@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "UserBackup": {
+      "title": "User Backup",
+      "description": "A full snapshot of the user's study tracker Dexie database.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "lastSyncedAt": { "type": "number" },
+        "data": { "type": "string", "description": "JSON stringified backup of Dexie DB" }
+      },
+      "required": ["userId", "lastSyncedAt", "data"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserBackup",
+      "description": "User's data backups."
+    }
+  }
+}

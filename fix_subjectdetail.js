@@ -1,0 +1,10 @@
+const fs = require('fs');
+const file = '/app/applet/artifacts/study-tracker/src/features/subjects/SubjectDetail.tsx';
+let content = fs.readFileSync(file, 'utf8');
+content = content.replace(/Rename Subject/g, 'Rename Territory');
+content = content.replace(/Delete Subject/g, 'Delete Territory');
+content = content.replace(/>Subject</g, '>Territory<');
+content = content.replace(/Add System/g, 'Add Waypoint');
+content = content.replace(/New System/g, 'New Waypoint');
+content = content.replace(/'systems'/g, "'waypoints'");
+fs.writeFileSync(file, content);

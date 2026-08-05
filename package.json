@@ -1,0 +1,39 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "lib/integrations/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=artifacts/study-tracker",
+    "dev:study-tracker": "npm run dev --workspace=artifacts/study-tracker",
+    "dev:mockup": "npm run dev --workspace=artifacts/mockup-sandbox",
+    "build": "npm run build --workspace=artifacts/study-tracker && mkdir -p dist && cp -r artifacts/study-tracker/dist/* dist/",
+    "typecheck": "tsc --build",
+    "lint": "tsc --build"
+  },
+  "private": true,
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "@replit/connectors-sdk": "^0.4.1",
+    "@tanstack/react-virtual": "^3.14.9",
+    "canvas-confetti": "^1.9.4",
+    "firebase": "^12.17.0",
+    "workbox-window": "^7.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/canvas-confetti": "^1.9.0",
+    "javascript-obfuscator": "^5.5.0",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.5",
+    "terser": "^5.49.0",
+    "typescript": "~5.9.3",
+    "vite-plugin-javascript-obfuscator": "^3.1.0",
+    "vitest": "^4.1.10"
+  }
+}

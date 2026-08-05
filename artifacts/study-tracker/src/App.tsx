@@ -1,0 +1,203 @@
+import { useEffect, Suspense, lazy } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster, toast } from 'sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+const NotFound = lazy(() => import('@/pages/not-found'));
+import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
+import { motion } from 'framer-motion';
+import { BottomNav } from '@/components/BottomNav';
+import { CommandPalette } from '@/components/CommandPalette';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { syncToFirebase } from '@/lib/firebaseSync';
+
+import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
+
+import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
+import { AutoSyncEngine } from '@/components/AutoSyncEngine';
+
+const Home = lazy(() => import('@/features/dashboard/Home'));
+const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
+const Timeline = lazy(() => import('@/features/timeline/Timeline'));
+const Analytics = lazy(() => import('@/features/analytics/Analytics'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const Landing = lazy(() => import('@/pages/Landing'));
+const Login = lazy(() => import('@/pages/Login'));
+const Migration = lazy(() => import('@/pages/Migration'));
+const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const Contact = lazy(() => import('@/pages/Contact'));
+
+const queryClient = new QueryClient();
+
+const initTheme = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const isDark = localStorage.getItem('theme') === 'dark' || !('theme' in localStorage);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {
+      console.warn('localStorage access denied, fallback to dark theme', e);
+      document.documentElement.classList.add('dark');
+    }
+  }
+};
+initTheme();
+
+function ProtectedApp() {
+  const { user, loading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      const isPublic = ['/login', '/privacy', '/terms', '/contact'].includes(location);
+      if (!user && !isPublic) {
+        setLocation('/login');
+      } else if (user && location === '/login') {
+        setLocation('/migration');
+      }
+    }
+  }, [user, loading, location, setLocation]);
+
+  const handleRefresh = async () => {
+    try {
+      toast.info('Backing up data to Firebase...');
+      await syncToFirebase();
+      toast.success('Firebase Cloud Sync successful.');
+    } catch (error) {
+      toast.error('Firebase Cloud Sync failed.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center w-full h-[100dvh]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (location === '/privacy') {
+    return (
+      <Suspense fallback={null}>
+        <PrivacyPolicy />
+      </Suspense>
+    );
+  }
+
+  if (location === '/terms') {
+    return (
+      <Suspense fallback={null}>
+        <TermsOfService />
+      </Suspense>
+    );
+  }
+
+  if (location === '/contact') {
+    return (
+      <Suspense fallback={null}>
+        <Contact />
+      </Suspense>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Suspense fallback={null}>
+        <Landing />
+      </Suspense>
+    );
+  }
+
+  if (location === '/migration') {
+    return (
+      <Suspense fallback={null}>
+        <Migration />
+      </Suspense>
+    );
+  }
+
+  if (location.startsWith('/admin')) {
+    return (
+      <Suspense fallback={null}>
+        <AdminDashboard />
+      </Suspense>
+    );
+  }
+
+  return (
+    <div className="flex flex-col md:flex-row min-h-[100dvh] w-full">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20" />
+      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[120vw] h-[120vw] max-w-[800px] max-h-[800px] meridian-ring opacity-20" />
+      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[90vw] h-[90vw] max-w-[600px] max-h-[600px] meridian-ring opacity-30" />
+      <GlobalAnnouncements />
+      <AutoSyncEngine />
+      <BottomNav />
+      <div className="flex-1 w-full relative z-10 overflow-x-hidden">
+        <PullToRefresh onRefresh={handleRefresh}>
+          <motion.main
+            key={location}
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
+            className="w-full h-full"
+          >
+            <Suspense fallback={
+              <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            }>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/subjects/:id" component={SubjectDetail} />
+                <Route path="/timeline" component={Timeline} />
+                <Route path="/analytics" component={Analytics} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/privacy" component={PrivacyPolicy} />
+                <Route path="/terms" component={TermsOfService} />
+                <Route path="/contact" component={Contact} />
+                <Route component={NotFound} />
+              </Switch>
+            </Suspense>
+          </motion.main>
+        </PullToRefresh>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  useEffect(() => {
+    triggerSpacedRepetitionNotification(false).catch(err => {
+      console.warn('Background notification trigger suppressed:', err);
+    });
+  }, []);
+
+  return (
+    <AuthProvider>
+      <FeatureFlagsProvider>
+        <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ErrorBoundary>
+            <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
+              <ProtectedApp />
+              <CommandPalette />
+            </WouterRouter>
+          </ErrorBoundary>
+          <Toaster />
+          <SonnerToaster position="top-center" richColors />
+        </TooltipProvider>
+        </QueryClientProvider>
+      </FeatureFlagsProvider>
+    </AuthProvider>
+  );
+}
+
+export default App;

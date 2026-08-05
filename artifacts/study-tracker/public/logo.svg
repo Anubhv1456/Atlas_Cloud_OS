@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background (full bleed for maskable) -->
+  <rect width="512" height="512" fill="#121315" />
+  <g transform="translate(0, -20)">
+    <!-- Glowing star at top -->
+    <path d="M256,90 C256,120 261,125 291,125 C261,125 256,130 256,160 C256,130 251,125 221,125 C251,125 256,120 256,90 Z" fill="#84f6d4" filter="url(#glow)" />
+    <!-- Left triangle -->
+    <path d="M256,125 L136,310 L256,260 Z" fill="#2ebfa5" />
+    <!-- Right triangle -->
+    <path d="M256,125 L376,310 L256,260 Z" fill="#3b4859" />
+    
+    <!-- Text ATLAS -->
+    <text x="260" y="400" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="500" letter-spacing="0.4em" text-anchor="middle">ATLAS</text>
+  </g>
+</svg>
