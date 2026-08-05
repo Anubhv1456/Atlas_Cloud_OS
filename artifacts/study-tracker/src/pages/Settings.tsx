@@ -7,6 +7,7 @@ import {
   DangerZoneSection,
   PresetsSection,
   AccountSection,
+  ExamProfileSection,
   LegacyDataSection,
   FirebaseSyncSection
 } from './settings';
@@ -22,6 +23,7 @@ export default function Settings() {
       </header>
       <div className="space-y-10 flex-1">
         <AccountSection />
+        <ExamProfileSection />
         <FirebaseSyncSection />
         <LegacyDataSection />
         <AppearanceSection />

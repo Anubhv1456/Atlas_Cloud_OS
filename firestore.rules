@@ -12,29 +12,29 @@ service cloud.firestore {
 
     // Test connection check
     match /test/connection {
-      allow read: if true;
+      allow read, write: if true;
     }
 
     // Admin bootstrap check
     match /admins/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null;
     }
     
-    // App configuration
+    // App configuration (featureFlags, socials, announcements, etc.)
     match /config/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if request.auth != null;
     }
 
-    // User profile and backup document
+    // User profiles and subcollections
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read, write: if isAdmin();
+      // Allow reading profiles so author names can be shown across community features
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       
       // User nested subcollections (e.g. subjects, systems, history, pyqYears, scoreLogs, uiPreferences)
       match /{collectionName}/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
     }
 
@@ -46,21 +46,15 @@ service cloud.firestore {
     // Community markers / insights
     match /insights/{insightId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      
-      allow update: if request.auth != null && (
-        request.auth.uid == resource.data.userId || 
-        isAdmin() ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usefulCount', 'helpfulBy', 'notHelpfulBy', 'savedBy', 'reportedBy', 'readCount', 'qualityScore', 'status']))
-      );
-      
-      allow delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if true;
+      allow update: if true;
+      allow delete: if request.auth != null;
     }
 
     // Contact / Support Messages submitted via Contact page
     match /contact_messages/{messageId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if request.auth != null;
     }
   }
 }

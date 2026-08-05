@@ -4,6 +4,7 @@ export * from './NotificationsSection';
 export * from './SecuritySection';
 export * from './DangerZoneSection';
 export * from './PresetsSection';
+export * from './ExamProfileSection';
 export * from './AccountSection';
 export * from './LegacyDataSection';
 export * from './FirebaseSyncSection';

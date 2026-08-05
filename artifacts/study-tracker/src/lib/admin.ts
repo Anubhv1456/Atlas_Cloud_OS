@@ -139,11 +139,22 @@ export async function sendContactMessage(data: Omit<ContactMessage, 'id' | 'stat
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const colRef = collection(firestoreDb, 'contact_messages');
   const { addDoc, serverTimestamp } = await import('firebase/firestore');
-  const docRef = await addDoc(colRef, {
-    ...data,
+
+  const payload: Record<string, any> = {
+    name: data.name || '',
+    email: data.email || '',
+    category: data.category || 'General',
+    subject: data.subject || '',
+    message: data.message || '',
     status: 'unread',
     createdAt: serverTimestamp()
-  });
+  };
+
+  if (data.userId) {
+    payload.userId = data.userId;
+  }
+
+  const docRef = await addDoc(colRef, payload);
   return docRef.id;
 }
 

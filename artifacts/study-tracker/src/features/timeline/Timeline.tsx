@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useHistory, useAllSystems, useSubjects, deleteHistoryEntry } from '@/db';
 import { HistoryEntry, StudySystem } from '@/db';
@@ -251,8 +251,8 @@ export default function Timeline() {
           </div>
         </section>
 
-        {/* ── Filter chips ───────�                {/* ── Month-on-Month Heatmap Calendar ──────────────────────────────── */}
-        <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm mb-8 overflow-hidden max-w-2xl w-[90%] md:w-[60%] mx-auto">
+        {/* ── Month-on-Month Heatmap Calendar ──────────────────────────────── */}
+        <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm mb-6 overflow-hidden max-w-2xl w-[90%] md:w-[60%] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
@@ -327,6 +327,58 @@ export default function Timeline() {
             })}
           </div>
         </div>
+
+        {/* ── Filter Feature (Below Activity Heatmap) ────────────────────── */}
+        <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm mb-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                <Filter className="w-3.5 h-3.5" />
+              </div>
+              <h2 className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+                Filter Timeline Events
+              </h2>
+            </div>
+            {(filter !== 'all' || selectedDate !== null) && (
+              <button
+                onClick={() => {
+                  setFilter('all');
+                  setSelectedDate(null);
+                }}
+                className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset Filters
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {TIMELINE_FILTERS.map((f) => {
+              const isActive = filter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border cursor-pointer",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-background border-border/60 hover:border-border text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {f.key === 'all' && <Filter className="w-3.5 h-3.5" />}
+                  {f.key === 'content' && <BookOpen className="w-3.5 h-3.5" />}
+                  {f.key === 'qbank' && <Layers className="w-3.5 h-3.5" />}
+                  {f.key === 'pyqs' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {f.key === 'revision' && <Clock className="w-3.5 h-3.5" />}
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Selected date filter banner */}
         {selectedDate && (
           <div className="flex items-center justify-between bg-primary/10 border border-primary/30 rounded-xl p-3 mb-6 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -336,9 +388,9 @@ export default function Timeline() {
             </div>
             <button
               onClick={() => setSelectedDate(null)}
-              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1"
+              className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1 cursor-pointer"
             >
-              Clear Filter
+              Clear Date Filter
             </button>
           </div>
         )}

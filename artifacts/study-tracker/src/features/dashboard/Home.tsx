@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { StudySystem, Subject } from '@/db';
 import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progress';
 import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
+import { useExamProfile } from '@/hooks/useExamProfile';
+import { TargetExamModal } from '@/components/TargetExamModal';
 // ── Inline result sub-components ──────────────────────────────────────────────
 
 function StatusBadge({ sys }: { sys: StudySystem }) {
@@ -77,17 +79,42 @@ export default function Home() {
     handleRenameSubjectSave, handleDeleteSubjectConfirm,
     handleSetFocus, goToSystem, goToSubject, handleSubjectDragEnd
   } = useHomeLogic();
-return (
+
+  const { profile, isConfigured } = useExamProfile();
+  const [examModalOpen, setExamModalOpen] = useState(false);
+
+  return (
     <>
       <div className="min-h-full bg-background px-4 pt-10 pb-36 max-w-2xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="relative z-10 flex-1 flex flex-col">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <header className="mb-8 flex items-center justify-between">
+        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <img src="/logo.svg?v=4" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
             <div>
-              <div className="flex items-center gap-1.5 text-primary text-[11px] font-semibold uppercase tracking-wider mb-0.5">
-                <Sparkles className="w-3 h-3" /> Medical Study Tracker
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" /> Medical Study Tracker
+                </span>
+                {isConfigured ? (
+                  <button
+                    onClick={() => setExamModalOpen(true)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[10px] font-bold border border-primary/20"
+                    title="Edit Target Examination"
+                  >
+                    <Target className="w-2.5 h-2.5" />
+                    {profile.targetExam}
+                    {profile.targetExamDate ? ` • ${new Date(profile.targetExamDate).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}` : ''}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setExamModalOpen(true)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all text-[10px] font-bold border border-amber-500/20 animate-pulse"
+                  >
+                    <Target className="w-2.5 h-2.5" />
+                    Set Target Exam
+                  </button>
+                )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
             </div>
@@ -96,7 +123,7 @@ return (
           {/* Quick Search trigger opening CommandPalette */}
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-            className="shrink-0 h-10 px-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground shadow-sm flex items-center gap-2 group cursor-pointer"
+            className="shrink-0 h-10 px-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground shadow-sm flex items-center gap-2 group cursor-pointer self-start sm:self-auto"
             aria-label="Open search"
             title="Open Quick Search (⌘K or /)"
           >
@@ -271,6 +298,8 @@ return (
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
     </>
   );
 }
