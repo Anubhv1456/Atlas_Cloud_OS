@@ -20,48 +20,45 @@ export default function Settings() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="min-h-full bg-background px-4 pt-8 pb-36 max-w-2xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <header className="mb-8">
+    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-32 max-w-5xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <header className="mb-8 border-b border-border/40 pb-5">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1.5 text-xs sm:text-sm leading-relaxed">
           Manage your account, exam target, membership status, and study preferences.
         </p>
       </header>
 
-      <div className="space-y-8 flex-1">
-        {/* Tier 1: Identity & Exam Focus */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+        {/* Column 1: Identity, Exam Focus & Behavior */}
         <div className="space-y-6">
-          {/* 1. Account */}
+          {/* Account */}
           <AccountSection />
 
-          {/* 2. Exam Profile */}
+          {/* Exam Profile */}
           <ExamProfileSection />
 
-          {/* 3. Membership */}
+          {/* Membership */}
           <ClosedBetaSection />
+
+          {/* Notifications */}
+          <NotificationsSection />
         </div>
 
-        {/* Tier 2: Behavior & App Preferences */}
-        <div className="space-y-6 pt-4 border-t border-border/40">
-          {/* 4. Notifications */}
-          <NotificationsSection />
-
-          {/* 5. Appearance */}
+        {/* Column 2: Preferences, Support & Advanced */}
+        <div className="space-y-6">
+          {/* Appearance */}
           <AppearanceSection />
 
-          {/* 6. Install Atlas */}
+          {/* Install Atlas */}
           <PWASection />
-        </div>
 
-        {/* Tier 3: Support, Legal & Advanced */}
-        <div className="space-y-6 pt-4 border-t border-border/40">
-          {/* 7. Help & Community */}
+          {/* Help & Community */}
           <div className="space-y-6">
             <FaqSection />
             <FeedbackSection />
           </div>
 
-          {/* 8. Privacy & Legal */}
+          {/* Privacy & Legal */}
           <AboutSection />
 
           {/* 9. Advanced Settings (Collapsed) */}

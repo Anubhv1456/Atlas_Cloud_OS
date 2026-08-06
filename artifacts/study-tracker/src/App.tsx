@@ -151,7 +151,7 @@ function ProtectedApp() {
       <GlobalAnnouncements />
       <AutoSyncEngine />
       <BottomNav />
-      <div className="flex-1 w-full relative z-10 overflow-x-hidden">
+      <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300">
         <PullToRefresh onRefresh={handleRefresh}>
           <motion.main
             key={location}

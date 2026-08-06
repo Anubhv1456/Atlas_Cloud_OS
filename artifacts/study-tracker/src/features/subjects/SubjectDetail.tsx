@@ -653,7 +653,7 @@ export default function SubjectDetail() {
   if (!subject) return null;
 
   return (
-    <div className="min-h-full bg-background px-4 pt-10 pb-28 max-w-2xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-32 max-w-6xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Header */}
       <header className="mb-10">
         <div className="flex items-center justify-between mb-4">
@@ -808,7 +808,7 @@ export default function SubjectDetail() {
             <Droppable droppableId="systems-list" isDropDisabled={activeFilter !== null}>
               {(provided) => (
                 <div 
-                  className="grid gap-3"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4"
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                 >
