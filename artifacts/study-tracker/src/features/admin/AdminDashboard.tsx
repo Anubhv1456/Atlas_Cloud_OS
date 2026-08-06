@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const { flags, loading: flagsLoading } = useFeatureFlags();
   const { isAdmin, loading } = useAdmin();
   const [, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   
   const filteredNavItems = navItems.filter(item => {
@@ -77,28 +77,20 @@ export default function AdminDashboard() {
     return true;
   });
 
-  if (loading || flagsLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!loading && !flagsLoading) {
+      if (!user) {
+        setLocation('/login');
+      } else if (!isAdmin) {
+        setLocation('/');
+      }
+    }
+  }, [user, isAdmin, loading, flagsLoading, setLocation]);
 
-  if (!isAdmin) {
+  if (loading || flagsLoading || !user || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4 opacity-80" />
-        <h1 className="text-2xl font-bold tracking-tight mb-2">Restricted Area</h1>
-        <p className="text-muted-foreground max-w-md mb-8">
-          This sector requires Founder clearance. If you are the founder, ensure your Custom Claims are set.
-        </p>
-        <button 
-          onClick={() => setLocation('/')}
-          className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-medium"
-        >
-          Return to Atlas
-        </button>
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

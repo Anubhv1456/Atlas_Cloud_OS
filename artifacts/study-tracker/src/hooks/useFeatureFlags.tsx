@@ -7,7 +7,8 @@ const defaultFlags: FeatureFlags = {
   communityMarkers: true,
   markerSubmission: true,
   markerVisibility: true,
-  payments: false
+  payments: false,
+  aiInsights: true
 };
 
 const FeatureFlagsContext = createContext<{ flags: FeatureFlags; loading: boolean }>({ flags: defaultFlags, loading: true });

@@ -8,7 +8,8 @@ export function FeatureFlagsView() {
     communityMarkers: true,
     markerSubmission: true,
     markerVisibility: true,
-    payments: false
+    payments: false,
+    aiInsights: true
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,6 +119,19 @@ export function FeatureFlagsView() {
             </div>
             <div className={`w-12 h-6 rounded-full p-1 transition-colors ${flags.payments ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${flags.payments ? 'translate-x-6' : 'translate-x-0'}`} />
+            </div>
+          </div>
+
+          <div 
+            onClick={() => toggleFlag('aiInsights')}
+            className="flex items-center justify-between p-4 rounded-xl border border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+          >
+            <div>
+              <div className="font-medium">AI Intelligence Engine</div>
+              <div className="text-sm text-muted-foreground">Enable AI-powered personalized insights and recommendations.</div>
+            </div>
+            <div className={`w-12 h-6 rounded-full p-1 transition-colors ${flags.aiInsights ? 'bg-primary' : 'bg-muted-foreground/30'}`}>
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${flags.aiInsights ? 'translate-x-6' : 'translate-x-0'}`} />
             </div>
           </div>
         </div>

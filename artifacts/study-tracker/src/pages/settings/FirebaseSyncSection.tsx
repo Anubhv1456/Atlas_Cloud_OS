@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, DownloadCloud, Activity } from 'lucide-react';
+import { CheckCircle2, Cloud, ChevronDown, ChevronUp, UploadCloud, DownloadCloud, Activity } from 'lucide-react';
 import { syncToFirebase, syncFromFirebase } from '@/lib/firebaseSync';
 import { toast } from 'sonner';
 
 export function FirebaseSyncSection() {
   const [loading, setLoading] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const time = localStorage.getItem('lastCloudSync');
@@ -14,7 +15,6 @@ export function FirebaseSyncSection() {
       setLastSync(new Date(parseInt(time)).toLocaleString());
     }
     
-    // Poll for updates to the last sync time to keep UI fresh
     const interval = setInterval(() => {
        const newTime = localStorage.getItem('lastCloudSync');
        if (newTime) {
@@ -56,30 +56,61 @@ export function FirebaseSyncSection() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3 px-1 mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cloud Sync Engine</h2>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <Cloud className="w-3.5 h-3.5 text-emerald-400" />
+          Cloud Status
+        </h2>
       </div>
+
       <div className="bg-card rounded-2xl border shadow-sm p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-500 mt-0.5 animate-pulse">
-            <Activity className="w-4 h-4" />
-          </div>
-          <div className="text-xs flex-1">
-            <div className="font-semibold text-foreground">Background Sync Active</div>
-            <div className="text-muted-foreground mt-0.5 mb-3">
-              Your progress is automatically saved to the cloud securely in the background. No manual backups required.
-              {lastSync && <div className="mt-1 font-medium text-emerald-500/80">Last synced: {lastSync}</div>}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-500">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div>
+              <div className="text-xs font-bold text-foreground flex items-center gap-2">
+                Synced
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                {lastSync ? `Last synced ${lastSync}` : 'Automatic background sync active'}
+              </div>
+            </div>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-xs font-semibold h-8 px-2.5 rounded-xl text-muted-foreground hover:text-foreground gap-1"
+          >
+            Details
+            {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </Button>
+        </div>
+
+        {showDetails && (
+          <div className="pt-3 border-t border-border/50 space-y-3 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="p-3 bg-muted/20 rounded-xl space-y-1.5 border border-border/40">
+              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                Background Synchronization Engine
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Your study progress, bookmarks, and logs are continuously synced to cloud storage. No manual intervention required.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleUpload}
                 disabled={loading}
-                className="flex-1 rounded-xl h-10 border-border/50 text-muted-foreground hover:text-foreground"
+                className="flex-1 rounded-xl h-9 text-xs border-border/60 text-muted-foreground hover:text-foreground"
               >
-                <UploadCloud className="w-4 h-4 mr-2" />
+                <UploadCloud className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
                 Force Sync
               </Button>
               <Button 
@@ -87,15 +118,16 @@ export function FirebaseSyncSection() {
                 size="sm" 
                 onClick={handleDownload}
                 disabled={loading}
-                className="flex-1 rounded-xl h-10 border-border/50 text-muted-foreground hover:text-foreground"
+                className="flex-1 rounded-xl h-9 text-xs border-border/60 text-muted-foreground hover:text-foreground"
               >
-                <DownloadCloud className="w-4 h-4 mr-2" />
+                <DownloadCloud className="w-3.5 h-3.5 mr-1.5 text-sky-400" />
                 Force Restore
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
 }
+

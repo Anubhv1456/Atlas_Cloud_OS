@@ -44,9 +44,13 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 import { useAnalyticsLogic } from './Analytics.hooks';
+import { Activity, Globe, Lightbulb } from 'lucide-react';
+import { useAIInsights } from '@/hooks/useAIInsights';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 export default function Analytics() {
-    const {
+
+  const {
     scoreLogs, subjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
     isModalOpen, setIsModalOpen,
     filteredLogs,
@@ -56,27 +60,32 @@ export default function Analytics() {
     selectedSystemId, setSelectedSystemId, availableSystems
   } = useAnalyticsLogic();
   
+  const { data: aiData } = useAIInsights(subjects, systems);
+  const { flags } = useFeatureFlags();
+  
   return (
-    <div className="min-h-screen bg-background text-foreground pb-36 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background text-foreground pb-36 pt-6 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider mb-1">
-            <TrendingUp className="w-4 h-4" /> Performance & Test Report
+            <TrendingUp className="w-4 h-4" /> Performance & Algorithm Intelligence
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            Track retention trends, accuracy, and topic mastery over time.
+            Track retention trends, accuracy, and inspect live algorithm telemetry signals.
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="shrink-0 gap-2 font-semibold shadow-md text-xs sm:text-sm rounded-xl"
-        >
-          <Plus className="w-4 h-4" />
-          Log Test Score
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="shrink-0 gap-2 font-semibold shadow-md text-xs sm:text-sm rounded-xl"
+          >
+            <Plus className="w-4 h-4" />
+            Log Test Score
+          </Button>
+        </div>
       </div>
 
       {/* Actionable Priority Recommendation Banner */}
@@ -109,6 +118,45 @@ export default function Analytics() {
               Set as Primary Focus
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* AI Insights & Interpretations Banner */}
+      {flags.aiInsights && aiData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+          {aiData.analyticsInterpretation && aiData.analyticsInterpretation.length > 0 && (
+            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Analytics Interpretation</span>
+              </div>
+              <ul className="space-y-1.5">
+                {aiData.analyticsInterpretation.map((interpretation: string, idx: number) => (
+                  <li key={idx} className="text-sm text-foreground leading-snug flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 mt-1.5 shrink-0" />
+                    <span>{interpretation}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {aiData.communityMarkers && aiData.communityMarkers.length > 0 && (
+            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="w-4 h-4 text-blue-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Community Markers</span>
+              </div>
+              <ul className="space-y-1.5">
+                {aiData.communityMarkers.map((marker: string, idx: number) => (
+                  <li key={idx} className="text-sm text-foreground leading-snug flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 mt-1.5 shrink-0" />
+                    <span>{marker}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

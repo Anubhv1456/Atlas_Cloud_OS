@@ -4,7 +4,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster, toast } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-const NotFound = lazy(() => import('@/pages/not-found'));
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { BottomNav } from '@/components/BottomNav';
@@ -15,22 +14,24 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { syncToFirebase } from '@/lib/firebaseSync';
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
-
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 
-const Home = lazy(() => import('@/features/dashboard/Home'));
-const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
-const Timeline = lazy(() => import('@/features/timeline/Timeline'));
-const Analytics = lazy(() => import('@/features/analytics/Analytics'));
-const Settings = lazy(() => import('@/pages/Settings'));
-const Landing = lazy(() => import('@/pages/Landing'));
-const Login = lazy(() => import('@/pages/Login'));
-const Migration = lazy(() => import('@/pages/Migration'));
-const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const Contact = lazy(() => import('@/pages/Contact'));
+import NotFound from '@/pages/not-found';
+import Home from '@/features/dashboard/Home';
+import SubjectDetail from '@/features/subjects/SubjectDetail';
+import Timeline from '@/features/timeline/Timeline';
+import Analytics from '@/features/analytics/Analytics';
+import Settings from '@/pages/Settings';
+import Landing from '@/pages/Landing';
+import Login from '@/pages/Login';
+import Migration from '@/pages/Migration';
+import AdminDashboard from '@/features/admin/AdminDashboard';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
+import Contact from '@/pages/Contact';
+import BetaAccess from '@/pages/BetaAccess';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 
 const queryClient = new QueryClient();
 
@@ -52,19 +53,35 @@ const initTheme = () => {
 initTheme();
 
 function ProtectedApp() {
-  const { user, loading } = useAuth();
+  const { user, isFreshLogin, loading: authLoading } = useAuth();
+  const { hasAccess, loading: accessLoading } = useBetaAccess();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading) {
+    if (!authLoading && !accessLoading) {
       const isPublic = ['/login', '/privacy', '/terms', '/contact'].includes(location);
+      const isAdminRoute = location.startsWith('/admin');
+
       if (!user && !isPublic) {
         setLocation('/login');
-      } else if (user && location === '/login') {
-        setLocation('/migration');
+      } else if (user) {
+        // Admin routes are completely separate from student beta-access and onboarding flow
+        if (isAdminRoute) {
+          return;
+        }
+        if (!hasAccess && location !== '/beta-access') {
+          setLocation('/beta-access');
+        } else if (hasAccess) {
+          const migrationChecked = sessionStorage.getItem(`migration_checked_${user.uid}`);
+          if (isFreshLogin && !migrationChecked && (location === '/login' || location === '/beta-access' || location === '/')) {
+            setLocation('/migration');
+          } else if (location === '/login' || location === '/beta-access') {
+            setLocation('/');
+          }
+        }
       }
     }
-  }, [user, loading, location, setLocation]);
+  }, [user, isFreshLogin, authLoading, hasAccess, accessLoading, location, setLocation]);
 
   const handleRefresh = async () => {
     try {
@@ -76,7 +93,7 @@ function ProtectedApp() {
     }
   };
 
-  if (loading) {
+  if (authLoading || accessLoading) {
     return (
       <div className="flex items-center justify-center w-full h-[100dvh]">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -108,6 +125,14 @@ function ProtectedApp() {
     );
   }
 
+  if (location.startsWith('/admin')) {
+    return (
+      <Suspense fallback={null}>
+        <AdminDashboard />
+      </Suspense>
+    );
+  }
+
   if (!user) {
     return (
       <Suspense fallback={null}>
@@ -116,18 +141,18 @@ function ProtectedApp() {
     );
   }
 
-  if (location === '/migration') {
+  if (location === '/beta-access' || !hasAccess) {
     return (
       <Suspense fallback={null}>
-        <Migration />
+        <BetaAccess />
       </Suspense>
     );
   }
 
-  if (location.startsWith('/admin')) {
+  if (location === '/migration') {
     return (
       <Suspense fallback={null}>
-        <AdminDashboard />
+        <Migration />
       </Suspense>
     );
   }

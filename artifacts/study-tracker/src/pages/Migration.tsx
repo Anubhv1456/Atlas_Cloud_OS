@@ -10,12 +10,20 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export default function Migration() {
-  const { user } = useAuth();
+  const { user, clearFreshLogin } = useAuth();
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [hasLocalData, setHasLocalData] = useState(false);
   const [hasCloudData, setHasCloudData] = useState(false);
+
+  const finishAndNavigate = () => {
+    if (user) {
+      sessionStorage.setItem(`migration_checked_${user.uid}`, 'true');
+    }
+    clearFreshLogin();
+    setLocation('/');
+  };
 
   useEffect(() => {
     async function checkData() {
@@ -33,7 +41,7 @@ export default function Migration() {
         setHasCloudData(cloudExists);
 
         if (!localExists && !cloudExists) {
-          setLocation('/');
+          finishAndNavigate();
         } else if (!localExists && cloudExists) {
           // Auto-download cloud data to local DB
           await pullFromCloud(cloudExists);
@@ -47,7 +55,7 @@ export default function Migration() {
     }
     
     checkData();
-  }, [user, setLocation]);
+  }, [user]);
 
   const pullFromCloud = async (isAuto = false) => {
     if (!user) return;
@@ -63,7 +71,7 @@ export default function Migration() {
         }
       }
       toast.success('Cloud Data Synced', { description: 'Your data has been restored from the cloud.' });
-      setLocation('/');
+      finishAndNavigate();
     } catch (e) {
       console.error(e);
       toast.error('Sync Failed');
@@ -111,7 +119,7 @@ export default function Migration() {
       toast.success('Migration Complete', {
         description: 'Your local data has been successfully moved to the cloud.'
       });
-      setLocation('/');
+      finishAndNavigate();
     } catch (e) {
       console.error(e);
       toast.error('Migration Failed');
@@ -123,7 +131,7 @@ export default function Migration() {
     try {
       await db.delete();
       await db.open();
-      setLocation('/');
+      finishAndNavigate();
     } catch (e) {
       console.error(e);
       toast.error('Failed to clear local data');
@@ -132,8 +140,8 @@ export default function Migration() {
 
   if (checking) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-[100dvh] w-full items-center justify-center bg-[#030303] text-zinc-100">
+        <Loader2 className="h-6 w-6 animate-spin text-teal-400" />
       </div>
     );
   }

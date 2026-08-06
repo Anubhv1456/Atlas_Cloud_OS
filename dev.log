@@ -1,0 +1,4 @@
+
+> workspace@0.0.0 dev
+> npm run dev --workspace=artifacts/study-tracker
+

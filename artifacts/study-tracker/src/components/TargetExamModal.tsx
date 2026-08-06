@@ -44,6 +44,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
   const [curriculum, setCurriculum] = useState(profile.curriculum || DEFAULT_CURRICULUM_OPTIONS[0]);
   const [targetScore, setTargetScore] = useState(profile.targetScore || '');
   const [dailyQuestionGoal, setDailyQuestionGoal] = useState<number>(profile.dailyQuestionGoal || 40);
+  const [currentYear, setCurrentYear] = useState<string>(profile.currentYear || 'Final MBBS');
 
   useEffect(() => {
     if (open) {
@@ -61,6 +62,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       setCurriculum(profile.curriculum || DEFAULT_CURRICULUM_OPTIONS[0]);
       setTargetScore(profile.targetScore || '');
       setDailyQuestionGoal(profile.dailyQuestionGoal || 40);
+      setCurrentYear(profile.currentYear || 'Final MBBS');
     }
   }, [open, profile]);
 
@@ -81,6 +83,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         curriculum,
         targetScore,
         dailyQuestionGoal: Number(dailyQuestionGoal) || 40,
+        currentYear,
       });
       toast.success('Target Examination & Curriculum updated successfully!');
       onOpenChange(false);
@@ -178,6 +181,34 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                 className="rounded-xl text-xs"
               />
             </div>
+          </div>
+
+          {/* Current Academic Level / Year */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-primary" />
+              Current Academic Level / Year
+            </Label>
+            <Select value={currentYear} onValueChange={setCurrentYear}>
+              <SelectTrigger className="rounded-xl text-xs h-10">
+                <SelectValue placeholder="Select current year" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl text-xs">
+                {[
+                  '1st Year MBBS',
+                  '2nd Year MBBS',
+                  '3rd Year MBBS',
+                  'Final MBBS',
+                  'Intern',
+                  'Postgraduate Resident',
+                  'Other'
+                ].map(yr => (
+                  <SelectItem key={yr} value={yr} className="text-xs">
+                    {yr}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Curriculum Structure */}

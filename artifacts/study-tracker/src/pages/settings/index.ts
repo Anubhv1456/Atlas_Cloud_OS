@@ -8,3 +8,7 @@ export * from './ExamProfileSection';
 export * from './AccountSection';
 export * from './LegacyDataSection';
 export * from './FirebaseSyncSection';
+export * from './ClosedBetaSection';
+export * from './FaqSection';
+export * from './FeedbackSection';
+export * from './AboutSection';

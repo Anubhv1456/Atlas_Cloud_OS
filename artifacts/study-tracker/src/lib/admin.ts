@@ -26,6 +26,48 @@ export async function updateMarkerStatusAdmin(markerId: string, status: MarkerSt
   await updateDoc(markerRef, { status });
 }
 
+export async function updateUserBetaAccess(userId: string, betaAccess: boolean, durationDays?: number | null) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const userRef = doc(firestoreDb, 'users', userId);
+  if (betaAccess) {
+    const now = Date.now();
+    const betaAccessExpiresAt = durationDays ? now + durationDays * 24 * 60 * 60 * 1000 : null;
+    await setDoc(userRef, {
+      betaAccess: true,
+      betaAccessExpiresAt,
+      betaGrantedAt: new Date()
+    }, { merge: true });
+  } else {
+    await setDoc(userRef, {
+      betaAccess: false,
+      betaAccessExpiresAt: null
+    }, { merge: true });
+  }
+}
+
+export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const now = Date.now();
+  const promises = userIds.map(userId => {
+    const userRef = doc(firestoreDb, 'users', userId);
+    if (betaAccess) {
+      const betaAccessExpiresAt = durationDays ? now + durationDays * 24 * 60 * 60 * 1000 : null;
+      return setDoc(userRef, {
+        betaAccess: true,
+        betaAccessExpiresAt,
+        betaGrantedAt: new Date()
+      }, { merge: true });
+    } else {
+      return setDoc(userRef, {
+        betaAccess: false,
+        betaAccessExpiresAt: null
+      }, { merge: true });
+    }
+  });
+  await Promise.all(promises);
+}
+
+
 export async function getAllUsersForAdmin() {
   if (!firestoreDb) return [];
   const usersCol = collection(firestoreDb, 'users');
@@ -71,16 +113,17 @@ export interface FeatureFlags {
   markerSubmission: boolean;
   markerVisibility: boolean;
   payments: boolean;
+  aiInsights: boolean;
 }
 
 export async function getFeatureFlags(): Promise<FeatureFlags> {
-  if (!firestoreDb) return { communityMarkers: true, markerSubmission: true, markerVisibility: true, payments: false };
+  if (!firestoreDb) return { communityMarkers: true, markerSubmission: true, markerVisibility: true, payments: false, aiInsights: true };
   const docRef = doc(firestoreDb, 'config', 'featureFlags');
   const snapshot = await getDoc(docRef);
   if (snapshot.exists()) {
-    return snapshot.data() as FeatureFlags;
+    return { aiInsights: true, ...snapshot.data() } as FeatureFlags;
   }
-  return { communityMarkers: true, markerSubmission: true, markerVisibility: true, payments: false };
+  return { communityMarkers: true, markerSubmission: true, markerVisibility: true, payments: false, aiInsights: true };
 }
 
 export async function setFeatureFlags(flags: FeatureFlags) {

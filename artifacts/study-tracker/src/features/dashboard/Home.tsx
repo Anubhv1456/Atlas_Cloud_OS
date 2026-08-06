@@ -21,6 +21,9 @@ import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progre
 import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
+import { OnboardingModal } from '@/components/OnboardingModal';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { useEffect } from 'react';
 // ── Inline result sub-components ──────────────────────────────────────────────
 
 function StatusBadge({ sys }: { sys: StudySystem }) {
@@ -82,6 +85,21 @@ export default function Home() {
 
   const { profile, isConfigured } = useExamProfile();
   const [examModalOpen, setExamModalOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
+
+  useEffect(() => {
+    // Auto trigger onboarding if completed flag is missing
+    if (!onboardingLoading && hasOnboarded === false) {
+      setOnboardingOpen(true);
+    }
+  }, [hasOnboarded, onboardingLoading]);
+
+  useEffect(() => {
+    const handleOpenOnboarding = () => setOnboardingOpen(true);
+    window.addEventListener('open-onboarding', handleOpenOnboarding);
+    return () => window.removeEventListener('open-onboarding', handleOpenOnboarding);
+  }, []);
 
   return (
     <>
@@ -90,7 +108,7 @@ export default function Home() {
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <img src="/logo.svg?v=4" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
+            <img src="/logo-mark.svg?v=atlas" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
@@ -300,6 +318,7 @@ export default function Home() {
       </Dialog>
 
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
+      <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
     </>
   );
 }

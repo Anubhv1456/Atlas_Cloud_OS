@@ -1,27 +1,42 @@
 import React, { useState } from 'react';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { Button } from '@/components/ui/button';
-import { Target, Calendar, Trophy, BookOpen, Edit3, CheckCircle2 } from 'lucide-react';
+import { Target, Calendar, Trophy, BookOpen, Edit3, ChevronDown, ChevronUp } from 'lucide-react';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { Badge } from '@/components/ui/badge';
+import { PresetsSection } from './PresetsSection';
 
 export function ExamProfileSection() {
   const { profile, isConfigured } = useExamProfile();
   const [modalOpen, setModalOpen] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Target Examination</h2>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setModalOpen(true)}
-          className="h-7 text-xs text-primary font-semibold gap-1 hover:bg-primary/10 rounded-lg"
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          Edit Target
-        </Button>
+    <section className="space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <Target className="w-3.5 h-3.5 text-primary" />
+          Exam Profile
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
+            className="h-7 text-xs text-muted-foreground font-semibold gap-1 hover:bg-muted/60 rounded-lg"
+          >
+            Rerun Onboarding
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setModalOpen(true)}
+            className="h-7 text-xs text-primary font-semibold gap-1 hover:bg-primary/10 rounded-lg"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            Edit Target
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card rounded-2xl border shadow-sm p-5 space-y-4">
@@ -68,6 +83,28 @@ export function ExamProfileSection() {
                 </div>
               </div>
             </div>
+
+            {/* Curriculum Presets Trigger */}
+            <div className="pt-3 border-t border-border/50">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPresets(!showPresets)}
+                className="w-full text-xs font-semibold justify-between h-9 rounded-xl border-border/60 hover:bg-muted/40"
+              >
+                <span className="flex items-center gap-2 text-foreground">
+                  <BookOpen className="w-3.5 h-3.5 text-primary" />
+                  {showPresets ? 'Hide Curriculum Presets' : 'Explore Exam Curriculum Presets'}
+                </span>
+                {showPresets ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </Button>
+
+              {showPresets && (
+                <div className="mt-3 pt-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <PresetsSection />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="py-4 text-center space-y-3">
@@ -96,3 +133,4 @@ export function ExamProfileSection() {
     </section>
   );
 }
+

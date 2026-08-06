@@ -1,16 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#181a1d" />
+      <stop offset="100%" stop-color="#0d0e10" />
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
-  <g transform="translate(0, 15)">
+
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <g transform="translate(0, 18)">
     <!-- Glowing star at top -->
-    <path d="M256,60 C256,105 263.5,112.5 308.5,112.5 C263.5,112.5 256,120 256,165 C256,120 248.5,112.5 203.5,112.5 C248.5,112.5 256,105 256,60 Z" fill="#84f6d4" filter="url(#glow)" />
+    <path d="M256,70 C256,115 264,122.5 309,122.5 C264,122.5 256,130 256,175 C256,130 248,122.5 203,122.5 C248,122.5 256,115 256,70 Z" fill="#84f6d4" filter="url(#glow)" />
     <!-- Left triangle -->
-    <path d="M256,112.5 L76,390 L256,315 Z" fill="#2ebfa5" />
+    <path d="M256,122.5 L86,395 L256,320 Z" fill="#2ebfa5" />
     <!-- Right triangle -->
-    <path d="M256,112.5 L436,390 L256,315 Z" fill="#3b4859" />
+    <path d="M256,122.5 L426,395 L256,320 Z" fill="#3b4859" />
   </g>
 </svg>

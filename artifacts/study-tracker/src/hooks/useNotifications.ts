@@ -16,12 +16,20 @@ export function useNotifications() {
   );
 
   const testNotification = useCallback(async () => {
-    if (Notification.permission === 'default') {
-      const p = await Notification.requestPermission();
-      if (p !== 'granted') {
-        toast({ title: 'Permission denied', description: 'Please enable notifications in your browser settings.' });
-        return;
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast({ title: 'Notifications unavailable', description: 'Web Notifications API is not supported in this browser environment.' });
+      return;
+    }
+    try {
+      if (window.Notification.permission === 'default') {
+        const p = await window.Notification.requestPermission();
+        if (p !== 'granted') {
+          toast({ title: 'Permission denied', description: 'Please enable notifications in your browser settings.' });
+          return;
+        }
       }
+    } catch (e) {
+      console.warn('Notification permission error:', e);
     }
     triggerSpacedRepetitionNotification(true);
   }, [toast]);

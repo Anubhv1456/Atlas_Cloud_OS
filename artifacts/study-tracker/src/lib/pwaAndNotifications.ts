@@ -111,8 +111,8 @@ async function dispatchLocalNotification(title: string, options: NotificationOpt
 
   // 2. Fallback for Desktop browsers where new Notification() constructor is allowed
   try {
-    if (typeof Notification === 'function') {
-      new Notification(title, options);
+    if (typeof window !== 'undefined' && 'Notification' in window && typeof window.Notification === 'function') {
+      new window.Notification(title, options);
       return true;
     }
   } catch (e) {
@@ -131,10 +131,10 @@ export async function triggerSpacedRepetitionNotification(force = false): Promis
   }
 
   try {
-    if (Notification.permission === 'denied') return false;
-    if (Notification.permission !== 'granted') {
+    if (window.Notification.permission === 'denied') return false;
+    if (window.Notification.permission !== 'granted') {
       if (!force) return false;
-      const perm = await Notification.requestPermission().catch(() => 'denied');
+      const perm = await window.Notification.requestPermission().catch(() => 'denied');
       if (perm !== 'granted') return false;
     }
   } catch (err) {

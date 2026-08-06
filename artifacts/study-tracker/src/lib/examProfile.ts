@@ -7,6 +7,7 @@ export interface ExamProfile {
   curriculum: string;
   targetScore: string;
   dailyQuestionGoal: number;
+  currentYear?: string;
 }
 
 const LOCAL_STORAGE_KEY = 'atlas_user_exam_profile';
@@ -32,11 +33,12 @@ export const DEFAULT_CURRICULUM_OPTIONS = [
 ];
 
 export const DEFAULT_EXAM_PROFILE: ExamProfile = {
-  targetExam: '',
+  targetExam: 'NEET PG',
   targetExamDate: '',
   curriculum: 'Organ-System Based (Cardiology, Neurology, etc.)',
   targetScore: '',
   dailyQuestionGoal: 40,
+  currentYear: 'Final MBBS',
 };
 
 export function getLocalExamProfile(): ExamProfile {

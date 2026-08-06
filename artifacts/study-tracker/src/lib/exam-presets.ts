@@ -264,60 +264,60 @@ export const usmleStep2CKHierarchy: PresetSubject[] = [
 
 export const neetPgHierarchy: PresetSubject[] = [
   {
-    subject: "Anatomy",
-    topics: ["Gross Anatomy", "Embryology", "Histology", "Neuroanatomy"]
-  },
-  {
-    subject: "Physiology",
-    topics: ["General Physiology", "Nerve Muscle", "CNS", "CVS", "Respiratory", "Renal", "Endocrine", "GIT"]
-  },
-  {
-    subject: "Biochemistry",
-    topics: ["Metabolism", "Enzymes", "Molecular Biology", "Vitamins & Minerals", "Clinical Biochemistry"]
-  },
-  {
-    subject: "Pathology",
-    topics: ["General Pathology", "Hematology", "Systemic Pathology", "Cytopathology"]
-  },
-  {
-    subject: "Pharmacology",
-    topics: ["General Pharmacology", "ANS & CNS", "CVS & Renal", "Antimicrobials", "Chemotherapy"]
-  },
-  {
-    subject: "Microbiology",
-    topics: ["Bacteriology", "Virology", "Mycology", "Parasitology", "Immunology"]
-  },
-  {
-    subject: "Forensic Medicine (FMT)",
-    topics: ["Traumatology", "Toxicology", "Medical Jurisprudence", "Autopsy & Thanatology"]
-  },
-  {
-    subject: "Community Medicine (PSM)",
-    topics: ["Epidemiology", "Biostatistics", "National Health Programs", "Communicable Diseases", "Nutrition & Environment"]
-  },
-  {
     subject: "General Medicine",
-    topics: ["Cardiology", "Neurology", "Gastroenterology", "Pulmonology", "Nephrology", "Endocrinology", "Rheumatology"]
+    topics: ["Cardiology", "Neurology", "Gastroenterology", "Pulmonology", "Nephrology", "Endocrinology", "Rheumatology", "Infectious Diseases", "Hematology"]
   },
   {
     subject: "General Surgery",
-    topics: ["Trauma & Shock", "GI Surgery", "Urology", "Breast & Endocrine", "Vascular Surgery"]
+    topics: ["Trauma & Shock", "GI Surgery", "Urology", "Breast & Endocrine", "Vascular Surgery", "General Surgery Principles"]
   },
   {
     subject: "Obstetrics & Gynecology",
-    topics: ["Obstetrics & Antenatal Care", "Gynecology & Infertility", "Gynecologic Oncology"]
+    topics: ["Obstetrics & Antenatal Care", "Gynecology & Infertility", "Gynecologic Oncology", "Labor & Puerperium Complications"]
+  },
+  {
+    subject: "Pathology",
+    topics: ["General Pathology", "Hematology", "Systemic Pathology", "Cytopathology & Histopathology"]
+  },
+  {
+    subject: "Pharmacology",
+    topics: ["General Pharmacology", "ANS & CNS", "CVS & Renal", "Antimicrobials", "Chemotherapy & Immunomodulators"]
+  },
+  {
+    subject: "Community Medicine (PSM)",
+    topics: ["Epidemiology", "Biostatistics", "National Health Programs", "Communicable Diseases", "Nutrition & Environment", "Screening & Demography"]
   },
   {
     subject: "Pediatrics",
-    topics: ["Neonatology", "Development & Nutrition", "Pediatric Systemic Diseases"]
+    topics: ["Neonatology", "Development & Nutrition", "Pediatric Systemic Diseases", "Pediatric Infections & Malignancies"]
   },
   {
-    subject: "Ophthalmology",
-    topics: ["Cornea & Lens", "Retina & Glaucoma", "Optics & Neuro-ophthalmology"]
+    subject: "Microbiology",
+    topics: ["Bacteriology", "Virology", "Mycology", "Parasitology", "Immunology & Serology"]
+  },
+  {
+    subject: "Biochemistry",
+    topics: ["Metabolism & Bioenergetics", "Enzymes & Kinetics", "Molecular Biology", "Vitamins & Minerals", "Clinical Biochemistry"]
+  },
+  {
+    subject: "Anatomy",
+    topics: ["Neuroanatomy", "Gross Anatomy", "Embryology", "Histology", "Head & Neck"]
+  },
+  {
+    subject: "Physiology",
+    topics: ["General Physiology", "Nerve Muscle", "CNS & Neurophysiology", "CVS & Hemodynamics", "Respiratory System", "Renal & Electrolytes", "Endocrine & GIT"]
   },
   {
     subject: "ENT",
-    topics: ["Otology & Hearing", "Rhinology", "Laryngology & Head/Neck"]
+    topics: ["Otology & Hearing", "Rhinology & Sinuses", "Laryngology & Head/Neck"]
+  },
+  {
+    subject: "Ophthalmology",
+    topics: ["Cornea & Lens", "Retina & Glaucoma", "Optics & Neuro-ophthalmology", "Squint & Uvea"]
+  },
+  {
+    subject: "Forensic Medicine (FMT)",
+    topics: ["Traumatology & Injuries", "Toxicology", "Medical Jurisprudence & Ethics", "Autopsy & Thanatology"]
   },
   {
     subject: "Orthopedics",
@@ -329,15 +329,15 @@ export const neetPgHierarchy: PresetSubject[] = [
   },
   {
     subject: "Psychiatry",
-    topics: ["Mood Disorders", "Schizophrenia & Psychosis", "Neurotic & Anxiety Disorders"]
+    topics: ["Mood Disorders", "Schizophrenia & Psychosis", "Neurotic & Anxiety Disorders", "Substance Abuse"]
   },
   {
     subject: "Radiology",
-    topics: ["X-Rays & Contrast Studies", "CT & MRI Physics", "Ultrasound & Nuclear Medicine"]
+    topics: ["X-Rays & Contrast Studies", "CT & MRI Physics", "Ultrasound & Nuclear Medicine", "Interventional Radiology"]
   },
   {
     subject: "Anaesthesia",
-    topics: ["General & Regional Anaesthesia", "Airway Management", "Critical Care & Resuscitation"]
+    topics: ["General & Regional Anaesthesia", "Airway Management", "Critical Care & Resuscitation", "Local Anesthetics & Monitoring"]
   }
 ];
 

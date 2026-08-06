@@ -9,9 +9,12 @@ export function PWASection() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3 px-1 mt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">App & Offline Experience</h2>
-        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-medium bg-primary/5 px-2 py-0.5 rounded-full">
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <Smartphone className="w-3.5 h-3.5 text-indigo-400" />
+          Install Atlas
+        </h2>
+        <Badge variant="outline" className="text-[10px] border-indigo-500/30 text-indigo-400 font-medium bg-indigo-500/10 px-2.5 py-0.5 rounded-full">
           Works Offline
         </Badge>
       </div>

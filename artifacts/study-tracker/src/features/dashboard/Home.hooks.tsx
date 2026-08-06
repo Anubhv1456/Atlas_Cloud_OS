@@ -12,6 +12,8 @@ import {
 import { calculateSubjectProgress } from '@/lib/progress';
 import { determineFocusSystems } from '@/features/dashboard/homeUtils';
 import { DropResult } from '@hello-pangea/dnd';
+import { useAIInsights } from '@/hooks/useAIInsights';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 export function useHomeLogic() {
 
@@ -93,11 +95,56 @@ export function useHomeLogic() {
     onAction?: () => void;
   }
 
+  const { data: aiData } = useAIInsights(subjects, systems);
+  const [aiInsight, setAiInsight] = useState<Insight | null>(null);
+  const { flags } = useFeatureFlags();
+
+  useEffect(() => {
+    if (!flags.aiInsights) {
+      if (aiInsight) setAiInsight(null);
+      return;
+    }
+    
+    if (aiData && aiData.subjectCalibrations && Array.isArray(aiData.subjectCalibrations) && aiData.subjectCalibrations.length > 0 && !aiInsight) {
+      const topSubject = aiData.subjectCalibrations.reduce((prev: any, current: any) => 
+        (prev.priorityWeight * prev.forgettingRisk > current.priorityWeight * current.forgettingRisk) ? prev : current
+      );
+      
+      if (topSubject && topSubject.subjectName) {
+        setAiInsight({
+          id: 'ai-insight',
+          confidence: 99,
+          badge: 'AI INTELLIGENCE',
+          badgeClass: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+          icon: <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />,
+          text: (
+            <span className="flex flex-col gap-1">
+              {aiData.strategicInsights && aiData.strategicInsights.length > 0 ? (
+                <span className="mb-2"><strong>Strategic Insight:</strong> {aiData.strategicInsights[0]}</span>
+              ) : null}
+              <span><strong className="text-foreground">{topSubject.subjectName}</strong>: Priority Weight {topSubject.priorityWeight.toFixed(2)}, Forgetting Risk {topSubject.forgettingRisk.toFixed(2)}</span>
+              {topSubject.reasons && topSubject.reasons.length > 0 && (
+                <span className="text-muted-foreground mt-1">Factors: {topSubject.reasons.join(' • ')}</span>
+              )}
+            </span>
+          ),
+          actionLabel: 'View Subject',
+          onAction: () => {
+            const sub = subjects.find(s => s.name.toLowerCase() === topSubject.subjectName.toLowerCase() || s.name.toLowerCase().includes(topSubject.subjectName.toLowerCase()));
+            if (sub) setLocation(`/subjects/${sub.id}`);
+          }
+        });
+      }
+    }
+  }, [aiData, aiInsight, setLocation, subjects, flags.aiInsights]);
+
   const insights = useMemo(() => {
     if (systems.length === 0 || subjects.length === 0) return [];
 
     const candidates: Insight[] = [];
     const now = new Date();
+    
+    if (aiInsight) candidates.push(aiInsight);
 
     // 0. SUBJECT FOCUS STRATEGY (Priority Confidence: 96)
     if (customPrimarySubject || customSecondarySubject) {
