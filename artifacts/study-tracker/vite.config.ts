@@ -30,17 +30,17 @@ export default defineConfig({
         start_url: '/',
         prefer_related_applications: false,
         icons: [
-          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
-          { src: '/favicon-32x32.png', sizes: '32x32', type: 'image/png', purpose: 'any' },
-          { src: '/favicon.png', sizes: '64x64', type: 'image/png', purpose: 'any' }
+          { src: '/pwa-192x192.png?v=4', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/maskable-192x192.png?v=4', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-512x512.png?v=4', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/maskable-512x512.png?v=4', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png', purpose: 'any' },
+          { src: '/favicon-32x32.png?v=4', sizes: '32x32', type: 'image/png', purpose: 'any' },
+          { src: '/favicon.png?v=4', sizes: '64x64', type: 'image/png', purpose: 'any' }
         ]
       },
       workbox: {
-        cacheId: 'atlas-pwa-v3',
+        cacheId: 'atlas-pwa-v4',
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
