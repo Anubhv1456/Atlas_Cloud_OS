@@ -24,6 +24,7 @@ import { FeatureFlagsView } from './views/FeatureFlagsView';
 import { AnnouncementsView } from './views/AnnouncementsView';
 import { SupportMessagesView } from './views/SupportMessagesView';
 import { SocialLinksView } from './views/SocialLinksView';
+import { PaymentsView } from './views/PaymentsView';
 import { Inbox, Share2 } from 'lucide-react';
 
 // Placeholder Views
@@ -41,7 +42,6 @@ const ComingSoonView = ({ title, description, icon: Icon }: { title: string, des
   </div>
 );
 
-const PaymentsView = () => <ComingSoonView title="Payments" description="Track revenue, subscriptions, and manage invites." icon={CreditCard} />;
 const AnalyticsView = () => <ComingSoonView title="Analytics" description="Deep dive into learning outcomes and platform usage across the student base." icon={BarChart3} />;
 const SettingsView = () => <ComingSoonView title="Console Settings" description="Configure global application parameters and access control." icon={Settings} />;
 const AuditLogView = () => <ComingSoonView title="Audit Log" description="Review a secure history of all administrative actions and security events." icon={History} />;
@@ -50,11 +50,11 @@ type ViewType = 'dashboard' | 'support' | 'socials' | 'users' | 'community' | 'p
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'payments', label: 'Pending Payments', icon: CreditCard },
+  { id: 'users', label: 'Users & Beta', icon: Users },
   { id: 'support', label: 'Support Inbox', icon: Inbox },
   { id: 'socials', label: 'Social Channels', icon: Share2 },
-  { id: 'users', label: 'Users', icon: Users },
   { id: 'community', label: 'Community', icon: MessageSquare },
-  { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'flags', label: 'Feature Flags', icon: ToggleLeft },
   { id: 'announcements', label: 'Announcements', icon: Megaphone },
@@ -73,7 +73,6 @@ export default function AdminDashboard() {
   
   const filteredNavItems = navItems.filter(item => {
     if (item.id === 'community' && !flags.communityMarkers) return false;
-    if (item.id === 'payments' && !flags.payments) return false;
     return true;
   });
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, Sparkles, BookOpen, Users, ShieldCheck, Lock, LifeBuoy } from 'lucide-react';
+import { HelpCircle, ChevronDown, ChevronUp, Sparkles, BookOpen, Users, ShieldCheck, Lock, LifeBuoy, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface FaqItem {
   id: string;
@@ -115,7 +116,10 @@ const FAQ_DATA: FaqItem[] = [
 ];
 
 export function FaqSection() {
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>({ 'gs-1': true });
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const toggleItem = (id: string) => {
     setOpenIds(prev => ({
@@ -124,49 +128,145 @@ export function FaqSection() {
     }));
   };
 
-  // Group FAQ items by category
   const categories = Array.from(new Set(FAQ_DATA.map(item => item.category)));
+
+  const filteredData = FAQ_DATA.filter(item => {
+    const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
+    const matchesQuery = searchQuery.trim() === '' ||
+      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesQuery;
+  });
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <HelpCircle className="w-3.5 h-3.5 text-teal-400" />
-          Help & FAQ
-        </h2>
-      </div>
+      <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden transition-all">
+        {/* Compact Expandable Tile Header */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setIsExpanded(!isExpanded)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setIsExpanded(!isExpanded);
+            }
+          }}
+          className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-muted/50 transition-colors text-left focus:outline-none cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400 border border-teal-500/20 shrink-0">
+              <HelpCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-foreground">Help & FAQ</h2>
+                <span className="px-2 py-0.5 text-[10px] font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full">
+                  12 Questions
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Answers to common questions about recommendations, data, & beta access
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex items-center justify-center rounded-xl h-8 px-3 text-xs font-semibold gap-1 shrink-0 bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-colors">
+            {isExpanded ? (
+              <>
+                Hide <ChevronUp className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Show <ChevronDown className="w-4 h-4" />
+              </>
+            )}
+          </div>
+        </div>
 
-      <div className="bg-card rounded-2xl border shadow-sm divide-y divide-border/50 overflow-hidden">
-        {categories.map(category => {
-          const items = FAQ_DATA.filter(item => item.category === category);
-          const CategoryIcon = items[0]?.categoryIcon || HelpCircle;
-
-          return (
-            <div key={category} className="p-4 sm:p-5 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-teal-400 uppercase tracking-wider">
-                <CategoryIcon className="w-3.5 h-3.5 shrink-0" />
-                <span>{category}</span>
+        {/* Expanded Content */}
+        {isExpanded && (
+          <div className="p-4 sm:p-5 border-t border-border/80 space-y-4 bg-muted/20 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Search and Category Filter Bar */}
+            <div className="space-y-2.5">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search FAQ..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-8 text-xs bg-background/80 border-border/60 h-8 rounded-xl"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-2.5 py-1 rounded-lg font-medium shrink-0 transition-colors ${
+                    selectedCategory === null
+                      ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30 font-semibold'
+                      : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  All
+                </button>
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                    className={`px-2.5 py-1 rounded-lg font-medium shrink-0 transition-colors ${
+                      selectedCategory === cat
+                        ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30 font-semibold'
+                        : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* List of FAQ Accordion Items */}
+            {filteredData.length === 0 ? (
+              <div className="text-center py-6 text-xs text-muted-foreground bg-background/40 rounded-xl border border-dashed border-border/50">
+                No matching questions found for "{searchQuery}".
+              </div>
+            ) : (
               <div className="space-y-2">
-                {items.map(item => {
+                {filteredData.map(item => {
                   const isOpen = !!openIds[item.id];
+                  const CategoryIcon = item.categoryIcon || HelpCircle;
                   return (
-                    <div 
-                      key={item.id} 
-                      className="rounded-xl border border-border/40 bg-muted/20 overflow-hidden transition-colors"
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-border/50 bg-card/70 overflow-hidden transition-colors"
                     >
                       <button
                         type="button"
                         onClick={() => toggleItem(item.id)}
-                        className="w-full flex items-center justify-between p-3 sm:p-3.5 text-left text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors gap-3"
+                        className="w-full flex items-center justify-between p-3 text-left text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors gap-3"
                       >
-                        <span>{item.question}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CategoryIcon className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                          <span className="truncate">{item.question}</span>
+                        </div>
                         <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                       </button>
 
                       {isOpen && (
-                        <div className="px-3.5 pb-3.5 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/30 bg-muted/10 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="px-3.5 pb-3.5 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/30 bg-muted/20 animate-in fade-in slide-in-from-top-1 duration-150">
                           {item.answer}
                         </div>
                       )}
@@ -174,9 +274,9 @@ export function FaqSection() {
                   );
                 })}
               </div>
-            </div>
-          );
-        })}
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

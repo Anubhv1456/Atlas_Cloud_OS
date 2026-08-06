@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, initializeAuth, browserLocalPersistence, browserPopupRedirectResolver } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB23xBbSVe1eehDAiyUSz_HOvKyPdfxytM",
@@ -25,18 +25,6 @@ try {
   auth = getAuth(app); // fallback if already initialized
 }
 
-let firestoreDb;
-try {
-  firestoreDb = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
-  });
-} catch (e) {
-  firestoreDb = getFirestore(app);
-}
-
-export { app, auth, firestoreDb };
+export { app, auth };
+export const firestoreDb = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
-

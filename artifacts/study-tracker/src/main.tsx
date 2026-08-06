@@ -5,8 +5,8 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
 
-// Register PWA service worker with auto-update
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+// Register PWA service worker with auto-update in production builds
+if (import.meta.env.PROD) {
   try {
     registerSW({
       immediate: true,

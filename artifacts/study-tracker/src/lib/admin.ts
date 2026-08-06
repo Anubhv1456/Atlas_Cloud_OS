@@ -276,3 +276,166 @@ export async function setSocialLinks(links: SocialLinks) {
   await setDoc(docRef, links, { merge: true });
 }
 
+// Payment Submissions Management
+export interface PaymentSubmission {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName?: string;
+  upiReference: string;
+  proofUrl: string;
+  amount: number;
+  plan: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: any;
+  reviewedAt?: any;
+  reviewedBy?: string;
+  rejectionNote?: string;
+}
+
+export async function submitPaymentProof(data: {
+  userId: string;
+  userEmail: string;
+  userName?: string;
+  upiReference: string;
+  proofUrl: string;
+  amount?: number;
+  plan?: string;
+}): Promise<string> {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const { addDoc, serverTimestamp } = await import('firebase/firestore');
+  const colRef = collection(firestoreDb, 'payments');
+
+  const payload = {
+    userId: data.userId,
+    userEmail: data.userEmail,
+    userName: data.userName || '',
+    upiReference: data.upiReference.trim(),
+    proofUrl: data.proofUrl,
+    amount: data.amount ?? 499,
+    plan: data.plan || 'Closed Beta (3 Months)',
+    status: 'pending',
+    createdAt: serverTimestamp()
+  };
+
+  const docRef = await addDoc(colRef, payload);
+
+  // Update user document
+  const userRef = doc(firestoreDb, 'users', data.userId);
+  await setDoc(userRef, {
+    paymentStatus: 'pending',
+    pendingPaymentId: docRef.id,
+    lastPaymentSubmittedAt: new Date()
+  }, { merge: true });
+
+  return docRef.id;
+}
+
+export interface PaymentConfig {
+  planTitle: string;
+  price: number;
+  currencySymbol: string;
+  durationText: string;
+  durationDays: number;
+  upiId: string;
+  upiQrUrl: string;
+  paymentLinkUrl: string;
+  enableUpiTab: boolean;
+  enableQrTab: boolean;
+  enableLinkTab: boolean;
+  instructionsText: string;
+  benefits: string[];
+}
+
+export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
+  planTitle: 'Closed Beta Membership',
+  price: 499,
+  currencySymbol: '₹',
+  durationText: '3 Months',
+  durationDays: 90,
+  upiId: 'atlas@upi',
+  upiQrUrl: '',
+  paymentLinkUrl: '',
+  enableUpiTab: true,
+  enableQrTab: true,
+  enableLinkTab: true,
+  instructionsText: "You're one step away from joining Atlas Closed Beta. Complete your membership payment below. Access is manually reviewed and usually activated within a few hours.",
+  benefits: [
+    'Full Atlas access',
+    'Continuous beta updates',
+    'Direct influence on future development'
+  ]
+};
+
+export async function getPaymentConfig(): Promise<PaymentConfig> {
+  if (!firestoreDb) return DEFAULT_PAYMENT_CONFIG;
+  try {
+    const docRef = doc(firestoreDb, 'config', 'payment_settings');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { ...DEFAULT_PAYMENT_CONFIG, ...snap.data() };
+    }
+  } catch (e) {
+    console.error('Error fetching payment config:', e);
+  }
+  return DEFAULT_PAYMENT_CONFIG;
+}
+
+export async function savePaymentConfig(config: Partial<PaymentConfig>): Promise<void> {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const docRef = doc(firestoreDb, 'config', 'payment_settings');
+  await setDoc(docRef, config, { merge: true });
+}
+
+export async function getPaymentSubmissions(): Promise<PaymentSubmission[]> {
+  if (!firestoreDb) return [];
+  const colRef = collection(firestoreDb, 'payments');
+  const q = query(colRef, orderBy('createdAt', 'desc'), limit(150));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as PaymentSubmission));
+}
+
+export async function approvePayment(paymentId: string, userId: string, adminEmail?: string, durationDays: number = 90) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  
+  // 1. Update Payment doc
+  const paymentRef = doc(firestoreDb, 'payments', paymentId);
+  await updateDoc(paymentRef, {
+    status: 'approved',
+    reviewedAt: new Date(),
+    reviewedBy: adminEmail || 'admin'
+  });
+
+  // 2. Update User doc and Grant Beta Access
+  await updateUserBetaAccess(userId, true, durationDays);
+
+  const userRef = doc(firestoreDb, 'users', userId);
+  await setDoc(userRef, {
+    paymentStatus: 'approved'
+  }, { merge: true });
+}
+
+export async function rejectPayment(paymentId: string, userId: string, rejectionNote?: string, adminEmail?: string) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+
+  // 1. Update Payment doc
+  const paymentRef = doc(firestoreDb, 'payments', paymentId);
+  await updateDoc(paymentRef, {
+    status: 'rejected',
+    rejectionNote: rejectionNote || 'Verification unsuccessful.',
+    reviewedAt: new Date(),
+    reviewedBy: adminEmail || 'admin'
+  });
+
+  // 2. Update User doc
+  const userRef = doc(firestoreDb, 'users', userId);
+  await setDoc(userRef, {
+    paymentStatus: 'rejected',
+    paymentRejectionNote: rejectionNote || 'Verification unsuccessful.'
+  }, { merge: true });
+}
+
+

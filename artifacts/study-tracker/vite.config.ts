@@ -12,59 +12,32 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      },
       selfDestroying: false,
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'favicon.png', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'logo.svg', 'emblem.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-192x192.png', 'maskable-512x512.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'logo.svg', 'emblem.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifestFilename: 'manifest.json',
       manifest: {
-        name: 'Atlas Medical',
+        name: 'Atlas Study Tracker',
         short_name: 'Atlas',
-        id: '/',
-        description: 'Intelligent Medical Study Operating System for MBBS, NEET PG, INICET, FMGE & USMLE',
+        description: 'An intelligent medical study operating system for MBBS students.',
         theme_color: '#121315',
         background_color: '#121315',
         display: 'standalone',
-        display_override: ['standalone', 'minimal-ui'],
-        orientation: 'portrait-primary',
-        categories: ['medical', 'education', 'productivity'],
-        dir: 'ltr',
-        lang: 'en',
+        orientation: 'portrait',
         scope: '/',
         start_url: '/',
-        prefer_related_applications: false,
         icons: [
           { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
           { src: '/favicon-32x32.png', sizes: '32x32', type: 'image/png', purpose: 'any' },
           { src: '/favicon.png', sizes: '64x64', type: 'image/png', purpose: 'any' }
-        ],
-        shortcuts: [
-          {
-            name: 'Study Timeline',
-            short_name: 'Timeline',
-            description: 'View active study schedule and task timeline',
-            url: '/timeline',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
-          },
-          {
-            name: 'Performance Analytics',
-            short_name: 'Analytics',
-            description: 'Track retention, revision and question accuracy',
-            url: '/analytics',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
-          }
         ]
       },
       workbox: {
-        cacheId: 'atlas-pwa-v4',
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
@@ -102,7 +75,10 @@ export default defineConfig({
             }
           }
         ]
-      }
+      },
+      devOptions: {
+        enabled: false,
+      },
     }),
   ],
   resolve: {

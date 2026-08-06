@@ -7,12 +7,16 @@ export function useBetaAccess() {
   const { user } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+  const [paymentRejectionNote, setPaymentRejectionNote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setHasAccess(false);
       setExpiresAt(null);
+      setPaymentStatus(null);
+      setPaymentRejectionNote(null);
       setLoading(false);
       return;
     }
@@ -41,40 +45,52 @@ export function useBetaAccess() {
 
     const userRef = doc(firestoreDb, 'users', user.uid);
 
-    // Subscribe to real-time changes so revocation from admin console takes immediate effect
+    // Subscribe to real-time changes so revocation/approval from admin console takes immediate effect
     const unsubscribe = onSnapshot(
       userRef,
       async (snap) => {
-        if (snap.exists() && snap.data().betaAccess === true) {
+        if (snap.exists()) {
           const data = snap.data();
-          const expTime = data.betaAccessExpiresAt?.toMillis
-            ? data.betaAccessExpiresAt.toMillis()
-            : data.betaAccessExpiresAt;
+          setPaymentStatus(data.paymentStatus || null);
+          setPaymentRejectionNote(data.paymentRejectionNote || null);
 
-          if (expTime && new Date().getTime() > expTime) {
-            // Expired access
+          if (data.betaAccess === true) {
+            const expTime = data.betaAccessExpiresAt?.toMillis
+              ? data.betaAccessExpiresAt.toMillis()
+              : data.betaAccessExpiresAt;
+
+            if (expTime && new Date().getTime() > expTime) {
+              // Expired access
+              localStorage.removeItem(`beta_access_${user.uid}`);
+              localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+              setHasAccess(false);
+              setExpiresAt(null);
+              await setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
+            } else {
+              // Valid access
+              localStorage.setItem(`beta_access_${user.uid}`, 'true');
+              if (expTime) {
+                localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
+                setExpiresAt(expTime);
+              } else {
+                setExpiresAt(null); // Lifetime
+              }
+              setHasAccess(true);
+            }
+          } else {
+            // Access revoked or absent
             localStorage.removeItem(`beta_access_${user.uid}`);
             localStorage.removeItem(`beta_access_expiry_${user.uid}`);
             setHasAccess(false);
             setExpiresAt(null);
-            await setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
-          } else {
-            // Valid access
-            localStorage.setItem(`beta_access_${user.uid}`, 'true');
-            if (expTime) {
-              localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
-              setExpiresAt(expTime);
-            } else {
-              setExpiresAt(null); // Lifetime
-            }
-            setHasAccess(true);
           }
         } else {
-          // Access revoked or absent
           localStorage.removeItem(`beta_access_${user.uid}`);
           localStorage.removeItem(`beta_access_expiry_${user.uid}`);
           setHasAccess(false);
           setExpiresAt(null);
+          setPaymentStatus(null);
+          setPaymentRejectionNote(null);
         }
         setLoading(false);
       },
@@ -114,5 +130,5 @@ export function useBetaAccess() {
     setExpiresAt(expTime);
   };
 
-  return { hasAccess, expiresAt, loading, grantAccess };
+  return { hasAccess, expiresAt, paymentStatus, paymentRejectionNote, loading, grantAccess };
 }
