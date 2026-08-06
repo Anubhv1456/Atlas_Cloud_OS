@@ -25,7 +25,6 @@ import Analytics from '@/features/analytics/Analytics';
 import Settings from '@/pages/Settings';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
-import Migration from '@/pages/Migration';
 import AdminDashboard from '@/features/admin/AdminDashboard';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
@@ -53,7 +52,7 @@ const initTheme = () => {
 initTheme();
 
 function ProtectedApp() {
-  const { user, isFreshLogin, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { hasAccess, loading: accessLoading } = useBetaAccess();
   const [location, setLocation] = useLocation();
 
@@ -71,17 +70,12 @@ function ProtectedApp() {
         }
         if (!hasAccess && location !== '/beta-access') {
           setLocation('/beta-access');
-        } else if (hasAccess) {
-          const migrationChecked = sessionStorage.getItem(`migration_checked_${user.uid}`);
-          if (isFreshLogin && !migrationChecked && (location === '/login' || location === '/beta-access' || location === '/')) {
-            setLocation('/migration');
-          } else if (location === '/login' || location === '/beta-access') {
-            setLocation('/');
-          }
+        } else if (hasAccess && (location === '/login' || location === '/beta-access')) {
+          setLocation('/');
         }
       }
     }
-  }, [user, isFreshLogin, authLoading, hasAccess, accessLoading, location, setLocation]);
+  }, [user, authLoading, hasAccess, accessLoading, location, setLocation]);
 
   const handleRefresh = async () => {
     try {
@@ -145,14 +139,6 @@ function ProtectedApp() {
     return (
       <Suspense fallback={null}>
         <BetaAccess />
-      </Suspense>
-    );
-  }
-
-  if (location === '/migration') {
-    return (
-      <Suspense fallback={null}>
-        <Migration />
       </Suspense>
     );
   }

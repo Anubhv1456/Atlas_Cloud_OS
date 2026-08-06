@@ -27,7 +27,7 @@ export default function BetaAccess() {
 
   useEffect(() => {
     if (hasAccess && !accessLoading) {
-      setLocation('/migration');
+      setLocation('/');
     }
   }, [hasAccess, accessLoading, setLocation]);
 

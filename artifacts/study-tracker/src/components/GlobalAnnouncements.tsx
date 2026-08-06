@@ -11,7 +11,7 @@ export function GlobalAnnouncements() {
 
   useEffect(() => {
     // Hide announcements in admin panel or login
-    if (location.startsWith('/admin') || location === '/login' || location === '/migration') {
+    if (location.startsWith('/admin') || location === '/login') {
       return;
     }
     
@@ -25,7 +25,7 @@ export function GlobalAnnouncements() {
     return () => { isMounted = false; };
   }, [location]);
 
-  if (location.startsWith('/admin') || location === '/login' || location === '/migration') {
+  if (location.startsWith('/admin') || location === '/login') {
     return null;
   }
 

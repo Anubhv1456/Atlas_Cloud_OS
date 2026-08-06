@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { syncToFirebase } from '@/lib/firebaseSync';
+import { syncToFirebase, syncFromFirebase } from '@/lib/firebaseSync';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AutoSyncEngine() {
@@ -7,6 +7,11 @@ export function AutoSyncEngine() {
   
   useEffect(() => {
     if (!user) return;
+
+    // Automatically load data from cloud on login / session start
+    syncFromFirebase().catch((err) => {
+      console.warn('Auto cloud load on login skipped or failed:', err);
+    });
 
     // Background interval sync (every 2 minutes)
     const interval = setInterval(() => {
@@ -22,6 +27,7 @@ export function AutoSyncEngine() {
     
     // Sync on online event
     const handleOnline = () => {
+      syncFromFirebase().catch(() => {});
       syncToFirebase().catch(() => {});
     };
 
