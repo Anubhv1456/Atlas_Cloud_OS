@@ -39,7 +39,7 @@
       ]
     },
     {
-      "source": "/(.*\\.(png|svg|ico|jpg|jpeg|webp))",
+      "source": "/:path*\\.(png|svg|ico|jpg|jpeg|webp)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
