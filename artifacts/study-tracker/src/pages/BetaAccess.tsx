@@ -34,6 +34,7 @@ export default function BetaAccess() {
   // Local states for flow
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
   
   // Payment form inputs
@@ -189,6 +190,7 @@ export default function BetaAccess() {
       });
 
       setSubmitted(true);
+      setIsResubmitting(false);
       toast.success('Payment submitted for manual verification!');
     } catch (error) {
       console.error('Error submitting payment proof:', error);
@@ -336,7 +338,7 @@ export default function BetaAccess() {
         </div>
 
         {/* Dynamic State View */}
-        {submitted || paymentStatus === 'pending' ? (
+        {(submitted || paymentStatus === 'pending') && !isResubmitting ? (
           /* ==================== STATE: PAYMENT SUBMITTED / AWAITING APPROVAL ==================== */
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
@@ -397,7 +399,7 @@ export default function BetaAccess() {
               </button>
             </div>
           </motion.div>
-        ) : paymentStatus === 'rejected' ? (
+        ) : paymentStatus === 'rejected' && !isResubmitting ? (
           /* ==================== STATE: REJECTED PAYMENT / RE-TRY ==================== */
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
@@ -416,10 +418,13 @@ export default function BetaAccess() {
             </div>
 
             <button 
+              type="button"
               onClick={() => {
+                setIsResubmitting(true);
                 setSubmitted(false);
                 setUpiReference('');
                 setProofImage(null);
+                setProofFileName(null);
               }}
               className="w-full h-12 rounded-2xl bg-teal-900/40 border border-teal-500/30 text-teal-200 font-medium text-xs hover:bg-teal-900/60 transition-all flex items-center justify-center gap-2"
             >
