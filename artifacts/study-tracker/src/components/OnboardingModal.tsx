@@ -211,7 +211,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
           {step > 1 && step < 6 && (
             <div className="flex items-center justify-between mb-6 border-b border-border/40 pb-3 z-10">
               <div className="flex items-center gap-2">
-                <img src="/logo-mark.svg?v=atlas" alt="Atlas" className="w-5 h-5 rounded-md object-contain" />
+                <img src="/emblem.svg" alt="Atlas" className="w-5 h-5 rounded-md object-contain" />
                 <span className="text-xs font-bold text-foreground tracking-tight">Onboarding</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -238,7 +238,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
             >
               <div className="relative">
                 <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-md overflow-hidden">
-                  <img src="/logo-mark.svg?v=atlas" alt="Atlas Logo" className="w-16 h-16 rounded-2xl object-contain" />
+                  <img src="/emblem.svg" alt="Atlas Logo" className="w-16 h-16 rounded-2xl object-contain" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 bg-primary text-primary-foreground rounded-full shadow-sm">
                   <Zap className="w-3.5 h-3.5" />

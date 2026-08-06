@@ -198,8 +198,8 @@ export async function triggerSpacedRepetitionNotification(force = false): Promis
     const sent = await dispatchLocalNotification(notif.title, {
       body: notif.body,
       tag: notif.tag,
-      icon: '/logo.svg',
-      badge: '/logo.svg',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
       vibrate: [200, 100, 200],
     } as NotificationOptions);
     if (sent) sentCount++;

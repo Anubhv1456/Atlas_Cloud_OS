@@ -108,7 +108,7 @@ export default function Home() {
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <img src="/logo-mark.svg?v=atlas" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
+            <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
