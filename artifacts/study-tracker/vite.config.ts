@@ -12,6 +12,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       selfDestroying: false,
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -98,10 +102,7 @@ export default defineConfig({
             }
           }
         ]
-      },
-      devOptions: {
-        enabled: false,
-      },
+      }
     }),
   ],
   resolve: {

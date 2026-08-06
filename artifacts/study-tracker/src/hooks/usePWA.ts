@@ -9,6 +9,10 @@ export function usePWA() {
       (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true)
   );
 
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+  const isAndroid = typeof window !== 'undefined' && /android/i.test(navigator.userAgent);
+  const isIOS = typeof window !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
+
   useEffect(() => {
     const handlePwaAvail = () => setCanInstallPwa(true);
     window.addEventListener('pwa-install-available', handlePwaAvail);
@@ -23,11 +27,22 @@ export function usePWA() {
     }
   }, [canInstallPwa]);
 
+  const openInNewTab = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.open(window.location.href, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
+
   return { 
     canInstallPwa, 
     showInstallGuideModal, 
     setShowInstallGuideModal, 
     isStandalone, 
-    handlePwaInstallClick 
+    isInIframe,
+    isAndroid,
+    isIOS,
+    handlePwaInstallClick,
+    openInNewTab
   };
 }
+
