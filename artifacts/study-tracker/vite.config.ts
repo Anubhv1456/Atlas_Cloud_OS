@@ -18,14 +18,18 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'favicon.png', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'logo.svg', 'emblem.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-192x192.png', 'maskable-512x512.png'],
       manifestFilename: 'manifest.json',
       manifest: {
-        name: 'Atlas Study Tracker',
+        name: 'Atlas Medical',
         short_name: 'Atlas',
         id: '/',
-        description: 'An intelligent medical study operating system for MBBS students.',
+        description: 'Intelligent Medical Study Operating System for MBBS, NEET PG, INICET, FMGE & USMLE',
         theme_color: '#121315',
         background_color: '#121315',
         display: 'standalone',
-        orientation: 'portrait',
+        display_override: ['standalone', 'minimal-ui'],
+        orientation: 'portrait-primary',
+        categories: ['medical', 'education', 'productivity'],
+        dir: 'ltr',
+        lang: 'en',
         scope: '/',
         start_url: '/',
         prefer_related_applications: false,
@@ -37,6 +41,22 @@ export default defineConfig({
           { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
           { src: '/favicon-32x32.png', sizes: '32x32', type: 'image/png', purpose: 'any' },
           { src: '/favicon.png', sizes: '64x64', type: 'image/png', purpose: 'any' }
+        ],
+        shortcuts: [
+          {
+            name: 'Study Timeline',
+            short_name: 'Timeline',
+            description: 'View active study schedule and task timeline',
+            url: '/timeline',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Performance Analytics',
+            short_name: 'Analytics',
+            description: 'Track retention, revision and question accuracy',
+            url: '/analytics',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          }
         ]
       },
       workbox: {

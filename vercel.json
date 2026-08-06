@@ -2,7 +2,6 @@
   "buildCommand": "npm run build --workspace=artifacts/study-tracker",
   "outputDirectory": "artifacts/study-tracker/dist",
   "installCommand": "npm install --legacy-peer-deps",
-  "framework": null,
   "headers": [
     {
       "source": "/manifest.json",
@@ -39,20 +38,7 @@
       ]
     },
     {
-      "source": "/:path*\\.(png|svg|ico|jpg|jpeg|webp)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
+      "source": "/:path*",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -95,7 +81,7 @@
       "destination": "https://responsible-collector-6n50x.firebaseapp.com/__/auth/:path*"
     },
     {
-      "source": "/((?!.*\\.[^/]+$).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]

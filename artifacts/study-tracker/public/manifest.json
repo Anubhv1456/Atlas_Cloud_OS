@@ -1,14 +1,18 @@
 {
-  "name": "Atlas Study Tracker",
+  "name": "Atlas Medical",
   "short_name": "Atlas",
   "id": "/",
-  "description": "An intelligent medical study operating system for MBBS students.",
+  "description": "Intelligent Medical Study Operating System for MBBS, NEET PG, INICET, FMGE & USMLE",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#121315",
   "theme_color": "#121315",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "categories": ["medical", "education", "productivity"],
+  "dir": "ltr",
+  "lang": "en",
   "prefer_related_applications": false,
   "icons": [
     {
@@ -46,6 +50,22 @@
       "sizes": "64x64",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Study Timeline",
+      "short_name": "Timeline",
+      "description": "View active study schedule and task timeline",
+      "url": "/timeline",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Performance Analytics",
+      "short_name": "Analytics",
+      "description": "Track retention, revision and question accuracy",
+      "url": "/analytics",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
