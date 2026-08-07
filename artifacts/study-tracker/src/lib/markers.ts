@@ -35,8 +35,15 @@ export async function submitMarker(marker: MarkerSubmission) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const markersCol = collection(firestoreDb, 'insights'); 
   
-  await addDoc(markersCol, {
-    ...marker,
+  const payload: Record<string, any> = {
+    subjectId: marker.subjectId,
+    systemId: marker.systemId,
+    subjectName: marker.subjectName || '',
+    systemName: marker.systemName || '',
+    type: marker.type || 'mnemonic',
+    content: marker.content,
+    userId: marker.userId || null,
+    authorAlias: marker.authorAlias || 'Wayfinder',
     usefulCount: 0,
     helpfulBy: [],
     savedBy: [],
@@ -44,9 +51,15 @@ export async function submitMarker(marker: MarkerSubmission) {
     reportedBy: [],
     readCount: 0,
     qualityScore: 50,
-    status: 'published', // For V1 preview without an admin dashboard, we set this to published so users can see it immediately.
+    status: 'published', // For V1 preview, set to published so users can see it immediately.
     createdAt: serverTimestamp(),
-  });
+  };
+
+  if (marker.source && marker.source.trim()) {
+    payload.source = marker.source.trim();
+  }
+
+  await addDoc(markersCol, payload);
 }
 
 export async function interactWithMarker(
@@ -64,8 +77,8 @@ export async function interactWithMarker(
   let currentScore = typeof data.qualityScore === 'number' ? data.qualityScore : 50;
 
   if (action === 'helpful') {
-    const helpfulBy = data.helpfulBy || [];
-    const notHelpfulBy = data.notHelpfulBy || [];
+    const helpfulBy = Array.isArray(data.helpfulBy) ? data.helpfulBy : [];
+    const notHelpfulBy = Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [];
     if (!helpfulBy.includes(userId)) {
       updates.helpfulBy = arrayUnion(userId);
       updates.usefulCount = increment(1);
@@ -77,8 +90,8 @@ export async function interactWithMarker(
       }
     }
   } else if (action === 'not_helpful') {
-    const notHelpfulBy = data.notHelpfulBy || [];
-    const helpfulBy = data.helpfulBy || [];
+    const notHelpfulBy = Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [];
+    const helpfulBy = Array.isArray(data.helpfulBy) ? data.helpfulBy : [];
     if (!notHelpfulBy.includes(userId)) {
       updates.notHelpfulBy = arrayUnion(userId);
       currentScore -= 2;
@@ -90,7 +103,7 @@ export async function interactWithMarker(
       }
     }
   } else if (action === 'save') {
-    const savedBy = data.savedBy || [];
+    const savedBy = Array.isArray(data.savedBy) ? data.savedBy : [];
     if (!savedBy.includes(userId)) {
       updates.savedBy = arrayUnion(userId);
       currentScore += 4;
@@ -99,7 +112,7 @@ export async function interactWithMarker(
       currentScore -= 4; // Unsave
     }
   } else if (action === 'report') {
-    const reportedBy = data.reportedBy || [];
+    const reportedBy = Array.isArray(data.reportedBy) ? data.reportedBy : [];
     if (!reportedBy.includes(userId)) {
       updates.reportedBy = arrayUnion(userId);
       currentScore -= 10;
@@ -137,10 +150,17 @@ export async function getMarkersForSystem(systemId: number | string): Promise<Ma
   
   const snapshot = await getDocs(q);
   
-  const markers = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as Marker)).filter(m => {
+  const markers = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      helpfulBy: Array.isArray(data.helpfulBy) ? data.helpfulBy : [],
+      notHelpfulBy: Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [],
+      savedBy: Array.isArray(data.savedBy) ? data.savedBy : [],
+      reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
+    } as Marker;
+  }).filter(m => {
     // Hide archived or low quality unless it's a direct moderator view, but for now we filter locally
     return m.status !== 'archived' && m.status !== 'low_quality';
   });

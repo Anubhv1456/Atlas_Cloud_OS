@@ -14,10 +14,17 @@ export async function getAllMarkersForAdmin(): Promise<Marker[]> {
   
   const snapshot = await getDocs(q);
   
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as Marker));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      helpfulBy: Array.isArray(data.helpfulBy) ? data.helpfulBy : [],
+      notHelpfulBy: Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [],
+      savedBy: Array.isArray(data.savedBy) ? data.savedBy : [],
+      reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
+    } as Marker;
+  });
 }
 
 export async function updateMarkerStatusAdmin(markerId: string, status: MarkerStatus) {

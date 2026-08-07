@@ -165,9 +165,13 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, onLeav
               <div className="p-6 space-y-4">
                 {displayedMarkers.map(marker => {
                   const isOwn = marker.userId === user?.uid;
-                  const hasHelped = user?.uid ? (marker.helpfulBy || []).includes(user.uid) : false;
-                  const hasNotHelped = user?.uid ? (marker.notHelpfulBy || []).includes(user.uid) : false;
-                  const isSaved = user?.uid ? (marker.savedBy || []).includes(user.uid) : false;
+                  const helpfulByList = Array.isArray(marker.helpfulBy) ? marker.helpfulBy : [];
+                  const notHelpfulByList = Array.isArray(marker.notHelpfulBy) ? marker.notHelpfulBy : [];
+                  const savedByList = Array.isArray(marker.savedBy) ? marker.savedBy : [];
+                  
+                  const hasHelped = user?.uid ? helpfulByList.includes(user.uid) : false;
+                  const hasNotHelped = user?.uid ? notHelpfulByList.includes(user.uid) : false;
+                  const isSaved = user?.uid ? savedByList.includes(user.uid) : false;
                   
                   return (
                     <div key={marker.id} className={cn("p-4 rounded-xl border relative transition-all hover:shadow-sm", isOwn ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card")}>

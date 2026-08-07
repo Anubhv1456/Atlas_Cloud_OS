@@ -242,6 +242,8 @@ export function useSystemCardLogic({
         alias = await getUserAlias(user.uid);
       }
 
+      const trimmedSource = insightSource.trim();
+
       await submitMarker({
         subjectId: system.subjectId,
         systemId: system.id!,
@@ -249,7 +251,7 @@ export function useSystemCardLogic({
         systemName: system.name,
         type: insightType,
         content,
-        source: insightSource.trim() || undefined,
+        ...(trimmedSource ? { source: trimmedSource } : {}),
         userId: user?.uid || null,
         authorAlias: alias,
       });
@@ -260,9 +262,9 @@ export function useSystemCardLogic({
       setInsightContent('');
       setInsightSource('');
     } catch (e) {
-      console.error(e);
+      console.error('Error submitting marker:', e);
       toast.error('Failed to leave marker', {
-        description: 'Please try again later.',
+        description: e instanceof Error ? e.message : 'Please try again later.',
       });
     } finally {
       setIsSubmittingInsight(false);
