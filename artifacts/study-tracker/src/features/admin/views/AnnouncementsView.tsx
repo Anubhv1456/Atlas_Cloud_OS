@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAnnouncements, createAnnouncement, setAnnouncementActive, Announcement } from '@/lib/admin';
-import { Megaphone, Plus, Trash2, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { Megaphone, Plus, Trash2, CheckCircle2, AlertCircle, Info, TriangleAlert } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -170,7 +170,7 @@ export function AnnouncementsView() {
                 }`}>
                   {announcement.type === 'info' && <Info className="w-6 h-6" />}
                   {announcement.type === 'success' && <CheckCircle2 className="w-6 h-6" />}
-                  {announcement.type === 'warning' && <AlertTriangle className="w-6 h-6" />}
+                  {announcement.type === 'warning' && <TriangleAlert className="w-6 h-6" />}
                   {announcement.type === 'error' && <AlertCircle className="w-6 h-6" />}
                 </div>
                 <div>

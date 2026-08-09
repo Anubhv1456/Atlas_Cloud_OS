@@ -1,3 +1,4 @@
+import { normalizeName } from '@/lib/exam-presets';
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   StudySystem, SystemStatus, 
@@ -11,6 +12,9 @@ import { calculateSystemProgress } from '@/lib/progress';
 import { isRevisionDue, isRevisionOverdue, daysOverdue } from '@/db';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
+import { calculateTopicsProgressPercentage } from '@/lib/progress';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
 export interface SystemCardProps {
@@ -41,13 +45,17 @@ export function useSystemCardLogic({
   // Initial evaluation (shown once both tasks complete)
   const [showEvalDialog, setShowEvalDialog]   = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showScoreModal, setShowScoreModal]       = useState(false);
+  const [showScoreModal, setShowScoreModal] = useState(false);
+  const [scoreModalTopicId, setScoreModalTopicId] = useState<string | undefined>();
+  const [scoreModalTopicName, setScoreModalTopicName] = useState<string | undefined>();
   const [showDecayCalibration, setShowDecayCalibration] = useState(false);
 
   // Rename dialog state
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [renameValue, setRenameValue]             = useState(system.name);
 
+  const [selectedTopicId, setSelectedTopicId] = useState<string | undefined>();
+  const [selectedTopicName, setSelectedTopicName] = useState<string | undefined>();
   const [showInsightDialog, setShowInsightDialog] = useState(false);
   const [showViewMarkersDialog, setShowViewMarkersDialog] = useState(false);
   const [insightContent, setInsightContent] = useState('');
@@ -84,8 +92,16 @@ export function useSystemCardLogic({
     }
   }, [system.contentCompleted, system.qbankDone, system.completionDate]);
 
+  const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
+  const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(system.name));
+  const topics = ontologySystem?.topics || [];
+  const topicProgresses = useLiveQuery(
+    () => db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray(),
+    [topics]
+  ) || [];
+  
   // Progress
-  const progress       = calculateSystemProgress(system);
+  const progress       = calculateTopicsProgressPercentage(topicProgresses, topics.length);
   const completedCount = (system.contentCompleted ? 1 : 0) + (system.qbankDone ? 1 : 0);
   const contentPct     =
     system.contentInitialized && system.contentUnitsTotal > 0
@@ -213,7 +229,25 @@ export function useSystemCardLogic({
   };
 
   const handleStatusChange = (status: SystemStatus) => updateSystem(system.id!, { status });
-  const handleNotesChange  = (e: React.ChangeEvent<HTMLTextAreaElement>) => updateSystem(system.id!, { weakAreas: e.target.value });
+  const [localNotes, setLocalNotes] = useState(system.weakAreas || '');
+  useEffect(() => {
+    if (system.weakAreas !== localNotes && !localNotes) {
+      setLocalNotes(system.weakAreas || '');
+    }
+  }, [system.weakAreas]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localNotes !== (system.weakAreas || '')) {
+        updateSystem(system.id!, { weakAreas: localNotes });
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [localNotes, system.id, system.weakAreas]);
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalNotes(e.target.value);
+  };
   const handleDelete       = () => { setShowDeleteConfirm(true); };
   const handleDeleteConfirm = () => {
     setShowDeleteConfirm(false);
@@ -247,8 +281,10 @@ export function useSystemCardLogic({
       await submitMarker({
         subjectId: system.subjectId,
         systemId: system.id!,
+        topicId: selectedTopicId,
         subjectName,
         systemName: system.name,
+        topicName: selectedTopicName,
         type: insightType,
         content,
         ...(trimmedSource ? { source: trimmedSource } : {}),
@@ -273,6 +309,14 @@ export function useSystemCardLogic({
 
   
 
+  const handleTopicLogScore = (id: string, name: string) => {
+    setScoreModalTopicId(id);
+    setScoreModalTopicName(name);
+    setScoreModalTopicId(undefined);
+    setScoreModalTopicName(undefined);
+    setShowScoreModal(true);
+  };
+
   const handleRevisionComplete = async () => {
     if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#059669', '#047857'] });
@@ -295,15 +339,15 @@ export function useSystemCardLogic({
     showInitDialog, setShowInitDialog, initValue, setInitValue,
     showEditContent, setShowEditContent, editCompleted, setEditCompleted, editTotal, setEditTotal,
     showEvalDialog, setShowEvalDialog, showDeleteConfirm, setShowDeleteConfirm,
-    showScoreModal, setShowScoreModal, showDecayCalibration, setShowDecayCalibration,
+    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleTopicLogScore, showDecayCalibration, setShowDecayCalibration,
     showRenameDialog, setShowRenameDialog, renameValue, setRenameValue,
-    showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, insightContent, setInsightContent,
+    showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, selectedTopicId, setSelectedTopicId, selectedTopicName, setSelectedTopicName, insightContent, setInsightContent,
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
     cardRef, progress, completedCount, contentPct,
     revisionDue, revisionOverdue, overdueDays,
     handleContentTap, handleContentPointerDown, handleContentPointerUp, handleContentPointerLeave,
     handleInitSave, handleEditSave, handleEditReset, toggleQBank, handleEvalSelect,
-    handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
+    localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
     handleRenameSave, handleRevisionComplete
   };
 }

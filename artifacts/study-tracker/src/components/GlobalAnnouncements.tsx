@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAnnouncements, Announcement } from '@/lib/admin';
-import { Info, AlertTriangle, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Info, TriangleAlert, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 
@@ -50,7 +50,7 @@ export function GlobalAnnouncements() {
             <div className="shrink-0 mt-0.5">
               {announcement.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
               {announcement.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-              {announcement.type === 'warning' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+              {announcement.type === 'warning' && <TriangleAlert className="w-5 h-5 text-amber-500" />}
               {announcement.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
             </div>
             <div className="flex-1 pr-6">

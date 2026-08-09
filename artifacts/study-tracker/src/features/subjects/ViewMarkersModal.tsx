@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Marker, MarkerType, getMarkersForSystem, interactWithMarker } from '@/lib/markers';
-import { Compass, Sparkles, AlertTriangle, Lightbulb, Video, Stethoscope, ChevronRight, Bookmark, ArrowUpCircle, BookmarkPlus, Flag, ThumbsDown } from 'lucide-react';
+import { Marker, MarkerType, getMarkersForSystem, getMarkersForTopic, interactWithMarker } from '@/lib/markers';
+import { Compass, Sparkles, TriangleAlert, Lightbulb, Video, Stethoscope, ChevronRight, Bookmark, ArrowUpCircle, BookmarkPlus, Flag, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,12 +14,14 @@ interface ViewMarkersModalProps {
   onClose: () => void;
   systemId: number | string;
   systemName: string;
+  topicId?: string;
+  topicName?: string;
   onLeaveMarker?: () => void;
 }
 
 const typeIcons: Record<MarkerType, React.ReactNode> = {
   high_yield: <Sparkles className="w-4 h-4 text-amber-500" />,
-  pitfall: <AlertTriangle className="w-4 h-4 text-red-500" />,
+  pitfall: <TriangleAlert className="w-4 h-4 text-red-500" />,
   clinical_pearl: <Stethoscope className="w-4 h-4 text-emerald-500" />,
   resource: <Video className="w-4 h-4 text-blue-500" />,
   mnemonic: <Lightbulb className="w-4 h-4 text-purple-500" />,
@@ -35,7 +37,7 @@ const typeLabels: Record<MarkerType, string> = {
   memory_trick: 'Memory Tricks',
 };
 
-export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, onLeaveMarker }: ViewMarkersModalProps) {
+export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicId, topicName, onLeaveMarker }: ViewMarkersModalProps) {
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -44,7 +46,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, onLeav
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      getMarkersForSystem(systemId)
+      (topicId ? getMarkersForTopic(topicId) : getMarkersForSystem(systemId))
         .then(setMarkers)
         .catch(console.error)
         .finally(() => setLoading(false));

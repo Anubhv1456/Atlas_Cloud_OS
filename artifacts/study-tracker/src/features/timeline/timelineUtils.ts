@@ -8,11 +8,15 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
     qbankDone:       'qbankDone',
     pyqsDone:        'pyqsDone',
     revision:        'revisionSystem',
+    topicMastered:   'topicMastered',
+    topicWeak:       'topicWeak',
   };
 
-  const entityName = h.taskKey === 'pyqsDone'
-    ? h.taskLabel
-    : `${h.systemName} ${h.taskLabel}`;
+
+  let entityName = `${h.systemName} ${h.taskLabel}`;
+  if (h.taskKey === 'pyqsDone') entityName = h.taskLabel;
+  if (h.taskKey === 'topicMastered' || h.taskKey === 'topicWeak') entityName = h.taskLabel;
+
 
   return {
     id:          String(h.id ?? `${h.systemId}-${h.taskKey}-${h.completedAt}`),

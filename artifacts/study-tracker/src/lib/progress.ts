@@ -45,3 +45,33 @@ export function calculateOverallProgress(systems: StudySystem[]): number {
   const sum = systems.reduce((acc, sys) => acc + calculateSystemProgress(sys), 0);
   return Math.round(sum / systems.length);
 }
+
+
+import { TopicProgress } from '@/db/types';
+
+/**
+ * Calculates completed tasks out of total topics tasks.
+ * Each topic has 2 tasks: content and qbank.
+ */
+export function calculateCompletedTopicTasks(topicProgresses: TopicProgress[]): number {
+  return topicProgresses.reduce((acc, tp) => {
+    let done = 0;
+    if (tp.contentStatus === 'completed') done++;
+    if (tp.qbankStatus === 'completed') done++;
+    return acc + done;
+  }, 0);
+}
+
+/**
+ * Calculates overall progress percentage (0 - 100) across given topics.
+ */
+export function calculateTopicsProgressPercentage(topicProgresses: TopicProgress[], totalTopics: number): number {
+  if (totalTopics === 0) return 0;
+  const sum = topicProgresses.reduce((acc, tp) => {
+    let val = 0;
+    if (tp.contentStatus === 'completed') val += 0.5;
+    if (tp.qbankStatus === 'completed') val += 0.5;
+    return acc + val;
+  }, 0);
+  return Math.round((sum / totalTopics) * 100);
+}

@@ -7,8 +7,7 @@ import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide
 export function determineFocusSystems(
   subjects: Subject[],
   systems: StudySystem[],
-  now: Date
-) {
+  now: Date) {
   const customPrimarySubject = subjects.find(s => s.focus === 'primary');
   const customPrimarySystem = systems.find(s => s.focus === 'primary');
   const customSecondarySubject = subjects.find(s => s.focus === 'secondary');
@@ -27,7 +26,9 @@ export function determineFocusSystems(
   };
 
   const sortedSystemsByPriority = [...systems].sort(sortSystemsByPriority);
-  const incompleteSystems = sortedSystemsByPriority.filter(s => !(s.contentCompleted && s.qbankDone));
+  const incompleteSystems = sortedSystemsByPriority.filter(s => {
+    return !(s.contentCompleted && s.qbankDone);
+  });
 
   let primaryFocus: StudySystem | undefined = undefined;
   let primaryFocusSubject: Subject | undefined = undefined;
@@ -37,7 +38,9 @@ export function determineFocusSystems(
   if (customPrimarySubject) {
     primaryFocusSubject = customPrimarySubject;
     const subSystems = sortedSystemsByPriority.filter(s => s.subjectId === customPrimarySubject.id);
-    const subIncomplete = subSystems.filter(s => !(s.contentCompleted && s.qbankDone));
+    const subIncomplete = subSystems.filter(s => {
+      return !(s.contentCompleted && s.qbankDone);
+    });
     primaryFocus = subIncomplete[0] || subSystems[0];
   } else if (customPrimarySystem) {
     primaryFocus = customPrimarySystem;
@@ -71,7 +74,9 @@ export function determineFocusSystems(
   } else if (customSecondarySubject) {
     secondaryFocusSubject = customSecondarySubject;
     const subSystems = sortedSystemsByPriority.filter(s => s.subjectId === customSecondarySubject.id);
-    const subIncomplete = subSystems.filter(s => !(s.contentCompleted && s.qbankDone));
+    const subIncomplete = subSystems.filter(s => {
+      return !(s.contentCompleted && s.qbankDone);
+    });
     secondaryFocus = subIncomplete[0] || subSystems[0];
   } else if (customSecondarySystem) {
     secondaryFocus = customSecondarySystem;

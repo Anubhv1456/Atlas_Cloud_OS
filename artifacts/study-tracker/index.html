@@ -43,9 +43,20 @@
           // Suppress anonymous cross-origin WebKit error noise
           return;
         }
+        if (e && e.message && e.message.includes('ResizeObserver loop')) {
+          e.stopImmediatePropagation();
+          return;
+        }
         console.error('Global window error:', e.error || e.message);
       });
       window.addEventListener('unhandledrejection', function(e) {
+        if (e && e.reason && (
+          (typeof e.reason === 'string' && e.reason.includes('WebSocket')) ||
+          (e.reason.message && typeof e.reason.message === 'string' && e.reason.message.includes('WebSocket'))
+        )) {
+          e.preventDefault();
+          return;
+        }
         console.warn('Unhandled promise rejection:', e.reason);
       });
     </script>

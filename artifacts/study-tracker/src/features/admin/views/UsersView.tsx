@@ -3,7 +3,7 @@ import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess } f
 import { formatDistanceToNow, format } from 'date-fns';
 import { 
   Shield, User, Mail, Calendar, Search, Copy, Check, Clock, 
-  UserCheck, UserX, AlertTriangle, Users, RefreshCw, ChevronDown, Sparkles
+  UserCheck, UserX, TriangleAlert, Users, RefreshCw, ChevronDown, Sparkles
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';

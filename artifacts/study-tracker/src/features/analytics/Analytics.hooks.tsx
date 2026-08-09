@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { ALL_SYSTEMS } from '@/data/ontology';
 import { filterScoreLogs, applyDensityLimit, calculateAnalyticsStats, formatChartData, calculateSystemBreakdown } from '@/features/analytics/analyticsUtils';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useToast } from '@/hooks/use-toast';
@@ -60,10 +61,29 @@ export function useAnalyticsLogic() {
     return applyDensityLimit(filteredLogs, densityLimit);
   }, [filteredLogs, densityLimit]);
 
+  
+  const topicProgresses = useLiveQuery(() => db.topicProgress.toArray()) || [];
+  
   // Calculate summary stats
   const stats = useMemo(() => {
-    return calculateAnalyticsStats(filteredLogs);
-  }, [filteredLogs]);
+    const baseStats = calculateAnalyticsStats(filteredLogs);
+    
+    // topics metrics
+    const totalTopics = ALL_SYSTEMS.flatMap(s => s.topics).length;
+    const mastered = topicProgresses.filter(tp => tp.confidence === 'high').length;
+    const weak = topicProgresses.filter(tp => tp.confidence === 'low').length;
+    const qbankDone = topicProgresses.filter(tp => tp.qbankStatus === 'completed').length;
+    const qbankCoverage = totalTopics > 0 ? Math.round((qbankDone / totalTopics) * 100) : 0;
+
+    return {
+      ...baseStats,
+      topicsMastered: mastered,
+      topicsWeak: weak,
+      qbankCoverage,
+      totalTopics
+    };
+  }, [filteredLogs, topicProgresses]);
+
 
   // Chart data formatting
   const chartData = useMemo(() => {

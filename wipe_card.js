@@ -1,0 +1,27 @@
+const fs = require('fs');
+let code = fs.readFileSync('artifacts/study-tracker/src/features/subjects/SubjectCard.tsx', 'utf8');
+
+const startIdx = code.indexOf('export function SubjectCard');
+code = code.substring(startIdx); // keep from function definition
+
+const imports = `import { Link } from 'wouter';
+import { ChevronRight, MoreVertical, PencilLine, Trash2 } from 'lucide-react';
+import { Subject, StudySystem, db } from '@/db';
+import { ALL_SYSTEMS } from '@/data/ontology';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { calculateCompletedTopicTasks, calculateTopicsProgressPercentage } from '@/lib/progress';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
+
+interface SubjectCardProps {
+  subject: Subject;
+  systems: StudySystem[];
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
+  onDelete?: (subject: Subject) => void;
+  onRename?: (subject: Subject) => void;
+}
+
+`;
+
+fs.writeFileSync('artifacts/study-tracker/src/features/subjects/SubjectCard.tsx', imports + code);

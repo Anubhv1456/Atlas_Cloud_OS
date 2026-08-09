@@ -1,3 +1,4 @@
+import { normalizeName } from '@/lib/exam-presets';
 import { useState, useMemo } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { DropResult } from '@hello-pangea/dnd';
@@ -8,6 +9,10 @@ import {
 } from '@/db';
 import { PYQYear, StudySystem } from '@/db';
 import { calculateSubjectProgress } from '@/lib/progress';
+import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db';
+import { calculateCompletedTopicTasks, calculateTopicsProgressPercentage } from '@/lib/progress';
 import { calculateYearScoreMap, generateCustomYearRange } from '@/features/subjects/subjectUtils';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
@@ -147,9 +152,9 @@ export function useSubjectDetailLogic(id: string | undefined) {
   }, [rawSystems]);
 
   const [showAddSystem, setShowAddSystem] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showEdit,      setShowEdit]      = useState(false);
-  const [editName,      setEditName]      = useState('');
+  
+  
+  
   const [activeFilter,  setActiveFilter]  = useState<StageKey | null>(null);
 
   const highlightId = (() => {
@@ -172,20 +177,33 @@ export function useSubjectDetailLogic(id: string | undefined) {
     await updateSystemsOrder(updates);
   };
 
-  const totalTasks     = systems.length * 2;
-  const completedTasks = systems.reduce((acc, sys) => {
-    let done = 0;
-    if (sys.contentCompleted) done++;
-    if (sys.qbankDone) done++;
-    return acc + done;
-  }, 0);
-  const progress = calculateSubjectProgress(systems);
+  
+  
+  const allTopicIds = systems.flatMap(sys => {
+    const ontologySubject = subject ? ALL_SUBJECTS.find(s => s.name === subject.name) : undefined;
+    const os = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(sys.name));
+    return os ? os.topics.map(t => t.id) : [];
+  });
+  
+  const allTopicsStr = allTopicIds.join(',');
+  const topicProgresses = useLiveQuery(() => db.topicProgress.where('topicId').anyOf(allTopicIds).toArray(), [allTopicsStr]) || [];
 
-  const pyqUnlocked = systems.length > 0 && systems.every(s => s.contentCompleted && s.qbankDone);
+  const totalTasks     = allTopicIds.length * 2;
+  const completedTasks = calculateCompletedTopicTasks(topicProgresses);
+  const progress = calculateTopicsProgressPercentage(topicProgresses, allTopicIds.length);
+
+  const pyqUnlocked = allTopicIds.length > 0 && allTopicIds.length === topicProgresses.filter(tp => tp.contentStatus === 'completed' && tp.qbankStatus === 'completed').length;
 
   const stagePct = (key: StageKey) => {
-    if (systems.length === 0) return 0;
-    return Math.round((systems.filter(s => s[key]).length / systems.length) * 100);
+    if (allTopicIds.length === 0) return 0;
+    
+    // Instead of system level, we count topic level
+    let done = 0;
+    for (const tp of topicProgresses) {
+      if (key === 'contentCompleted' && tp.contentStatus === 'completed') done++;
+      if (key === 'qbankDone' && tp.qbankStatus === 'completed') done++;
+    }
+    return Math.round((done / allTopicIds.length) * 100);
   };
 
   const visibleSystems: StudySystem[] = activeFilter
@@ -196,32 +214,16 @@ export function useSubjectDetailLogic(id: string | undefined) {
     setActiveFilter(prev => (prev === key ? null : key));
   };
 
-  const handleSaveEdit = async () => {
-    if (editName.trim() && subject) {
-      await updateSubject(subject.id!, editName.trim());
-      setShowEdit(false);
-    }
-  };
-
-  const handleDelete = () => { setShowDeleteConfirm(true); };
-  const handleDeleteConfirm = async () => {
-    setShowDeleteConfirm(false);
-    if (subject) {
-      await deleteSubject(subject.id!);
-      setLocation('/');
-    }
-  };
-
   return {
     subjectId, subject, systems, pyqYears,
     showAddSystem, setShowAddSystem,
-    showDeleteConfirm, setShowDeleteConfirm,
-    showEdit, setShowEdit,
-    editName, setEditName,
+    
+    
+    
     activeFilter, setActiveFilter,
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
     pyqUnlocked, stagePct, visibleSystems,
-    handleDonutClick, handleSaveEdit, handleDelete, handleDeleteConfirm
+    handleDonutClick, 
   };
 }

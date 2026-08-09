@@ -7,8 +7,10 @@ export type MarkerStatus = 'pending' | 'published' | 'trusted' | 'featured' | 'l
 export interface MarkerSubmission {
   subjectId: number;
   systemId: number | string;
+  topicId?: string;
   subjectName: string;
   systemName: string;
+  topicName?: string;
   type: MarkerType;
   content: string;
   source?: string;
@@ -38,8 +40,10 @@ export async function submitMarker(marker: MarkerSubmission) {
   const payload: Record<string, any> = {
     subjectId: marker.subjectId,
     systemId: marker.systemId,
+    topicId: marker.topicId || null,
     subjectName: marker.subjectName || '',
     systemName: marker.systemName || '',
+    topicName: marker.topicName || '',
     type: marker.type || 'mnemonic',
     content: marker.content,
     userId: marker.userId || null,
@@ -167,6 +171,46 @@ export async function getMarkersForSystem(systemId: number | string): Promise<Ma
 
   markers.sort((a, b) => {
     // Sort by Quality Score first, then recency
+    const scoreA = a.qualityScore || 50;
+    const scoreB = b.qualityScore || 50;
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    const timeA = a.createdAt?.toMillis?.() || 0;
+    const timeB = b.createdAt?.toMillis?.() || 0;
+    return timeB - timeA;
+  });
+
+  return markers;
+}
+
+
+export async function getMarkersForTopic(topicId: string): Promise<Marker[]> {
+  if (!firestoreDb) return [];
+  const markersCol = collection(firestoreDb, 'insights');
+  const q = query(
+    markersCol, 
+    where("topicId", "==", topicId),
+    limit(50)
+  );
+  
+  const snapshot = await getDocs(q);
+  
+  const markers = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      helpfulBy: Array.isArray(data.helpfulBy) ? data.helpfulBy : [],
+      notHelpfulBy: Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [],
+      savedBy: Array.isArray(data.savedBy) ? data.savedBy : [],
+      reportedBy: Array.isArray(data.reportedBy) ? data.reportedBy : [],
+    } as Marker;
+  }).filter(m => {
+    return m.status !== 'archived' && m.status !== 'low_quality';
+  });
+
+  markers.sort((a, b) => {
     const scoreA = a.qualityScore || 50;
     const scoreB = b.qualityScore || 50;
     if (scoreB !== scoreA) {

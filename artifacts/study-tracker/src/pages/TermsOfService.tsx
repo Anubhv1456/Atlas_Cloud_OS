@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { FileText, ArrowLeft, AlertTriangle, BookOpen, UserCheck, ShieldCheck, Scale, Compass } from 'lucide-react';
+import { FileText, ArrowLeft, TriangleAlert, BookOpen, UserCheck, ShieldCheck, Scale, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function TermsOfService() {
@@ -62,7 +62,7 @@ export default function TermsOfService() {
         {/* Important Warning Alert Banner */}
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 sm:p-6 flex items-start gap-4">
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-            <AlertTriangle className="w-5 h-5" />
+            <TriangleAlert className="w-5 h-5" />
           </div>
           <div className="space-y-1">
             <h3 className="font-bold text-sm text-amber-900 dark:text-amber-200">Medical Education Disclaimer</h3>

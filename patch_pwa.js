@@ -1,10 +1,47 @@
 const fs = require('fs');
-const file = './artifacts/study-tracker/src/lib/pwaAndNotifications.ts';
-let content = fs.readFileSync(file, 'utf8');
+const file = 'artifacts/study-tracker/src/features/settings/PWASection.tsx';
+let content = `import { useState, useEffect } from 'react';
+import { Download } from 'lucide-react';
+import { SettingsRow } from './SettingsLayout';
+import { isPwaInstallable, promptPwaInstall } from '@/lib/pwaAndNotifications';
+import { toast } from 'sonner';
 
-content = content.replace(
-  '  const allSystems = await db.systems.toArray();',
-  '  const allSystems = await db.systems.toArray().then(res => res.filter(s => !s.deletedAt));'
-);
+export function PWASection() {
+  const [isStandalone, setIsStandalone] = useState(true);
 
+  useEffect(() => {
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
+    
+    // Also listen to the event to know when install becomes available
+    const handleAvailable = () => {
+       setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
+    };
+    window.addEventListener('pwa-install-available', handleAvailable);
+    return () => window.removeEventListener('pwa-install-available', handleAvailable);
+  }, []);
+
+  const handlePwaInstallClick = async () => {
+    if (isPwaInstallable()) {
+      await promptPwaInstall();
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        toast.info("To install on iOS: tap 'Share' then 'Add to Home Screen'");
+      } else {
+        toast.info("Install prompt not available. Try adding from your browser menu.");
+      }
+    }
+  };
+
+  if (isStandalone) return null;
+
+  return (
+    <SettingsRow
+      icon={Download}
+      label="Install App"
+      onClick={handlePwaInstallClick}
+    />
+  );
+}
+`;
 fs.writeFileSync(file, content);

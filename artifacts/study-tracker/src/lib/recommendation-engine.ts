@@ -1,4 +1,9 @@
-import { StudySubject, StudySystem } from '@/db';
+import { normalizeName } from '@/lib/exam-presets';
+import { calculateTopicsProgressPercentage } from './progress';
+import { REC_WEIGHTS, REC_MULTIPLIERS } from './recommendation-constants';
+import { Subject, StudySystem } from '@/db';
+import { ALL_SYSTEMS, ALL_SUBJECTS, OntologyTopic } from '@/data/ontology';
+import { TopicProgress } from '@/db/types';
 
 export interface SubjectWeightage {
   weight: number; // 0 - 100 score
@@ -84,48 +89,49 @@ export function getSubjectWeightageInfo(subjectName: string, targetExam: string)
     return dict[key];
   }
 
-  return { weight: 65, tag: 'Core Curriculum Topic', phase: 'General' };
+  return { weight: REC_WEIGHTS.DEFAULT_SUBJECT_WEIGHT, tag: 'Core Curriculum Topic', phase: 'General' };
 }
 
 // Check if a subject aligns with student year
 export function getYearMultiplier(subjectPhase: string, currentYear: string): number {
-  if (!currentYear) return 1.0;
+  if (!currentYear) return REC_MULTIPLIERS.YEAR_ALIGN_NEUTRAL;
 
   const yr = currentYear.toLowerCase();
 
   if (yr.includes('1st year') || yr.includes('first')) {
-    if (subjectPhase === '1st Year') return 2.5;
-    if (subjectPhase === '2nd Year') return 0.4;
-    return 0.2; // Avoid 3rd / Final year subjects for 1st year students unless requested
+    if (subjectPhase === '1st Year') return REC_MULTIPLIERS.YEAR_ALIGN_EXACT_1ST_2ND;
+    if (subjectPhase === '2nd Year') return REC_MULTIPLIERS.YEAR_ALIGN_VERY_LOW;
+    return REC_MULTIPLIERS.YEAR_ALIGN_AVOID; // Avoid 3rd / Final year subjects for 1st year students unless requested
   }
 
   if (yr.includes('2nd year') || yr.includes('second')) {
-    if (subjectPhase === '2nd Year') return 2.5;
-    if (subjectPhase === '1st Year') return 1.1; // Good for revision
-    return 0.3;
+    if (subjectPhase === '2nd Year') return REC_MULTIPLIERS.YEAR_ALIGN_EXACT_1ST_2ND;
+    if (subjectPhase === '1st Year') return REC_MULTIPLIERS.YEAR_ALIGN_SLIGHT; // Good for revision
+    return REC_MULTIPLIERS.YEAR_ALIGN_MINIMAL;
   }
 
   if (yr.includes('3rd year') || yr.includes('third')) {
-    if (subjectPhase === '3rd Year') return 2.5;
-    if (subjectPhase === '2nd Year') return 1.2;
-    if (subjectPhase === '1st Year') return 1.0;
-    return 0.5;
+    if (subjectPhase === '3rd Year') return REC_MULTIPLIERS.YEAR_ALIGN_EXACT_3RD;
+    if (subjectPhase === '2nd Year') return REC_MULTIPLIERS.YEAR_ALIGN_MODERATE;
+    if (subjectPhase === '1st Year') return REC_MULTIPLIERS.YEAR_ALIGN_NEUTRAL;
+    return REC_MULTIPLIERS.YEAR_ALIGN_LOW;
   }
 
   if (yr.includes('final') || yr.includes('intern') || yr.includes('resident') || yr.includes('postgraduate')) {
-    if (subjectPhase === 'Final MBBS') return 2.2;
-    if (subjectPhase === '3rd Year' || subjectPhase === '2nd Year') return 1.5;
-    return 1.2;
+    if (subjectPhase === 'Final MBBS') return REC_MULTIPLIERS.YEAR_ALIGN_EXACT_FINAL;
+    if (subjectPhase === '3rd Year' || subjectPhase === '2nd Year') return REC_MULTIPLIERS.YEAR_ALIGN_GOOD;
+    return REC_MULTIPLIERS.YEAR_ALIGN_MODERATE;
   }
 
-  return 1.0;
+  return REC_MULTIPLIERS.YEAR_ALIGN_NEUTRAL;
 }
 
 export function computeIntelligentRecommendation(
-  subjects: StudySubject[],
+  subjects: Subject[],
   systems: StudySystem[],
   currentYear: string = 'Final MBBS',
-  targetExam: string = 'NEET PG'
+  targetExam: string = 'NEET PG',
+  topicProgresses: TopicProgress[] = []
 ): RecommendationResult {
   if (systems.length === 0) {
     return {
@@ -141,7 +147,8 @@ export function computeIntelligentRecommendation(
   }
 
   let bestSystem: StudySystem | null = null;
-  let bestSubject: StudySubject | null = null;
+  let bestSubject: Subject | null = null;
+  let bestTopic: OntologyTopic | null = null;
   let bestScore = -1;
   let bestReasons: string[] = [];
 
@@ -152,49 +159,105 @@ export function computeIntelligentRecommendation(
     const weightage = getSubjectWeightageInfo(subName, targetExam);
     const yearMult = getYearMultiplier(weightage.phase, currentYear);
 
-    // Calculate dynamic priority score
-    let score = weightage.weight * yearMult;
+    const ontologySubject = ALL_SUBJECTS.find(s => s.name === subName);
+    const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(sys.name));
+    const topics = ontologySystem?.topics || [];
 
-    const reasons: string[] = [];
+    if (topics.length > 0) {
+      for (const topic of topics) {
+        let score = weightage.weight * yearMult;
+        const reasons: string[] = [];
 
-    // 1. Year alignment note
-    if (yearMult > 2.0) {
-      reasons.push(`• Essential ${currentYear} priority subject (${subName})`);
+        // 1. Year alignment note
+        if (yearMult > 2.0) {
+          reasons.push(`• Essential ${currentYear} priority (${subName})`);
+        } else {
+          reasons.push(`• High yield for ${targetExam}: ${weightage.tag}`);
+        }
+
+        if (topic.highYield) {
+          score += REC_WEIGHTS.HIGH_YIELD_BONUS;
+          reasons.push('• High-Yield Marker');
+        }
+        if (topic.pyqWeight > 0) {
+          score += topic.pyqWeight * REC_WEIGHTS.PYQ_WEIGHT_MULTIPLIER;
+          reasons.push(`• PYQ Weight: ${topic.pyqWeight}`);
+        }
+
+        const tp = topicProgresses.find(p => p.topicId === topic.id);
+        
+        if (tp) {
+          if (tp.confidence === 'low') {
+            score += REC_WEIGHTS.WEAK_CONFIDENCE_BONUS;
+            reasons.push('• Weak confidence tag — needs immediate reinforcement');
+          }
+          if (tp.contentStatus !== 'completed') {
+            score += REC_WEIGHTS.PENDING_CONTENT_BONUS;
+            reasons.push('• Pending core content completion');
+          } else if (tp.qbankStatus !== 'completed') {
+            score += REC_WEIGHTS.PENDING_QBANK_BONUS;
+            reasons.push('• Pending QBank practice');
+          }
+          
+          if (tp.contentStatus === 'completed' && tp.qbankStatus === 'completed') {
+            // Memory decay logic could go here, for now basic boost if due
+            if (tp.nextRevisionDate && tp.nextRevisionDate < new Date()) {
+               score += REC_WEIGHTS.REVISION_DUE_BONUS;
+               reasons.push('• Active revision due based on spaced repetition');
+            } else {
+               score += REC_WEIGHTS.MASTERED_PENALTY; // Already mastered and not due
+            }
+          }
+        } else {
+          // Unstarted topic
+          score += REC_WEIGHTS.UNEXPLORED_TOPIC_BONUS;
+          reasons.push('• Unexplored topic in recommended subject');
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestSystem = sys;
+          bestSubject = sub || null;
+          bestTopic = topic;
+          bestReasons = reasons.slice(0, 3);
+        }
+      }
     } else {
-      reasons.push(`• High yield for ${targetExam}: ${weightage.tag}`);
-    }
+      // Fallback if no topics mapped
+      let score = weightage.weight * yearMult;
+      const reasons: string[] = [];
+      if (yearMult > 2.0) {
+        reasons.push(`• Essential ${currentYear} priority (${subName})`);
+      }
+      if (sys.status === 'Weak') {
+        score += REC_WEIGHTS.WEAK_CONFIDENCE_BONUS;
+        reasons.push('• Weak confidence tag');
+      } else {
+        const osSub = ALL_SUBJECTS.find(s => s.name === subName);
+        const sysTopics = ALL_SYSTEMS.find(s => s.subjectId === osSub?.id && normalizeName(s.name) === normalizeName(sys.name))?.topics || [];
+        const sysTopicIds = sysTopics.map(t => t.id);
+        const sysTopicProgresses = topicProgresses.filter(tp => sysTopicIds.includes(tp.topicId));
+        const progress = calculateTopicsProgressPercentage(sysTopicProgresses, sysTopics.length);
+        if (progress < 100) {
+          score += REC_WEIGHTS.INCOMPLETE_SYSTEM_BONUS;
+        }
+      }
 
-    // 2. Performance or revision state
-    if (sys.status === 'Weak') {
-      score += 45;
-      reasons.push('• Weak confidence tag — needs immediate reinforcement');
-    } else if (sys.revisionState === 'in_progress') {
-      score += 40;
-      reasons.push('• Active revision cycle in progress');
-    } else if (!sys.contentCompleted) {
-      score += 25;
-      reasons.push('• Pending core content completion');
-    } else if (!sys.qbankDone) {
-      score += 20;
-      reasons.push('• Pending QBank question practice');
-    } else {
-      reasons.push('• Calibrated for spaced repetition recall');
-    }
-
-    // 3. Exam weightage specifics
-    reasons.push(`• Official Exam Priority: ${weightage.tag}`);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestSystem = sys;
-      bestSubject = sub || null;
-      bestReasons = reasons.slice(0, 3);
+      if (score > bestScore) {
+        bestScore = score;
+        bestSystem = sys;
+        bestSubject = sub || null;
+        bestReasons = reasons.slice(0, 3);
+      }
     }
   }
 
+  // Update recommendation result to include topic name if available
+  const sysName = bestTopic ? `${bestTopic.name}` : (bestSystem?.name || 'Gastroenterology');
+
   return {
     subjectName: bestSubject?.name || 'General Medicine',
-    systemName: bestSystem?.name || 'Gastroenterology',
+    systemName: sysName,
     subjectId: bestSystem?.subjectId,
     systemId: bestSystem?.id,
     reasons: bestReasons,

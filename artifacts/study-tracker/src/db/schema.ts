@@ -7,6 +7,9 @@ export class AtlasDB extends Dexie {
   pyqYears!: Table<T.PYQYear, number>;
   scoreLogs!: Table<T.ScoreLog, number>;
   uiPreferences!: Table<T.UIPreference, string>;
+  topicProgress!: Table<T.TopicProgress, string>;
+  curriculumSets!: Table<T.CurriculumSet, string>;
+  revisionSets!: Table<T.CurriculumSet, string>;
 
   constructor() {
     super('AtlasDB');
@@ -220,7 +223,48 @@ export class AtlasDB extends Dexie {
       }
     });
 
-  }
+  
+        this.version(16).stores({
+      subjects: '++id, name',
+      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
+      history: '++id, subjectId, systemId, completedAt',
+      pyqYears: '++id, subjectId',
+      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
+      uiPreferences: 'id, type, entityId',
+      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
+      curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
+      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt'
+    }).upgrade(async tx => {
+      try {
+        const oldSets = await tx.table('revisionSets').toArray();
+        if (oldSets && oldSets.length > 0) {
+          await tx.table('curriculumSets').bulkAdd(oldSets);
+        }
+      } catch (e) {
+        console.warn('Migration upgrade note:', e);
+      }
+    });
+
+    this.version(15).stores({
+      subjects: '++id, name',
+      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
+      history: '++id, subjectId, systemId, completedAt',
+      pyqYears: '++id, subjectId',
+      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
+      uiPreferences: 'id, type, entityId',
+      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
+      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt'
+    });
+    this.version(14).stores({
+      subjects: '++id, name',
+      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
+      history: '++id, subjectId, systemId, completedAt',
+      pyqYears: '++id, subjectId',
+      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
+      uiPreferences: 'id, type, entityId',
+      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt'
+    });
+}
 
 }
 

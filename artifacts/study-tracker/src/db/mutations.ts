@@ -469,3 +469,112 @@ export async function completeRevision(
 export async function clearHistory() {
   return await db.history.clear();
 }
+
+export async function saveTopicProgress(progress: import('./types').TopicProgress) {
+  progress.updatedAt = new Date();
+  progress.hlc = generateHLC();
+  await db.topicProgress.put(progress);
+}
+
+export async function getTopicProgress(topicId: string): Promise<import('./types').TopicProgress | undefined> {
+  return await db.topicProgress.get(topicId);
+}
+
+
+// ── Curriculum Sets ──────────────────────────────────────────────────────────
+
+export async function createCurriculumSet(data: { subjectId: number; systemId: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray' }) {
+  const newSet: import('./types').CurriculumSet = {
+    id: crypto.randomUUID(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  };
+  await db.curriculumSets.add(newSet);
+  return newSet;
+}
+
+export async function updateCurriculumSet(id: string, updates: Partial<import('./types').CurriculumSet>) {
+  return await db.curriculumSets.update(id, {
+    ...updates,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
+}
+
+export async function deleteCurriculumSet(id: string) {
+  return await db.curriculumSets.update(id, {
+    deletedAt: new Date(),
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
+}
+
+export const createRevisionSet = createCurriculumSet;
+export const updateRevisionSet = updateCurriculumSet;
+export const deleteRevisionSet = deleteCurriculumSet;
+
+
+import { calibrateCurriculumSetSDSR } from '@/lib/sdsr-engine';
+
+export async function logCurriculumSetScore(
+  curriculumSetId: string,
+  score: number,
+  reviewedTopicIds: string[],
+  subjectName: string = 'General'
+) {
+  const table = db.curriculumSets || db.revisionSets;
+  const set = await table.get(curriculumSetId);
+  if (!set || set.deletedAt) return;
+
+  const normalizedScore = score > 1 ? score / 100 : score;
+
+  const { updatedSet } = calibrateCurriculumSetSDSR(
+    set,
+    normalizedScore,
+    subjectName
+  );
+
+  await table.update(curriculumSetId, updatedSet);
+
+  const now = new Date();
+  for (const topicId of reviewedTopicIds) {
+    let p = await db.topicProgress.get(topicId);
+    if (!p) {
+      p = { topicId, contentStatus: 'completed', qbankStatus: 'completed', updatedAt: now } as any;
+    } else {
+      p = {
+        ...p,
+        contentStatus: p.contentStatus === 'not_started' ? 'completed' : p.contentStatus,
+        qbankStatus: 'completed',
+        updatedAt: now,
+      };
+    }
+    await db.topicProgress.put(p as any);
+  }
+
+  const scorePercent = Math.round(normalizedScore * 100);
+  await db.scoreLogs.add({ title: 'Revision', total: 100, percentage: score, 
+    type: 'revision',
+    subjectId: set.subjectId,
+    systemId: set.systemId,
+    topicId: curriculumSetId,
+    score: scorePercent,
+    timestamp: now,
+  });
+
+  await logCompletion({
+    subjectId: set.subjectId,
+    subjectName,
+    systemId: set.systemId,
+    systemName: set.name,
+    taskKey: 'curriculum_set_revision',
+    taskLabel: 'Reviewed ' + set.name + ' (' + scorePercent + '%)',
+    completedAt: now,
+  });
+
+  toast.success('Score saved', {
+    description: 'Atlas updated the next review timing for ' + set.name + '.',
+  });
+}

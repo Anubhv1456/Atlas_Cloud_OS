@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { EXAM_PRESETS, loadPreset, ExamPreset } from '@/lib/exam-presets';
-import { computeIntelligentRecommendation } from '@/lib/recommendation-engine';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { useSubjects, useAllSystems, db } from '@/db';
 import { useLocation } from 'wouter';
@@ -47,7 +46,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const [selectedGoal, setSelectedGoal] = useState<string>('MBBS Professional Exams');
 
   // Step 3 state: Curriculum preset
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('mbbs');
+  
   const [importingPreset, setImportingPreset] = useState<boolean>(false);
 
   // Step 4 state: Personalization
@@ -71,10 +70,6 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   useEffect(() => {
     if (profile.targetExam) {
       setSelectedGoal(profile.targetExam);
-      const matchedPreset = EXAM_PRESETS.find(p => p.targetExam.toLowerCase().includes(profile.targetExam.toLowerCase()));
-      if (matchedPreset) {
-        setSelectedPresetId(matchedPreset.id);
-      }
     }
     if (profile.targetExamDate) {
       setExamDate(profile.targetExamDate);
@@ -110,37 +105,26 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   };
 
   // Step transitions
-  const handleNextFromGoal = () => {
-    // Auto match preset if possible
-    if (selectedGoal.includes('NEET')) setSelectedPresetId('neet-pg');
-    else if (selectedGoal.includes('USMLE')) setSelectedPresetId('usmle-step1');
-    else setSelectedPresetId('mbbs');
-
-    setStep(3);
-  };
-
-  const handleNextFromCurriculum = async () => {
+  const handleNextFromGoal = async () => {
     setImportingPreset(true);
+    setStep(3); // reusing step 3 for loading state if needed, or jumping to 4
     try {
-      const presetToLoad = EXAM_PRESETS.find(p => p.id === selectedPresetId);
-      if (presetToLoad) {
-        await loadPreset(presetToLoad.hierarchy);
-      }
+      await loadUniversalOntology();
     } catch (err) {
-      console.error('Failed to import preset during onboarding', err);
+      console.error(err);
     } finally {
       setImportingPreset(false);
       setStep(4);
     }
   };
 
+  
+
   const handleNextFromPersonalization = () => {
-    // Save choices to profile
-    const selectedPresetObj = EXAM_PRESETS.find(p => p.id === selectedPresetId);
     updateProfile({
       targetExam: selectedGoal,
       targetExamDate: examDate,
-      curriculum: selectedPresetObj?.name || 'Standard Curriculum',
+      curriculum: 'Universal Ontology',
       currentYear: currentYear
     });
     setStep(5);
@@ -171,14 +155,34 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     const allSubs = await db.subjects.toArray();
     const allSys = await db.systems.toArray();
 
-    const result = computeIntelligentRecommendation(allSubs, allSys, currentYear, selectedGoal);
-    setRecommendedSystem({
-      subjectName: result.subjectName,
-      systemName: result.systemName,
-      subjectId: result.subjectId,
-      systemId: result.systemId,
-      reasons: result.reasons
+    const topicProgresses = await db.topicProgress.toArray();
+    
+    const worker = new Worker(new URL('@/lib/recommendation.worker.ts', import.meta.url), { type: 'module' });
+    worker.postMessage({
+      subjects: allSubs,
+      systems: allSys,
+      currentYear,
+      targetExam: selectedGoal,
+      topicProgresses
     });
+    
+    worker.onmessage = (e) => {
+      if (e.data.success) {
+        const result = e.data.result;
+        setRecommendedSystem({
+          subjectName: result.subjectName,
+          systemName: result.systemName,
+          subjectId: result.subjectId,
+          systemId: result.systemId,
+          reasons: result.reasons
+        });
+      }
+      worker.terminate();
+    };
+    worker.onerror = (err) => {
+      console.error('Worker error', err);
+      worker.terminate();
+    };
   };
 
   const handleStartStudying = async () => {
@@ -319,86 +323,20 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
             </motion.div>
           )}
 
-          {/* ── STEP 3: IMPORT A CURRICULUM ─────────────────────────────────── */}
+          
+          {/* ── STEP 3: LOADING ONTOLOGY ─────────────────────────────────── */}
           {step === 3 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col justify-between space-y-4 z-10"
+              className="flex-1 flex flex-col items-center justify-center space-y-4 z-10"
             >
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 2 of 3</span>
-                <h2 className="text-xl font-bold text-foreground">Import a Curriculum</h2>
-                <p className="text-xs text-muted-foreground">Instead of building everything manually, Atlas imports structured subject hierarchies instantly.</p>
-              </div>
-
-              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
-                {EXAM_PRESETS.map((preset) => {
-                  const isSelected = selectedPresetId === preset.id;
-                  const totalSub = preset.hierarchy.length;
-                  const totalTop = preset.hierarchy.reduce((sum, i) => sum + i.topics.length, 0);
-
-                  return (
-                    <button
-                      key={preset.id}
-                      onClick={() => setSelectedPresetId(preset.id)}
-                      className={cn(
-                        "w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer",
-                        isSelected
-                          ? "bg-primary/10 border-primary shadow-xs"
-                          : "bg-background border-border/60 hover:border-border hover:bg-muted/40"
-                      )}
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">{preset.name}</span>
-                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">
-                            {preset.badge}
-                          </Badge>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground line-clamp-1">{preset.description}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-mono text-muted-foreground block">{totalSub} Subjects</span>
-                        <span className="text-[10px] font-mono text-muted-foreground block">{totalTop} Topics</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                <Button
-                  variant="ghost"
-                  onClick={() => setStep(2)}
-                  className="rounded-xl text-xs font-medium h-9 px-3 cursor-pointer"
-                >
-                  Back
-                </Button>
-
-                <Button
-                  onClick={handleNextFromCurriculum}
-                  disabled={importingPreset}
-                  className="rounded-xl text-xs font-semibold h-10 px-5 gap-1.5 cursor-pointer"
-                >
-                  {importingPreset ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Importing Hierarchy...
-                    </>
-                  ) : (
-                    <>
-                      Import & Continue
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-sm font-medium text-foreground">Importing Universal Curriculum...</p>
             </motion.div>
           )}
-
-          {/* ── STEP 4: OPTIONAL PERSONALIZATION ────────────────────────────── */}
+{/* ── STEP 4: OPTIONAL PERSONALIZATION ────────────────────────────── */}
           {step === 4 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}

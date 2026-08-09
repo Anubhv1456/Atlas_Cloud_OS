@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, initializeAuth, browserLocalPersistence, browserPopupRedirectResolver } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, initializeAuth, Auth, browserLocalPersistence, browserPopupRedirectResolver } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Use explicit init to avoid IndexedDB issues on HMR (Database is closing/hidden)
-let auth;
+let auth: Auth;
 try {
   auth = initializeAuth(app, {
     persistence: browserLocalPersistence,

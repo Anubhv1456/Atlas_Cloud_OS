@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { StudySystem, SystemStatus } from '@/db';
 import { updateSystem, deleteSystem, logCompletion, recordInitialEvaluation, completeRevision, startActiveRevision, logDailyRevisionCheckIn, toggleSystemLengthy } from '@/db';
-import { ProgressBar } from '@/components/ProgressBar';
 import { ConfidenceDialog } from '@/features/revision/ConfidenceDialog';
 import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
 import { ChevronDown, Trash2, Check, RotateCcw, Clock, GripVertical, CheckCircle2, Award, Sliders, MoreVertical, Edit2, BookOpen, Calendar, Play, Lightbulb, Bookmark, Compass, Sparkles } from 'lucide-react';
@@ -45,31 +44,37 @@ function ContentCircle({ pct }: { pct: number }) {
 // ── SystemCard ────────────────────────────────────────────────────────────────
 import { ViewMarkersModal } from './ViewMarkersModal';
 import { useSystemCardLogic } from './SystemCard.hooks';
+import { TopicList } from './TopicList';
+import { CurriculumSets } from './CurriculumSets';
+import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 
 export function SystemCard(props: SystemCardProps) {
   const { flags } = useFeatureFlags();
   const { system, subjectName, dragHandleProps, highlighted } = props;
+  const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
+  const ontologySystem = ALL_SYSTEMS.find(s => s.name === system.name && s.subjectId === ontologySubject?.id);
+  const topics = ontologySystem?.topics || [];
   const {
     expanded, setExpanded,
     showInitDialog, setShowInitDialog, initValue, setInitValue,
     showEditContent, setShowEditContent, editCompleted, setEditCompleted, editTotal, setEditTotal,
     showEvalDialog, setShowEvalDialog, showDeleteConfirm, setShowDeleteConfirm,
-    showScoreModal, setShowScoreModal, showDecayCalibration, setShowDecayCalibration,
+    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleTopicLogScore, showDecayCalibration, setShowDecayCalibration,
     showRenameDialog, setShowRenameDialog, renameValue, setRenameValue,
-    showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, insightContent, setInsightContent,
+    showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, selectedTopicId, setSelectedTopicId, selectedTopicName, setSelectedTopicName, insightContent, setInsightContent,
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
     cardRef, progress, completedCount, contentPct,
     revisionDue, revisionOverdue, overdueDays,
     handleContentTap, handleContentPointerDown, handleContentPointerUp, handleContentPointerLeave,
     handleInitSave, handleEditSave, handleEditReset, toggleQBank, handleEvalSelect,
-    handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
+    localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
     handleRenameSave, handleRevisionComplete
   } = useSystemCardLogic(props);
 
   const statusColors: Record<SystemStatus, string> = {
-    Strong:  'bg-muted/30 text-[hsl(var(--gold))] border-[hsl(var(--gold))]/50',
-    Average: 'bg-muted/50 text-muted-foreground border-transparent',
-    Weak:    'bg-muted/30 text-destructive border-destructive/50',
+    Strong:  'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+    Average: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+    Weak:    'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
   };
 
   return (
@@ -216,57 +221,31 @@ export function SystemCard(props: SystemCardProps) {
             </div>
 
             <div className="flex items-center gap-3 w-full">
-              <ProgressBar progress={progress} className="flex-1 h-1.5 bg-muted/40" barClassName="bg-primary shadow-none" showShimmer={false} />
-              <span className="text-xs font-mono font-medium text-muted-foreground shrink-0 w-6 text-right">{completedCount}/2</span>
+              <span className="text-xs font-mono font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">{Math.round(progress)}% Complete</span>
             </div>
           </div>
         </div>
+        
+        {/* Header Progress Line */}
+        {!expanded && (
+          <div className="h-[2px] bg-primary/10 w-full">
+            <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+          </div>
+        )}
 
         {/* Expanded body */}
         <div className={cn('grid transition-all duration-300 ease-in-out', expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
           <div className="overflow-hidden">
             <div className="p-4 pt-0 border-t border-border/50 bg-card">
               <div className="grid gap-2 py-4">
-                {/* Content row */}
-                <div
-                  className={cn('flex items-center gap-3 w-full p-2.5 rounded-xl transition-colors text-left select-none', !system.contentCompleted && 'hover:bg-muted/20 cursor-pointer', system.contentCompleted && 'cursor-default')}
-                  onClick={handleContentTap}
-                  onPointerDown={handleContentPointerDown}
-                  onPointerUp={handleContentPointerUp}
-                  onPointerLeave={handleContentPointerLeave}
-                  onContextMenu={e => e.preventDefault()}
-                >
-                  {system.contentCompleted ? <div className="w-[22px] h-[22px] rounded-full flex items-center justify-center shrink-0 border border-muted-foreground/30"><div className="w-[14px] h-[14px] rounded-full bg-primary" /></div> : <ContentCircle pct={contentPct} />}
-                  <span className={cn('text-sm font-medium flex-1 transition-all duration-500', system.contentCompleted ? 'text-muted-foreground/40 line-through' : 'text-muted-foreground')}>Content</span>
-                  {system.contentInitialized && !system.contentCompleted && (
-                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">{system.contentUnitsCompleted}/{system.contentUnitsTotal}</span>
-                  )}
-                </div>
+                {/* Curriculum Sets */}
+                <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={topics} />
 
-                {/* QBank row */}
-                <button onClick={toggleQBank} className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-muted/20 transition-colors text-left group">
-                  <div className={cn('w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center transition-all duration-200 border-2', system.qbankDone ? 'border-primary bg-background' : 'border-muted-foreground/30 bg-transparent group-hover:border-primary/50')}>
-                    {system.qbankDone && <div className="w-3 h-3 rounded-full bg-primary" />}
-                  </div>
-                  <span className={cn('text-sm font-medium transition-colors duration-200', system.qbankDone ? 'text-muted-foreground line-through' : 'text-muted-foreground')}>Qbank</span>
-                </button>
+                {/* Topics Checklist */}
+                <TopicList topics={topics} subjectId={system.subjectId} systemId={system.id!} subjectName={subjectName} systemName={system.name} onViewMarkers={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowViewMarkersDialog(true); }} onLeaveMarker={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowInsightDialog(true); }} onLogScore={handleTopicLogScore} />
               </div>
 
               <div className="space-y-6 pt-2">
-                {/* Confidence / Status selector */}
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Confidence Level</label>
-                  <div className="flex gap-3">
-                    {(['Strong', 'Average', 'Weak'] as const).map(s => (
-                      <button key={s} onClick={() => handleStatusChange(s)}
-                        className={cn('flex-1 py-2.5 px-3 text-sm font-medium rounded-full border transition-all duration-200',
-                          (system.status || 'Average') === s ? 'border-primary text-primary bg-primary/5' : 'bg-transparent border-border text-muted-foreground hover:bg-muted/30')}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* ── System Memory Decay Calibration (Collapsible) ───────────────────── */}
                 <div className="rounded-xl overflow-hidden transition-all mt-6">
                   <button
@@ -298,7 +277,7 @@ export function SystemCard(props: SystemCardProps) {
                   {showDecayCalibration && (
                     <div className="pb-3.5 pt-3 border-t border-border/40 mt-2 space-y-3">
                       <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Calibrate memory decay speed for <span className="font-semibold text-foreground">{system.name}</span> based on topic complexity or volatile facts.
+                        Calibrate memory decay speed for <span className="font-semibold text-foreground">{system.name}</span>. (e.g. 1.5x = 33% faster reviews, 0.8x = 20% slower).
                       </p>
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -366,7 +345,7 @@ export function SystemCard(props: SystemCardProps) {
                         const health = getRetrievabilityHealth(ret);
                         return (
                           <span className={cn('text-[11px] font-bold px-2.5 py-0.5 rounded-full border bg-background/80 shadow-xs', health.colorClass)}>
-                            {ret}% Recall • {health.label}
+                            {health.label}
                           </span>
                         );
                       })()}
@@ -501,7 +480,7 @@ export function SystemCard(props: SystemCardProps) {
                 {/* Notes */}
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Weak Areas / Notes</label>
-                  <Textarea value={system.weakAreas} onChange={handleNotesChange} placeholder="Note down concepts you struggle with..."
+                  <Textarea value={localNotes} onChange={handleNotesChange} placeholder="Note down concepts you struggle with..."
                     className="min-h-[100px] resize-none rounded-xl bg-muted/30 border-transparent focus-visible:bg-background focus-visible:border-primary" />
                 </div>
 
@@ -529,18 +508,9 @@ export function SystemCard(props: SystemCardProps) {
                       <span className="text-xs text-primary font-medium">{system.nextRevisionDate ? (isToday(new Date(system.nextRevisionDate)) ? 'Today' : isTomorrow(new Date(system.nextRevisionDate)) ? 'Tomorrow' : formatDistanceToNow(new Date(system.nextRevisionDate), { addSuffix: true })) : 'Pending'}</span>
                     </div>
 
-                    {flags.communityMarkers && flags.markerSubmission && (
-                      <Button className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 h-11 shadow-sm w-full sm:w-auto mt-2 sm:mt-0" onClick={() => setShowInsightDialog(true)}>
-                        <Compass className="w-4 h-4 mr-2" /> Leave a Marker
-                      </Button>
-                    )}
+                    
                   </div>
-                  {flags.communityMarkers && (
-                    <div className="mt-3 mb-1 flex items-start sm:items-center justify-center gap-1.5 text-[11px] text-muted-foreground font-medium px-2 text-center sm:text-left">
-                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5 sm:mt-0" />
-                      <span>Share high-yield notes, mnemonics, or explanations to help fellow Wayfinders.</span>
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>
@@ -701,7 +671,7 @@ export function SystemCard(props: SystemCardProps) {
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <Compass className="w-5 h-5 text-primary" />
-              Leave a Marker
+              Leave a Marker {selectedTopicName ? `for ${selectedTopicName}` : ''}
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-5">
@@ -774,6 +744,8 @@ export function SystemCard(props: SystemCardProps) {
         onClose={() => setShowViewMarkersDialog(false)}
         systemId={system.id!}
         systemName={system.name}
+        topicId={selectedTopicId}
+        topicName={selectedTopicName}
         onLeaveMarker={() => setShowInsightDialog(true)}
       />
 

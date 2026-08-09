@@ -96,6 +96,7 @@ export interface ScoreLog {
   type: 'revision' | 'pyq';
   subjectId: number;
   systemId?: number;
+  topicId?: string;
   pyqYearId?: number;
   title: string;
   score: number;
@@ -122,3 +123,58 @@ export interface HistoryEntry {
   deletedAt?: Date | null;
   hlc?: string;
 }
+
+
+export interface RevisionLog {
+  topicId?: string;
+  previousInterval?: number | null;
+  newInterval?: number;
+  reviewedAt?: string;
+  date: string;
+  score: number;
+}
+
+export interface TopicProgress {
+  topicId: string;
+  contentStatus: 'not_started' | 'in_progress' | 'completed';
+  contentUnitsTotal: number;
+  contentUnitsCompleted: number;
+  qbankStatus: 'not_started' | 'in_progress' | 'completed';
+  weakAreas: string;
+  confidence: 'low' | 'average' | 'high';
+  
+  completionDate: Date | null;
+  revisionCount: number;
+  lastRevisionDate: Date | null;
+  currentRevisionInterval: number | null;
+  nextRevisionDate: Date | null;
+  decayFactor: number;
+  
+  revisionHistory: RevisionLog[];
+  
+  updatedAt: Date;
+  hlc?: string;
+}
+
+export type TopicLivingState = 'not_started' | 'learning' | 'practicing' | 'revision_due' | 'mastered';
+
+export interface CurriculumSet {
+  id?: string;
+  subjectId: number;
+  systemId: number;
+  name: string;
+  topicIds: string[];
+  color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray';
+  order?: number;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+  nextRevisionDate?: string;
+  lastRevisionDate?: string;
+  currentRevisionInterval?: number;
+  revisionCount?: number;
+  averageScore?: number;
+}
+
+export type RevisionSet = CurriculumSet;

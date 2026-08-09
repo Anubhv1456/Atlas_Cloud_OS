@@ -1,3 +1,4 @@
+import { ProgressBar } from '@/components/ProgressBar';
 import { useState, useMemo } from 'react';
 import { useParams, Link, useLocation, useSearch } from 'wouter';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -9,13 +10,12 @@ import {
 import { SystemCard } from '@/features/subjects/SystemCard';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { AddDialog } from '@/components/AddDialog';
-import { ProgressBar } from '@/components/ProgressBar';
 import { PYQYear } from '@/db';
 import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Plus, Trash2, Edit2,
   LayoutList, Lock, Check, BookOpen, Award, LayoutGrid, Sparkles,
-  RefreshCw, Calendar, CheckCircle2, Circle, MoreVertical,
+  RefreshCw, Calendar, CheckCircle2, Circle, MoreVertical, Search
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -153,35 +153,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
           </Button>
 
           {/* Options Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-xl">
-              <DropdownMenuItem onClick={handleQuickAdd5YearDefaults} className="gap-2 text-xs font-medium cursor-pointer">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Add 5-Year Defaults ({currentYearNum-4}–{currentYearNum})</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowPresetModal(true)} className="gap-2 text-xs font-medium cursor-pointer">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-                <span>Custom Year Range...</span>
-              </DropdownMenuItem>
-              {total > 0 && (
-                <>
-                  <DropdownMenuItem onClick={handleMarkAllComplete} className="gap-2 text-xs font-medium cursor-pointer text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Mark All Complete</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleResetAll} className="gap-2 text-xs font-medium cursor-pointer text-muted-foreground">
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Reset All</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          
         </div>
       </div>
 
@@ -637,14 +609,14 @@ export default function SubjectDetail() {
   const {
     subjectId, subject, systems, pyqYears,
     showAddSystem, setShowAddSystem,
-    showDeleteConfirm, setShowDeleteConfirm,
-    showEdit, setShowEdit,
-    editName, setEditName,
+    
+    
+    
     activeFilter, setActiveFilter,
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
     pyqUnlocked, stagePct, visibleSystems,
-    handleDonutClick, handleSaveEdit, handleDelete, handleDeleteConfirm
+    handleDonutClick, 
   } = useSubjectDetailLogic(id);
 
   if (!subject && id) {
@@ -662,23 +634,14 @@ export default function SubjectDetail() {
               <ChevronLeft className="w-6 h-6" />
             </button>
           </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
-              <div className="flex gap-1">
-                <span className="w-1 h-1 rounded-full bg-current" />
-                <span className="w-1 h-1 rounded-full bg-current" />
-                <span className="w-1 h-1 rounded-full bg-current" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-xl">
-              <DropdownMenuItem onClick={() => { setEditName(subject.name); setShowEdit(true); }} className="gap-2 py-3 cursor-pointer">
-                <Edit2 className="w-4 h-4" /> Rename Subject
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive gap-2 py-3 cursor-pointer">
-                <Trash2 className="w-4 h-4" /> Delete Subject
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors ml-auto"
+            title="Search topics"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+          
         </div>
 
         <div className="mb-6">
@@ -692,7 +655,7 @@ export default function SubjectDetail() {
               <span className="font-semibold text-foreground">Progress</span>
               <span className="font-bold text-primary">{progress}%</span>
             </div>
-            <ProgressBar progress={progress} className="h-2.5" />
+            
           </div>
           <div className="h-10 w-px bg-border mx-2" />
           <div className="text-center min-w-[3rem]">
@@ -890,54 +853,10 @@ export default function SubjectDetail() {
       />
 
       {/* Rename dialog */}
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Rename Subject</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              autoFocus value={editName} onChange={e => setEditName(e.target.value)}
-              className="text-lg py-6 px-4 bg-muted/50 border-transparent focus-visible:ring-primary focus-visible:bg-background"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowEdit(false)} className="rounded-xl">Cancel</Button>
-            <Button
-              onClick={handleSaveEdit}
-              disabled={!editName.trim() || editName === subject.name}
-              className="rounded-xl font-semibold px-8 shadow-sm"
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
 
       {/* Delete Subject confirmation dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-destructive">Delete Subject</DialogTitle>
-          </DialogHeader>
-          <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Are you sure you want to delete <strong className="text-foreground">{subject.name}</strong>?
-            </p>
-            <div className="text-xs text-destructive bg-destructive/10 p-3 rounded-xl border border-destructive/20 leading-relaxed font-medium">
-              ⚠️ This will permanently delete this subject along with all its systems, task progress, revision schedules, and PYQ records.
-            </div>
-          </div>
-          <DialogFooter className="flex-row gap-2 sm:justify-end mt-4">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowDeleteConfirm(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" className="flex-1 rounded-xl font-semibold shadow-sm" onClick={handleDeleteConfirm}>
-              Delete Subject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
     </div>
   );
 }

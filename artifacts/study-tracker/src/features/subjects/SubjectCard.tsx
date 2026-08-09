@@ -1,121 +1,172 @@
-import { Link } from 'wouter';
-import { Subject, StudySystem } from '@/db';
-import { ProgressBar } from '@/components/ProgressBar';
-import { ChevronRight, GripVertical, BookOpen, CheckCircle2, MoreVertical, Trash2, Edit2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { calculateSubjectProgress } from '@/lib/progress';
+import { normalizeName } from "@/lib/exam-presets";
+import { Link } from "wouter";
+import { ChevronRight, MoreVertical, PencilLine, Trash2 } from "lucide-react";
+import { Subject, StudySystem, db, updateSubject, deleteSubject } from "@/db";
+import { toast } from "sonner";
+import { RotateCcw } from "lucide-react";
+import { ALL_SYSTEMS, ALL_SUBJECTS } from "@/data/ontology";
+import { useLiveQuery } from "dexie-react-hooks";
+import {
+  calculateCompletedTopicTasks,
+  calculateTopicsProgressPercentage,
+} from "@/lib/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 
 interface SubjectCardProps {
   subject: Subject;
   systems: StudySystem[];
-  dragHandleProps?: any;
-  onDelete?: (subject: Subject) => void;
-  onRename?: (subject: Subject) => void;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
-export function SubjectCard({ subject, systems, dragHandleProps, onDelete, onRename }: SubjectCardProps) {
-  const totalTasks = systems.length * 2;
-  const completedTasks = systems.reduce((acc, sys) => {
-    let done = 0;
-    if (sys.contentCompleted) done++;
-    if (sys.qbankDone) done++;
-    return acc + done;
-  }, 0);
+export function SubjectCard({
+  subject,
+  systems,
+  dragHandleProps,
+}: SubjectCardProps) {
+  const allTopicIds = systems.flatMap((sys) => {
+    const ontologySubject = ALL_SUBJECTS.find((s) => s.name === subject.name);
+    const os = ALL_SYSTEMS.find(
+      (s) =>
+        s.subjectId === ontologySubject?.id &&
+        normalizeName(s.name) === normalizeName(sys.name),
+    );
+    return os ? os.topics.map((t) => t.id) : [];
+  });
+  const allTopicsStr = allTopicIds.join(",");
+  const topicProgresses =
+    useLiveQuery(
+      () => db.topicProgress.where("topicId").anyOf(allTopicIds).toArray(),
+      [allTopicsStr],
+    ) || [];
 
-  const progress = calculateSubjectProgress(systems);
+  const totalTasks = allTopicIds.length * 2;
+  const completedTasks = calculateCompletedTopicTasks(topicProgresses);
+  const progress = calculateTopicsProgressPercentage(
+    topicProgresses,
+    allTopicIds.length,
+  );
   const isFullyComplete = progress === 100 && totalTasks > 0;
 
   return (
-    <div className="group flex items-center w-full bg-card transition-all duration-200 rounded-2xl border border-border/80 hover:border-primary/40 shadow-sm hover:shadow-md overflow-hidden relative p-4 sm:p-5 gap-2">
-      {dragHandleProps && (
-        <div
-          {...dragHandleProps}
-          className="pr-1 text-muted-foreground/30 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing shrink-0"
-          aria-label="Drag to reorder subject"
-        >
-          <GripVertical className="w-4 h-4 sm:w-5 sm:h-5" />
-        </div>
+    <div
+      className={cn(
+        "group relative w-full p-4 rounded-2xl border transition-all duration-300 hover:shadow-sm",
+        isFullyComplete
+          ? "bg-primary/5 border-primary/20 shadow-[inset_0_0_20px_rgba(var(--primary),0.02)]"
+          : "bg-card border-border/40 hover:border-border",
       )}
-      <div className="flex-1 min-w-0">
-        <Link href={`/subjects/${subject.id}`} className="block select-none">
-          <div className="flex justify-between items-center mb-3 gap-2 min-w-0">
-            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-              <div className={cn(
-                "p-2 rounded-xl border shrink-0 transition-colors",
-                isFullyComplete
-                  ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                  : "bg-primary/10 text-primary border-primary/20"
-              )}>
-                {isFullyComplete ? <CheckCircle2 className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
-              </div>
-              <h3 className="font-semibold text-base sm:text-lg leading-tight text-foreground truncate min-w-0 flex-1 group-hover:text-primary transition-colors">
-                {subject.name}
-              </h3>
-            </div>
-
-            <Badge
-              variant="outline"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <Link
+          href={`/subjects/${subject.id}`}
+          className="flex-1 min-w-0 group-hover:opacity-90 transition-opacity"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <h3
               className={cn(
-                "font-mono tabular-nums text-xs px-2 py-0.5 font-bold border-border/60 shrink-0",
-                isFullyComplete && "border-emerald-500/30 text-emerald-500 bg-emerald-500/5"
+                "font-bold text-lg sm:text-xl truncate tracking-tight transition-colors",
+                isFullyComplete ? "text-primary/90" : "text-foreground",
               )}
             >
-              {progress}%
-            </Badge>
+              {subject.name}
+            </h3>
+            {isFullyComplete && (
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase border border-primary/20 flex-shrink-0 animate-in fade-in zoom-in duration-300">
+                Mastered
+              </span>
+            )}
           </div>
 
-          <ProgressBar progress={progress} className="h-1.5 rounded-full" />
-
-          <div className="mt-3 flex justify-between items-center text-[11px] font-medium tracking-wide text-muted-foreground">
+          <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-              {systems.length} {systems.length === 1 ? 'System' : 'Systems'}
+              {systems.length} {systems.length === 1 ? "System" : "Systems"}
             </span>
             <span className="font-mono tabular-nums text-[11px] text-foreground/80 font-semibold bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
               {completedTasks}/{totalTasks} tasks
             </span>
           </div>
         </Link>
-      </div>
 
-      <div className="flex items-center gap-1 shrink-0 ml-1">
-        {(onDelete || onRename) && (
+        <div className="flex items-center gap-1 shrink-0 ml-1 relative z-20">
           <DropdownMenu>
             <DropdownMenuTrigger
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors focus:outline-none shrink-0"
               aria-label="Subject options"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             >
               <MoreVertical className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 rounded-xl">
-              {onRename && (
-                <DropdownMenuItem
-                  onClick={(e) => { e.stopPropagation(); onRename(subject); }}
-                  className="gap-2 py-2 cursor-pointer text-xs"
-                >
-                  <Edit2 className="w-3.5 h-3.5" /> Rename
-                </DropdownMenuItem>
-              )}
-              {onDelete && (
-                <DropdownMenuItem
-                  onClick={(e) => { e.stopPropagation(); onDelete(subject); }}
-                  className="text-destructive focus:text-destructive gap-2 py-2 cursor-pointer text-xs font-medium"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                </DropdownMenuItem>
-              )}
+              
+              <DropdownMenuItem
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Are you sure you want to reset all progress for this subject? This cannot be undone.')) {
+                    await db.topicProgress.where('topicId').anyOf(allTopicIds).delete();
+                    await db.history.where('subjectId').equals(subject.id!).delete();
+                    toast.success('Progress reset for ' + subject.name);
+                  }
+                }}
+                className="gap-2 py-2 cursor-pointer text-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-500" /> Reset Progress
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Are you sure you want to delete this subject and all its systems?')) {
+                    await deleteSubject(subject.id!);
+                    toast.success('Subject deleted');
+                  }
+                }}
+                className="text-destructive focus:text-destructive gap-2 py-2 cursor-pointer text-xs font-medium"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
 
-        <Link href={`/subjects/${subject.id}`}>
-          <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 cursor-pointer" />
-        </Link>
+          <div
+            {...dragHandleProps}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors cursor-grab active:cursor-grabbing focus:outline-none shrink-0"
+            aria-label="Drag handle"
+          >
+            <div className="grid grid-cols-2 gap-0.5">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="w-1 h-1 rounded-full bg-current opacity-70"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-border/40">
+        <div className="flex items-center justify-between text-xs mb-2">
+          <span className="font-semibold text-muted-foreground">
+            Overall Progress
+          </span>
+          <span className="font-mono font-bold text-foreground tabular-nums tracking-tight">
+            {progress}%
+          </span>
+        </div>
+        <div className="h-2 sm:h-2.5 w-full bg-muted/60 rounded-full overflow-hidden border border-border/20 shadow-inner">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   );
 }
-

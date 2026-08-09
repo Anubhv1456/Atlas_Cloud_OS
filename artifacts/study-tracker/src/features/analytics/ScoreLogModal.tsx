@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Award, CheckCircle2, Trophy, AlertTriangle } from 'lucide-react';
+import { Award, CheckCircle2, Trophy, TriangleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { calibrateSystemSDSR, calibrateSDSR } from '@/lib/sdsr-engine';
 
 interface ScoreLogModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ interface ScoreLogModalProps {
   initialType?: 'revision' | 'pyq';
   initialSubjectId?: number;
   initialSystemId?: number;
+  initialTopicId?: string;
+  initialTopicName?: string;
   initialPyqYearId?: number;
   initialTitle?: string;
   onSuccess?: () => void;
@@ -34,6 +37,8 @@ export function ScoreLogModal({
   initialType = 'revision',
   initialSubjectId,
   initialSystemId,
+  initialTopicId,
+  initialTopicName,
   initialPyqYearId,
   initialTitle,
   onSuccess,
@@ -46,6 +51,8 @@ export function ScoreLogModal({
   const [type, setType] = useState<'revision' | 'pyq'>(initialType);
   const [subjectId, setSubjectId] = useState<number | undefined>(initialSubjectId);
   const [systemId, setSystemId] = useState<number | undefined>(initialSystemId);
+  const [topicId, setTopicId] = useState<string | undefined>(initialTopicId);
+  const [topicName, setTopicName] = useState<string | undefined>(initialTopicName);
   const [pyqYearId, setPyqYearId] = useState<number | undefined>(initialPyqYearId);
   const [title, setTitle] = useState<string>(initialTitle || '');
   const [score, setScore] = useState<string>('');
@@ -60,6 +67,8 @@ export function ScoreLogModal({
       setType(initialType);
       setSubjectId(initialSubjectId);
       setSystemId(initialSystemId);
+      setTopicId(initialTopicId);
+      setTopicName(initialTopicName);
       setPyqYearId(initialPyqYearId);
       setTitle(initialTitle || '');
       setScore('');
@@ -67,7 +76,7 @@ export function ScoreLogModal({
       setDateStr(new Date().toISOString().split('T')[0]);
       setNotes('');
     }
-  }, [isOpen, initialType, initialSubjectId, initialSystemId, initialPyqYearId, initialTitle]);
+  }, [isOpen, initialType, initialSubjectId, initialSystemId, initialTopicId, initialTopicName, initialPyqYearId, initialTitle]);
 
   // Auto-generate title if missing
   useEffect(() => {
@@ -153,6 +162,7 @@ export function ScoreLogModal({
         type,
         subjectId,
         systemId: systemId || undefined,
+        topicId: topicId || undefined,
         pyqYearId: pyqYearId || undefined,
         title: logTitle,
         score: scoreNum,
@@ -163,6 +173,36 @@ export function ScoreLogModal({
       };
 
       await db.scoreLogs.add(logData as ScoreLog);
+
+      
+      // Calculate global retention score
+      const recentLogs = await db.scoreLogs.orderBy('timestamp').reverse().limit(50).toArray();
+      let globalRetentionScore = 0.70;
+      if (recentLogs.length > 0) {
+        const sum = recentLogs.reduce((acc, log) => acc + (log.percentage / 100), 0);
+        globalRetentionScore = sum / recentLogs.length;
+      }
+
+      // SDSR Engine Calibration
+      if (type === 'revision' && selectedSub) {
+        const scoreRatio = scoreNum / totalNum;
+        
+        if (topicId) {
+          // Topic-level SDSR
+          const topicProgress = await db.topicProgress.get(topicId);
+          if (topicProgress) {
+            const { updatedTopicProgress, newInterval } = calibrateSDSR(topicProgress, scoreRatio, selectedSub.name, globalRetentionScore);
+            await db.topicProgress.update(topicId, updatedTopicProgress);
+            console.log(`SDSR Calibrated Topic: ${topicId} -> new interval ${newInterval} days`);
+          }
+        } else if (systemId && selectedSys) {
+          // System-level SDSR
+          const sysUpdates = calibrateSystemSDSR(selectedSys, scoreRatio, selectedSub.name, globalRetentionScore);
+          await db.systems.update(systemId, sysUpdates);
+          console.log(`SDSR Calibrated System: ${systemId} -> new interval ${sysUpdates.currentRevisionInterval} days`);
+        }
+      }
+
 
       toast({
         title: 'Score Recorded! 🎯',
@@ -345,19 +385,19 @@ export function ScoreLogModal({
           {/* Real-time Inline Validation Error Alerts */}
           {score !== '' && total !== '' && !isNaN(scoreNum) && !isNaN(totalNum) && scoreNum > totalNum && (
             <div className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 flex items-center gap-2 text-xs font-medium animate-in fade-in duration-200">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <TriangleAlert className="w-4 h-4 shrink-0" />
               <span>Earned score ({scoreNum}) cannot exceed total possible marks ({totalNum}).</span>
             </div>
           )}
           {score !== '' && !isNaN(scoreNum) && scoreNum < 0 && (
             <div className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 flex items-center gap-2 text-xs font-medium animate-in fade-in duration-200">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <TriangleAlert className="w-4 h-4 shrink-0" />
               <span>Earned score cannot be a negative number.</span>
             </div>
           )}
           {total !== '' && !isNaN(totalNum) && totalNum <= 0 && (
             <div className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 flex items-center gap-2 text-xs font-medium animate-in fade-in duration-200">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <TriangleAlert className="w-4 h-4 shrink-0" />
               <span>Total possible marks must be greater than 0.</span>
             </div>
           )}
@@ -371,7 +411,7 @@ export function ScoreLogModal({
                 ) : percentage >= 60 ? (
                   <CheckCircle2 className="w-5 h-5 shrink-0" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 shrink-0" />
+                  <TriangleAlert className="w-5 h-5 shrink-0" />
                 )}
                 <div>
                   <p className="text-xs font-bold leading-none">Percentage Grade</p>

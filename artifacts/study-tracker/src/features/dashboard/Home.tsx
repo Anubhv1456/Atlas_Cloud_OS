@@ -1,3 +1,8 @@
+import { DueCurriculumSetsCard } from './DueCurriculumSetsCard';
+import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
+import { ALL_TOPICS, ALL_SUBJECTS } from '@/data/ontology';
+import { CurriculumSet } from '@/db/types';
+import { normalizeName } from '@/lib/exam-presets';
 import { useRef, useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useSubjects, useAllSystems, addSubject, updateSubject, deleteSubject, useCurrentStreak, setFocus, setSubjectFocus, updateSubjectsOrder, useAllPYQs } from '@/db';
@@ -8,16 +13,19 @@ import { FocusDialog } from '@/components/FocusDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, BookOpen, Layers, Search as SearchIcon, X, ChevronRight, Clock, AlertCircle, Target, XCircle, Activity, ArrowUpRight, CheckCircle, Lightbulb, Lock, Pencil, Flame, Award, Sparkles, TrendingUp, Brain } from 'lucide-react';
+import { Plus, BookOpen, Layers, X, ChevronRight, Clock, AlertCircle, Target, XCircle, Activity, ArrowUpRight, CheckCircle, Lightbulb, Lock, Pencil, Flame, Award, Sparkles, TrendingUp, Brain } from 'lucide-react';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useLocation } from 'wouter';
-import { runSearch } from '@/lib/searchUtils';
 import { isRevisionDue, isRevisionOverdue, sortSystemsByRevisionPriority, calculateDecayScore, daysOverdue, getRetrievability, getRetrievabilityHealth, getDailyRevisionQueue, getSystemDecayFactor } from '@/db';
 import { format } from 'date-fns';
 import { StudySystem, Subject } from '@/db';
 import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progress';
+import { ALL_SYSTEMS } from '@/data/ontology';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db';
+import { calculateTopicProgressValue } from '@/lib/topic-progress';
 import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
@@ -46,17 +54,17 @@ function RevisionPill({ sys }: { sys: StudySystem }) {
 
   if (isRevisionOverdue(sys)) return (
     <span className="flex items-center gap-1 text-[10px] font-bold text-destructive shrink-0 bg-destructive/10 px-2.5 py-0.5 rounded-full border border-destructive/20">
-      <AlertCircle className="w-2.5 h-2.5" />{retrievability}% ({daysOverdue(sys)}d overdue)
+      <div className="w-1.5 h-1.5 rounded-full bg-destructive" />Overdue
     </span>
   );
   if (isRevisionDue(sys)) return (
     <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-500 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-      <Clock className="w-2.5 h-2.5" />{retrievability}% Due today
+      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />Due
     </span>
   );
   if (sys.nextRevisionDate) return (
     <span className={cn("flex items-center gap-1 text-[10px] font-semibold shrink-0 px-2.5 py-0.5 rounded-full bg-muted/60 border border-border/40", health.colorClass)}>
-      <Brain className="w-2.5 h-2.5" />{retrievability}% Recall
+      <div className={cn("w-1.5 h-1.5 rounded-full", health.colorClass.includes("destructive") ? "bg-destructive" : health.colorClass.includes("amber") ? "bg-amber-500" : "bg-emerald-500")} />Healthy
     </span>
   );
   return null;
@@ -64,7 +72,6 @@ function RevisionPill({ sys }: { sys: StudySystem }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-import { OverviewStats } from '@/features/dashboard/OverviewStats';
 import { ActiveRevisions } from '@/features/dashboard/ActiveRevisions';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { useHomeLogic } from './Home.hooks';
@@ -75,11 +82,11 @@ export default function Home() {
     primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision,
     secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision,
     secondaryDaysOverdue, dueRevisions, insights,
-    showAddSubject, setShowAddSubject,
-    subjectToRename, setSubjectToRename, renameSubjectName, setRenameSubjectName,
-    subjectToDelete, setSubjectToDelete,
+    
+     
+    
     focusDialogType, setFocusDialogType,
-    handleRenameSubjectSave, handleDeleteSubjectConfirm,
+    
     handleSetFocus, goToSystem, goToSubject, handleSubjectDragEnd
   } = useHomeLogic();
 
@@ -87,6 +94,46 @@ export default function Home() {
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
+
+    const allTopicIds = systems.flatMap(sys => {
+    const subject = subjects.find(sub => sub.id === sys.subjectId);
+    const ontologySubject = subject ? ALL_SUBJECTS.find(s => s.name === subject.name) : undefined;
+    const os = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(sys.name));
+    return os ? os.topics.map(t => t.id) : [];
+  });
+  
+  const stats = useLiveQuery(async () => {
+    let completedTasks = 0;
+    let strongSystems = 0;
+    let dueRevisionsCount = 0;
+    let weakTopicsCount = 0;
+    let learningTopicsCount = 0;
+    let sum = 0;
+    
+    const now = new Date();
+    await db.topicProgress.each(tp => {
+      if (tp.contentStatus === 'completed' && tp.qbankStatus === 'completed') completedTasks++;
+      if (tp.confidence === 'high') strongSystems++;
+      if (tp.nextRevisionDate && new Date(tp.nextRevisionDate) <= now) dueRevisionsCount++;
+      if (tp.confidence === 'low') weakTopicsCount++;
+      if (tp.contentStatus === 'in_progress' || tp.qbankStatus === 'in_progress' || 
+          (tp.contentStatus === 'completed' && tp.qbankStatus !== 'completed') || 
+          (tp.contentStatus !== 'completed' && tp.qbankStatus === 'completed')) {
+        learningTopicsCount++;
+      }
+      sum += calculateTopicProgressValue(tp);
+    });
+    
+    return { completedTasks, strongSystems, dueRevisionsCount, weakTopicsCount, learningTopicsCount, sum };
+  }, []) || { completedTasks: 0, strongSystems: 0, dueRevisionsCount: 0, weakTopicsCount: 0, learningTopicsCount: 0, sum: 0 };
+
+  
+  let topicOverallProgress = 0;
+  if (allTopicIds.length > 0) {
+    let sum = 0;
+    
+    topicOverallProgress = Math.round((sum / allTopicIds.length) * 100);
+  }
 
   useEffect(() => {
     // Auto trigger onboarding if completed flag is missing
@@ -114,55 +161,18 @@ export default function Home() {
                 <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
                   <Sparkles className="w-3 h-3" /> Medical Study Tracker
                 </span>
-                {isConfigured ? (
-                  <button
-                    onClick={() => setExamModalOpen(true)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[10px] font-bold border border-primary/20"
-                    title="Edit Target Examination"
-                  >
-                    <Target className="w-2.5 h-2.5" />
-                    {profile.targetExam}
-                    {profile.targetExamDate ? ` • ${new Date(profile.targetExamDate).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })}` : ''}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setExamModalOpen(true)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all text-[10px] font-bold border border-amber-500/20 animate-pulse"
-                  >
-                    <Target className="w-2.5 h-2.5" />
-                    Set Target Exam
-                  </button>
-                )}
+                
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
             </div>
           </div>
 
-          {/* Quick Search trigger opening CommandPalette */}
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-            className="shrink-0 h-10 px-3.5 rounded-xl border border-border/80 bg-card hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground shadow-sm flex items-center gap-2 group cursor-pointer self-start sm:self-auto"
-            aria-label="Open search"
-            title="Open Quick Search (⌘K or /)"
-          >
-            <SearchIcon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="hidden sm:inline text-xs font-medium text-muted-foreground group-hover:text-foreground">Search...</span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-mono font-medium text-muted-foreground bg-muted/80 px-1.5 py-0.5 rounded border border-border/60">
-              <span className="text-[9px]">⌘</span>K
-            </kbd>
-          </button>
+          
         </header>
             
-            <OverviewStats 
-              streak={streak}
-              overallProgress={calculateOverallProgress(systems)}
-              completedTasks={systems.reduce((acc, sys) => acc + (sys.contentCompleted ? 1 : 0) + (sys.qbankDone ? 1 : 0), 0)}
-              totalTasks={systems.length * 2}
-              strongSystems={systems.filter(s => s.status === 'Strong').length}
-              totalSystems={systems.length}
-              dueRevisionsCount={dueRevisions.length}
-            />
+            
 
+            <DueCurriculumSetsCard />
             <ActiveRevisions
               primaryFocus={primaryFocus || null}
               primaryFocusSubject={primaryFocusSubject || null}
@@ -229,22 +239,16 @@ export default function Home() {
             <SubjectsGrid
               subjects={subjects}
               systems={systems}
-              setShowAddSubject={setShowAddSubject}
-              setSubjectToDelete={setSubjectToDelete}
-              setSubjectToRename={setSubjectToRename}
-              setRenameSubjectName={setRenameSubjectName}
+              
+              
+              
+              
               handleSubjectDragEnd={handleSubjectDragEnd}
             />
 </div>
       </div>
 
-      <AddDialog
-        open={showAddSubject}
-        onOpenChange={setShowAddSubject}
-        title="New Subject"
-        placeholder="e.g. Internal Medicine"
-        onSave={addSubject}
-      />
+      
       <FocusDialog
         open={focusDialogType !== null}
         onOpenChange={(isOpen) => !isOpen && setFocusDialogType(null)}
@@ -264,58 +268,9 @@ export default function Home() {
         }}
       />
 
-      {/* Rename Subject dialog */}
-      <Dialog open={!!subjectToRename} onOpenChange={(open) => { if (!open) setSubjectToRename(null); }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Rename Subject</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Input
-              autoFocus
-              value={renameSubjectName}
-              onChange={e => setRenameSubjectName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleRenameSubjectSave(); }}
-              className="text-lg py-6 px-4 bg-muted/50 border-transparent focus-visible:ring-primary focus-visible:bg-background"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setSubjectToRename(null)} className="rounded-xl">Cancel</Button>
-            <Button
-              onClick={handleRenameSubjectSave}
-              disabled={!renameSubjectName.trim() || renameSubjectName === subjectToRename?.name}
-              className="rounded-xl font-semibold px-8 shadow-sm"
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
 
-      {/* Delete Subject confirmation dialog */}
-      <Dialog open={!!subjectToDelete} onOpenChange={(open) => { if (!open) setSubjectToDelete(null); }}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-destructive">Delete Subject</DialogTitle>
-          </DialogHeader>
-          <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Are you sure you want to delete <strong className="text-foreground">{subjectToDelete?.name}</strong>?
-            </p>
-            <div className="text-xs text-destructive bg-destructive/10 p-3 rounded-xl border border-destructive/20 leading-relaxed font-medium">
-              ⚠️ This will permanently delete this subject along with all its systems, task progress, revision schedules, and PYQ records.
-            </div>
-          </div>
-          <DialogFooter className="flex-row gap-2 sm:justify-end mt-4">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setSubjectToDelete(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" className="flex-1 rounded-xl font-semibold shadow-sm" onClick={handleDeleteSubjectConfirm}>
-              Delete Subject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      
 
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />

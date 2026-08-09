@@ -11,7 +11,9 @@ export type TimelineEventType =
   | 'qbankDone'          // Q-bank completed
   | 'pyqsDone'           // PYQs completed (future)
   | 'revisionSystem'     // system revision (future)
-  | 'revisionSubject';   // subject revision (future)
+  | 'revisionSubject'
+  | 'topicMastered'
+  | 'topicWeak';
 
 export type TimelineEventStatus = 'completed' | 'upcoming' | 'overdue';
 

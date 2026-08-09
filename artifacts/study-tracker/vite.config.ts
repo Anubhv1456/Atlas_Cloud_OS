@@ -116,9 +116,7 @@ export default defineConfig({
     }
   },
   server: {
-    hmr: {
-      clientPort: 443,
-    },
+    hmr: false,
     port,
     strictPort: true,
     host: '0.0.0.0',

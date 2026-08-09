@@ -18,7 +18,7 @@ import {
   getDay,
   isSameMonth,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, BookOpen, Layers, CalendarDays, Clock, AlertCircle, CheckCircle2, Sparkles, Filter, Activity, TrendingUp, Flame, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Layers, CalendarDays, Clock, AlertCircle, CheckCircle2, Sparkles, Filter, Activity, TrendingUp, Flame, RotateCcw, TriangleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
@@ -43,6 +43,8 @@ const EVENT_STYLE: Record<TimelineEvent['eventType'], { bg: string; text: string
   pyqsDone:         { bg: 'bg-amber-500/10 border-amber-500/20',     text: 'text-amber-500',        Icon: BookOpen },
   revisionSystem:   { bg: 'bg-primary/10 border-primary/20',          text: 'text-primary',          Icon: Clock    },
   revisionSubject:  { bg: 'bg-primary/10 border-primary/20',          text: 'text-primary',          Icon: Clock    },
+  topicMastered:    { bg: 'bg-emerald-500/10 border-emerald-500/20',  text: 'text-emerald-500',      Icon: CheckCircle2 },
+  topicWeak:        { bg: 'bg-rose-500/10 border-rose-500/20',        text: 'text-rose-500',         Icon: TriangleAlert },
 };
 
 // ── Event card ────────────────────────────────────────────────────────────────

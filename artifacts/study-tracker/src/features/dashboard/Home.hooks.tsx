@@ -1,3 +1,6 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db';
+import { ALL_SYSTEMS } from '@/data/ontology';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 import { useState, ReactNode, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
@@ -10,6 +13,7 @@ import {
   daysOverdue, calculateDecayScore, today 
 } from '@/db';
 import { calculateSubjectProgress } from '@/lib/progress';
+import { calculateTopicsProgressPercentage } from '@/lib/progress';
 import { determineFocusSystems } from '@/features/dashboard/homeUtils';
 import { DropResult } from '@hello-pangea/dnd';
 import { useAIInsights } from '@/hooks/useAIInsights';
@@ -22,47 +26,11 @@ export function useHomeLogic() {
   const systems  = useAllSystems();
   const pyqs = useAllPYQs();
   const [, setLocation] = useLocation();
-  const [showAddSubject, setShowAddSubject] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
-  const [subjectToRename, setSubjectToRename] = useState<Subject | null>(null);
-  const [renameSubjectName, setRenameSubjectName] = useState('');
+  
+  
+  
+  
 
-  const handleDeleteSubjectConfirm = async () => {
-    if (subjectToDelete) {
-      await deleteSubject(subjectToDelete.id!);
-      setSubjectToDelete(null);
-    }
-  };
-
-  const handleRenameSubjectSave = async () => {
-    if (subjectToRename && renameSubjectName.trim()) {
-      await updateSubject(subjectToRename.id!, renameSubjectName.trim());
-      setSubjectToRename(null);
-      setRenameSubjectName('');
-    }
-  };
-
-  const handleSubjectDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-    const items = Array.from(subjects);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    const updates = items.map((item, index) => ({
-      id: item.id!,
-      order: index
-    }));
-
-    await updateSubjectsOrder(updates);
-  };
-
-
-  // ── Overall Stats & Greetings ───────────────────────────────────────────────────
-
-  const currentHour = new Date().getHours();
-  let greeting = 'Good Evening';
-  if (currentHour < 12) greeting = 'Good Morning';
-  else if (currentHour < 17) greeting = 'Good Afternoon';
 
   const [focusDialogType, setFocusDialogType] = useState<'primary' | 'secondary' | null>(null);
 
@@ -81,67 +49,29 @@ export function useHomeLogic() {
     isSecondaryOverriddenByRevision,
     dueRevisions,
     secondaryDaysOverdue
-  } = determineFocusSystems(subjects, systems, new Date());
+  } = determineFocusSystems(subjects, systems, today());
 
-  // ── Smart Dynamic Knowledge Insights ───────────────────────────────────────
-  interface Insight {
-    id: string;
-    confidence: number;
-    badge: string;
-    badgeClass: string;
-    icon: ReactNode;
-    text: ReactNode;
-    actionLabel?: string;
-    onAction?: () => void;
-  }
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
 
-  const { data: aiData } = useAIInsights(subjects, systems);
-  const [aiInsight, setAiInsight] = useState<Insight | null>(null);
-  const { flags } = useFeatureFlags();
+  const aiInsight = null;
 
-  useEffect(() => {
-    if (!flags.aiInsights) {
-      if (aiInsight) setAiInsight(null);
-      return;
-    }
-    
-    if (aiData && aiData.subjectCalibrations && Array.isArray(aiData.subjectCalibrations) && aiData.subjectCalibrations.length > 0 && !aiInsight) {
-      const topSubject = aiData.subjectCalibrations.reduce((prev: any, current: any) => 
-        (prev.priorityWeight * prev.forgettingRisk > current.priorityWeight * current.forgettingRisk) ? prev : current
-      );
-      
-      if (topSubject && topSubject.subjectName) {
-        setAiInsight({
-          id: 'ai-insight',
-          confidence: 99,
-          badge: 'AI INTELLIGENCE',
-          badgeClass: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-          icon: <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />,
-          text: (
-            <span className="flex flex-col gap-1">
-              {aiData.strategicInsights && aiData.strategicInsights.length > 0 ? (
-                <span className="mb-2"><strong>Strategic Insight:</strong> {aiData.strategicInsights[0]}</span>
-              ) : null}
-              <span><strong className="text-foreground">{topSubject.subjectName}</strong>: Priority Weight {topSubject.priorityWeight.toFixed(2)}, Forgetting Risk {topSubject.forgettingRisk.toFixed(2)}</span>
-              {topSubject.reasons && topSubject.reasons.length > 0 && (
-                <span className="text-muted-foreground mt-1">Factors: {topSubject.reasons.join(' • ')}</span>
-              )}
-            </span>
-          ),
-          actionLabel: 'View Subject',
-          onAction: () => {
-            const sub = subjects.find(s => s.name.toLowerCase() === topSubject.subjectName.toLowerCase() || s.name.toLowerCase().includes(topSubject.subjectName.toLowerCase()));
-            if (sub) setLocation(`/subjects/${sub.id}`);
-          }
-        });
-      }
-    }
-  }, [aiData, aiInsight, setLocation, subjects, flags.aiInsights]);
+  const handleSubjectDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(subjects);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    await updateSubjectsOrder(items.filter(s => s.id !== undefined).map(s => ({ id: s.id as number, order: s.order })));
+  };
 
   const insights = useMemo(() => {
     if (systems.length === 0 || subjects.length === 0) return [];
 
-    const candidates: Insight[] = [];
+    const candidates: any[] = [];
     const now = new Date();
     
     if (aiInsight) candidates.push(aiInsight);
@@ -214,7 +144,7 @@ export function useHomeLogic() {
     // 2. PRIMARY FOCUS STEP AWAY (Confidence: 94)
     if (primaryFocus && !(primaryFocus.contentCompleted && primaryFocus.qbankDone)) {
       const sub = subjects.find(s => s.id === primaryFocus!.subjectId);
-      const missingTask = !primaryFocus.contentCompleted ? 'Content' : 'QBank';
+      const missingTask = 'Topics';
       candidates.push({
         id: 'primary-focus-near',
         confidence: 94,
@@ -367,12 +297,12 @@ export function useHomeLogic() {
     secondaryDaysOverdue,
     dueRevisions,
     insights,
-    showAddSubject, setShowAddSubject,
-    subjectToRename, setSubjectToRename,
-    renameSubjectName, setRenameSubjectName,
-    subjectToDelete, setSubjectToDelete,
+    
+    
+    
+    
     focusDialogType, setFocusDialogType,
-    handleRenameSubjectSave, handleDeleteSubjectConfirm,
+    
     handleSetFocus, goToSystem, goToSubject, handleSubjectDragEnd
   };
 }

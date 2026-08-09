@@ -189,7 +189,7 @@ export default function Contact() {
                           {label}
                         </div>
                         <div className="text-[10px] text-muted-foreground truncate font-mono">
-                          {url.replace(/^https?:\/\/(www\.)?/, '')}
+                          {url!.replace(/^https?:\/\/(www\.)?/, '')}
                         </div>
                       </div>
                     </div>

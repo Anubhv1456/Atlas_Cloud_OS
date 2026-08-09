@@ -5,6 +5,18 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
 
+// Suppress ResizeObserver loop limit exceeded error
+const _ResizeObserver = window.ResizeObserver;
+window.ResizeObserver = class ResizeObserver extends _ResizeObserver {
+  constructor(callback: ResizeObserverCallback) {
+    super((entries, observer) => {
+      window.requestAnimationFrame(() => {
+        callback(entries, observer);
+      });
+    });
+  }
+};
+
 // Register PWA service worker with auto-update in production builds
 if (import.meta.env.PROD) {
   try {

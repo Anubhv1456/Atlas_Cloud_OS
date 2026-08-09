@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Marker, MarkerStatus } from '@/lib/markers';
 import { getAllMarkersForAdmin, updateMarkerStatusAdmin } from '@/lib/admin';
 import { formatDistanceToNow } from 'date-fns';
-import { Check, X, Archive, AlertTriangle, Shield } from 'lucide-react';
+import { Check, X, Archive, TriangleAlert, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -108,7 +108,7 @@ export function CommunityView() {
                     </span>
                     {(marker.reportedBy || []).length > 0 && (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" />
+                        <TriangleAlert className="w-3 h-3" />
                         Reported ({(marker.reportedBy || []).length})
                       </span>
                     )}

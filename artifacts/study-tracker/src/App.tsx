@@ -15,21 +15,23 @@ import { syncToFirebase } from '@/lib/firebaseSync';
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 
 import NotFound from '@/pages/not-found';
 import Home from '@/features/dashboard/Home';
-import SubjectDetail from '@/features/subjects/SubjectDetail';
-import Timeline from '@/features/timeline/Timeline';
-import Analytics from '@/features/analytics/Analytics';
-import Settings from '@/pages/Settings';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
-import AdminDashboard from '@/features/admin/AdminDashboard';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
 import Contact from '@/pages/Contact';
 import BetaAccess from '@/pages/BetaAccess';
+
+const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
+const Analytics = lazy(() => import('@/features/analytics/Analytics'));
+const Settings = lazy(() => import('@/features/settings/Settings'));
+const Timeline = lazy(() => import('@/features/timeline/Timeline'));
+const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 
 const queryClient = new QueryClient();
@@ -185,6 +187,17 @@ function ProtectedApp() {
 }
 
 function App() {
+  useEffect(() => {
+    const checkOntology = async () => {
+      if (!localStorage.getItem('ontology_psychiatry_fix')) {
+        await loadUniversalOntology();
+        localStorage.setItem('ontology_psychiatry_fix', 'true');
+        window.location.reload();
+      }
+    };
+    checkOntology();
+  }, []);
+
   useEffect(() => {
     triggerSpacedRepetitionNotification(false).catch(err => {
       console.warn('Background notification trigger suppressed:', err);

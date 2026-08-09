@@ -146,7 +146,7 @@ export function FocusDialog({
                 {filteredSubjects.map(sub => {
                   const subSystems = systems.filter(s => s.subjectId === sub.id);
                   const totalSys = subSystems.length;
-                  const completedSys = subSystems.filter(s => s.contentCompleted && s.qbankDone).length;
+                  const completedSys = subSystems.filter(s => false).length;
                   const percent = totalSys > 0 ? Math.round((completedSys / totalSys) * 100) : 0;
                   const isCurrentFocus = sub.focus === focusType;
 
@@ -203,7 +203,7 @@ export function FocusDialog({
               <div className="grid gap-1.5">
                 {filteredSystems.slice(0, activeTab === 'systems' ? 50 : 20).map(sys => {
                   const subject = subjects.find(s => s.id === sys.subjectId);
-                  const isDone = sys.contentCompleted && sys.qbankDone;
+                  const isDone = false;
                   const isCurrentFocus = sys.focus === focusType;
 
                   return (
