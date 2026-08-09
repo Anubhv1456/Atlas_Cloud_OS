@@ -1,5 +1,4 @@
 import { normalizeName } from '@/lib/exam-presets';
-import { calculateTopicsProgressPercentage } from './progress';
 import { REC_WEIGHTS, REC_MULTIPLIERS } from './recommendation-constants';
 import { Subject, StudySystem } from '@/db';
 import { ALL_SYSTEMS, ALL_SUBJECTS, OntologyTopic } from '@/data/ontology';
@@ -131,7 +130,8 @@ export function computeIntelligentRecommendation(
   systems: StudySystem[],
   currentYear: string = 'Final MBBS',
   targetExam: string = 'NEET PG',
-  topicProgresses: TopicProgress[] = []
+  topicProgresses: TopicProgress[] = [],
+  curriculumSets: any[] = []
 ): RecommendationResult {
   if (systems.length === 0) {
     return {
@@ -148,82 +148,67 @@ export function computeIntelligentRecommendation(
 
   let bestSystem: StudySystem | null = null;
   let bestSubject: Subject | null = null;
-  let bestTopic: OntologyTopic | null = null;
+  let bestTopicOrSetName: string | null = null;
   let bestScore = -1;
   let bestReasons: string[] = [];
 
   for (const sys of systems) {
     const sub = subjects.find(s => s.id === sys.subjectId);
     const subName = sub?.name || 'General Topic';
-
     const weightage = getSubjectWeightageInfo(subName, targetExam);
     const yearMult = getYearMultiplier(weightage.phase, currentYear);
 
-    const ontologySubject = ALL_SUBJECTS.find(s => s.name === subName);
-    const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(sys.name));
-    const topics = ontologySystem?.topics || [];
+    const systemSets = curriculumSets.filter(s => s.systemId === sys.id);
 
-    if (topics.length > 0) {
-      for (const topic of topics) {
+    if (systemSets.length > 0) {
+      for (const set of systemSets) {
         let score = weightage.weight * yearMult;
         const reasons: string[] = [];
 
-        // 1. Year alignment note
         if (yearMult > 2.0) {
           reasons.push(`• Essential ${currentYear} priority (${subName})`);
         } else {
           reasons.push(`• High yield for ${targetExam}: ${weightage.tag}`);
         }
 
-        if (topic.highYield) {
-          score += REC_WEIGHTS.HIGH_YIELD_BONUS;
-          reasons.push('• High-Yield Marker');
-        }
-        if (topic.pyqWeight > 0) {
-          score += topic.pyqWeight * REC_WEIGHTS.PYQ_WEIGHT_MULTIPLIER;
-          reasons.push(`• PYQ Weight: ${topic.pyqWeight}`);
+        // Check if any topic in set is weak
+        const weakTopics = set.topicIds.filter((tId: string) => {
+          const tp = topicProgresses.find(p => p.topicId === tId);
+          return tp && tp.isWeak;
+        });
+
+        if (weakTopics.length > 0) {
+          score += REC_WEIGHTS.WEAK_CONFIDENCE_BONUS;
+          reasons.push(`• Contains ${weakTopics.length} weak topics`);
         }
 
-        const tp = topicProgresses.find(p => p.topicId === topic.id);
-        
-        if (tp) {
-          if (tp.confidence === 'low') {
-            score += REC_WEIGHTS.WEAK_CONFIDENCE_BONUS;
-            reasons.push('• Weak confidence tag — needs immediate reinforcement');
+        if (!set.contentCompleted) {
+          score += REC_WEIGHTS.PENDING_CONTENT_BONUS;
+          reasons.push('• Pending core content completion');
+        } else if (!set.qbankCompleted) {
+          score += REC_WEIGHTS.PENDING_QBANK_BONUS;
+          reasons.push('• Pending QBank practice');
+        }
+
+        if (set.contentCompleted && set.qbankCompleted) {
+          if (set.nextRevisionDate && new Date(set.nextRevisionDate) < new Date()) {
+            score += REC_WEIGHTS.REVISION_DUE_BONUS;
+            reasons.push('• Active revision due based on spaced repetition');
+          } else {
+            score += REC_WEIGHTS.MASTERED_PENALTY;
           }
-          if (tp.contentStatus !== 'completed') {
-            score += REC_WEIGHTS.PENDING_CONTENT_BONUS;
-            reasons.push('• Pending core content completion');
-          } else if (tp.qbankStatus !== 'completed') {
-            score += REC_WEIGHTS.PENDING_QBANK_BONUS;
-            reasons.push('• Pending QBank practice');
-          }
-          
-          if (tp.contentStatus === 'completed' && tp.qbankStatus === 'completed') {
-            // Memory decay logic could go here, for now basic boost if due
-            if (tp.nextRevisionDate && tp.nextRevisionDate < new Date()) {
-               score += REC_WEIGHTS.REVISION_DUE_BONUS;
-               reasons.push('• Active revision due based on spaced repetition');
-            } else {
-               score += REC_WEIGHTS.MASTERED_PENALTY; // Already mastered and not due
-            }
-          }
-        } else {
-          // Unstarted topic
-          score += REC_WEIGHTS.UNEXPLORED_TOPIC_BONUS;
-          reasons.push('• Unexplored topic in recommended subject');
         }
 
         if (score > bestScore) {
           bestScore = score;
           bestSystem = sys;
           bestSubject = sub || null;
-          bestTopic = topic;
+          bestTopicOrSetName = `Set: ${set.name}`;
           bestReasons = reasons.slice(0, 3);
         }
       }
     } else {
-      // Fallback if no topics mapped
+      // Fallback
       let score = weightage.weight * yearMult;
       const reasons: string[] = [];
       if (yearMult > 2.0) {
@@ -233,27 +218,21 @@ export function computeIntelligentRecommendation(
         score += REC_WEIGHTS.WEAK_CONFIDENCE_BONUS;
         reasons.push('• Weak confidence tag');
       } else {
-        const osSub = ALL_SUBJECTS.find(s => s.name === subName);
-        const sysTopics = ALL_SYSTEMS.find(s => s.subjectId === osSub?.id && normalizeName(s.name) === normalizeName(sys.name))?.topics || [];
-        const sysTopicIds = sysTopics.map(t => t.id);
-        const sysTopicProgresses = topicProgresses.filter(tp => sysTopicIds.includes(tp.topicId));
-        const progress = calculateTopicsProgressPercentage(sysTopicProgresses, sysTopics.length);
-        if (progress < 100) {
-          score += REC_WEIGHTS.INCOMPLETE_SYSTEM_BONUS;
-        }
+        score += REC_WEIGHTS.UNEXPLORED_TOPIC_BONUS;
+        reasons.push('• Start building Curriculum Sets here');
       }
 
       if (score > bestScore) {
         bestScore = score;
         bestSystem = sys;
         bestSubject = sub || null;
+        bestTopicOrSetName = null;
         bestReasons = reasons.slice(0, 3);
       }
     }
   }
 
-  // Update recommendation result to include topic name if available
-  const sysName = bestTopic ? `${bestTopic.name}` : (bestSystem?.name || 'Gastroenterology');
+  const sysName = bestTopicOrSetName ? bestTopicOrSetName : (bestSystem?.name || 'Gastroenterology');
 
   return {
     subjectName: bestSubject?.name || 'General Medicine',

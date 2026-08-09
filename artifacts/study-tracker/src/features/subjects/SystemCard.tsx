@@ -59,7 +59,7 @@ export function SystemCard(props: SystemCardProps) {
     showInitDialog, setShowInitDialog, initValue, setInitValue,
     showEditContent, setShowEditContent, editCompleted, setEditCompleted, editTotal, setEditTotal,
     showEvalDialog, setShowEvalDialog, showDeleteConfirm, setShowDeleteConfirm,
-    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleTopicLogScore, showDecayCalibration, setShowDecayCalibration,
+    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleSetLogScore, showDecayCalibration, setShowDecayCalibration,
     showRenameDialog, setShowRenameDialog, renameValue, setRenameValue,
     showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, selectedTopicId, setSelectedTopicId, selectedTopicName, setSelectedTopicName, insightContent, setInsightContent,
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
@@ -68,7 +68,8 @@ export function SystemCard(props: SystemCardProps) {
     handleContentTap, handleContentPointerDown, handleContentPointerUp, handleContentPointerLeave,
     handleInitSave, handleEditSave, handleEditReset, toggleQBank, handleEvalSelect,
     localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
-    handleRenameSave, handleRevisionComplete
+    handleRenameSave, handleRevisionComplete,
+    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, finalTopics
   } = useSystemCardLogic(props);
 
   const statusColors: Record<SystemStatus, string> = {
@@ -239,10 +240,10 @@ export function SystemCard(props: SystemCardProps) {
             <div className="p-4 pt-0 border-t border-border/50 bg-card">
               <div className="grid gap-2 py-4">
                 {/* Curriculum Sets */}
-                <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={topics} />
+                <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={finalTopics} />
 
                 {/* Topics Checklist */}
-                <TopicList topics={topics} subjectId={system.subjectId} systemId={system.id!} subjectName={subjectName} systemName={system.name} onViewMarkers={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowViewMarkersDialog(true); }} onLeaveMarker={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowInsightDialog(true); }} onLogScore={handleTopicLogScore} />
+                <TopicList topics={finalTopics} subjectId={system.subjectId} systemId={system.id!} subjectName={subjectName} systemName={system.name} onViewMarkers={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowViewMarkersDialog(true); }} onLeaveMarker={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowInsightDialog(true); }} onLogScore={handleSetLogScore} onRenameTopic={handleRenameTopic} onDeleteTopic={handleDeleteTopic} onAddTopic={handleAddCustomTopic} />
               </div>
 
               <div className="space-y-6 pt-2">

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
+import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
 import { OntologyTopic } from '@/data/ontology';
-import { Folder, MoreVertical, Edit, Trash2, GripVertical, CheckCircle2 } from 'lucide-react';
 import { CurriculumSet } from '@/db/types';
-import { CurriculumSetForm } from './CurriculumSetForm';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
+import { CurriculumSetForm } from './CurriculumSetForm';
 import { deleteCurriculumSet } from '@/db/mutations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ interface CurriculumSetsProps {
   systemId: number;
   subjectId: number;
   topics: OntologyTopic[];
+  onLogScore?: (setId: string, setName: string) => void;
 }
 
 const colorMap = {
@@ -30,22 +31,28 @@ const colorMap = {
   gray: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
 };
 
-export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsProps) {
+export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: CurriculumSetsProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
   
   const curriculumSets = useLiveQuery(
-    () => (db.curriculumSets || db.revisionSets)
-      .where('systemId')
-      .equals(systemId)
-      .filter(s => !s.deletedAt)
-      .sortBy('order')
-      .then(res => res || []),
+    () => {
+      if (!systemId) return [];
+      return (db.curriculumSets || db.revisionSets)
+        .where('systemId')
+        .equals(systemId)
+        .filter(s => !s.deletedAt)
+        .sortBy('order')
+        .then(res => res || []);
+    },
     [systemId]
   ) || [];
 
   const topicProgresses = useLiveQuery(
-    () => db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray(),
+    () => {
+      if (!topics || topics.length === 0) return [];
+      return db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray();
+    },
     [topics]
   ) || [];
 
@@ -55,7 +62,6 @@ export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsPr
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Update orders in DB
     const updates = items.map((item, index) => ({
       ...item,
       order: index
@@ -67,6 +73,15 @@ export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsPr
   const handleDelete = async (id: string) => {
     await deleteCurriculumSet(id);
     toast.success('Curriculum set removed');
+  };
+
+  const togglePhase = async (setId: string, phase: 'content' | 'qbank', currentValue: boolean | undefined) => {
+    const targetDbTable = db.curriculumSets || db.revisionSets;
+    if (phase === 'content') {
+      await targetDbTable.update(setId, { contentCompleted: !currentValue, updatedAt: new Date() });
+    } else {
+      await targetDbTable.update(setId, { qbankCompleted: !currentValue, updatedAt: new Date() });
+    }
   };
 
   if (curriculumSets.length === 0) {
@@ -119,28 +134,33 @@ export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsPr
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
               {curriculumSets.map((rs, index) => {
-                // Calculate derived summary
                 const setTopics = topics.filter(t => rs.topicIds.includes(t.id));
                 const total = setTopics.length;
-                let completed = 0;
-                let due = 0;
                 let weak = 0;
                 
                 const now = new Date();
                 setTopics.forEach(t => {
                   const p = topicProgresses.find(tp => tp.topicId === t.id);
-                  if (p) {
-                    if (p.contentStatus === 'completed' && p.qbankStatus === 'completed') {
-                      completed++;
-                    }
-                    if (p.nextRevisionDate && now >= p.nextRevisionDate) {
-                      due++;
-                    }
-                    if (p.confidence === 'low') {
-                      weak++;
-                    }
+                  if (p && p.isWeak) {
+                    weak++;
                   }
                 });
+
+                let sdsrStatusText = '';
+                let sdsrStatusColor = '';
+                if (rs.nextRevisionDate) {
+                  const daysToRevision = Math.ceil((new Date(rs.nextRevisionDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysToRevision < 0) {
+                    sdsrStatusText = `${Math.abs(daysToRevision)}d Overdue`;
+                    sdsrStatusColor = 'text-rose-600';
+                  } else if (daysToRevision === 0) {
+                    sdsrStatusText = 'Due Today';
+                    sdsrStatusColor = 'text-amber-600';
+                  } else {
+                    sdsrStatusText = `Due in ${daysToRevision}d`;
+                    sdsrStatusColor = 'text-muted-foreground';
+                  }
+                }
 
                 return (
                   <Draggable key={rs.id} draggableId={rs.id!} index={index}>
@@ -149,7 +169,7 @@ export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsPr
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          "relative rounded-xl border p-3 flex flex-col gap-2 transition-colors bg-card",
+                          "relative rounded-xl border p-3 flex flex-col gap-3 transition-colors bg-card",
                           snapshot.isDragging && "shadow-lg scale-[1.02]",
                           colorMap[rs.color || 'teal']
                         )}
@@ -179,12 +199,53 @@ export function CurriculumSets({ systemId, subjectId, topics }: CurriculumSetsPr
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
+                        
+                        <div className="flex flex-wrap items-center justify-between gap-3 pl-8">
+                          <div className="flex items-center gap-3 text-xs font-medium">
+                            <span className="text-muted-foreground">{total} Topics</span>
+                            {weak > 0 && <span className="text-rose-600 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-600" /> {weak} Weak</span>}
+                            {sdsrStatusText && (
+                              <span className={cn("flex items-center gap-1", sdsrStatusColor)}>
+                                <div className={cn("w-1.5 h-1.5 rounded-full", sdsrStatusColor.replace('text-', 'bg-'))} />
+                                {sdsrStatusText}
+                              </span>
+                            )}
+                          </div>
 
-                        <div className="flex items-center gap-4 text-xs font-medium pl-8">
-                          <span className="text-muted-foreground">{total} Topics</span>
-                          {due > 0 && <span className="text-amber-600 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-600" /> {due} Due</span>}
-                          {weak > 0 && <span className="text-rose-600 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-600" /> {weak} Weak</span>}
-                          {(total > 0 && completed === total) && <span className="text-emerald-600 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> All Done</span>}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button 
+                              onClick={() => togglePhase(rs.id!, 'content', rs.contentCompleted)}
+                              className={cn(
+                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+                                rs.contentCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
+                              )}
+                            >
+                              {rs.contentCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+                              Content
+                            </button>
+
+                            <button 
+                              onClick={() => togglePhase(rs.id!, 'qbank', rs.qbankCompleted)}
+                              className={cn(
+                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+                                rs.qbankCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
+                              )}
+                            >
+                              {rs.qbankCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+                              QBank
+                            </button>
+
+                            <button
+                              onClick={() => onLogScore && onLogScore(rs.id!, rs.name)}
+                              className={cn(
+                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+                                "bg-transparent border-border text-foreground hover:border-primary/50 hover:bg-primary/10 shadow-sm"
+                              )}
+                            >
+                              <Target className="w-3.5 h-3.5" />
+                              Log Score
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}

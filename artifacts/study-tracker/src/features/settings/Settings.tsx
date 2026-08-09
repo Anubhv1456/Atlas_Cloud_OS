@@ -15,7 +15,7 @@ import { SettingsBlock } from './SettingsLayout';
 
 export default function Settings() {
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-32 max-w-2xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-2xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
       <header className="mb-8 border-b border-border/40 pb-5">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Settings</h1>
       </header>

@@ -1,111 +1,112 @@
+import React from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db';
 import { OntologyTopic } from '@/data/ontology';
 import { TopicProgress } from '@/db/types';
-import { db } from '@/db/schema';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { createDefaultTopicProgress } from '@/lib/status-engine';
-import { CheckCircle2, MessageSquarePlus, MessageCircle, Circle, TriangleAlert, Plus, FolderPlus, ChevronDown, Target } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { CurriculumSetForm } from './CurriculumSetForm';
-import { updateCurriculumSet } from '@/db/mutations';
-import { toast } from 'sonner';
-import { useState } from 'react';
+import { CheckCircle2, Circle, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef } from 'react';
 import { generateHLC } from '@/lib/hlc';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Edit2, Trash2, FolderPlus, Plus } from 'lucide-react';
+import { CurriculumSetForm } from './CurriculumSetForm';
+import { toast } from 'sonner';
 
 interface TopicListProps {
   topics: OntologyTopic[];
   subjectId: number;
-  systemId: number;
   subjectName: string;
+  systemId: number;
   systemName: string;
+  onLogScore?: (topicId: string, topicName: string) => void;
   onViewMarkers?: (topicId: string, topicName: string) => void;
   onLeaveMarker?: (topicId: string, topicName: string) => void;
-  onLogScore?: (topicId: string, topicName: string) => void;
+  onRenameTopic?: (topicId: string, newName: string) => void;
+  onDeleteTopic?: (topicId: string) => void;
+  onAddTopic?: (name: string) => void;
 }
 
-export function TopicList({ topics, subjectId, systemId, subjectName, systemName, onViewMarkers, onLeaveMarker, onLogScore }: TopicListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  
-  const rowVirtualizer = useVirtualizer({
-    count: topics.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 48,
-    overscan: 5,
-  });
+export function TopicList({
+  topics,
+  subjectId,
+  subjectName,
+  systemId,
+  systemName,
+  onLogScore,
+  onViewMarkers,
+  onLeaveMarker,
+  onRenameTopic,
+  onDeleteTopic,
+  onAddTopic,
+}: TopicListProps) {
+  const [addTopicToSet, setAddTopicToSet] = React.useState<OntologyTopic | undefined>();
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [editingTopicId, setEditingTopicId] = React.useState<string | null>(null);
+  const [topicToDelete, setTopicToDelete] = React.useState<string | null>(null);
+  const [editingName, setEditingName] = React.useState('');
+  const [isAddingTopic, setIsAddingTopic] = React.useState(false);
+  const [newTopicName, setNewTopicName] = React.useState('');
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [addTopicToSet, setAddTopicToSet] = useState<OntologyTopic | undefined>();
+  const topicProgresses = useLiveQuery(
+    () => {
+      if (!topics || topics.length === 0) return [];
+      return db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray();
+    },
+    [topics]
+  ) || [];
 
   const revisionSets = useLiveQuery(
-    () => (db.curriculumSets || db.revisionSets).where('systemId').equals(systemId).filter(s => !s.deletedAt).toArray(),
+    () => {
+      if (!systemId) return [];
+      return (db.curriculumSets || db.revisionSets)
+        .where('systemId')
+        .equals(systemId)
+        .filter(s => !s.deletedAt)
+        .toArray();
+    },
     [systemId]
   ) || [];
 
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: topics.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 56, // approx height of one row
+    overscan: 10,
+  });
+
+  const getProgress = (topicId: string): TopicProgress => {
+    return topicProgresses.find(p => p.topicId === topicId) || {
+      topicId,
+      isWeak: false,
+      updatedAt: new Date()
+    };
+  };
+
   const handleAddToSet = async (setId: string, topicId: string) => {
-    const set = revisionSets.find(s => s.id === setId);
-    if (set && !set.topicIds.includes(topicId)) {
-      await updateCurriculumSet(setId, { topicIds: [...set.topicIds, topicId] });
+    const targetDbTable = db.curriculumSets || db.revisionSets;
+    const rs = await targetDbTable.get(setId);
+    if (rs && !rs.topicIds.includes(topicId)) {
+      await targetDbTable.update(setId, {
+        topicIds: [...rs.topicIds, topicId],
+        updatedAt: new Date(),
+        hlc: generateHLC()
+      });
       toast.success('Added to Curriculum Set');
     } else {
-      toast.info('Already in this Curriculum Set');
-    }
-  };
-
-  const progresses = useLiveQuery(
-    () => db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray(),
-    [topics]
-  );
-
-  const getProgress = (topicId: string) => {
-    return progresses?.find(p => p.topicId === topicId) || createDefaultTopicProgress(topicId);
-  };
-
-  const toggleContent = async (topicId: string) => {
-    const p = getProgress(topicId);
-    const newStatus = p.contentStatus === 'completed' ? 'not_started' : 'completed';
-    await db.topicProgress.put({ ...p, contentStatus: newStatus, updatedAt: new Date(), hlc: generateHLC() });
-    
-    if (newStatus === 'completed') {
-      const topic = topics.find(t => t.id === topicId);
-      await db.history.add({
-        subjectId,
-        subjectName,
-        systemId,
-        systemName,
-        taskKey: 'topicMastered',
-        taskLabel: `Mastered ${topic?.name} Content`,
-        completedAt: new Date()
-      });
-    }
-  };
-
-  const toggleQBank = async (topicId: string) => {
-    const p = getProgress(topicId);
-    const newStatus = p.qbankStatus === 'completed' ? 'not_started' : 'completed';
-    await db.topicProgress.put({ ...p, qbankStatus: newStatus, updatedAt: new Date(), hlc: generateHLC() });
-    
-    if (newStatus === 'completed') {
-      const topic = topics.find(t => t.id === topicId);
-      await db.history.add({
-        subjectId,
-        subjectName,
-        systemId,
-        systemName,
-        taskKey: 'topicMastered',
-        taskLabel: `Mastered ${topic?.name} QBank`,
-        completedAt: new Date()
-      });
+      toast.info('Topic already in set');
     }
   };
 
   const toggleWeak = async (topicId: string) => {
     const p = getProgress(topicId);
-    const newConf = p.confidence === 'low' ? 'average' : 'low';
-    await db.topicProgress.put({ ...p, confidence: newConf, updatedAt: new Date(), hlc: generateHLC() });
+    const newWeak = !p.isWeak;
+    await db.topicProgress.put({ ...p, isWeak: newWeak, updatedAt: new Date(), hlc: generateHLC() });
     
-    if (newConf === 'low') {
+    if (newWeak) {
       const topic = topics.find(t => t.id === topicId);
       await db.history.add({
         subjectId,
@@ -119,19 +120,49 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
     }
   };
 
-  if (!topics.length) {
+  if (!topics.length && !onAddTopic) {
     return <div className="p-4 text-sm text-muted-foreground text-center">No topics available.</div>;
   }
 
   return (
-    <div ref={parentRef} className="flex flex-col gap-1 p-2 max-h-[400px] overflow-auto">
+    <div className="flex flex-col">
+      {onAddTopic && (
+        <div className="p-2 border-b border-border/50 flex items-center justify-between bg-muted/20">
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-2">Topics</span>
+          {!isAddingTopic ? (
+            <button onClick={() => setIsAddingTopic(true)} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded hover:bg-primary/10">
+              <Plus className="w-3.5 h-3.5" /> Add Topic
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Input
+                autoFocus
+                value={newTopicName}
+                onChange={e => setNewTopicName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newTopicName.trim()) {
+                    onAddTopic(newTopicName.trim());
+                    setIsAddingTopic(false);
+                    setNewTopicName('');
+                  } else if (e.key === 'Escape') {
+                    setIsAddingTopic(false);
+                    setNewTopicName('');
+                  }
+                }}
+                placeholder="Topic name..."
+                className="h-6 text-xs w-[150px] px-2 py-0"
+              />
+              <button onClick={() => { setIsAddingTopic(false); setNewTopicName(''); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+            </div>
+          )}
+        </div>
+      )}
+      <div ref={parentRef} className="flex flex-col gap-1 p-2 max-h-[400px] overflow-auto">
       <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
         {rowVirtualizer.getVirtualItems().map(virtualRow => {
           const topic = topics[virtualRow.index];
           const p = getProgress(topic.id);
-          const isContentDone = p.contentStatus === 'completed';
-          const isQBankDone = p.qbankStatus === 'completed';
-          const isWeak = p.confidence === 'low';
+          const isWeak = p.isWeak;
 
           return (
             <div
@@ -150,10 +181,37 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="text-left w-full focus:outline-none flex items-center justify-between group-hover:text-primary transition-colors">
-                        <div>
-                        <span className={cn("text-sm font-medium transition-colors", (isContentDone && isQBankDone) ? "text-muted-foreground line-through" : "text-foreground")}>
-                          {topic.name}
-                        </span>
+                        <div className="flex-1">
+                          {editingTopicId === topic.id ? (
+                            <Input
+                              autoFocus
+                              value={editingName}
+                              onChange={e => setEditingName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (editingName.trim()) {
+                                    onRenameTopic?.(topic.id, editingName.trim());
+                                    setEditingTopicId(null);
+                                  }
+                                } else if (e.key === 'Escape') {
+                                  setEditingTopicId(null);
+                                }
+                              }}
+                              onBlur={() => {
+                                if (editingName.trim() && editingName !== topic.name) {
+                                  onRenameTopic?.(topic.id, editingName.trim());
+                                }
+                                setEditingTopicId(null);
+                              }}
+                              className="h-7 text-sm py-0 px-2 my-0.5"
+                              onClick={e => e.stopPropagation()}
+                            />
+                          ) : (
+                            <span className={cn("text-sm font-medium transition-colors", "text-foreground")}>
+                              {topic.name}
+                            </span>
+                          )}
                         {(() => {
                           const setsCount = revisionSets.filter(rs => rs.topicIds.includes(topic.id)).length;
                           if (setsCount > 0) {
@@ -177,48 +235,21 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
                       <DropdownMenuItem onClick={() => { setAddTopicToSet(topic); setFormOpen(true); }}>
                         <Plus className="w-4 h-4 mr-2" /> Create New Set...
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => { setEditingTopicId(topic.id); setEditingName(topic.name); }}>
+                        <Edit2 className="w-4 h-4 mr-2" /> Rename Topic
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive focus:bg-destructive/10" onClick={() => {
+                        setTopicToDelete(topic.id);
+                      }}>
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete Topic
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  
-                  <button 
-                    onClick={() => onLogScore && onLogScore(topic.id, topic.name)}
-                    className={cn(
-                      "p-1.5 sm:px-2 sm:py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1",
-                      "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
-                    )}
-                    title="Log Test Score"
-                  >
-                    <Target className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Score</span>
-                  </button>
-                  <button 
-                    onClick={() => toggleContent(topic.id)}
-                    className={cn(
-                      "p-1.5 sm:px-2 sm:py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1",
-                      isContentDone ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
-                    )}
-                    title="Toggle Content Completion"
-                  >
-                    {isContentDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">Content</span>
-                  </button>
-
-                  <button 
-                    onClick={() => toggleQBank(topic.id)}
-                    className={cn(
-                      "p-1.5 sm:px-2 sm:py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1",
-                      isQBankDone ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
-                    )}
-                    title="Toggle QBank Completion"
-                  >
-                    {isQBankDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">QBank</span>
-                  </button>
-
-                  <div className="flex items-center gap-1 border-l border-border/50 pl-1.5 ml-0.5">
+                  <div className="flex items-center gap-1 border-r border-border/50 pr-1.5 mr-0.5">
                     <button 
                       onClick={() => onViewMarkers?.(topic.id, topic.name)}
                       className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10"
@@ -238,10 +269,10 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
                   <button 
                     onClick={() => toggleWeak(topic.id)}
                     className={cn(
-                      "p-1.5 rounded-md border transition-colors",
+                      "p-1.5 rounded-md border transition-colors flex items-center gap-1.5",
                       isWeak ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-transparent border-border text-muted-foreground hover:border-destructive/50"
                     )}
-                    title="Mark as Weak"
+                    title={isWeak ? "Marked as Weak" : "Mark as Weak"}
                   >
                     <TriangleAlert className="w-3.5 h-3.5" />
                   </button>
@@ -251,6 +282,31 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
           );
         })}
       </div>
+
+      <AlertDialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Topic</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this topic? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (topicToDelete) {
+                  onDeleteTopic?.(topicToDelete);
+                  setTopicToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CurriculumSetForm
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
@@ -269,6 +325,7 @@ export function TopicList({ topics, subjectId, systemId, subjectName, systemName
           } : undefined
         }
       />
+    </div>
     </div>
   );
 }

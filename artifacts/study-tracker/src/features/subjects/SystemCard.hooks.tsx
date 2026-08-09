@@ -14,7 +14,6 @@ import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
-import { calculateTopicsProgressPercentage } from '@/lib/progress';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
 export interface SystemCardProps {
@@ -94,14 +93,49 @@ export function useSystemCardLogic({
 
   const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
   const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(system.name));
-  const topics = ontologySystem?.topics || [];
+  // Merge ontology topics with custom topics
+  let mergedTopics = ontologySystem ? [...ontologySystem.topics] : [];
+  if (system.customTopics) {
+    system.customTopics.forEach(ct => {
+      const idx = mergedTopics.findIndex(t => t.id === ct.id);
+      if (idx >= 0) {
+        if (ct.deleted) {
+           mergedTopics[idx] = { ...mergedTopics[idx], deleted: true } as any;
+        } else {
+           mergedTopics[idx] = { ...mergedTopics[idx], name: ct.name };
+        }
+      } else if (!ct.deleted) {
+        mergedTopics.push({
+           id: ct.id,
+           subjectId: ontologySubject?.id || '',
+           systemId: ontologySystem?.id || '',
+           name: ct.name,
+           highYield: false,
+           estimatedStudyMinutes: 0,
+           relatedTopics: [],
+           aliases: [],
+           pyqWeight: 0,
+           difficulty: 'average'
+        });
+      }
+    });
+  }
+  const finalTopics = mergedTopics.filter(t => !(t as any).deleted);
   const topicProgresses = useLiveQuery(
-    () => db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray(),
-    [topics]
+    () => {
+      if (!finalTopics || finalTopics.length === 0) return [];
+      return db.topicProgress.where('topicId').anyOf(finalTopics.map(t => t.id)).toArray();
+    },
+    [finalTopics.map(t => t.id).join(',')]
   ) || [];
-  
+
+  const curriculumSets = useLiveQuery(
+    () => (db.curriculumSets || db.revisionSets).filter(s => s.systemId === system.id && !s.deletedAt).toArray(),
+    [system.id]
+  ) || [];
+
   // Progress
-  const progress       = calculateTopicsProgressPercentage(topicProgresses, topics.length);
+  const progress = calculateSystemProgress(curriculumSets);
   const completedCount = (system.contentCompleted ? 1 : 0) + (system.qbankDone ? 1 : 0);
   const contentPct     =
     system.contentInitialized && system.contentUnitsTotal > 0
@@ -112,6 +146,36 @@ export function useSystemCardLogic({
   const revisionDue      = isRevisionDue(system);
   const revisionOverdue  = isRevisionOverdue(system);
   const overdueDays      = daysOverdue(system);
+
+  const handleUpdateTopic = async (topicId: string, updates: { name?: string; deleted?: boolean }) => {
+     let customTopics = system.customTopics ? [...system.customTopics] : [];
+     const existingIndex = customTopics.findIndex(t => t.id === topicId);
+     
+     if (existingIndex >= 0) {
+        customTopics[existingIndex] = { ...customTopics[existingIndex], ...updates };
+     } else {
+        const baseTopic = ontologySystem?.topics.find(t => t.id === topicId);
+        customTopics.push({ id: topicId, name: updates.name || baseTopic?.name || 'Unknown', deleted: updates.deleted });
+     }
+     await updateSystem(system.id!, { customTopics });
+  };
+
+  const handleRenameTopic = (topicId: string, name: string) => {
+    handleUpdateTopic(topicId, { name });
+  };
+
+  const handleDeleteTopic = (topicId: string) => {
+    handleUpdateTopic(topicId, { deleted: true });
+  };
+
+  const handleAddCustomTopic = async (name: string) => {
+     let customTopics = system.customTopics ? [...system.customTopics] : [];
+     customTopics.push({ id: `CUSTOM_TOPIC_${Date.now()}`, name });
+     await updateSystem(system.id!, { customTopics });
+     toast.success('Custom topic added');
+  };
+
+
 
   // ── Content tap ───────────────────────────────────────────────────────────
   const handleContentTap = () => {
@@ -309,7 +373,7 @@ export function useSystemCardLogic({
 
   
 
-  const handleTopicLogScore = (id: string, name: string) => {
+  const handleSetLogScore = (id: string, name: string) => {
     setScoreModalTopicId(id);
     setScoreModalTopicName(name);
     setScoreModalTopicId(undefined);
@@ -339,7 +403,7 @@ export function useSystemCardLogic({
     showInitDialog, setShowInitDialog, initValue, setInitValue,
     showEditContent, setShowEditContent, editCompleted, setEditCompleted, editTotal, setEditTotal,
     showEvalDialog, setShowEvalDialog, showDeleteConfirm, setShowDeleteConfirm,
-    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleTopicLogScore, showDecayCalibration, setShowDecayCalibration,
+    showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleSetLogScore, showDecayCalibration, setShowDecayCalibration,
     showRenameDialog, setShowRenameDialog, renameValue, setRenameValue,
     showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, selectedTopicId, setSelectedTopicId, selectedTopicName, setSelectedTopicName, insightContent, setInsightContent,
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
@@ -348,6 +412,11 @@ export function useSystemCardLogic({
     handleContentTap, handleContentPointerDown, handleContentPointerUp, handleContentPointerLeave,
     handleInitSave, handleEditSave, handleEditReset, toggleQBank, handleEvalSelect,
     localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
-    handleRenameSave, handleRevisionComplete
+    handleRenameSave, handleRevisionComplete,
+    handleUpdateTopic,
+    handleRenameTopic,
+    handleDeleteTopic,
+    handleAddCustomTopic,
+    finalTopics
   };
 }

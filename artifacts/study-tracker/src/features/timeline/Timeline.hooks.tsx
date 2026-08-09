@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { historyToEvent, systemToRevisionEvent, buildActivityHeatmap, groupPastEntries } from '@/features/timeline/timelineUtils';
+import { historyToEvent, systemToRevisionEvent, setToRevisionEvent, buildActivityHeatmap, groupPastEntries } from '@/features/timeline/timelineUtils';
 import { useLocation } from 'wouter';
 import { 
   useSubjects, useAllSystems, db, deleteHistoryEntry
@@ -26,6 +26,13 @@ export function useTimelineLogic() {
   const history  = useHistory();
   const systems  = useAllSystems();
   const subjects = useSubjects();
+  
+  const curriculumSets = useLiveQuery(
+    () => (db.curriculumSets || db.revisionSets)
+      .filter(s => !s.deletedAt && !!s.nextRevisionDate)
+      .toArray()
+  ) || [];
+  
   const [filter, setFilter]       = useState<TimelineFilter>('all');
   const [calDate, setCalDate]     = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);

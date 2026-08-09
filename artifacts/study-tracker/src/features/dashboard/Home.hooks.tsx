@@ -13,7 +13,6 @@ import {
   daysOverdue, calculateDecayScore, today 
 } from '@/db';
 import { calculateSubjectProgress } from '@/lib/progress';
-import { calculateTopicsProgressPercentage } from '@/lib/progress';
 import { determineFocusSystems } from '@/features/dashboard/homeUtils';
 import { DropResult } from '@hello-pangea/dnd';
 import { useAIInsights } from '@/hooks/useAIInsights';
@@ -27,10 +26,13 @@ export function useHomeLogic() {
   const pyqs = useAllPYQs();
   const [, setLocation] = useLocation();
   
-  
-  
-  
+  const curriculumSets = useLiveQuery(
+    () => (db.curriculumSets || db.revisionSets).filter(s => !s.deletedAt).toArray()
+  ) || [];
 
+  const weakTopicIds = useLiveQuery(
+    () => db.topicProgress.toArray().then(res => res.filter(t => t.isWeak).map(t => t.topicId))
+  ) || [];
 
   const [focusDialogType, setFocusDialogType] = useState<'primary' | 'secondary' | null>(null);
 
@@ -163,9 +165,9 @@ export function useHomeLogic() {
 
     // 3. SUBJECT COVERAGE IMBALANCE (Confidence: 88)
     const subjectStats = subjects.map(sub => {
-      const subSys = systems.filter(s => s.subjectId === sub.id);
-      const totalCount = subSys.length;
-      const ratio = calculateSubjectProgress(subSys) / 100;
+      const subSets = curriculumSets.filter(s => s.subjectId === sub.id);
+      const totalCount = subSets.length;
+      const ratio = calculateSubjectProgress(subSets) / 100;
       return { sub, totalCount, ratio };
     }).filter(s => s.totalCount > 0);
 
@@ -195,10 +197,10 @@ export function useHomeLogic() {
     // 4. PYQ READINESS GAP (Confidence: 84)
     if (pyqs.length > 0) {
       for (const sub of subjects) {
-        const subSys = systems.filter(s => s.subjectId === sub.id);
+        const subSets = curriculumSets.filter(s => s.subjectId === sub.id);
         const subPYQs = pyqs.filter(p => p.subjectId === sub.id);
-        if (subSys.length > 0 && subPYQs.length > 0) {
-          const sysRatio = calculateSubjectProgress(subSys) / 100;
+        if (subSets.length > 0 && subPYQs.length > 0) {
+          const sysRatio = calculateSubjectProgress(subSets) / 100;
           const pyqRatio = subPYQs.filter(p => p.completed).length / subPYQs.length;
           if (sysRatio >= 0.5 && pyqRatio <= 0.3) {
             candidates.push({
@@ -248,7 +250,14 @@ export function useHomeLogic() {
     }
 
     // 6. PERFECT MOMENTUM & STREAK (Confidence: 70)
-    const overdueCount = systems.filter(s => isRevisionOverdue(s)).length;
+    const nowTime = new Date();
+    nowTime.setHours(0,0,0,0);
+    const overdueCount = curriculumSets.filter(s => {
+      if (!s.nextRevisionDate) return false;
+      const d = new Date(s.nextRevisionDate);
+      d.setHours(0,0,0,0);
+      return d < nowTime;
+    }).length;
     if (overdueCount === 0 && streak > 0) {
       candidates.push({
         id: 'perfect-momentum',

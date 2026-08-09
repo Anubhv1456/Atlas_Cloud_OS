@@ -70,10 +70,10 @@ export function useAnalyticsLogic() {
     
     // topics metrics
     const totalTopics = ALL_SYSTEMS.flatMap(s => s.topics).length;
-    const mastered = topicProgresses.filter(tp => tp.confidence === 'high').length;
-    const weak = topicProgresses.filter(tp => tp.confidence === 'low').length;
-    const qbankDone = topicProgresses.filter(tp => tp.qbankStatus === 'completed').length;
-    const qbankCoverage = totalTopics > 0 ? Math.round((qbankDone / totalTopics) * 100) : 0;
+    const mastered = 0; // Removing topic level confidence, not needed right now
+    const weak = topicProgresses.filter(tp => tp.isWeak).length;
+    const qbankDone = 0; // Topic level qbank doesn't exist anymore
+    const qbankCoverage = 0;
 
     return {
       ...baseStats,

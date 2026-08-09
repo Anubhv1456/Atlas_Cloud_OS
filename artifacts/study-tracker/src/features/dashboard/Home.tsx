@@ -25,7 +25,6 @@ import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progre
 import { ALL_SYSTEMS } from '@/data/ontology';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
-import { calculateTopicProgressValue } from '@/lib/topic-progress';
 import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
@@ -112,16 +111,21 @@ export default function Home() {
     
     const now = new Date();
     await db.topicProgress.each(tp => {
-      if (tp.contentStatus === 'completed' && tp.qbankStatus === 'completed') completedTasks++;
-      if (tp.confidence === 'high') strongSystems++;
-      if (tp.nextRevisionDate && new Date(tp.nextRevisionDate) <= now) dueRevisionsCount++;
-      if (tp.confidence === 'low') weakTopicsCount++;
-      if (tp.contentStatus === 'in_progress' || tp.qbankStatus === 'in_progress' || 
-          (tp.contentStatus === 'completed' && tp.qbankStatus !== 'completed') || 
-          (tp.contentStatus !== 'completed' && tp.qbankStatus === 'completed')) {
-        learningTopicsCount++;
+      if (tp.isWeak) weakTopicsCount++;
+    });
+    await (db.curriculumSets || db.revisionSets).each(set => {
+      if (set.contentCompleted && set.qbankCompleted) completedTasks++;
+      if (set.averageScore && set.averageScore >= 80) strongSystems++;
+      if (set.nextRevisionDate && new Date(set.nextRevisionDate) <= now) dueRevisionsCount++;
+      if (set.contentCompleted || set.qbankCompleted) {
+        if (!(set.contentCompleted && set.qbankCompleted)) {
+          learningTopicsCount++;
+        }
       }
-      sum += calculateTopicProgressValue(tp);
+      
+      const v1 = set.contentCompleted ? 50 : 0;
+      const v2 = set.qbankCompleted ? 50 : 0;
+      sum += (v1 + v2);
     });
     
     return { completedTasks, strongSystems, dueRevisionsCount, weakTopicsCount, learningTopicsCount, sum };
@@ -150,7 +154,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-32 max-w-6xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="relative z-10 flex-1 flex flex-col">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

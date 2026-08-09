@@ -1,5 +1,6 @@
 import { format, isSameDay } from 'date-fns';
 import { HistoryEntry, StudySystem, TimelineEvent, daysOverdue } from '@/db';
+import { CurriculumSet } from '@/db/types';
 
 export function historyToEvent(h: HistoryEntry): TimelineEvent {
   const typeMap: Record<string, TimelineEvent['eventType']> = {
@@ -12,11 +13,9 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
     topicWeak:       'topicWeak',
   };
 
-
   let entityName = `${h.systemName} ${h.taskLabel}`;
   if (h.taskKey === 'pyqsDone') entityName = h.taskLabel;
   if (h.taskKey === 'topicMastered' || h.taskKey === 'topicWeak') entityName = h.taskLabel;
-
 
   return {
     id:          String(h.id ?? `${h.systemId}-${h.taskKey}-${h.completedAt}`),
@@ -41,6 +40,31 @@ export function systemToRevisionEvent(
     entityName:  `${sys.name} Revision`,
     subjectName,
     date:        new Date(sys.nextRevisionDate!),
+    status,
+    meta:        status === 'overdue' ? { daysOverdue: days } : undefined,
+  };
+}
+
+export function setToRevisionEvent(
+  set: CurriculumSet,
+  subjectName: string,
+  status: 'upcoming' | 'overdue',
+): TimelineEvent {
+  let days = 0;
+  if (status === 'overdue' && set.nextRevisionDate) {
+    const due = new Date(set.nextRevisionDate);
+    due.setHours(0, 0, 0, 0);
+    const n = new Date();
+    n.setHours(0, 0, 0, 0);
+    days = Math.floor((n.getTime() - due.getTime()) / 86_400_000);
+  }
+  
+  return {
+    id:          `rev-set-${set.id}-${status}`,
+    eventType:   'revisionSystem',
+    entityName:  `${set.name}`,
+    subjectName,
+    date:        new Date(set.nextRevisionDate!),
     status,
     meta:        status === 'overdue' ? { daysOverdue: days } : undefined,
   };

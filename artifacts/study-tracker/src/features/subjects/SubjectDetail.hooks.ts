@@ -12,7 +12,6 @@ import { calculateSubjectProgress } from '@/lib/progress';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
-import { calculateCompletedTopicTasks, calculateTopicsProgressPercentage } from '@/lib/progress';
 import { calculateYearScoreMap, generateCustomYearRange } from '@/features/subjects/subjectUtils';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
@@ -186,24 +185,41 @@ export function useSubjectDetailLogic(id: string | undefined) {
   });
   
   const allTopicsStr = allTopicIds.join(',');
-  const topicProgresses = useLiveQuery(() => db.topicProgress.where('topicId').anyOf(allTopicIds).toArray(), [allTopicsStr]) || [];
+  const topicProgresses = useLiveQuery(
+    () => {
+      if (allTopicIds.length === 0) return [];
+      return db.topicProgress.where('topicId').anyOf(allTopicIds).toArray();
+    }, 
+    [allTopicsStr]
+  ) || [];
 
-  const totalTasks     = allTopicIds.length * 2;
-  const completedTasks = calculateCompletedTopicTasks(topicProgresses);
-  const progress = calculateTopicsProgressPercentage(topicProgresses, allTopicIds.length);
+  const revisionSets = useLiveQuery(
+    () => {
+      if (!subject?.id) return [];
+      return (db.curriculumSets || db.revisionSets)
+        .where('subjectId')
+        .equals(subject.id)
+        .filter(s => !s.deletedAt)
+        .toArray();
+    },
+    [subject?.id]
+  ) || [];
 
-  const pyqUnlocked = allTopicIds.length > 0 && allTopicIds.length === topicProgresses.filter(tp => tp.contentStatus === 'completed' && tp.qbankStatus === 'completed').length;
+  const totalTasks     = revisionSets.length * 2;
+  const completedTasks = revisionSets.reduce((acc, rs) => acc + (rs.contentCompleted ? 1 : 0) + (rs.qbankCompleted ? 1 : 0), 0);
+  const progress = revisionSets.length > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const pyqUnlocked = revisionSets.length > 0 && revisionSets.every(rs => rs.contentCompleted && rs.qbankCompleted);
 
   const stagePct = (key: StageKey) => {
-    if (allTopicIds.length === 0) return 0;
+    if (revisionSets.length === 0) return 0;
     
-    // Instead of system level, we count topic level
     let done = 0;
-    for (const tp of topicProgresses) {
-      if (key === 'contentCompleted' && tp.contentStatus === 'completed') done++;
-      if (key === 'qbankDone' && tp.qbankStatus === 'completed') done++;
+    for (const rs of revisionSets) {
+      if (key === 'contentCompleted' && rs.contentCompleted) done++;
+      if (key === 'qbankDone' && rs.qbankCompleted) done++;
     }
-    return Math.round((done / allTopicIds.length) * 100);
+    return Math.round((done / revisionSets.length) * 100);
   };
 
   const visibleSystems: StudySystem[] = activeFilter

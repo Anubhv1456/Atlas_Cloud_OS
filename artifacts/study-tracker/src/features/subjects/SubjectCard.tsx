@@ -7,10 +7,6 @@ import { RotateCcw } from "lucide-react";
 import { ALL_SYSTEMS, ALL_SUBJECTS } from "@/data/ontology";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  calculateCompletedTopicTasks,
-  calculateTopicsProgressPercentage,
-} from "@/lib/progress";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -30,28 +26,25 @@ export function SubjectCard({
   systems,
   dragHandleProps,
 }: SubjectCardProps) {
-  const allTopicIds = systems.flatMap((sys) => {
-    const ontologySubject = ALL_SUBJECTS.find((s) => s.name === subject.name);
-    const os = ALL_SYSTEMS.find(
-      (s) =>
-        s.subjectId === ontologySubject?.id &&
-        normalizeName(s.name) === normalizeName(sys.name),
-    );
-    return os ? os.topics.map((t) => t.id) : [];
-  });
-  const allTopicsStr = allTopicIds.join(",");
-  const topicProgresses =
-    useLiveQuery(
-      () => db.topicProgress.where("topicId").anyOf(allTopicIds).toArray(),
-      [allTopicsStr],
-    ) || [];
+  const systemIds = systems.map(s => s.id!);
+  
+  const curriculumSets = useLiveQuery(
+    async () => {
+      const table = db.curriculumSets || db.revisionSets;
+      if (systemIds.length === 0) return [];
+      return await table.where('systemId').anyOf(systemIds).toArray();
+    },
+    [systemIds.join(',')]
+  ) || [];
 
-  const totalTasks = allTopicIds.length * 2;
-  const completedTasks = calculateCompletedTopicTasks(topicProgresses);
-  const progress = calculateTopicsProgressPercentage(
-    topicProgresses,
-    allTopicIds.length,
-  );
+  const totalTasks = curriculumSets.length * 2;
+  let completedTasks = 0;
+  curriculumSets.forEach(set => {
+    if (set.contentCompleted) completedTasks++;
+    if (set.qbankCompleted) completedTasks++;
+  });
+
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const isFullyComplete = progress === 100 && totalTasks > 0;
 
   return (
@@ -90,7 +83,7 @@ export function SubjectCard({
               {systems.length} {systems.length === 1 ? "System" : "Systems"}
             </span>
             <span className="font-mono tabular-nums text-[11px] text-foreground/80 font-semibold bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
-              {completedTasks}/{totalTasks} tasks
+              {completedTasks}/{totalTasks} set tasks
             </span>
           </div>
         </Link>
@@ -105,20 +98,7 @@ export function SubjectCard({
               <MoreVertical className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 rounded-xl">
-              
-              <DropdownMenuItem
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (window.confirm('Are you sure you want to reset all progress for this subject? This cannot be undone.')) {
-                    await db.topicProgress.where('topicId').anyOf(allTopicIds).delete();
-                    await db.history.where('subjectId').equals(subject.id!).delete();
-                    toast.success('Progress reset for ' + subject.name);
-                  }
-                }}
-                className="gap-2 py-2 cursor-pointer text-xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-amber-500" /> Reset Progress
-              </DropdownMenuItem>
+                 
               <DropdownMenuItem
                 onClick={async (e) => {
                   e.stopPropagation();

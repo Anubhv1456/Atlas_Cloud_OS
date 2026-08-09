@@ -156,6 +156,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     const allSys = await db.systems.toArray();
 
     const topicProgresses = await db.topicProgress.toArray();
+    const curriculumSets = await (db.curriculumSets || db.revisionSets).toArray();
     
     const worker = new Worker(new URL('@/lib/recommendation.worker.ts', import.meta.url), { type: 'module' });
     worker.postMessage({
@@ -163,7 +164,8 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       systems: allSys,
       currentYear,
       targetExam: selectedGoal,
-      topicProgresses
+      topicProgresses,
+      curriculumSets
     });
     
     worker.onmessage = (e) => {

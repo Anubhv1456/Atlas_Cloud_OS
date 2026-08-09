@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Award, CheckCircle2, Trophy, TriangleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { calibrateSystemSDSR, calibrateSDSR } from '@/lib/sdsr-engine';
+import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 
 interface ScoreLogModalProps {
   isOpen: boolean;
@@ -187,15 +187,7 @@ export function ScoreLogModal({
       if (type === 'revision' && selectedSub) {
         const scoreRatio = scoreNum / totalNum;
         
-        if (topicId) {
-          // Topic-level SDSR
-          const topicProgress = await db.topicProgress.get(topicId);
-          if (topicProgress) {
-            const { updatedTopicProgress, newInterval } = calibrateSDSR(topicProgress, scoreRatio, selectedSub.name, globalRetentionScore);
-            await db.topicProgress.update(topicId, updatedTopicProgress);
-            console.log(`SDSR Calibrated Topic: ${topicId} -> new interval ${newInterval} days`);
-          }
-        } else if (systemId && selectedSys) {
+        if (systemId && selectedSys) {
           // System-level SDSR
           const sysUpdates = calibrateSystemSDSR(selectedSys, scoreRatio, selectedSub.name, globalRetentionScore);
           await db.systems.update(systemId, sysUpdates);

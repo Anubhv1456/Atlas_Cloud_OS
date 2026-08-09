@@ -93,10 +93,11 @@ export interface PYQYear {
 
 export interface ScoreLog {
   id?: number;
-  type: 'revision' | 'pyq';
+  type: 'revision' | 'pyq' | 'set';
   subjectId: number;
   systemId?: number;
   topicId?: string;
+  curriculumSetId?: string;
   pyqYearId?: number;
   title: string;
   score: number;
@@ -124,9 +125,9 @@ export interface HistoryEntry {
   hlc?: string;
 }
 
-
 export interface RevisionLog {
   topicId?: string;
+  curriculumSetId?: string;
   previousInterval?: number | null;
   newInterval?: number;
   reviewedAt?: string;
@@ -136,22 +137,8 @@ export interface RevisionLog {
 
 export interface TopicProgress {
   topicId: string;
-  contentStatus: 'not_started' | 'in_progress' | 'completed';
-  contentUnitsTotal: number;
-  contentUnitsCompleted: number;
-  qbankStatus: 'not_started' | 'in_progress' | 'completed';
-  weakAreas: string;
-  confidence: 'low' | 'average' | 'high';
-  
-  completionDate: Date | null;
-  revisionCount: number;
-  lastRevisionDate: Date | null;
-  currentRevisionInterval: number | null;
-  nextRevisionDate: Date | null;
-  decayFactor: number;
-  
-  revisionHistory: RevisionLog[];
-  
+  isWeak: boolean;
+  notesCount?: number;
   updatedAt: Date;
   hlc?: string;
 }
@@ -170,11 +157,19 @@ export interface CurriculumSet {
   updatedAt: Date;
   deletedAt?: Date | null;
   hlc?: string;
+  
+  // Phase States
+  contentCompleted?: boolean;
+  qbankCompleted?: boolean;
+
+  // SDSR Engine Data
   nextRevisionDate?: string;
   lastRevisionDate?: string;
   currentRevisionInterval?: number;
   revisionCount?: number;
+  easeFactor?: number;
   averageScore?: number;
+  scoreHistory?: ScoreLog[];
 }
 
 export type RevisionSet = CurriculumSet;

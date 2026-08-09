@@ -539,27 +539,14 @@ export async function logCurriculumSetScore(
   await table.update(curriculumSetId, updatedSet);
 
   const now = new Date();
-  for (const topicId of reviewedTopicIds) {
-    let p = await db.topicProgress.get(topicId);
-    if (!p) {
-      p = { topicId, contentStatus: 'completed', qbankStatus: 'completed', updatedAt: now } as any;
-    } else {
-      p = {
-        ...p,
-        contentStatus: p.contentStatus === 'not_started' ? 'completed' : p.contentStatus,
-        qbankStatus: 'completed',
-        updatedAt: now,
-      };
-    }
-    await db.topicProgress.put(p as any);
-  }
-
+  // Topic progress loop removed since we no longer track completion at topic level.
+  
   const scorePercent = Math.round(normalizedScore * 100);
   await db.scoreLogs.add({ title: 'Revision', total: 100, percentage: score, 
-    type: 'revision',
+    type: 'set',
     subjectId: set.subjectId,
     systemId: set.systemId,
-    topicId: curriculumSetId,
+    curriculumSetId: curriculumSetId,
     score: scorePercent,
     timestamp: now,
   });
