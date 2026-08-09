@@ -130,9 +130,25 @@ function ProtectedApp() {
     );
   }
 
+  if (location === '/login') {
+    return (
+      <Suspense fallback={
+        <div className="flex items-center justify-center w-full h-[100dvh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
+        <Login />
+      </Suspense>
+    );
+  }
+
   if (!user) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={
+        <div className="flex items-center justify-center w-full h-[100dvh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
         <Landing />
       </Suspense>
     );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { QuickMistakeModal } from '@/features/mistakes/QuickMistakeModal';
 import { 
   getNextActionRecommendation, 
   NextActionEngineResult, 
@@ -20,8 +19,7 @@ import {
   CheckCircle2, 
   Compass,
   Folder,
-  Plus,
-  ShieldAlert
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,7 +31,6 @@ export function NextActionCard() {
   const [sessionBudget, setSessionBudget] = useState<'quick' | 'deep'>('quick');
   const [skipIds, setSkipIds] = useState<string[]>([]);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [mistakeModalOpen, setMistakeModalOpen] = useState(false);
 
   const [renderTimestamp, setRenderTimestamp] = useState<number>(Date.now());
   const [s10Speed, setS10Speed] = useState<number | null>(null);
@@ -254,15 +251,6 @@ export function NextActionCard() {
                 <span>Skip / Show Alternative</span>
               </Button>
 
-              <Button
-                variant="outline"
-                onClick={() => setMistakeModalOpen(true)}
-                className="border-destructive/30 text-destructive hover:bg-destructive/10 rounded-xl px-3 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>+ Log Mistake</span>
-              </Button>
-
               {skipIds.length > 0 && (
                 <button
                   type="button"
@@ -319,14 +307,6 @@ export function NextActionCard() {
         </div>
       )}
 
-      {/* Quick Mistake Modal */}
-      <QuickMistakeModal
-        open={mistakeModalOpen}
-        onOpenChange={setMistakeModalOpen}
-        defaultSubjectId={primary?.subjectId}
-        defaultSystemId={primary?.systemId}
-        defaultCurriculumSetId={primary?.curriculumSetId}
-      />
     </div>
   );
 }
