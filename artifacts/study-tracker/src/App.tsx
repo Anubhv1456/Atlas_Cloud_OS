@@ -27,11 +27,12 @@ import TermsOfService from '@/pages/TermsOfService';
 import Contact from '@/pages/Contact';
 import BetaAccess from '@/pages/BetaAccess';
 
-const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
-const Analytics = lazy(() => import('@/features/analytics/Analytics'));
-const Settings = lazy(() => import('@/features/settings/Settings'));
-const Timeline = lazy(() => import('@/features/timeline/Timeline'));
-const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
+import AdminDashboard from '@/features/admin/AdminDashboard';
+import Analytics from '@/features/analytics/Analytics';
+import Settings from '@/features/settings/Settings';
+import Timeline from '@/features/timeline/Timeline';
+import SubjectDetail from '@/features/subjects/SubjectDetail';
+import MistakeRecoveryQueue from '@/features/mistakes/MistakeRecoveryQueue';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 
 const queryClient = new QueryClient();
@@ -171,6 +172,7 @@ function ProtectedApp() {
                 <Route path="/" component={Home} />
                 <Route path="/subjects/:id" component={SubjectDetail} />
                 <Route path="/timeline" component={Timeline} />
+                <Route path="/mistakes" component={MistakeRecoveryQueue} />
                 <Route path="/analytics" component={Analytics} />
                 <Route path="/settings" component={Settings} />
                 <Route path="/privacy" component={PrivacyPolicy} />
@@ -192,7 +194,6 @@ function App() {
       if (!localStorage.getItem('ontology_psychiatry_fix')) {
         await loadUniversalOntology();
         localStorage.setItem('ontology_psychiatry_fix', 'true');
-        window.location.reload();
       }
     };
     checkOntology();

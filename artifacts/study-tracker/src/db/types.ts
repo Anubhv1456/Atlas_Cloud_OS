@@ -173,3 +173,21 @@ export interface CurriculumSet {
 }
 
 export type RevisionSet = CurriculumSet;
+
+export interface MistakeLog {
+  id?: number;
+  subjectId: number;
+  systemId: number;          // required
+  curriculumSetId?: string; // optional
+  topicId?: string;         // optional
+
+  errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
+  keyTakeaway: string;
+  source: 'GT' | 'QBank' | 'Custom';
+
+  resolved: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+}

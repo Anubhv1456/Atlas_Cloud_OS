@@ -1,3 +1,4 @@
+import { NextActionCard } from '@/components/dashboard/NextActionCard';
 import { DueCurriculumSetsCard } from './DueCurriculumSetsCard';
 import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
 import { ALL_TOPICS, ALL_SUBJECTS } from '@/data/ontology';
@@ -174,8 +175,7 @@ export default function Home() {
           
         </header>
             
-            
-
+            <NextActionCard />
             <DueCurriculumSetsCard />
             <ActiveRevisions
               primaryFocus={primaryFocus || null}

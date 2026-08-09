@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Home, CalendarDays, BarChart3, Settings, Search, Sparkles, Target, ShieldCheck, User } from 'lucide-react';
+import { Home, CalendarDays, BarChart3, Settings, Search, Sparkles, Target, ShieldCheck, User, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
@@ -16,6 +16,7 @@ export function BottomNav() {
   const links = [
     { href: '/',          icon: Home,          label: 'Home',      shortcut: '1' },
     { href: '/timeline',  icon: CalendarDays,  label: 'Timeline',  shortcut: '2' },
+    { href: '/mistakes',  icon: ShieldAlert,   label: 'Mistakes',  shortcut: 'M' },
     { href: '/analytics', icon: BarChart3,     label: 'Analytics', shortcut: '3' },
     { href: '/settings',  icon: Settings,      label: 'Settings',  shortcut: '4' },
   ];

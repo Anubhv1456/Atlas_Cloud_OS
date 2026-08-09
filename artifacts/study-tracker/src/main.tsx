@@ -5,7 +5,16 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
 
-// Suppress ResizeObserver loop limit exceeded error
+// Suppress ResizeObserver loop limit exceeded error & benign Vite WebSocket rejections
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason && (
+    event.reason.message?.includes('WebSocket') || 
+    String(event.reason).includes('WebSocket')
+  )) {
+    event.preventDefault();
+  }
+});
+
 const _ResizeObserver = window.ResizeObserver;
 window.ResizeObserver = class ResizeObserver extends _ResizeObserver {
   constructor(callback: ResizeObserverCallback) {

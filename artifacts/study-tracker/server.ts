@@ -26,7 +26,7 @@ if (isProd) {
   });
 }
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server started at http://localhost:${port}`);
+const port = 3000;
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server started at http://0.0.0.0:${port}`);
 });
