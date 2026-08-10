@@ -82,8 +82,7 @@ export default function Home() {
     subjects, systems, pyqs, streak, greeting,
     primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision, isPrimaryIntentStale, isSecondaryIntentStale,
     secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision,
-    secondaryDaysOverdue, dueRevisions, insights,
-    
+    secondaryDaysOverdue, dueRevisions,     
      
     
     focusDialogType, setFocusDialogType,

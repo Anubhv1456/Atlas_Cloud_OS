@@ -136,7 +136,7 @@ export function NextActionCard() {
     }
   };
 
-  const isGap = primary?.type === 'topicGap' || primary?.type === 'systemGap';
+  const isGap = (primary as any)?.type === 'topicGap' || (primary as any)?.type === 'systemGap';
 
   // If in triage mode, we suppress red overdue badges to lower anxiety
   const displayBadges = result?.isTriageMode && primary?.rationaleBadges
@@ -256,7 +256,7 @@ export function NextActionCard() {
           {/* Action Row */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/50">
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {primary.type === 'topicGap' ? (
+              {(primary as any).type === 'topicGap' ? (
                 <>
                   <Button
                     onClick={() => handleStartRevision(primary)}
@@ -273,7 +273,7 @@ export function NextActionCard() {
                     Create New
                   </Button>
                 </>
-              ) : primary.type === 'systemGap' ? (
+              ) : (primary as any).type === 'systemGap' ? (
                 <>
                   <Button
                     onClick={() => handleStartRevision(primary)}
@@ -373,7 +373,7 @@ export function NextActionCard() {
           <h3 className="text-base font-bold text-foreground">All Clear & Up to Date!</h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
             {sessionBudget === 'quick' && result?.quickEligibleCount === 0
-              ? 'No quick 10-20m topics left pending. Switch to "Deep Work (45m+)" to see lengthy systems requiring deep focus.'
+              ? `No quick reviews pending. You have ${(result?.totalCandidatesEvaluated || 0) - (result?.quickEligibleCount || 0)} Deep Study Blocks due.`
               : 'You have no pending revisions or overdue items right now. Add new subjects or create study blocks to get recommendations.'}
           </p>
           {sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (

@@ -22,7 +22,10 @@ export function determineFocusSystems(
     if (sub.id !== undefined) subjectIndexMap.set(sub.id, idx);
   });
 
-  const sortSystemsByPriority = (a: StudySystem, b: StudySystem) => {
+    const sortSystemsByPriority = (a: StudySystem, b: StudySystem) => {
+    if (a.isHighYield && !b.isHighYield) return -1;
+    if (!a.isHighYield && b.isHighYield) return 1;
+
     const subIdxA = subjectIndexMap.get(a.subjectId) ?? Number.MAX_VALUE;
     const subIdxB = subjectIndexMap.get(b.subjectId) ?? Number.MAX_VALUE;
     if (subIdxA !== subIdxB) return subIdxA - subIdxB;

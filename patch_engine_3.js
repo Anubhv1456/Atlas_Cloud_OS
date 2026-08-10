@@ -1,96 +1,16 @@
+const fs = require('fs');
+const file = './artifacts/study-tracker/src/lib/recommendations/nextActionEngine.ts';
+let code = fs.readFileSync(file, 'utf8');
 
-import { db } from '@/db';
-import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval } from '@/db';
-import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
-import { getSubjectWeightageInfo } from '@/lib/recommendation-engine';
-import { CurriculumSet, StudySystem, ScoreLog, TopicProgress } from '@/db/types';
-import { getDaysSinceLastStudy } from '@/db/queries';
+// Replace everything from `// 1. Process Study Blocks` to the end of the file.
+const splitStr = "  // 1. Process Study Blocks (Primary Scheduling Entity)";
+const parts = code.split(splitStr);
 
-export interface RationaleBadge {
-  label: string;
-  variant: 'amber' | 'emerald' | 'destructive' | 'primary' | 'muted';
-  iconType?: 'clock' | 'target' | 'alert' | 'zap' | 'book';
-}
-
-export interface NextActionRecommendation {
-  id: string;
-  type: 'curriculumSet' | 'system';
-  title: string;
-  subjectName: string;
-  systemName: string;
-  subjectId: number;
-  systemId: number;
-  curriculumSetId?: string;
-  isLengthy: boolean;
-  estimatedMinutes: number;
-  priorityScore: number;
-  rationaleBadges: RationaleBadge[];
-  topicCount?: number;
-  inferredScore?: number;
-  daysOverdue?: number;
-  isAgingPin?: boolean;
-  wasPinned?: boolean;
-  revisionCount?: number;
-  statusText: string;
-}
-
-export interface NextActionEngineResult {
-  primary: NextActionRecommendation | null;
-  fallback: NextActionRecommendation | null;
-  sessionBudget: 'quick' | 'deep';
-  totalCandidatesEvaluated: number;
-  quickEligibleCount: number;
-  isTriageMode: boolean;
-}
-
-export interface EngineOptions {
-  sessionBudget?: 'quick' | 'deep';
-  skipIds?: string[];
-  targetExam?: string;
-}
-
-export async function getNextActionRecommendation(
-  options: EngineOptions = {}
-): Promise<NextActionEngineResult> {
-  const sessionBudget = options.sessionBudget || 'quick';
-  const localSkipIds = new Set(options.skipIds || []);
-  const targetExam = options.targetExam || 'NEET PG';
-  const now = new Date();
-
-  // 1. Fetch persistent skips & add to skip list
-  const persistentSkips = await db.recommendationSkips.filter(s => s.expiresAt > now).toArray();
-  persistentSkips.forEach(s => localSkipIds.add(s.targetId));
-
-  // 2. Triage Mode
-  const daysSinceLastStudy = await getDaysSinceLastStudy();
-  const isTriageMode = daysSinceLastStudy > 3;
-
-  const subjects = await db.subjects.filter(s => !s.deletedAt).toArray();
-  const systems = await db.systems.filter(s => !s.deletedAt).toArray();
-  
-  const setTable = db.curriculumSets || db.revisionSets;
-  const curriculumSets: CurriculumSet[] = setTable 
-    ? await setTable.filter(s => !s.deletedAt).toArray() 
-    : [];
-    
-  const scoreLogs: ScoreLog[] = await db.scoreLogs.filter(sl => !sl.deletedAt).toArray();
-  const topicProgresses: TopicProgress[] = await db.topicProgress.toArray();
-  
-  const weakTopicMap = new Set(
-    topicProgresses.filter(tp => tp.isWeak).map(tp => tp.topicId)
-  );
-
-  const subjectMap = new Map<number, string>(subjects.map(s => [s.id!, s.name]));
-  const systemMap = new Map<number, StudySystem>(systems.map(sys => [sys.id!, sys]));
-
-  const rawCandidates: NextActionRecommendation[] = [];
-  const systemsWithSets = new Set<number>();
-  const systemsWithIncompleteSets = new Set<number>();
-
-  // 1. Process Study Blocks (Primary Scheduling Entity)
+if (parts.length === 2) {
+  const replacement = `  // 1. Process Study Blocks (Primary Scheduling Entity)
   for (const set of curriculumSets) {
     if (!set.id) continue;
-    const candidateId = `set:${set.id}`;
+    const candidateId = \`set:\${set.id}\`;
     
     const parentSystem = systemMap.get(set.systemId);
     if (parentSystem) {
@@ -106,12 +26,11 @@ export async function getNextActionRecommendation(
        ALL_SUBJECTS.find(s => String(s.id) === String(set.subjectId))?.name || 'Medical Subject';
     const systemName = parentSystem?.name || 'System';
     
+    const isLengthy = set.topicIds.length > 5;
     const topicCount = set.topicIds.length;
     
     const yieldInfo = getSubjectWeightageInfo(subjectName, targetExam);
     const yieldWeight = yieldInfo.weight || 70;
-    
-    const isLengthy = yieldWeight >= 85; // High Yield blocks default to Deep Work
     
     let daysOverdue = 0;
     let isOverdue = false;
@@ -151,26 +70,10 @@ export async function getNextActionRecommendation(
       actionIndex = 0;
     }
     
-    let isPinned = false;
-    let isAgingPin = false;
-    let wasPinned = false;
-    
-    if (set.focus === 'primary') {
-      const pinDate = set.focusUpdatedAt ? new Date(set.focusUpdatedAt) : now;
-      const hoursSincePin = (now.getTime() - pinDate.getTime()) / (1000 * 3600);
-      
-      if (hoursSincePin > 168) {
-        // > 7 days (168 hours): Auto-Downgrade
-        wasPinned = true;
-      } else {
-        isPinned = true;
-        actionIndex += 1000; // Force position #1
-        
-        if (hoursSincePin >= 48) {
-          // 48-168 hours: Aging Pin
-          isAgingPin = true;
-        }
-      }
+    const isPinned = set.focus === 'primary';
+    if (isPinned) {
+      // Pinned Intent Lifecycle handling - if stale, UI might downgrade, but here we just give it massive boost
+      actionIndex += 1000; 
     }
     
     // Triage Mode Filter
@@ -184,15 +87,18 @@ export async function getNextActionRecommendation(
     if (isTriageMode && actionIndex > 80 && !isPinned) {
       badges.push({ label: '🚨 Triage Priority', variant: 'destructive', iconType: 'alert' });
     } else if (isOverdue) {
-      badges.push({ label: `⚡ Overdue`, variant: 'amber', iconType: 'clock' });
+      badges.push({ label: \`⚡ Overdue\`, variant: 'amber', iconType: 'clock' });
     } else if (isDueToday) {
       badges.push({ label: '🕒 Due Today', variant: 'amber', iconType: 'clock' });
     }
     
     if (yieldWeight >= 85) {
-      badges.push({ label: '🎯 High Yield', variant: 'primary', iconType: 'target' });
+      badges.push({ label: \`🎯 High Yield (\${yieldInfo.tag.split('•')[0].trim()})\`, variant: 'primary', iconType: 'target' });
     }
     
+    if (isPinned) {
+      badges.push({ label: '⭐ Pinned', variant: 'primary', iconType: 'target' });
+    }
     
     const isBlockWeak = topicMemoryLosses.length > 0 && topicMemoryLosses.some(loss => loss > 80);
     if (isBlockWeak) {
@@ -203,10 +109,10 @@ export async function getNextActionRecommendation(
     const revisionCount = set.revisionCount || 0;
     
     let statusText = '';
-    if (isOverdue) statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
-    else if (isDueToday) statusText = `Due today (Pass #${revisionCount + 1})`;
-    else if (set.contentCompleted && set.qbankCompleted) statusText = `Completed • Pass #${revisionCount}`;
-    else statusText = `In Progress • ${topicCount} topics`;
+    if (isOverdue) statusText = \`\${daysOverdue} days overdue (Pass #\${revisionCount + 1})\`;
+    else if (isDueToday) statusText = \`Due today (Pass #\${revisionCount + 1})\`;
+    else if (set.contentCompleted && set.qbankCompleted) statusText = \`Completed • Pass #\${revisionCount}\`;
+    else statusText = \`In Progress • \${topicCount} topics\`;
     
     rawCandidates.push({
       id: candidateId,
@@ -225,9 +131,7 @@ export async function getNextActionRecommendation(
       inferredScore: 100 - baseMemoryLoss,
       daysOverdue: isOverdue ? daysOverdue : 0,
       revisionCount,
-      statusText,
-      isAgingPin,
-      wasPinned
+      statusText
     });
   }
 
@@ -257,4 +161,7 @@ export async function getNextActionRecommendation(
     quickEligibleCount,
     isTriageMode
   };
+}
+`;
+  fs.writeFileSync(file, parts[0] + replacement);
 }

@@ -50,7 +50,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     } else {
-      setTimeout(() => setMounted(false), 500);
+      const timer = setTimeout(() => setMounted(false), 500);
+      return () => clearTimeout(timer);
     }
   }, [open]);
 

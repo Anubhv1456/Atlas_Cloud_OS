@@ -184,77 +184,10 @@ export default function Timeline() {
           </p>
         </header>
 
-        {/* ── KPI Overview Grid ────────────────────────────────────────────── */}
-        <section className="mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Total Completed */}
-            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-emerald-500 transition-colors">Completed</span>
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold font-mono tracking-tight text-foreground">
-                  {history.length}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">Total tasks logged</div>
-              </div>
-            </div>
-
-            {/* Monthly Activity */}
-            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">{format(calDate, 'MMM')} Activity</span>
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                  <Activity className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold font-mono tracking-tight text-foreground">
-                  {monthCompleted.length}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">In selected month</div>
-              </div>
-            </div>
-
-            {/* Due / Overdue */}
-            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-amber-500/40 hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-amber-500 transition-colors">Attention</span>
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                  <AlertCircle className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold font-mono tracking-tight text-foreground">
-                  {overdueRevisions.length + dueTodayRevisions.length}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">Due or overdue</div>
-              </div>
-            </div>
-
-            {/* Scheduled Revisions */}
-            <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-sky-500/40 hover:-translate-y-0.5 transition-all duration-200 group">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-sky-500 transition-colors">Upcoming</span>
-                <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20">
-                  <Clock className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold font-mono tracking-tight text-foreground">
-                  {upcomingRevisions.length}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">Revisions this month</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        
 
         {/* ── Month-on-Month Heatmap Calendar ──────────────────────────────── */}
-        <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm mb-6 overflow-hidden max-w-2xl w-[90%] md:w-[60%] mx-auto">
+        <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm mb-6 overflow-hidden w-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-1 rounded-lg bg-primary/10 text-primary border border-primary/20">

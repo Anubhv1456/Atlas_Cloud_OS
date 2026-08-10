@@ -28,6 +28,7 @@ export interface Subject {
 export type SystemStatus = 'Strong' | 'Average' | 'Weak';
 
 export interface StudySystem {
+  isHighYield?: boolean;
   id?: number;
   subjectId: number;
   name: string;

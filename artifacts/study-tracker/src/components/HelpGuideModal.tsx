@@ -1,102 +1,344 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { HelpCircle, BookOpen, Clock, Target, Rocket, Lightbulb, Map, Layout, Zap, BrainCircuit, Activity } from 'lucide-react';
+import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
+const CHAPTERS = [
+  {
+    id: 'philosophy',
+    title: 'The Atlas Philosophy',
+    icon: Compass,
+    searchTerms: 'mission sdsr engine algorithm sky progress bar memory',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">The Mission</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas is not a simple checklist; it is your strategic brain, designed to answer one question: <strong>"What should I study next?"</strong>
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">The SDSR Engine</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Our <strong>Spaced Decay Study Routine</strong> calculates memory decay over time. You study on your platform of choice (Marrow, UWorld), and Atlas schedules the exact day you should revise it.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Atlas Sky</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas Sky is not a progress bar. It is a visual memory of your medical journey. As subjects strengthen, the sky becomes more connected. The pattern is unique to your order of mastery, making it a personal signature of your preparation rather than a score.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Trust the Algorithm</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Do not panic if you fall behind. The dynamic queue automatically reorganizes pending reviews without guilt-tripping, ensuring you always focus on what matters most today.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'workflow',
+    title: 'The Daily Workflow',
+    icon: Zap,
+    searchTerms: 'next action card active revisions external study log evaluate 4-step loop',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-3">
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">1</span> 
+            The Next Action Card
+          </h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">Always start your day by checking the top recommendation on the Home Screen. It is precisely calculated based on your decay profile.</p>
+        </section>
+        <section className="space-y-3">
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">2</span> 
+            Active Revisions
+          </h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">Clear your "Due Revisions" queue before learning new content to lock in memory.</p>
+        </section>
+        <section className="space-y-3">
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">3</span> 
+            External Study
+          </h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">Use your primary content sources (like Marrow or PrepLadder) to study the recommended topic.</p>
+        </section>
+        <section className="space-y-3">
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">4</span> 
+            Log & Evaluate
+          </h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">Mark Content/QBank as complete in Atlas and rate your confidence honestly. This feeds the engine.</p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'curriculum',
+    title: 'Managing Curriculum',
+    icon: BookOpen,
+    searchTerms: 'hierarchy subject system topic high-yield star study blocks study blocks progress tracking content units',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Hierarchy</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Everything flows from <strong>Subject ➔ System ➔ Topic</strong>. Master the systems, and the subject takes care of itself.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            High-Yield Tagging <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+          </h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Tagging a system as High-Yield gives it a massive priority boost in the recommendation engine, ensuring it surfaces more frequently during crucial study phases.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Study Blocks</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Group granular topics (e.g., "ECG + Heart Failure") into custom blocks for highly focused revision sessions.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Progress Tracking</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas distinguishes between incremental <strong>Content Units</strong> (e.g., 12 videos left) and binary <strong>QBank</strong> completion. Track both for true mastery.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'retention',
+    title: 'Mastering Retention',
+    icon: BrainCircuit,
+    searchTerms: 'confidence ratings brutal memory decay calibration speed lengthy topics massive systems',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Confidence Ratings</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Be brutal. Guessing correctly during a QBank means you should rate it as <strong>Weak</strong> to ensure early revision. Don't lie to the algorithm.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Memory Decay Calibration</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Use the gear icon on systems to tweak your memory decay speed.
+          </p>
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm space-y-3 mt-3">
+            <p className="flex items-start gap-2 text-foreground/90">
+              <span className="text-primary font-bold">Pro Tip:</span> 
+              <span>Use <strong>1.5x (Fast Decay)</strong> for volatile topics like Biochemistry.</span>
+            </p>
+            <p className="flex items-start gap-2 text-foreground/90">
+              <span className="text-primary font-bold">Pro Tip:</span> 
+              <span>Use <strong>0.8x (Slow Decay)</strong> for deeply conceptual topics you retain easily.</span>
+            </p>
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Lengthy Topics</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Use <strong>Mark as Lengthy</strong> in the system dropdown for massive systems (like CNS). This allows revisions to spread across multiple days without breaking your streak.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'exam',
+    title: 'Exam Strategy',
+    icon: Award,
+    searchTerms: 'mistake recovery queue concept retrieval misread fomo markers community wisdom analytics trailing subjects',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Mistake Recovery Queue</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Don't just read GT/QBank explanations. Log wrong answers in the Mistake Log and categorize them strictly (Concept, Retrieval, Misread, FOMO). Review this queue the week before an exam.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Markers (Community Wisdom)</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Leave "breadcrumbs" (mnemonics, clinical pearls, traps) on specific topics to instantly recall nuances during your next revision.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Analytics</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Use the performance charts to spot trailing subjects and realign your study time proactively.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'power',
+    title: 'Power User Secrets',
+    icon: Sparkles,
+    searchTerms: 'algorithm override pinning target icon focus mode managing interruptions illness exams travel burnout triage mode custom topics',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Algorithm Override (Pinning)</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Need to cram for a college internal exam? Use the <strong>Focus Mode</strong> (Target icon) to pin a Subject/System as Primary or Secondary, temporarily overriding the AI recommendations.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Managing Interruptions</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Illness, college exams, travel, or burnout happen. Atlas will automatically enter <strong>Triage Mode</strong> after several days of inactivity, prioritizing high-yield overdue topics first without punishing your stats.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Custom Topics</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Add personalized topics into systems if the default ontology misses something specific to your university syllabus.
+          </p>
+        </section>
+      </div>
+    )
+  }
+];
 
 export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenChange: (o: boolean) => void }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTabId, setActiveTabId] = useState('philosophy'); // Desktop active tab
+  const [expandedMobileId, setExpandedMobileId] = useState<string | null>('philosophy'); // Mobile expanded accordion
+
+  const filteredChapters = useMemo(() => {
+    if (!searchQuery.trim()) return CHAPTERS;
+    const q = searchQuery.toLowerCase();
+    return CHAPTERS.filter(c => 
+      c.title.toLowerCase().includes(q) || 
+      c.searchTerms.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  // Sync desktop tab if filtered chapters change and active isn't in it
+  React.useEffect(() => {
+    if (filteredChapters.length > 0 && !filteredChapters.find(c => c.id === activeTabId)) {
+      setActiveTabId(filteredChapters[0].id);
+    }
+  }, [filteredChapters, activeTabId]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50">
-        <DialogHeader className="p-6 pb-4 border-b border-border/50 bg-card/30">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary" />
-            Atlas Study Guide
+      <DialogContent className="max-w-4xl h-[90vh] md:h-[80vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50 rounded-2xl">
+        <DialogHeader className="p-4 md:p-6 pb-4 border-b border-border/50 bg-card/30 flex-shrink-0">
+          <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+            Atlas Masterclass
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
-            Everything you need to know to get the most out of your medical study tracker.
+          <DialogDescription className="text-muted-foreground text-sm mt-1">
+            The definitive guide to unlocking your strategic brain.
           </DialogDescription>
+          <div className="mt-4 relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input 
+              placeholder="Search guide, features, or tips..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-background/50 border-border/50 rounded-xl focus-visible:ring-primary/50"
+            />
+          </div>
         </DialogHeader>
         
-        <div className="flex-1 px-6 py-6 overflow-y-auto">
-          <div className="space-y-8 pr-4">
-            
-            <section className="space-y-3">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Target className="w-5 h-5 text-emerald-500" />
-                The Core Philosophy
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Atlas is designed to answer one crucial question: <strong>"What should I study next?"</strong>. 
-                Instead of overwhelming you with content, Atlas acts as your strategic brain. You log what you study, and Atlas calculates your memory decay, building a precise daily schedule for you.
-              </p>
-            </section>
-
-            <section className="space-y-4">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Map className="w-5 h-5 text-blue-500" />
-                How Atlas is Structured
-              </h3>
-              <div className="grid gap-3">
-                <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-1.5">
-                  <h4 className="font-semibold text-sm">1. Subjects</h4>
-                  <p className="text-xs text-muted-foreground">The highest level (e.g., Pathology, Anatomy, Medicine). Add the subjects you are currently studying from the home screen.</p>
-                </div>
-                <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-1.5">
-                  <h4 className="font-semibold text-sm">2. Systems</h4>
-                  <p className="text-xs text-muted-foreground">The sub-divisions (e.g., CVS, Respiratory, Endocrine). Track your completion and confidence for each system.</p>
-                </div>
-                <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-1.5">
-                  <h4 className="font-semibold text-sm">3. Topics & Study Blocks</h4>
-                  <p className="text-xs text-muted-foreground">The specific chapters. You can group these into <strong>Study Blocks</strong> (previously Study Blocks) to organize what you want to revise together.</p>
-                </div>
+        <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+          
+          {/* ── DESKTOP SIDEBAR ── */}
+          <div className="hidden md:block w-64 border-r border-border/50 bg-muted/10 overflow-y-auto py-4">
+            {filteredChapters.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">No matches found.</div>
+            ) : (
+              <div className="px-2 space-y-1">
+                {filteredChapters.map(chapter => {
+                  const isActive = activeTabId === chapter.id;
+                  const Icon = chapter.icon;
+                  return (
+                    <button
+                      key={chapter.id}
+                      onClick={() => setActiveTabId(chapter.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-md" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className={cn("w-4 h-4", isActive ? "text-primary-foreground" : "text-muted-foreground/70")} />
+                      {chapter.title}
+                    </button>
+                  );
+                })}
               </div>
-            </section>
-
-            <section className="space-y-4">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <BrainCircuit className="w-5 h-5 text-purple-500" />
-                The Recommendation Engine (SDSR)
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Our Spaced Repetition engine is invisible but powerful. When you finish a system or study block, log your confidence. Atlas will schedule your next revision:
-              </p>
-              <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
-                <li><strong>Weak:</strong> Reviewed very soon to reinforce memory.</li>
-                <li><strong>Average:</strong> Reviewed in a standard interval.</li>
-                <li><strong>Strong:</strong> Pushed further out to maximize efficiency.</li>
-              </ul>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex gap-3 mt-2">
-                <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-600/90 dark:text-amber-400/90">
-                  <strong>Pro Tip:</strong> Trust the "Next Up" feed. If you fall behind, don't panic. Atlas will smoothly reorganize your pending reviews without making you feel guilty.
-                </p>
-              </div>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Activity className="w-5 h-5 text-rose-500" />
-                Logging Mistakes
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                When you do QBank or GTs on other platforms, bring your mistakes to Atlas. Use the <strong>Mistake Recovery Queue</strong> to log concepts you got wrong. Atlas will help you track these weaknesses until you master them before the exam.
-              </p>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
-                <Rocket className="w-5 h-5 text-teal-500" />
-                Daily Workflow
-              </h3>
-              <ol className="space-y-2 text-sm text-muted-foreground list-decimal pl-5">
-                <li>Open Atlas to see your top recommended focus.</li>
-                <li>Study the content (using Marrow, PrepLadder, etc.).</li>
-                <li>Mark it as "Done" in Atlas and rate your confidence.</li>
-                <li>Let Atlas schedule the next review date automatically.</li>
-              </ol>
-            </section>
-
+            )}
           </div>
+
+          {/* ── DESKTOP CONTENT AREA ── */}
+          <div className="hidden md:block flex-1 overflow-y-auto p-8 bg-card/10">
+             {(() => {
+                const activeChapter = filteredChapters.find(c => c.id === activeTabId);
+                if (!activeChapter) return null;
+                const Icon = activeChapter.icon;
+                return (
+                  <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-2.5 bg-primary/10 rounded-xl text-primary border border-primary/20">
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-foreground">{activeChapter.title}</h2>
+                    </div>
+                    {activeChapter.content}
+                  </div>
+                );
+             })()}
+          </div>
+
+          {/* ── MOBILE ACCORDION ── */}
+          <div className="flex-1 md:hidden overflow-y-auto p-4 space-y-3 bg-card/10">
+            {filteredChapters.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">No matches found.</div>
+            ) : (
+              filteredChapters.map(chapter => {
+                const isExpanded = expandedMobileId === chapter.id;
+                const Icon = chapter.icon;
+                return (
+                  <div key={chapter.id} className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm transition-all">
+                    <button
+                      onClick={() => setExpandedMobileId(isExpanded ? null : chapter.id)}
+                      className={cn(
+                        "w-full flex items-center justify-between p-4 text-left transition-colors focus:outline-none",
+                        isExpanded ? "bg-muted/30" : "hover:bg-muted/10"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn("p-2 rounded-xl transition-colors", isExpanded ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <h3 className="font-semibold text-foreground text-sm">{chapter.title}</h3>
+                      </div>
+                      <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", isExpanded && "rotate-180")} />
+                    </button>
+                    {isExpanded && (
+                      <div className="p-4 pt-2 border-t border-border/30 bg-background/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {chapter.content}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+
         </div>
       </DialogContent>
     </Dialog>

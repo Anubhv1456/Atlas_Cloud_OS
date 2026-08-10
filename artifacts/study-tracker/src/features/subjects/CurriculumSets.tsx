@@ -11,6 +11,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CurriculumSetScoreModal } from './CurriculumSetScoreModal';
+import { ALL_SUBJECTS } from '@/data/ontology';
 import { CurriculumSetForm } from './CurriculumSetForm';
 import { deleteCurriculumSet } from '@/db/mutations';
 import { toast } from 'sonner';
@@ -33,8 +35,10 @@ const colorMap = {
 };
 
 export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: CurriculumSetsProps) {
-  const [formOpen, setFormOpen] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
+  const [scoreModalOpen, setScoreModalOpen] = useState(false);
+  const [scoreModalSet, setScoreModalSet] = useState<CurriculumSet | undefined>();
   
   const curriculumSets = useLiveQuery(
     () => {
@@ -267,8 +271,11 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                             </button>
 
                             <button
-                              onClick={() => onLogScore && onLogScore(rs.id!, rs.name)}
-                              className={cn(
+                              onClick={() => {
+                              setScoreModalSet(rs);
+                              setScoreModalOpen(true);
+                            }}
+className={cn(
                                 "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
                                 "bg-transparent border-border text-foreground hover:border-primary/50 hover:bg-primary/10 shadow-sm"
                               )}
@@ -299,6 +306,15 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
         allTopics={topics}
         initialData={editSet}
       />
+    
+      {scoreModalOpen && scoreModalSet && (
+        <CurriculumSetScoreModal
+          isOpen={scoreModalOpen}
+          onClose={() => setScoreModalOpen(false)}
+          curriculumSet={scoreModalSet}
+          allTopics={topics}
+        />
+      )}
     </div>
   );
 }

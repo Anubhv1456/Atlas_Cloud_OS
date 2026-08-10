@@ -3,7 +3,7 @@ import { StudySystem, SystemStatus } from '@/db';
 import { updateSystem, deleteSystem, logCompletion, recordInitialEvaluation, completeRevision, startActiveRevision, logDailyRevisionCheckIn, toggleSystemLengthy } from '@/db';
 import { ConfidenceDialog } from '@/features/revision/ConfidenceDialog';
 import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
-import { ChevronDown, Trash2, Check, RotateCcw, Clock, GripVertical, CheckCircle2, Award, Sliders, MoreVertical, Edit2, BookOpen, Calendar, Play, Lightbulb, Bookmark, Compass, Sparkles } from 'lucide-react';
+import { ChevronDown, Trash2, Check, RotateCcw, Clock, GripVertical, CheckCircle2, Award, Sliders, MoreVertical, Edit2, BookOpen, Calendar, Play, Lightbulb, Bookmark, Compass, Sparkles, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -143,6 +143,23 @@ export function SystemCard(props: SystemCardProps) {
           >
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateSystem(system.id!, { isHighYield: !system.isHighYield });
+                  }}
+                  className={cn(
+                    "shrink-0 transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none cursor-pointer flex items-center justify-center -ml-1 p-1 rounded-full",
+                    system.isHighYield 
+                      ? "text-amber-500 bg-amber-500/10" 
+                      : "text-muted-foreground/30 hover:text-muted-foreground/60 hover:bg-muted"
+                  )}
+                  title={system.isHighYield ? "High Yield Topic (Click to unmark)" : "Mark as High Yield Topic"}
+                >
+                  <Star className={cn("w-[18px] h-[18px] transition-all", system.isHighYield ? "fill-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "fill-transparent")} />
+                </button>
                 <h4 className="font-semibold text-lg leading-tight text-foreground truncate min-w-0">{system.name}</h4>
                 <span className={cn('text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-medium border shrink-0', statusColors[system.status || 'Average'])}>
                   {system.status || 'Average'}
@@ -238,7 +255,7 @@ export function SystemCard(props: SystemCardProps) {
             <div className="p-4 pt-0 border-t border-border/50 bg-card">
               <div className="grid gap-2 py-4">
                 {/* Study Blocks */}
-                <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={finalTopics} />
+                <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={finalTopics} onLogScore={handleSetLogScore} />
 
                 {/* Topics Checklist */}
                 <TopicList topics={finalTopics} subjectId={system.subjectId} systemId={system.id!} subjectName={subjectName} systemName={system.name} onViewMarkers={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowViewMarkersDialog(true); }} onLeaveMarker={(id, name) => { setSelectedTopicId(id); setSelectedTopicName(name); setShowInsightDialog(true); }} onLogScore={handleSetLogScore} onRenameTopic={handleRenameTopic} onDeleteTopic={handleDeleteTopic} onAddTopic={handleAddCustomTopic} />

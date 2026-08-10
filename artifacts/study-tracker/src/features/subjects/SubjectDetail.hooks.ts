@@ -154,8 +154,7 @@ export function useSubjectDetailLogic(id: string | undefined) {
   
   
   
-  const [activeFilter,  setActiveFilter]  = useState<StageKey | null>(null);
-
+  
   const highlightId = (() => {
     const params = new URLSearchParams(search);
     const v = params.get('highlight');
@@ -164,8 +163,7 @@ export function useSubjectDetailLogic(id: string | undefined) {
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
-    if (activeFilter !== null) return;
-    const items = Array.from(systems);
+        const items = Array.from(systems);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
@@ -222,24 +220,16 @@ export function useSubjectDetailLogic(id: string | undefined) {
     return Math.round((done / revisionSets.length) * 100);
   };
 
-  const visibleSystems: StudySystem[] = activeFilter
-    ? systems.filter(s => !s[activeFilter])
-    : systems;
-
-  const handleDonutClick = (key: StageKey) => {
-    setActiveFilter(prev => (prev === key ? null : key));
-  };
-
+  
+  
   return {
     subjectId, subject, systems, pyqYears,
     showAddSystem, setShowAddSystem,
     
     
     
-    activeFilter, setActiveFilter,
-    highlightId, handleDragEnd,
+        highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked, stagePct, visibleSystems,
-    handleDonutClick, 
+    pyqUnlocked, stagePct, 
   };
 }

@@ -99,8 +99,30 @@ export function today(): Date {
  * - At t = S (due date): R = 90%
  * - At t = 2S (overdue): R = 81%
  */
-export function getRetrievability(sys: StudySystem, now: Date = today()): number {
-  if (!hasRevisionScheduled(sys)) return 100;
+export function getTopicMemoryLoss(
+  lastDate: Date,
+  stabilityInterval: number,
+  isWeak: boolean,
+  baseDecayFactor: number = 1.0,
+  now: Date = today()
+): number {
+  const n = new Date(now);
+  n.setHours(0, 0, 0, 0);
+  const l = new Date(lastDate);
+  l.setHours(0, 0, 0, 0);
+
+  const daysElapsed = Math.max(0, Math.floor((n.getTime() - l.getTime()) / 86_400_000));
+  
+  const decayFactor = baseDecayFactor * (isWeak ? 1.5 : 1.0);
+  
+  const retrievability = 100 * Math.pow(REVISION_CONFIG.TARGET_RETENTION_DUE, (daysElapsed * decayFactor) / stabilityInterval);
+  const memoryLoss = 100 - retrievability;
+  
+  return Math.min(100, Math.max(0, Math.round(memoryLoss * 10) / 10));
+}
+
+export function getSystemMemoryLoss(sys: StudySystem, now: Date = today()): number {
+  if (!hasRevisionScheduled(sys)) return 0;
 
   const lastDate = sys.lastRevisionDate
     ? new Date(sys.lastRevisionDate)
@@ -114,17 +136,23 @@ export function getRetrievability(sys: StudySystem, now: Date = today()): number
     ? sys.currentRevisionInterval
     : getInitialInterval(sys.status);
 
-  const n = new Date(now);
-  n.setHours(0, 0, 0, 0);
-  const l = new Date(lastDate);
-  l.setHours(0, 0, 0, 0);
+  const isWeak = sys.status === 'Weak';
+  const baseDecayFactor = getSystemDecayFactor(sys);
 
-  const daysElapsed = Math.max(0, Math.floor((n.getTime() - l.getTime()) / 86_400_000));
-  const decayFactor = getSystemDecayFactor(sys);
-  
-  // Formula: 100 * (0.90 ^ ((daysElapsed * decayFactor) / stability))
-  const retrievability = 100 * Math.pow(REVISION_CONFIG.TARGET_RETENTION_DUE, (daysElapsed * decayFactor) / stability);
-  return Math.min(100, Math.max(0, Math.round(retrievability * 10) / 10));
+  return getTopicMemoryLoss(lastDate, stability, isWeak, baseDecayFactor, now);
+}
+
+export function calculateBlockMemoryLoss(topicMemoryLosses: number[]): number {
+  if (topicMemoryLosses.length === 0) return 0;
+  const maxLoss = Math.max(...topicMemoryLosses);
+  const avgLoss = topicMemoryLosses.reduce((sum, val) => sum + val, 0) / topicMemoryLosses.length;
+  const blockLoss = (0.7 * maxLoss) + (0.3 * avgLoss);
+  return Math.min(100, Math.max(0, Math.round(blockLoss * 10) / 10));
+}
+
+// Legacy wrapper to avoid breaking UI (temporary until UI is updated)
+export function getRetrievability(sys: StudySystem, now: Date = today()): number {
+  return 100 - getSystemMemoryLoss(sys, now);
 }
 
 /** Categorize retrievability into human-readable recall health. */
@@ -261,17 +289,13 @@ export function daysOverdue(sys: StudySystem, now: Date = today()): number {
 export function calculateDecayScore(sys: StudySystem, now: Date = today()): number {
   if (!hasRevisionScheduled(sys)) return 0;
   
-  const retrievability = getRetrievability(sys, now);
-  const memoryLoss = 100 - retrievability;
-  const weight = REVISION_CONFIG.CONFIDENCE_WEIGHTS[sys.status] ?? 1.0;
-  const decayFactor = getSystemDecayFactor(sys);
-  const overdue = daysOverdue(sys, now);
-
+  const memoryLoss = getSystemMemoryLoss(sys, now);
+  
   if (isRevisionDue(sys, now)) {
-    return Math.round((memoryLoss * weight * decayFactor + overdue * 2) * 10) / 10;
+    return memoryLoss;
   } else {
     // Small background decay score for upcoming
-    return Math.round((memoryLoss * 0.1 * weight * decayFactor) * 10) / 10;
+    return Math.round((memoryLoss * 0.1) * 10) / 10;
   }
 }
 

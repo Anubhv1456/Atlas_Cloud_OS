@@ -157,7 +157,7 @@ export async function deleteHistoryEntry(id: number) {
       const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
       const matchedSet = sets.find(s => entry.taskLabel.includes(s.name));
       if (matchedSet && matchedSet.id) {
-        // very basic rollback for curriculum set revision: just decrement revision count
+        // very basic rollback for Study Block revision: just decrement revision count
         const newRevCount = Math.max(0, (matchedSet.revisionCount ?? 1) - 1);
         await db.curriculumSets.update(matchedSet.id, { revisionCount: newRevCount, updatedAt: new Date(), hlc: generateHLC() });
       }

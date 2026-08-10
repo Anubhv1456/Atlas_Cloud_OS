@@ -178,6 +178,7 @@ export default function Analytics() {
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="revision">System Revisions</SelectItem>
                 <SelectItem value="pyq">PYQ Tests</SelectItem>
+                <SelectItem value="set">Study Blocks</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -510,9 +511,7 @@ function VirtualizedScoreTable({
                         <Badge
                           variant="outline"
                           className={`text-[10px] capitalize ${
-                            log.type === 'revision'
-                              ? 'border-blue-500/30 text-blue-500 bg-blue-500/5'
-                              : 'border-purple-500/30 text-purple-500 bg-purple-500/5'
+                            log.type === 'revision' ? 'border-blue-500/30 text-blue-500 bg-blue-500/5' : log.type === 'set' ? 'border-amber-500/30 text-amber-500 bg-amber-500/5' : 'border-purple-500/30 text-purple-500 bg-purple-500/5'
                           }`}
                         >
                           {log.type}

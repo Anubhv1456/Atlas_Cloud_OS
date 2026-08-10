@@ -612,11 +612,10 @@ export default function SubjectDetail() {
     
     
     
-    activeFilter, setActiveFilter,
+    
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked, stagePct, visibleSystems,
-    handleDonutClick, 
+    pyqUnlocked, stagePct
   } = useSubjectDetailLogic(id);
 
   if (!subject && id) {
@@ -664,81 +663,7 @@ export default function SubjectDetail() {
           </div>
         </div>
 
-        {/* ── Progress Rings (Quiet Confidence) ───────────────────────── */}
-        {systems.length > 0 && (
-          <section className="mt-8 mb-10">
-            <div className="flex justify-center gap-10">
-              <button 
-                onClick={() => handleDonutClick('contentCompleted')} 
-                className={cn(
-                  "flex flex-col items-center gap-3 transition-all focus:outline-none",
-                  activeFilter && activeFilter !== 'contentCompleted' ? 'opacity-40 hover:opacity-70' : 'opacity-100'
-                )}
-              >
-                <div className="relative w-24 h-24">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="4" />
-                    <circle 
-                      cx="50" cy="50" r="45" fill="none" className="stroke-primary transition-all duration-1000 ease-in-out" 
-                      strokeWidth="4" strokeLinecap="round"
-                      strokeDasharray="283" strokeDashoffset={283 - (283 * stagePct('contentCompleted')) / 100}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-mono text-foreground">{stagePct('contentCompleted')}%</span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 h-6">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content</span>
-                  {activeFilter === 'contentCompleted' && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                </div>
-              </button>
-
-              <button 
-                onClick={() => handleDonutClick('qbankDone')} 
-                className={cn(
-                  "flex flex-col items-center gap-3 transition-all focus:outline-none",
-                  activeFilter && activeFilter !== 'qbankDone' ? 'opacity-40 hover:opacity-70' : 'opacity-100'
-                )}
-              >
-                <div className="relative w-24 h-24">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="4" />
-                    <circle 
-                      cx="50" cy="50" r="45" fill="none" style={{ stroke: 'hsl(var(--gold))' }} className="transition-all duration-1000 ease-in-out" 
-                      strokeWidth="4" strokeLinecap="round"
-                      strokeDasharray="283" strokeDashoffset={283 - (283 * stagePct('qbankDone')) / 100}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-mono text-foreground">{stagePct('qbankDone')}%</span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-1.5 h-6">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">QBank</span>
-                  {activeFilter === 'qbankDone' && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'hsl(var(--gold))' }} />}
-                </div>
-              </button>
-            </div>
-            
-            {activeFilter && (
-              <div className="text-center mt-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  Showing{' '}
-                  <span className="font-mono text-foreground">{visibleSystems.length}</span>
-                  {' '}system{visibleSystems.length !== 1 ? 's' : ''} without{' '}
-                  <span className={cn(
-                    "font-semibold",
-                    activeFilter === 'contentCompleted' ? 'text-primary' : 'text-[hsl(var(--gold))]'
-                  )}>
-                    {activeFilter === 'contentCompleted' ? 'Content' : 'QBank'}
-                  </span>
-                  {' '}— tap again to clear
-                </p>
-              </div>
-            )}
-          </section>
-        )}
+        
       </header>
 
       {/* Systems list */}
@@ -755,32 +680,21 @@ export default function SubjectDetail() {
             }
             className="mt-6"
           />
-        ) : visibleSystems.length === 0 ? (
-          <div className="text-center py-12 px-4 bg-muted/30 rounded-3xl border border-dashed">
-            <p className="text-foreground font-semibold mb-1">All systems complete</p>
-            <p className="text-sm text-muted-foreground">
-              Every system has{' '}
-              <span className="font-medium" style={{ color: STAGES.find(s => s.key === activeFilter)!.color }}>
-                {STAGES.find(s => s.key === activeFilter)!.label}
-              </span>{' '}
-              done.
-            </p>
-          </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="systems-list" isDropDisabled={activeFilter !== null}>
+            <Droppable droppableId="systems-list" isDropDisabled={false}>
               {(provided) => (
                 <div 
                   className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4"
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                 >
-                  {visibleSystems.map((system, index) => (
+                  {systems.map((system, index) => (
                     <Draggable 
                       key={system.id} 
                       draggableId={String(system.id)} 
                       index={index}
-                      isDragDisabled={activeFilter !== null}
+                      isDragDisabled={false}
                     >
                       {(provided, snapshot) => (
                         <div

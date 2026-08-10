@@ -101,7 +101,7 @@ export function useTimelineLogic() {
       };
     });
 
-  // ── Curriculum Sets Revision Events ─────────────────────────────────────────
+  // ── Study Blocks Revision Events ─────────────────────────────────────────
   const setUpcomingRevisions: TimelineEvent[] = curriculumSets
     .filter(sys => {
       if (!sys.nextRevisionDate) return false;

@@ -1,13 +1,8 @@
 const fs = require('fs');
-const file = '/app/applet/artifacts/study-tracker/src/features/dashboard/Home.tsx';
-let data = fs.readFileSync(file, 'utf8');
+const file = './artifacts/study-tracker/src/features/dashboard/Home.tsx';
+let code = fs.readFileSync(file, 'utf8');
 
-// Find the start of Knowledge Insights and remove it until SubjectsGrid
-const startIndex = data.indexOf('{/* ── Knowledge Insights');
-const endIndex = data.indexOf('<SubjectsGrid');
+code = code.replace(/insights,\n/g, "");
+code = code.replace(/secondaryDaysOverdue, dueRevisions, insights,/g, "secondaryDaysOverdue, dueRevisions,");
 
-if (startIndex !== -1 && endIndex !== -1) {
-  data = data.substring(0, startIndex) + data.substring(endIndex);
-}
-
-fs.writeFileSync(file, data);
+fs.writeFileSync(file, code);

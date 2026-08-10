@@ -160,6 +160,8 @@ export function computeIntelligentRecommendation(
 
     const systemSets = curriculumSets.filter(s => s.systemId === sys.id);
 
+        
+    
     if (systemSets.length > 0) {
       for (const set of systemSets) {
         let score = weightage.weight * yearMult;
@@ -208,9 +210,13 @@ export function computeIntelligentRecommendation(
         }
       }
     } else {
-      // Fallback
+            // Fallback
       let score = weightage.weight * yearMult;
       const reasons: string[] = [];
+      if (sys.isHighYield) {
+        score += 150;
+        reasons.unshift('🔥 Marked as High Yield');
+      }
       if (yearMult > 2.0) {
         reasons.push(`• Essential ${currentYear} priority (${subName})`);
       }

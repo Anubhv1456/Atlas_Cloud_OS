@@ -307,8 +307,7 @@ export function useHomeLogic() {
     secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision, isSecondaryIntentStale,
     secondaryDaysOverdue,
     dueRevisions,
-    insights,
-    
+        
     
     
     

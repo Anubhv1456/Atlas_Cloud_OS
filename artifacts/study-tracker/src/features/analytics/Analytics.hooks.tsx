@@ -22,7 +22,7 @@ export function useAnalyticsLogic() {
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
 
   // Filter state
-  const [selectedType, setSelectedType] = useState<'all' | 'revision' | 'pyq'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'revision' | 'pyq' | 'set'>('all');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
   const [selectedSystemId, setSelectedSystemId] = useState<string>('all');
   const [densityLimit, setDensityLimit] = useState<string>('10'); // Default: Last 10 results
