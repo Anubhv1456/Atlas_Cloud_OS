@@ -1,3 +1,5 @@
+import { HelpGuideModal } from '@/components/HelpGuideModal';
+import { AtlasSkyPreview } from './AtlasSkyPreview';
 import { NextActionCard } from '@/components/dashboard/NextActionCard';
 import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
 import { ALL_TOPICS, ALL_SUBJECTS } from '@/data/ontology';
@@ -13,7 +15,7 @@ import { FocusDialog } from '@/components/FocusDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, BookOpen, Layers, X, ChevronRight, Clock, AlertCircle, Target, XCircle, Activity, ArrowUpRight, CheckCircle, Lightbulb, Lock, Pencil, Flame, Award, Sparkles, TrendingUp, Brain } from 'lucide-react';
+import { Plus, BookOpen, HelpCircle, Layers, X, ChevronRight, Clock, AlertCircle, Target, XCircle, Activity, ArrowUpRight, CheckCircle, Lightbulb, Lock, Pencil, Flame, Award, Sparkles, TrendingUp, Brain } from 'lucide-react';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -52,8 +54,8 @@ function RevisionPill({ sys }: { sys: StudySystem }) {
   const health = getRetrievabilityHealth(retrievability);
 
   if (isRevisionOverdue(sys)) return (
-    <span className="flex items-center gap-1 text-[10px] font-bold text-destructive shrink-0 bg-destructive/10 px-2.5 py-0.5 rounded-full border border-destructive/20">
-      <div className="w-1.5 h-1.5 rounded-full bg-destructive" />Overdue
+    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-500 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />Pending Review
     </span>
   );
   if (isRevisionDue(sys)) return (
@@ -92,6 +94,7 @@ export default function Home() {
   const { profile, isConfigured } = useExamProfile();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
     const allTopicIds = systems.flatMap(sys => {
@@ -158,23 +161,48 @@ export default function Home() {
       <div className="relative z-10 flex-1 flex flex-col">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" /> Medical Study Tracker
-                </span>
-                
+          <div className="flex items-center gap-3.5 w-full justify-between sm:justify-start sm:w-auto">
+            <div className="flex items-center gap-3.5">
+              <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3" /> Medical Study Tracker
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
+            </div>
+            
+            <div className="flex items-center gap-1 sm:hidden">
+              <AtlasSkyPreview />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-muted-foreground hover:text-foreground rounded-full"
+                onClick={() => setHelpOpen(true)}
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
             </div>
           </div>
-
           
+          <div className="hidden sm:flex items-center gap-1">
+            <AtlasSkyPreview />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-foreground rounded-full"
+              onClick={() => setHelpOpen(true)}
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Button>
+          </div>
         </header>
             
-            <NextActionCard />
+            <div className="mb-12">
+              <NextActionCard />
+            </div>
             <ActiveRevisions
               primaryFocus={primaryFocus || null}
               primaryFocusSubject={primaryFocusSubject || null}
@@ -196,49 +224,7 @@ export default function Home() {
               customSecondarySubject={customSecondarySubject}
               customSecondarySystem={customSecondarySystem}
             />
-{/* ── Knowledge Insights ──────────────────────────────────────────────── */}
-            {insights.length > 0 && (
-              <section className="mb-12">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Strategic Insights
-                </h2>
-                <div className="grid gap-3">
-                  {insights.map((insight) => (
-                    <div
-                      key={insight.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card rounded-2xl border border-border/80 shadow-sm transition-all hover:border-primary/30"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="shrink-0 p-2 bg-muted/50 rounded-xl border border-border/50">
-                          {insight.icon}
-                        </div>
-                        <div className="space-y-1">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border inline-block ${insight.badgeClass}`}>
-                            {insight.badge}
-                          </span>
-                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                            {insight.text}
-                          </p>
-                        </div>
-                      </div>
-                      {insight.actionLabel && insight.onAction && (
-                        <button
-                          onClick={insight.onAction}
-                          className="shrink-0 self-end sm:self-center px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs transition-colors flex items-center gap-1 border border-primary/20 cursor-pointer"
-                        >
-                          {insight.actionLabel} <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-
-
-            
-            <SubjectsGrid
+<SubjectsGrid
               subjects={subjects}
               systems={systems}
               
@@ -276,6 +262,7 @@ export default function Home() {
 
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
+      <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
     </>
   );
 }

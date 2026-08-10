@@ -167,3 +167,15 @@ export function useCurrentStreak(): number {
     return streak;
   }) ?? 0;
 }
+
+export async function getDaysSinceLastStudy(): Promise<number> {
+  const latestLog = await db.scoreLogs.orderBy('timestamp').reverse().first();
+  if (!latestLog) return 0;
+  
+  const now = new Date();
+  const logDate = new Date(latestLog.timestamp);
+  
+  const diffTime = Math.abs(now.getTime() - logDate.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}

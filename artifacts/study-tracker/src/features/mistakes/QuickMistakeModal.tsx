@@ -109,31 +109,17 @@ export function QuickMistakeModal({
   const errorTypePills = [
     {
       id: 'concept' as const,
-      label: 'Concept',
+      label: 'Knowledge Gap',
       icon: Brain,
-      color: 'border-purple-500/40 text-purple-600 bg-purple-500/10 dark:text-purple-400',
-      description: 'Misunderstood pathophys / core rule'
-    },
-    {
-      id: 'retrieval' as const,
-      label: 'Retrieval',
-      icon: Zap,
-      color: 'border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400',
-      description: 'Knew concept, failed memory recall'
+      color: 'border-rose-500/40 text-rose-600 bg-rose-500/10 dark:text-rose-400',
+      description: 'Missing concept'
     },
     {
       id: 'misread' as const,
-      label: 'Misread',
+      label: 'Silly Mistake',
       icon: Eye,
-      color: 'border-blue-500/40 text-blue-600 bg-blue-500/10 dark:text-blue-400',
-      description: 'Misread question stem / EXCEPT / NOT'
-    },
-    {
-      id: 'fomo' as const,
-      label: 'FOMO',
-      icon: AlertTriangle,
-      color: 'border-destructive/40 text-destructive bg-destructive/10',
-      description: 'Overthought or picked obscure option'
+      color: 'border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400',
+      description: 'Read the question wrong'
     }
   ];
 

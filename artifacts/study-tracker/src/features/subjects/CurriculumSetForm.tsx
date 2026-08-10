@@ -78,7 +78,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error('Failed to save Curriculum Set');
+      toast.error('Failed to save Study Block');
     }
   };
 
@@ -88,7 +88,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[420px] max-h-[85vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Edit Curriculum Set' : 'Create Curriculum Set'}</DialogTitle>
+          <DialogTitle>{initialData ? 'Edit Study Block' : 'Create Study Block'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
           <div className="space-y-4 py-4 overflow-y-auto flex-1 px-1">

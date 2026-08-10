@@ -37,7 +37,7 @@ export function DueCurriculumSetsCard() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Revisions Up to Date</h3>
-            <p className="text-xs text-muted-foreground">No Curriculum Sets due for recall today.</p>
+            <p className="text-xs text-muted-foreground">No Study Blocks due for recall today.</p>
           </div>
         </div>
       </div>
@@ -74,12 +74,10 @@ export function DueCurriculumSetsCard() {
                   <span
                     className={cn(
                       'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0',
-                      isOverdue
-                        ? 'bg-destructive/10 text-destructive border-destructive/20'
-                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                      'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
                     )}
                   >
-                    {isOverdue ? `${daysOverdueCount}d overdue` : 'Due Today'}
+                    {isOverdue ? 'Pending' : 'Due Today'}
                   </span>
                 </div>
 

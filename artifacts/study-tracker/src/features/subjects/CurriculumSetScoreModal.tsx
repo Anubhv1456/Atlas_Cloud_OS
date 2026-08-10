@@ -127,7 +127,7 @@ export function CurriculumSetScoreModal({
           </DialogTitle>
           <p className="text-xs text-muted-foreground">
             {step === 1 
-              ? `${setTopics.length} topic${setTopics.length === 1 ? '' : 's'} in this Curriculum Set` 
+              ? `${setTopics.length} topic${setTopics.length === 1 ? '' : 's'} in this Study Block` 
               : 'Tap any specific topics you felt weak on.'}
           </p>
         </DialogHeader>

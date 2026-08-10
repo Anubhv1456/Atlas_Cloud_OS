@@ -83,7 +83,7 @@ export function SystemCard(props: SystemCardProps) {
       <div ref={cardRef} className={cn(
         'bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-all duration-300',
         (system.status || 'Average') === 'Strong' && 'border-[hsl(var(--gold))]/30',
-        revisionOverdue && 'border-destructive/50',
+        revisionOverdue && 'border-amber-500/50',
         revisionDue && !revisionOverdue && 'border-amber-500/25',
         highlighted && 'ring-1 ring-primary ring-offset-2 ring-offset-background',
       )}>
@@ -113,14 +113,12 @@ export function SystemCard(props: SystemCardProps) {
         {revisionDue && system.revisionState !== 'in_progress' && (
           <div className={cn(
             'flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider',
-            revisionOverdue
-              ? 'bg-destructive/10 text-destructive'
-              : 'bg-amber-500/10 text-amber-500',
+            'bg-amber-500/10 text-amber-600 dark:text-amber-500',
           )}>
             <Clock className="w-3.5 h-3.5 shrink-0" />
             {revisionOverdue
-              ? `Revision overdue — ${overdueDays} day${overdueDays !== 1 ? 's' : ''}`
-              : 'Revision due today'}
+              ? 'Pending Review'
+              : 'Revision Due Today'}
           </div>
         )}
 
@@ -239,7 +237,7 @@ export function SystemCard(props: SystemCardProps) {
           <div className="overflow-hidden">
             <div className="p-4 pt-0 border-t border-border/50 bg-card">
               <div className="grid gap-2 py-4">
-                {/* Curriculum Sets */}
+                {/* Study Blocks */}
                 <CurriculumSets systemId={system.id!} subjectId={system.subjectId} topics={finalTopics} />
 
                 {/* Topics Checklist */}
@@ -360,14 +358,12 @@ export function SystemCard(props: SystemCardProps) {
                       label="Memory Stability"
                       value={system.currentRevisionInterval ? `${system.currentRevisionInterval} days` : '—'}
                     />
-                    <RevisionRow
-                      label="Next Recall Due"
-                      value={system.nextRevisionDate
-                        ? format(new Date(system.nextRevisionDate), 'MMM d, yyyy')
-                        : '—'}
-                      highlight={revisionDue}
-                      highlightClass={revisionOverdue ? 'text-destructive font-semibold' : 'text-amber-500 dark:text-amber-400 font-semibold'}
-                    />
+                    <div className="flex items-center justify-between text-xs py-1.5 border-b border-border/30 last:border-0 group" title={system.nextRevisionDate ? format(new Date(system.nextRevisionDate), 'MMM d, yyyy') : ''}>
+                      <span className="text-muted-foreground">Next Recall Due</span>
+                      <span className={revisionDue ? 'text-amber-600 dark:text-amber-500 font-semibold' : 'text-emerald-500 dark:text-emerald-400 font-semibold'}>
+                        {system.nextRevisionDate ? new Date(system.nextRevisionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      </span>
+                    </div>
                     {/* Multi-Day Active Revision Controls */}
                     {system.revisionState === 'in_progress' ? (
                       <div className="pt-3 pb-1 border-t border-border/60 space-y-3">
@@ -504,9 +500,9 @@ export function SystemCard(props: SystemCardProps) {
 
                     <div className="hidden sm:block w-px h-6 bg-border/50" />
                     
-                    <div className="flex flex-col items-center px-2 flex-1 sm:flex-none">
+                    <div className="flex flex-col items-center px-2 flex-1 sm:flex-none cursor-help" title={system.nextRevisionDate ? format(new Date(system.nextRevisionDate), 'MMM d, yyyy') : ''}>
                       <span className="text-[10px] text-muted-foreground/70 tracking-wide font-medium mb-0.5">Next review</span>
-                      <span className="text-xs text-primary font-medium">{system.nextRevisionDate ? (isToday(new Date(system.nextRevisionDate)) ? 'Today' : isTomorrow(new Date(system.nextRevisionDate)) ? 'Tomorrow' : formatDistanceToNow(new Date(system.nextRevisionDate), { addSuffix: true })) : 'Pending'}</span>
+                      <span className="text-xs text-primary font-medium">{system.nextRevisionDate ? new Date(system.nextRevisionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}</span>
                     </div>
 
                     

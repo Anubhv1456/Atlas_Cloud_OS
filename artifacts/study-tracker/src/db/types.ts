@@ -5,8 +5,8 @@ export interface UIPreference {
   type: 'subject' | 'system';
   entityId: number;
   order?: number;
+  focus?: 'primary' | 'secondary' | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[]; // kept for TS type compatibility only
-  focus?: 'primary' | 'secondary' | null; // kept for TS type compatibility only
   updatedAt: Date;
   hlc?: string;
 }
@@ -15,8 +15,8 @@ export interface Subject {
   id?: number;
   name: string;
   order?: number;
-  customTopics?: { id: string; name: string; deleted?: boolean }[];
   focus?: 'primary' | 'secondary' | null;
+  customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -156,6 +156,7 @@ export interface CurriculumSet {
   topicIds: string[];
   color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray';
   order?: number;
+  focus?: 'primary' | 'secondary' | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
   updatedAt: Date;
@@ -194,4 +195,12 @@ export interface MistakeLog {
   updatedAt?: Date;
   deletedAt?: Date | null;
   hlc?: string;
+}
+
+export interface RecommendationSkip {
+  id?: number;
+  targetId: string;
+  skippedAt: Date;
+  reason: 'already_studied' | 'too_difficult' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default';
+  expiresAt: Date;
 }

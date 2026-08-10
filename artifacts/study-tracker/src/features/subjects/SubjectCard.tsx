@@ -134,13 +134,13 @@ export function SubjectCard({
       <div className="mt-4 pt-4 border-t border-border/40">
         <div className="flex items-center justify-between text-xs mb-2">
           <span className="font-semibold text-muted-foreground">
-            Overall Progress
+            Mastery
           </span>
           <span className="font-mono font-bold text-foreground tabular-nums tracking-tight">
             {progress}%
           </span>
         </div>
-        <div className="h-2 sm:h-2.5 w-full bg-muted/60 rounded-full overflow-hidden border border-border/20 shadow-inner">
+        <div className="h-3 sm:h-4 w-full bg-muted/60 rounded-full overflow-hidden border border-border/20 shadow-inner">
           <div
             className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${progress}%` }}

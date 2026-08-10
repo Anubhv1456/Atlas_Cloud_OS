@@ -219,7 +219,7 @@ export function computeIntelligentRecommendation(
         reasons.push('• Weak confidence tag');
       } else {
         score += REC_WEIGHTS.UNEXPLORED_TOPIC_BONUS;
-        reasons.push('• Start building Curriculum Sets here');
+        reasons.push('• Start building Study Blocks here');
       }
 
       if (score > bestScore) {

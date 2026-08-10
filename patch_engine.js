@@ -1,4 +1,7 @@
+const fs = require('fs');
+const file = '/app/applet/artifacts/study-tracker/src/lib/recommendations/nextActionEngine.ts';
 
+const content = `
 import { db } from '@/db';
 import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
 import { getSubjectWeightageInfo } from '@/lib/recommendation-engine';
@@ -132,7 +135,7 @@ export async function getNextActionRecommendation(
   // 1. Process Study Blocks (Primary Scheduling Entity)
   for (const set of curriculumSets) {
     if (!set.id) continue;
-    const candidateId = `set:${set.id}`;
+    const candidateId = \`set:\${set.id}\`;
     
     const parentSystem = systemMap.get(set.systemId);
     if (parentSystem) {
@@ -215,13 +218,13 @@ export async function getNextActionRecommendation(
     if (isTriageMode && isOverdue) {
       badges.push({ label: '🚨 Triage Priority', variant: 'destructive', iconType: 'alert' });
     } else if (isOverdue) {
-      badges.push({ label: `⚡ Pending Review`, variant: 'amber', iconType: 'clock' });
+      badges.push({ label: \`⚡ Pending Review\`, variant: 'amber', iconType: 'clock' });
     } else if (isDueToday) {
       badges.push({ label: '🕒 Due Today', variant: 'amber', iconType: 'clock' });
     }
 
     if (yieldWeight >= 85) {
-      badges.push({ label: `🎯 High Yield (${yieldInfo.tag.split('•')[0].trim()})`, variant: 'primary', iconType: 'target' });
+      badges.push({ label: \`🎯 High Yield (\${yieldInfo.tag.split('•')[0].trim()})\`, variant: 'primary', iconType: 'target' });
     }
 
     if (set.focus === 'primary') {
@@ -236,10 +239,10 @@ export async function getNextActionRecommendation(
     const revisionCount = set.revisionCount || 0;
     
     let statusText = '';
-    if (isOverdue) statusText = `${daysOverdue} days overdue for revision (Pass #${revisionCount + 1})`;
-    else if (isDueToday) statusText = `Scheduled for recall pass #${revisionCount + 1} today`;
-    else if (set.contentCompleted && set.qbankCompleted) statusText = `Completed • Pass #${revisionCount}`;
-    else statusText = `In Progress • ${topicCount} topics`;
+    if (isOverdue) statusText = \`\${daysOverdue} days overdue for revision (Pass #\${revisionCount + 1})\`;
+    else if (isDueToday) statusText = \`Scheduled for recall pass #\${revisionCount + 1} today\`;
+    else if (set.contentCompleted && set.qbankCompleted) statusText = \`Completed • Pass #\${revisionCount}\`;
+    else statusText = \`In Progress • \${topicCount} topics\`;
 
     rawCandidates.push({
       id: candidateId,
@@ -265,7 +268,7 @@ export async function getNextActionRecommendation(
   // 2. Topic Gaps & System Gaps
   for (const sys of systems) {
     if (!sys.id) continue;
-    const candidateId = `sys:${sys.id}`;
+    const candidateId = \`sys:\${sys.id}\`;
     if (localSkipIds.has(candidateId)) continue;
     
     const subjectName = subjectMap.get(sys.subjectId) || 
@@ -278,7 +281,7 @@ export async function getNextActionRecommendation(
     
     // Calculate total topics for this system based on ontology
     let totalOntologyTopics = 0;
-    const ontologySystem = ALL_SYSTEMS.find(s => s.name === sys.name && s.subjectId === String(sys.subjectId));
+    const ontologySystem = ALL_SYSTEMS.find(s => s.name === sys.name && s.subject === subjectName);
     if (ontologySystem) {
       totalOntologyTopics = ontologySystem.topics.length;
     }
@@ -302,7 +305,7 @@ export async function getNextActionRecommendation(
       rawCandidates.push({
         id: candidateId,
         type: 'topicGap',
-        title: `${orphanedTopicsCount} Topic${orphanedTopicsCount > 1 ? 's' : ''} Not Assigned`,
+        title: \`\${orphanedTopicsCount} Topic\${orphanedTopicsCount > 1 ? 's' : ''} Not Assigned\`,
         subjectName,
         systemName: sys.name,
         subjectId: sys.subjectId,
@@ -330,7 +333,7 @@ export async function getNextActionRecommendation(
       rawCandidates.push({
         id: candidateId,
         type: 'systemGap',
-        title: `${sys.name} Not Organized`,
+        title: \`\${sys.name} Not Organized\`,
         subjectName,
         systemName: sys.name,
         subjectId: sys.subjectId,
@@ -378,3 +381,6 @@ export async function getNextActionRecommendation(
     isTriageMode
   };
 }
+`;
+
+fs.writeFileSync(file, content);

@@ -11,6 +11,7 @@ export class AtlasDB extends Dexie {
   curriculumSets!: Table<T.CurriculumSet, string>;
   revisionSets!: Table<T.CurriculumSet, string>;
   mistakeLogs!: Table<T.MistakeLog, number>;
+  recommendationSkips!: Table<T.RecommendationSkip, number>;
 
   constructor() {
     super('AtlasDB');
@@ -277,6 +278,20 @@ export class AtlasDB extends Dexie {
       curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
       revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
       mistakeLogs: '++id, subjectId, systemId, curriculumSetId, topicId, errorType, resolved, createdAt'
+    });
+
+    this.version(18).stores({
+      subjects: '++id, name',
+      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
+      history: '++id, subjectId, systemId, completedAt',
+      pyqYears: '++id, subjectId',
+      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
+      uiPreferences: 'id, type, entityId',
+      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
+      curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
+      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
+      mistakeLogs: '++id, subjectId, systemId, curriculumSetId, topicId, errorType, resolved, createdAt',
+      recommendationSkips: '++id, targetId, expiresAt'
     });
   }
 }

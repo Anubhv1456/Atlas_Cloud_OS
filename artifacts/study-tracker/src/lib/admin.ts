@@ -75,6 +75,13 @@ export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: bo
 }
 
 
+export async function deleteUserAsAdmin(userId: string) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const { deleteDoc } = await import("firebase/firestore");
+  const userRef = doc(firestoreDb, "users", userId);
+  await deleteDoc(userRef);
+}
+
 export async function getAllUsersForAdmin() {
   if (!firestoreDb) return [];
   const usersCol = collection(firestoreDb, 'users');

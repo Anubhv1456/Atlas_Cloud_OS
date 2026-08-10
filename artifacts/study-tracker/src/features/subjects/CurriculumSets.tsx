@@ -89,7 +89,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Folder className="w-3.5 h-3.5" /> Curriculum Sets
+            <Folder className="w-3.5 h-3.5" /> Study Blocks
           </h4>
           <button
             onClick={() => { setEditSet(undefined); setFormOpen(true); }}
@@ -119,7 +119,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Folder className="w-3.5 h-3.5" /> Curriculum Sets
+          <Folder className="w-3.5 h-3.5" /> Study Blocks
         </h4>
         <button
           onClick={() => { setEditSet(undefined); setFormOpen(true); }}

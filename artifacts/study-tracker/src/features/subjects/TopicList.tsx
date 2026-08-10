@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
 import { OntologyTopic } from '@/data/ontology';
 import { TopicProgress } from '@/db/types';
-import { CheckCircle2, Circle, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';
+import { CheckCircle2, Circle, CircleDashed, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateHLC } from '@/lib/hlc';
@@ -95,7 +95,7 @@ export function TopicList({
         updatedAt: new Date(),
         hlc: generateHLC()
       });
-      toast.success('Added to Curriculum Set');
+      toast.success('Added to Study Block');
     } else {
       toast.info('Topic already in set');
     }
@@ -208,9 +208,22 @@ export function TopicList({
                               onClick={e => e.stopPropagation()}
                             />
                           ) : (
-                            <span className={cn("text-sm font-medium transition-colors", "text-foreground")}>
-                              {topic.name}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const sets = revisionSets.filter(rs => rs.topicIds.includes(topic.id));
+                                let status = 'empty';
+                                if (sets.length > 0) {
+                                  if (sets.some(rs => rs.contentCompleted && rs.qbankCompleted)) status = 'checked';
+                                  else if (sets.some(rs => rs.contentCompleted || rs.qbankCompleted)) status = 'half';
+                                }
+                                if (status === 'checked') return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />;
+                                if (status === 'half') return <CircleDashed className="w-4 h-4 text-amber-500 shrink-0" />;
+                                return <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />;
+                              })()}
+                              <span className={cn("text-sm font-medium transition-colors", "text-foreground truncate")}>
+                                {topic.name}
+                              </span>
+                            </div>
                           )}
                         {(() => {
                           const setsCount = revisionSets.filter(rs => rs.topicIds.includes(topic.id)).length;
@@ -226,7 +239,7 @@ export function TopicList({
                     <DropdownMenuContent align="start" className="w-56">
                       <DropdownMenuLabel>Topic Options</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="text-xs text-muted-foreground">Add to Curriculum Set</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">Add to Study Block</DropdownMenuLabel>
                       {revisionSets.map(rs => (
                         <DropdownMenuItem key={rs.id} onClick={() => handleAddToSet(rs.id!, topic.id)}>
                           <FolderPlus className="w-4 h-4 mr-2" /> {rs.name}

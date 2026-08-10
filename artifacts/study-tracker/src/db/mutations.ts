@@ -481,7 +481,7 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 }
 
 
-// ── Curriculum Sets ──────────────────────────────────────────────────────────
+// ── Study Blocks ──────────────────────────────────────────────────────────
 
 export async function createCurriculumSet(data: { subjectId: number; systemId: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray' }) {
   const newSet: import('./types').CurriculumSet = {
@@ -609,3 +609,19 @@ export async function deleteMistakeLog(id: number) {
   toast.info('Mistake entry removed');
 }
 
+
+export async function addRecommendationSkip(
+  targetId: string,
+  reason: 'already_studied' | 'too_difficult' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default' = 'default',
+  hours: number = 12
+) {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+  
+  await db.recommendationSkips.add({
+    targetId,
+    skippedAt: now,
+    reason,
+    expiresAt
+  });
+}
