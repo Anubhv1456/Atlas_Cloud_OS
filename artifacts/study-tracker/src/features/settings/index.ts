@@ -10,3 +10,4 @@ export * from './FirebaseSyncSection';
 export * from './FaqSection';
 export * from './FeedbackSection';
 export * from './AboutSection';
+export * from './DataExportSection';

@@ -27,7 +27,6 @@ import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progre
 import { ALL_SYSTEMS } from '@/data/ontology';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
-import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
@@ -76,11 +75,12 @@ function RevisionPill({ sys }: { sys: StudySystem }) {
 import { ActiveRevisions } from '@/features/dashboard/ActiveRevisions';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { useHomeLogic } from './Home.hooks';
+import { useHomeStats } from './useHomeStats';
 
 export default function Home() {
   const {
     subjects, systems, pyqs, streak, greeting,
-    primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision,
+    primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision, isPrimaryIntentStale, isSecondaryIntentStale,
     secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision,
     secondaryDaysOverdue, dueRevisions, insights,
     
@@ -208,6 +208,8 @@ export default function Home() {
               primaryFocusSubject={primaryFocusSubject || null}
               isAutoPrimary={isAutoPrimary}
               isPrimaryOverriddenByRevision={isPrimaryOverriddenByRevision}
+              isPrimaryIntentStale={isPrimaryIntentStale}
+              isSecondaryIntentStale={isSecondaryIntentStale}
               secondaryFocus={secondaryFocus || null}
               secondaryFocusSubject={secondaryFocusSubject || null}
               isAutoSecondary={isAutoSecondary}

@@ -9,6 +9,9 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
     qbankDone:       'qbankDone',
     pyqsDone:        'pyqsDone',
     revision:        'revisionSystem',
+    curriculum_set_revision: 'revisionSystem',
+    curriculum_set_content: 'contentCompleted',
+    curriculum_set_qbank: 'qbankDone',
     topicMastered:   'topicMastered',
     topicWeak:       'topicWeak',
   };
@@ -16,6 +19,7 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
   let entityName = `${h.systemName} ${h.taskLabel}`;
   if (h.taskKey === 'pyqsDone') entityName = h.taskLabel;
   if (h.taskKey === 'topicMastered' || h.taskKey === 'topicWeak') entityName = h.taskLabel;
+  if (h.taskKey === 'curriculum_set_revision' || h.taskKey === 'curriculum_set_content' || h.taskKey === 'curriculum_set_qbank') entityName = h.taskLabel;
 
   return {
     id:          String(h.id ?? `${h.systemId}-${h.taskKey}-${h.completedAt}`),

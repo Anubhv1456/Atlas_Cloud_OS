@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
+import { logCompletion } from '@/db/mutations';
 import { OntologyTopic } from '@/data/ontology';
 import { CurriculumSet } from '@/db/types';
 import {
@@ -72,15 +73,45 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
 
   const handleDelete = async (id: string) => {
     await deleteCurriculumSet(id);
-    toast.success('Curriculum set removed');
+    toast.success('Study block removed');
   };
 
-  const togglePhase = async (setId: string, phase: 'content' | 'qbank', currentValue: boolean | undefined) => {
+    const togglePhase = async (setId: string, phase: 'content' | 'qbank', currentValue: boolean | undefined) => {
     const targetDbTable = db.curriculumSets || db.revisionSets;
+    const isNowCompleted = !currentValue;
+    const set = curriculumSets.find(s => s.id === setId);
+    let subjectName = '';
+    if (set) {
+      const sub = await db.subjects.get(set.subjectId);
+      if (sub) subjectName = sub.name;
+    }
+
     if (phase === 'content') {
-      await targetDbTable.update(setId, { contentCompleted: !currentValue, updatedAt: new Date() });
+      await targetDbTable.update(setId, { contentCompleted: isNowCompleted, updatedAt: new Date() });
+      if (isNowCompleted && set) {
+        await logCompletion({
+            subjectId: set.subjectId,
+            subjectName,
+            systemId: set.systemId,
+            systemName: set.name,
+            taskKey: 'curriculum_set_content',
+            taskLabel: set.name + ' Content',
+            completedAt: new Date()
+        });
+      }
     } else {
-      await targetDbTable.update(setId, { qbankCompleted: !currentValue, updatedAt: new Date() });
+      await targetDbTable.update(setId, { qbankCompleted: isNowCompleted, updatedAt: new Date() });
+      if (isNowCompleted && set) {
+        await logCompletion({
+            subjectId: set.subjectId,
+            subjectName,
+            systemId: set.systemId,
+            systemName: set.name,
+            taskKey: 'curriculum_set_qbank',
+            taskLabel: set.name + ' QBank',
+            completedAt: new Date()
+        });
+      }
     }
   };
 

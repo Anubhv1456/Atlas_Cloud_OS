@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generateHLC } from '../lib/hlc';
 async function updateUIPref(type: 'subject' | 'system', entityId: number, updates: Partial<UIPreference>) {
+  if ('focus' in updates) {
+    updates.focusUpdatedAt = new Date();
+  }
   const prefId = `${type}:${entityId}`;
   const existing = await db.uiPreferences.get(prefId);
   if (existing) {
@@ -134,11 +137,31 @@ export async function logCompletion(entry: Omit<HistoryEntry, 'id'>) {
 }
 
 export async function deleteHistoryEntry(id: number) {
-  return await db.transaction('rw', db.history, db.systems, db.pyqYears, async () => {
+  return await db.transaction('rw', db.history, db.systems, db.pyqYears, db.curriculumSets, async () => {
     const entry = await db.history.get(id);
     if (!entry || entry.deletedAt) return;
 
-    if (entry.taskKey === 'qbankDone' && entry.systemId) {
+        if (entry.taskKey === 'curriculum_set_content') {
+      const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
+      const matchedSet = sets.find(s => entry.taskLabel.startsWith(s.name));
+      if (matchedSet && matchedSet.id) {
+        await db.curriculumSets.update(matchedSet.id, { contentCompleted: false, updatedAt: new Date(), hlc: generateHLC() });
+      }
+    } else if (entry.taskKey === 'curriculum_set_qbank') {
+      const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
+      const matchedSet = sets.find(s => entry.taskLabel.startsWith(s.name));
+      if (matchedSet && matchedSet.id) {
+        await db.curriculumSets.update(matchedSet.id, { qbankCompleted: false, updatedAt: new Date(), hlc: generateHLC() });
+      }
+    } else if (entry.taskKey === 'curriculum_set_revision') {
+      const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
+      const matchedSet = sets.find(s => entry.taskLabel.includes(s.name));
+      if (matchedSet && matchedSet.id) {
+        // very basic rollback for curriculum set revision: just decrement revision count
+        const newRevCount = Math.max(0, (matchedSet.revisionCount ?? 1) - 1);
+        await db.curriculumSets.update(matchedSet.id, { revisionCount: newRevCount, updatedAt: new Date(), hlc: generateHLC() });
+      }
+    } else if (entry.taskKey === 'qbankDone' && entry.systemId) {
       const sys = await db.systems.get(entry.systemId);
       if (sys) {
         await db.systems.update(entry.systemId, {

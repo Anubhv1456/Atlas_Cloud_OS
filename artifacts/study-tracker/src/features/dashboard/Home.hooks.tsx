@@ -45,6 +45,8 @@ export function useHomeLogic() {
     primaryFocusSubject,
     isAutoPrimary,
     isPrimaryOverriddenByRevision,
+    isPrimaryIntentStale,
+    isSecondaryIntentStale,
     secondaryFocus,
     secondaryFocusSubject,
     isAutoSecondary,
@@ -167,7 +169,7 @@ export function useHomeLogic() {
     const subjectStats = subjects.map(sub => {
       const subSets = curriculumSets.filter(s => s.subjectId === sub.id);
       const totalCount = subSets.length;
-      const ratio = calculateSubjectProgress(subSets) / 100;
+      const ratio = calculateSubjectProgress(sub, systems, subSets) / 100;
       return { sub, totalCount, ratio };
     }).filter(s => s.totalCount > 0);
 
@@ -200,7 +202,7 @@ export function useHomeLogic() {
         const subSets = curriculumSets.filter(s => s.subjectId === sub.id);
         const subPYQs = pyqs.filter(p => p.subjectId === sub.id);
         if (subSets.length > 0 && subPYQs.length > 0) {
-          const sysRatio = calculateSubjectProgress(subSets) / 100;
+          const sysRatio = calculateSubjectProgress(sub, systems, subSets) / 100;
           const pyqRatio = subPYQs.filter(p => p.completed).length / subPYQs.length;
           if (sysRatio >= 0.5 && pyqRatio <= 0.3) {
             candidates.push({
@@ -301,8 +303,8 @@ export function useHomeLogic() {
     subjects, systems, pyqs,
     streak,
     greeting,
-    primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision,
-    secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision,
+    primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision, isPrimaryIntentStale,
+    secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision, isSecondaryIntentStale,
     secondaryDaysOverdue,
     dueRevisions,
     insights,

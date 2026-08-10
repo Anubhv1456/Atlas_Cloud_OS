@@ -1,38 +1,93 @@
 const fs = require('fs');
-const file = './artifacts/study-tracker/src/features/subjects/TopicList.tsx';
-let content = fs.readFileSync(file, 'utf8');
 
-// Add CircleDashed to imports
-content = content.replace(
-  `import { CheckCircle2, Circle, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';`,
-  `import { CheckCircle2, Circle, CircleDashed, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';`
-);
+const p = './artifacts/study-tracker/src/features/subjects/TopicList.tsx';
+let content = fs.readFileSync(p, 'utf-8');
 
-const targetRender = `                          ) : (
-                            <span className={cn("text-sm font-medium transition-colors", "text-foreground")}>
-                              {topic.name}
-                            </span>
-                          )}`;
-
-const replacementRender = `                          ) : (
-                            <div className="flex items-center gap-2">
-                              {(() => {
-                                const sets = revisionSets.filter(rs => rs.topicIds.includes(topic.id));
-                                let status = 'empty';
-                                if (sets.length > 0) {
-                                  if (sets.some(rs => rs.contentCompleted && rs.qbankCompleted)) status = 'checked';
-                                  else if (sets.some(rs => rs.contentCompleted || rs.qbankCompleted)) status = 'half';
+const oldStr = `                <div className="flex-1 min-w-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="text-left w-full focus:outline-none flex items-center justify-between group-hover:text-primary transition-colors">
+                        <div className="flex-1">
+                          {editingTopicId === topic.id ? (
+                            <Input
+                              autoFocus
+                              value={editingName}
+                              onChange={e => setEditingName(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (editingName.trim()) {
+                                    onRenameTopic?.(topic.id, editingName.trim());
+                                    setEditingTopicId(null);
+                                  }
+                                } else if (e.key === 'Escape') {
+                                  setEditingTopicId(null);
                                 }
-                                if (status === 'checked') return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />;
-                                if (status === 'half') return <CircleDashed className="w-4 h-4 text-amber-500 shrink-0" />;
-                                return <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />;
-                              })()}
-                              <span className={cn("text-sm font-medium transition-colors", "text-foreground truncate")}>
-                                {topic.name}
-                              </span>
-                            </div>
-                          )}`;
+                              }}
+                              onBlur={() => {
+                                if (editingName.trim() && editingName !== topic.name) {
+                                  onRenameTopic?.(topic.id, editingName.trim());
+                                }
+                                setEditingTopicId(null);
+                              }}
+                              className="h-7 text-sm py-0 px-2 my-0.5"
+                              onClick={e => e.stopPropagation()}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2">`;
 
-content = content.replace(targetRender, replacementRender);
+const newStr = `                <div className="flex-1 min-w-0">
+                  {editingTopicId === topic.id ? (
+                    <div className="flex-1 px-2">
+                      <Input
+                        autoFocus
+                        value={editingName}
+                        onChange={e => setEditingName(e.target.value)}
+                        onKeyDown={e => {
+                          e.stopPropagation();
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (editingName.trim()) {
+                              onRenameTopic?.(topic.id, editingName.trim());
+                              setEditingTopicId(null);
+                            }
+                          } else if (e.key === 'Escape') {
+                            setEditingTopicId(null);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (editingName.trim() && editingName !== topic.name) {
+                            onRenameTopic?.(topic.id, editingName.trim());
+                          }
+                          setEditingTopicId(null);
+                        }}
+                        className="h-7 text-sm py-0 px-2 my-0.5"
+                        onClick={e => e.stopPropagation()}
+                      />
+                    </div>
+                  ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="text-left w-full focus:outline-none flex items-center justify-between group-hover:text-primary transition-colors">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">`;
 
-fs.writeFileSync(file, content);
+const oldStr2 = `                            </div>
+                          )}
+                        {(() => {`;
+
+const newStr2 = `                            </div>
+                        {(() => {`;
+
+const oldStr3 = `                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>`;
+
+const newStr3 = `                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  )}
+                </div>`;
+
+content = content.replace(oldStr, newStr).replace(oldStr2, newStr2).replace(oldStr3, newStr3);
+fs.writeFileSync(p, content);
+console.log('patched');

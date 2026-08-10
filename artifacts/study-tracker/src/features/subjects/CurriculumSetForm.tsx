@@ -64,7 +64,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           topicIds: Array.from(selectedTopicIds),
           color,
         });
-        toast.success('Curriculum set updated');
+        toast.success('Study block updated');
       } else {
         await createCurriculumSet({
           subjectId,
@@ -73,7 +73,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           topicIds: Array.from(selectedTopicIds),
           color,
         });
-        toast.success('Curriculum set created');
+        toast.success('Study block created');
       }
       onClose();
     } catch (err) {

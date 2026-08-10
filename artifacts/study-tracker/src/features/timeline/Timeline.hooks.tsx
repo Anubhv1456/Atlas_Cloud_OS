@@ -101,6 +101,62 @@ export function useTimelineLogic() {
       };
     });
 
+  // ── Curriculum Sets Revision Events ─────────────────────────────────────────
+  const setUpcomingRevisions: TimelineEvent[] = curriculumSets
+    .filter(sys => {
+      if (!sys.nextRevisionDate) return false;
+      const d = new Date(sys.nextRevisionDate);
+      d.setHours(0, 0, 0, 0);
+      const n = new Date(now);
+      n.setHours(0, 0, 0, 0);
+      return d > n && d >= monthStart && d <= monthEnd;
+    })
+    .map(set => {
+      const sub = subjects.find(s => s.id === set.subjectId);
+      return setToRevisionEvent(set, sub?.name ?? '', 'upcoming');
+    });
+
+  const setOverdueRevisions: TimelineEvent[] = curriculumSets
+    .filter(sys => {
+      if (!sys.nextRevisionDate) return false;
+      const d = new Date(sys.nextRevisionDate);
+      d.setHours(0, 0, 0, 0);
+      const n = new Date(now);
+      n.setHours(0, 0, 0, 0);
+      return d < n;
+    })
+    .map(set => {
+      const sub = subjects.find(s => s.id === set.subjectId);
+      return setToRevisionEvent(set, sub?.name ?? '', 'overdue');
+    });
+
+  const setDueTodayRevisions: TimelineEvent[] = curriculumSets
+    .filter(sys => {
+      if (!sys.nextRevisionDate) return false;
+      const d = new Date(sys.nextRevisionDate);
+      d.setHours(0, 0, 0, 0);
+      const n = new Date(now);
+      n.setHours(0, 0, 0, 0);
+      return d.getTime() === n.getTime();
+    })
+    .map(set => {
+      const sub = subjects.find(s => s.id === set.subjectId);
+      return {
+        id: `rev-set-${set.id}-due-today`,
+        eventType: 'revisionSystem' as const,
+        entityName: `${set.name}`,
+        subjectName: sub?.name ?? '',
+        date: new Date(set.nextRevisionDate!),
+        status: 'upcoming' as const,
+        meta: { isDueToday: true },
+      };
+    });
+
+  const allUpcomingRevisions = [...upcomingRevisions, ...setUpcomingRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const allOverdueRevisions = [...overdueRevisions, ...setOverdueRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const allDueTodayRevisions = [...dueTodayRevisions, ...setDueTodayRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+
   // ── Apply filter ──────────────────────────────────────────────────────────
   const filtered = (events: TimelineEvent[]) => events.filter(e => {
     const matchesCategory = eventMatchesFilter(e, filter);
@@ -115,11 +171,11 @@ export function useTimelineLogic() {
   const blanks   = Array.from({ length: startDow });
 
   // ── Section data ──────────────────────────────────────────────────────────
-  const todayDue             = (isCurrentMonth && (!selectedDate || isSameDay(now, selectedDate))) ? filtered(dueTodayRevisions) : [];
+  const todayDue             = (isCurrentMonth && (!selectedDate || isSameDay(now, selectedDate))) ? filtered(allDueTodayRevisions) : [];
   const todayCompleted       = (isCurrentMonth && (!selectedDate || isSameDay(now, selectedDate))) ? filtered(monthCompleted).filter(e => isToday(e.date)) : [];
   const todayEvents          = [...todayDue, ...todayCompleted];
-  const filteredUpcoming     = filtered(upcomingRevisions);
-  const filteredOverdue      = isCurrentMonth ? filtered(overdueRevisions) : [];
+  const filteredUpcoming     = filtered(allUpcomingRevisions);
+  const filteredOverdue      = isCurrentMonth ? filtered(allOverdueRevisions) : [];
 
   // Past days in the selected month, most recent first
   const pastEntries = filtered(monthCompleted).filter(e => isCurrentMonth ? (!selectedDate ? !isToday(e.date) : true) : true);

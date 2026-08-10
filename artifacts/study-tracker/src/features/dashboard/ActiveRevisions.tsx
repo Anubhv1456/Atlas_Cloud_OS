@@ -1,13 +1,14 @@
 import React from 'react';
 import { Target, BookOpen, Clock, Pencil, X, Plus } from 'lucide-react';
 import { StudySystem, Subject } from '@/db';
-import { DailyAnkiCard } from '@/features/revision/DailyAnkiCard';
 
 interface ActiveRevisionsProps {
   primaryFocus: StudySystem | null;
   primaryFocusSubject: Subject | null;
   isAutoPrimary: boolean;
   isPrimaryOverriddenByRevision: boolean;
+  isPrimaryIntentStale?: boolean;
+  isSecondaryIntentStale?: boolean;
   secondaryFocus: StudySystem | null;
   secondaryFocusSubject: Subject | null;
   isAutoSecondary: boolean;
@@ -30,6 +31,8 @@ export function ActiveRevisions({
   primaryFocusSubject,
   isAutoPrimary,
   isPrimaryOverriddenByRevision,
+  isPrimaryIntentStale,
+  isSecondaryIntentStale,
   secondaryFocus,
   secondaryFocusSubject,
   isAutoSecondary,
@@ -55,6 +58,16 @@ export function ActiveRevisions({
         </h2>
         <div className="grid grid-cols-1 gap-4">
           {/* Primary Focus */}
+          {isPrimaryIntentStale && (customPrimarySubject || customPrimarySystem) && (
+            <div className="mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm flex items-center justify-between">
+              <span className="text-amber-500 font-medium">Are you still focusing on this? (Set {">"}72h ago)</span>
+              <button onClick={(e) => {
+                e.stopPropagation();
+                if (customPrimarySubject?.id) setSubjectFocus(customPrimarySubject.id, null);
+                if (customPrimarySystem?.id) setFocus(customPrimarySystem.id, null);
+              }} className="text-xs px-2 py-1 bg-amber-500/20 text-amber-500 rounded hover:bg-amber-500/30">Clear</button>
+            </div>
+          )}
           <div className="bg-card rounded-2xl border border-primary/20 shadow-sm overflow-hidden relative flex flex-col justify-between">
             <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
             <div className="p-4">

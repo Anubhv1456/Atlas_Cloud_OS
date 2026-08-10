@@ -6,6 +6,7 @@ import {
   AccountSection,
   ExamProfileSection,
   LegacyDataSection,
+  DataExportSection,
   FirebaseSyncSection,
   FaqSection,
   FeedbackSection,
@@ -34,6 +35,7 @@ export default function Settings() {
         <SettingsBlock title="Data & Sync">
           <FirebaseSyncSection />
           <LegacyDataSection />
+          <DataExportSection />
           <PWASection />
         </SettingsBlock>
 

@@ -135,7 +135,7 @@ export function useSystemCardLogic({
   ) || [];
 
   // Progress
-  const progress = calculateSystemProgress(curriculumSets);
+  const progress = calculateSystemProgress(system, subjectName, curriculumSets);
   const completedCount = (system.contentCompleted ? 1 : 0) + (system.qbankDone ? 1 : 0);
   const contentPct     =
     system.contentInitialized && system.contentUnitsTotal > 0

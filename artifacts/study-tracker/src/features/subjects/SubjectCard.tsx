@@ -15,6 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 
+import { calculateSubjectProgress } from "@/lib/progress";
+
 interface SubjectCardProps {
   subject: Subject;
   systems: StudySystem[];
@@ -37,15 +39,8 @@ export function SubjectCard({
     [systemIds.join(',')]
   ) || [];
 
-  const totalTasks = curriculumSets.length * 2;
-  let completedTasks = 0;
-  curriculumSets.forEach(set => {
-    if (set.contentCompleted) completedTasks++;
-    if (set.qbankCompleted) completedTasks++;
-  });
-
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const isFullyComplete = progress === 100 && totalTasks > 0;
+  const progress = calculateSubjectProgress(subject, systems, curriculumSets);
+  const isFullyComplete = progress === 100 && systems.length > 0;
 
   return (
     <div
@@ -81,9 +76,6 @@ export function SubjectCard({
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
               {systems.length} {systems.length === 1 ? "System" : "Systems"}
-            </span>
-            <span className="font-mono tabular-nums text-[11px] text-foreground/80 font-semibold bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
-              {completedTasks}/{totalTasks} set tasks
             </span>
           </div>
         </Link>

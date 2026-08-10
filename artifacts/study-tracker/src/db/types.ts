@@ -6,6 +6,7 @@ export interface UIPreference {
   entityId: number;
   order?: number;
   focus?: 'primary' | 'secondary' | null;
+  focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[]; // kept for TS type compatibility only
   updatedAt: Date;
   hlc?: string;
@@ -16,6 +17,7 @@ export interface Subject {
   name: string;
   order?: number;
   focus?: 'primary' | 'secondary' | null;
+  focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +46,7 @@ export interface StudySystem {
 
   // ── Focus Mode ────────────────────────────────────────────────────────────
   focus?: 'primary' | 'secondary' | null;
+  focusUpdatedAt?: Date | null;
 
   // ── Ordering ──────────────────────────────────────────────────────────────
   order?: number;
@@ -157,6 +160,7 @@ export interface CurriculumSet {
   color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray';
   order?: number;
   focus?: 'primary' | 'secondary' | null;
+  focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
   updatedAt: Date;

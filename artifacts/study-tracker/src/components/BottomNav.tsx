@@ -21,10 +21,7 @@ export function BottomNav() {
     { href: '/settings',  icon: Settings,      label: 'Settings',  shortcut: '4' },
   ];
 
-  const handleOpenCommandPalette = () => {
-    window.dispatchEvent(new CustomEvent('open-command-palette'));
-  };
-
+    
   return (
     <>
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
@@ -47,19 +44,6 @@ export function BottomNav() {
             </div>
           </Link>
 
-          {/* Search / Command Palette Quick Button */}
-          <button
-            onClick={handleOpenCommandPalette}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/60 text-muted-foreground hover:text-foreground text-xs font-medium transition-all group shadow-2xs"
-          >
-            <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-              <span>Quick search...</span>
-            </div>
-            <kbd className="pointer-events-none px-1.5 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground bg-background rounded border border-border shadow-2xs">
-              ⌘K
-            </kbd>
-          </button>
 
           {/* Navigation Links */}
           <nav className="space-y-1">

@@ -9,9 +9,13 @@ export function determineFocusSystems(
   systems: StudySystem[],
   now: Date) {
   const customPrimarySubject = subjects.find(s => s.focus === 'primary');
+  const primarySubjectStale = customPrimarySubject?.focusUpdatedAt && (now.getTime() - new Date(customPrimarySubject.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
   const customPrimarySystem = systems.find(s => s.focus === 'primary');
+  const primarySystemStale = customPrimarySystem?.focusUpdatedAt && (now.getTime() - new Date(customPrimarySystem.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
   const customSecondarySubject = subjects.find(s => s.focus === 'secondary');
+  const secondarySubjectStale = customSecondarySubject?.focusUpdatedAt && (now.getTime() - new Date(customSecondarySubject.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
   const customSecondarySystem = systems.find(s => s.focus === 'secondary');
+  const secondarySystemStale = customSecondarySystem?.focusUpdatedAt && (now.getTime() - new Date(customSecondarySystem.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
 
   const subjectIndexMap = new Map<number, number>();
   subjects.forEach((sub, idx) => {
@@ -34,6 +38,7 @@ export function determineFocusSystems(
   let primaryFocusSubject: Subject | undefined = undefined;
   let isAutoPrimary = false;
   let isPrimaryOverriddenByRevision = false;
+  let isPrimaryIntentStale = !!(primarySubjectStale || primarySystemStale);
 
   if (customPrimarySubject) {
     primaryFocusSubject = customPrimarySubject;
@@ -59,6 +64,7 @@ export function determineFocusSystems(
   let secondaryFocusSubject: Subject | undefined = undefined;
   let isSecondaryOverriddenByRevision = false;
   let isAutoSecondary = false;
+  let isSecondaryIntentStale = !!(secondarySubjectStale || secondarySystemStale);
 
   const activeMultiDaySystem = systems.find(s => s.revisionState === 'in_progress');
 
@@ -100,6 +106,8 @@ export function determineFocusSystems(
   }
 
   return {
+    isPrimaryIntentStale,
+    isSecondaryIntentStale,
     customPrimarySubject,
     customPrimarySystem,
     customSecondarySubject,

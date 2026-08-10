@@ -47,7 +47,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
                 </div>
                 <div className="p-4 rounded-xl border border-border/50 bg-card/30 space-y-1.5">
                   <h4 className="font-semibold text-sm">3. Topics & Study Blocks</h4>
-                  <p className="text-xs text-muted-foreground">The specific chapters. You can group these into <strong>Study Blocks</strong> (previously Curriculum Sets) to organize what you want to revise together.</p>
+                  <p className="text-xs text-muted-foreground">The specific chapters. You can group these into <strong>Study Blocks</strong> (previously Study Blocks) to organize what you want to revise together.</p>
                 </div>
               </div>
             </section>

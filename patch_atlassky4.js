@@ -1,10 +1,11 @@
-import React, { useMemo, useEffect, useState } from 'react';
+const fs = require('fs');
+
+const content = `import React, { useMemo, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
 import { Subject, StudySystem } from '@/db';
 import { CurriculumSet } from '@/db/types';
 import { cn } from '@/lib/utils';
-import { calculateSubjectProgress, calculateOverallProgress } from '@/lib/progress';
 import { motion } from 'framer-motion';
 
 interface AtlasSkyModalProps {
@@ -77,8 +78,14 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
       if (dbSubject) {
         const subSets = curriculumSets.filter(c => c.subjectId === dbSubject!.id);
-        progress = calculateSubjectProgress(dbSubject, systems, subSets);
         const totalTasks = subSets.length * 2;
+        let completedTasks = 0;
+        subSets.forEach(s => {
+          if (s.contentCompleted) completedTasks++;
+          if (s.qbankCompleted) completedTasks++;
+        });
+
+        progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
         const isCompleted = progress === 100 && totalTasks > 0;
 
         const subSystems = systems.filter(s => s.subjectId === dbSubject!.id);
@@ -103,18 +110,21 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       };
     });
 
-    const syllabusProgress = calculateOverallProgress(subjects, systems, curriculumSets);
+    const totalSyllabusTasks = curriculumSets.length * 2;
+    let completedSyllabusTasks = 0;
     let totalQbankScore = 0;
     let qbankCount = 0;
     
     curriculumSets.forEach(s => {
+      if (s.contentCompleted) completedSyllabusTasks++;
+      if (s.qbankCompleted) completedSyllabusTasks++;
       if (s.averageScore) {
         totalQbankScore += s.averageScore;
         qbankCount++;
       }
     });
 
-    const syllabusHealth = syllabusProgress;
+    const syllabusHealth = totalSyllabusTasks > 0 ? (completedSyllabusTasks / totalSyllabusTasks) * 100 : 0;
     const qbankHealth = qbankCount > 0 ? (totalQbankScore / qbankCount) : 0;
     
     const totalSystems = systems.length;
@@ -128,7 +138,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     const statusHealth = totalSystems > 0 ? ((strongSystems + (totalSystems - weakSystems - strongSystems) * 0.5) / totalSystems) * 100 : 0;
     
     let health = 0;
-    if (syllabusProgress === 0 && qbankHealth === 0 && statusHealth === 0) {
+    if (totalSyllabusTasks === 0) {
       health = 0;
     } else {
       health = (syllabusHealth * 0.5) + (qbankHealth * 0.3) + (statusHealth * 0.2);
@@ -149,8 +159,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent hideCloseButton className={cn(
-        "!max-w-none !w-screen !h-screen !max-h-none !m-0 !p-0 !rounded-none !border-none overflow-hidden flex flex-col [&>button]:hidden",
+      <DialogContent className={cn(
+        "!max-w-none !w-screen !h-screen !max-h-none !m-0 !p-0 !rounded-none !border-none overflow-hidden flex flex-col",
         "bg-[#050816] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
       )}>
         <DialogTitle className="sr-only">Atlas Sky Constellation</DialogTitle>
@@ -173,7 +183,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
           <button 
             onClick={() => onOpenChange(false)}
-            className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 w-12 h-12 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+            className="absolute top-6 right-6 z-50 w-10 h-10 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -183,7 +193,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
             animate={{ x: mousePos.x, y: mousePos.y }}
             transition={{ type: "spring", stiffness: 40, damping: 25 }}
           >
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{ __html: \`
               @keyframes drawCurve {
                 from { stroke-dasharray: 2000; stroke-dashoffset: 2000; }
                 to { stroke-dasharray: 2000; stroke-dashoffset: 0; }
@@ -196,9 +206,9 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 0% { stroke-dasharray: 20 3000; stroke-dashoffset: 0; }
                 100% { stroke-dasharray: 20 3000; stroke-dashoffset: -3000; }
               }
-            `}} />
+            \`}} />
 
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox={`0 0 ${winSize.w} ${winSize.h}`}>
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox={\`0 0 \${winSize.w} \${winSize.h}\`}>
               {(mounted || open) && completedStars.length > 1 && completedStars.map((star, i) => {
                 if (i === 0) return null;
                 const prev = completedStars[i - 1];
@@ -210,17 +220,17 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 const cx = (x1 + x2) / 2 + (y2 - y1) * 0.15;
                 const cy = (y1 + y2) / 2 - (x2 - x1) * 0.15;
                 
-                const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+                const d = \`M \${x1} \${y1} Q \${cx} \${cy} \${x2} \${y2}\`;
 
                 return (
-                  <g key={`path-${i}`}>
+                  <g key={\`path-\${i}\`}>
                     <path
                       d={d}
                       fill="none"
                       stroke={allCompleted ? "rgba(252, 211, 77, 0.15)" : "rgba(20, 184, 166, 0.15)"}
                       strokeWidth="1.5"
                       className="transition-all duration-1000 ease-out"
-                      style={{ animation: `drawCurve 2s ease-out forwards`, animationDelay: `${i * 0.1}s` }}
+                      style={{ animation: \`drawCurve 2s ease-out forwards\`, animationDelay: \`\${i * 0.1}s\` }}
                     />
                     <path
                       d={d}
@@ -229,7 +239,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                       strokeWidth="2"
                       strokeLinecap="round"
                       className="opacity-60"
-                      style={{ animation: `travelLight 3s linear infinite`, animationDelay: `${i * 0.3}s` }}
+                      style={{ animation: \`travelLight 3s linear infinite\`, animationDelay: \`\${i * 0.3}s\` }}
                     />
                   </g>
                 );
@@ -252,8 +262,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     globalHealth >= 90 ? "bg-amber-100 shadow-[0_0_40px_15px_rgba(252,211,77,0.4)]" : "bg-sky-100 shadow-[0_0_30px_10px_rgba(224,242,254,0.3)]"
                   )}
                   style={{
-                    width: `${10 + (globalHealth / 100) * 8}px`,
-                    height: `${10 + (globalHealth / 100) * 8}px`,
+                    width: \`\${10 + (globalHealth / 100) * 8}px\`,
+                    height: \`\${10 + (globalHealth / 100) * 8}px\`,
                   }}
                  />
               </div>
@@ -274,7 +284,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     starClasses += "bg-teal-500/20 border border-teal-500/40 shadow-[0_0_10px_rgba(20,184,166,0.3)]";
                     textClasses += "text-teal-500/70";
                     const size = 8 + (star.progress / 100) * 8; 
-                    sizeStyle = { width: `${size}px`, height: `${size}px` };
+                    sizeStyle = { width: \`\${size}px\`, height: \`\${size}px\` };
                     break;
                   case 'strong':
                     starClasses += "bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.6)]";
@@ -296,7 +306,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 }
 
                 return (
-                  <div key={star.name} className="absolute" style={{ left: `${star.x}%`, top: `${star.y}%` }}>
+                  <div key={star.name} className="absolute" style={{ left: \`\${star.x}%\`, top: \`\${star.y}%\` }}>
                     <div 
                       className={starClasses} 
                       style={{ 
@@ -309,8 +319,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                          <div 
                            className="bg-teal-400 rounded-full opacity-80" 
                            style={{ 
-                             width: `${Math.max(20, star.progress)}%`, 
-                             height: `${Math.max(20, star.progress)}%` 
+                             width: \`\${Math.max(20, star.progress)}%\`, 
+                             height: \`\${Math.max(20, star.progress)}%\` 
                            }} 
                          />
                        )}
@@ -333,3 +343,6 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     </Dialog>
   );
 }
+`;
+
+fs.writeFileSync('./artifacts/study-tracker/src/features/dashboard/AtlasSkyModal.tsx', content);

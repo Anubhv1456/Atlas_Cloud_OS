@@ -178,36 +178,39 @@ export function TopicList({
             >
               <div className="flex items-center gap-3 p-2 hover:bg-muted/30 rounded-lg transition-colors group h-full">
                 <div className="flex-1 min-w-0">
+                  {editingTopicId === topic.id ? (
+                    <div className="flex-1 px-2">
+                      <Input
+                        autoFocus
+                        value={editingName}
+                        onChange={e => setEditingName(e.target.value)}
+                        onKeyDown={e => {
+                          e.stopPropagation();
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (editingName.trim()) {
+                              onRenameTopic?.(topic.id, editingName.trim());
+                              setEditingTopicId(null);
+                            }
+                          } else if (e.key === 'Escape') {
+                            setEditingTopicId(null);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (editingName.trim() && editingName !== topic.name) {
+                            onRenameTopic?.(topic.id, editingName.trim());
+                          }
+                          setEditingTopicId(null);
+                        }}
+                        className="h-7 text-sm py-0 px-2 my-0.5"
+                        onClick={e => e.stopPropagation()}
+                      />
+                    </div>
+                  ) : (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="text-left w-full focus:outline-none flex items-center justify-between group-hover:text-primary transition-colors">
                         <div className="flex-1">
-                          {editingTopicId === topic.id ? (
-                            <Input
-                              autoFocus
-                              value={editingName}
-                              onChange={e => setEditingName(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  if (editingName.trim()) {
-                                    onRenameTopic?.(topic.id, editingName.trim());
-                                    setEditingTopicId(null);
-                                  }
-                                } else if (e.key === 'Escape') {
-                                  setEditingTopicId(null);
-                                }
-                              }}
-                              onBlur={() => {
-                                if (editingName.trim() && editingName !== topic.name) {
-                                  onRenameTopic?.(topic.id, editingName.trim());
-                                }
-                                setEditingTopicId(null);
-                              }}
-                              className="h-7 text-sm py-0 px-2 my-0.5"
-                              onClick={e => e.stopPropagation()}
-                            />
-                          ) : (
                             <div className="flex items-center gap-2">
                               {(() => {
                                 const sets = revisionSets.filter(rs => rs.topicIds.includes(topic.id));
@@ -224,7 +227,6 @@ export function TopicList({
                                 {topic.name}
                               </span>
                             </div>
-                          )}
                         {(() => {
                           const setsCount = revisionSets.filter(rs => rs.topicIds.includes(topic.id)).length;
                           if (setsCount > 0) {
@@ -259,6 +261,7 @@ export function TopicList({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-1.5 shrink-0">

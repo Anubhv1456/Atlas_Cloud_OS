@@ -15,7 +15,8 @@ export function useSubjects() {
       return {
         ...s,
         order: p?.order ?? s.id ?? 0,
-        focus: p?.focus ?? null
+        focus: p?.focus ?? null,
+        focusUpdatedAt: p?.focusUpdatedAt ?? null
       };
     }).sort((a, b) => (a.order ?? a.id ?? 0) - (b.order ?? b.id ?? 0));
   }) ?? [];
@@ -29,7 +30,8 @@ export function useSubject(id: number) {
     return {
       ...sub,
       order: p?.order ?? sub.id ?? 0,
-      focus: p?.focus ?? null
+      focus: p?.focus ?? null,
+        focusUpdatedAt: p?.focusUpdatedAt ?? null
     };
   }, [id]);
 }
@@ -43,7 +45,8 @@ export function useSystemsBySubject(subjectId: number) {
       return {
         ...s,
         order: p?.order ?? s.id ?? 0,
-        focus: p?.focus ?? null
+        focus: p?.focus ?? null,
+        focusUpdatedAt: p?.focusUpdatedAt ?? null
       };
     });
   }, [subjectId]) ?? [];
@@ -58,7 +61,8 @@ export function useAllSystems() {
       return {
         ...s,
         order: p?.order ?? s.id ?? 0,
-        focus: p?.focus ?? null
+        focus: p?.focus ?? null,
+        focusUpdatedAt: p?.focusUpdatedAt ?? null
       };
     });
   }) ?? [];
@@ -72,7 +76,8 @@ export function useSystem(id: number) {
     return {
       ...sys,
       order: p?.order ?? sys.id ?? 0,
-      focus: p?.focus ?? null
+      focus: p?.focus ?? null,
+        focusUpdatedAt: p?.focusUpdatedAt ?? null
     };
   }, [id]);
 }

@@ -7,7 +7,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { BottomNav } from '@/components/BottomNav';
-import { CommandPalette } from '@/components/CommandPalette';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
@@ -240,7 +239,6 @@ function App() {
           <ErrorBoundary>
             <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
               <ProtectedApp />
-              <CommandPalette />
             </WouterRouter>
           </ErrorBoundary>
           <Toaster />

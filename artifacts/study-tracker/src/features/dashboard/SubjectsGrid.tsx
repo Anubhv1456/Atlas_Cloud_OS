@@ -1,11 +1,12 @@
-import React from 'react';
-import { BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Filter } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Subject, StudySystem } from '@/db';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { Button } from '@/components/ui/button';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
 import { loadUniversalOntology } from '@/lib/exam-presets';
+import { cn } from '@/lib/utils';
 
 interface SubjectsGridProps {
   subjects: Subject[];
@@ -13,21 +14,57 @@ interface SubjectsGridProps {
   handleSubjectDragEnd: (result: DropResult) => void;
 }
 
+const YEAR_MAPPING: Record<string, string[]> = {
+  '1st Year': ['Anatomy', 'Physiology', 'Biochemistry'],
+  '2nd Year': ['Pathology', 'Microbiology', 'Pharmacology'],
+  '3rd Year': ['Forensic Medicine & Toxicology', 'Community Medicine (PSM)', 'ENT (Otorhinolaryngology)', 'Ophthalmology'],
+  'Final Year': ['General Medicine', 'General Surgery', 'Obstetrics & Gynaecology', 'Pediatrics', 'Orthopedics', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
+};
+
+type FilterOption = 'All' | '1st Year' | '2nd Year' | '3rd Year' | 'Final Year';
+
 export function SubjectsGrid({
   subjects,
   systems,
   handleSubjectDragEnd
 }: SubjectsGridProps) {
+  const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
+
+  const filteredSubjects = React.useMemo(() => {
+    if (activeFilter === 'All') return subjects;
+    const allowedNames = YEAR_MAPPING[activeFilter] || [];
+    return subjects.filter(sub => allowedNames.includes(sub.name));
+  }, [subjects, activeFilter]);
+
   return (
     <section className="flex-1">
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <BookOpen className="w-3.5 h-3.5" /> Subject Portfolio
           </h2>
           <span className="text-[10px] font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
-            {subjects.length}
+            {filteredSubjects.length}
           </span>
+        </div>
+        
+        {/* Year Filter */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none">
+          <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1 hidden sm:block" />
+          {(['All', '1st Year', '2nd Year', '3rd Year', 'Final Year'] as FilterOption[]).map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+                activeFilter === filter 
+                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
       </div>
       
@@ -50,6 +87,18 @@ export function SubjectsGrid({
             </Button>
           }
         />
+      ) : filteredSubjects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/60 bg-muted/20">
+          <p className="text-sm font-medium text-muted-foreground">No subjects found for {activeFilter}.</p>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mt-4"
+            onClick={() => setActiveFilter('All')}
+          >
+            View All Subjects
+          </Button>
+        </div>
       ) : (
         <DragDropContext onDragEnd={handleSubjectDragEnd}>
           <Droppable droppableId="subjects-list">
@@ -59,11 +108,12 @@ export function SubjectsGrid({
                 ref={provided.innerRef}
                 className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
               >
-                {subjects.map((subject, index) => (
+                {filteredSubjects.map((subject, index) => (
                   <Draggable
                     key={subject.id}
                     draggableId={String(subject.id)}
                     index={index}
+                    isDragDisabled={activeFilter !== 'All'} // Disable drag when filtered to prevent order issues
                   >
                     {(provided) => (
                       <div
@@ -73,7 +123,7 @@ export function SubjectsGrid({
                         <SubjectCard
                           subject={subject}
                           systems={systems.filter(s => s.subjectId === subject.id)}
-                          dragHandleProps={provided.dragHandleProps}
+                          dragHandleProps={activeFilter === 'All' ? provided.dragHandleProps : undefined}
                         />
                       </div>
                     )}
