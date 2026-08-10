@@ -21,7 +21,7 @@ import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 import NotFound from '@/pages/not-found';
 import Home from '@/features/dashboard/Home';
 import Landing from '@/pages/Landing';
-import Login from '@/pages/Login';
+import AcceptInvitation from '@/pages/AcceptInvitation';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
 import Contact from '@/pages/Contact';
@@ -56,29 +56,36 @@ initTheme();
 
 function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
-  const { hasAccess, loading: accessLoading } = useBetaAccess();
+  const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
     if (!authLoading && !accessLoading) {
-      const isPublic = ['/login', '/privacy', '/terms', '/contact'].includes(location);
+      const isPublic = ['/privacy', '/terms', '/contact', '/accept-invitation'].includes(location);
       const isAdminRoute = location.startsWith('/admin');
 
       if (!user && !isPublic) {
-        setLocation('/login');
+        if (location !== '/') {
+          setLocation('/');
+        }
       } else if (user) {
         // Admin routes are completely separate from student beta-access and onboarding flow
         if (isAdminRoute) {
           return;
         }
-        if (!hasAccess && location !== '/beta-access') {
-          setLocation('/beta-access');
-        } else if (hasAccess && (location === '/login' || location === '/beta-access')) {
+        if (!hasAccess) {
+          const isAccepted = localStorage.getItem(`invitation_accepted_${user.uid}`);
+          if (!isAccepted && paymentStatus === null) {
+            if (location !== '/accept-invitation') setLocation('/accept-invitation');
+          } else if (location !== '/beta-access') {
+            setLocation('/beta-access');
+          }
+        } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation')) {
           setLocation('/');
         }
       }
     }
-  }, [user, authLoading, hasAccess, accessLoading, location, setLocation]);
+  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation]);
 
   const handleRefresh = async () => {
     try {
@@ -130,14 +137,18 @@ function ProtectedApp() {
     );
   }
 
-  if (location === '/login') {
+  if (location === '/accept-invitation') {
+    if (!user) {
+      setLocation('/');
+      return null;
+    }
     return (
       <Suspense fallback={
         <div className="flex items-center justify-center w-full h-[100dvh]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       }>
-        <Login />
+        <AcceptInvitation />
       </Suspense>
     );
   }

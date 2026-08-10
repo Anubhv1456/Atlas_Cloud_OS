@@ -730,7 +730,7 @@ export default function BetaAccess() {
               </div>
               <div className="flex flex-col items-center gap-1.5 flex-1 border-x border-white/5">
                 <Users className="w-4 h-4 text-zinc-500 mb-0.5" strokeWidth={1.5} />
-                <span className="text-[12px] text-zinc-300 font-medium">20 Seats</span>
+                <span className="text-[12px] text-zinc-300 font-medium">50 Seats</span>
                 <span className="text-[11px] text-zinc-500">First Closed Beta cohort</span>
               </div>
               <div className="flex flex-col items-center gap-1.5 flex-1">

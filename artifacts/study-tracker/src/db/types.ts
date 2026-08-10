@@ -4,7 +4,8 @@ export interface UIPreference {
   id: string; // 'subject:1' or 'system:2'
   type: 'subject' | 'system';
   entityId: number;
-  order?: number; // kept for TS type compatibility only
+  order?: number;
+  customTopics?: { id: string; name: string; deleted?: boolean }[]; // kept for TS type compatibility only
   focus?: 'primary' | 'secondary' | null; // kept for TS type compatibility only
   updatedAt: Date;
   hlc?: string;
@@ -14,6 +15,7 @@ export interface Subject {
   id?: number;
   name: string;
   order?: number;
+  customTopics?: { id: string; name: string; deleted?: boolean }[];
   focus?: 'primary' | 'secondary' | null;
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +47,7 @@ export interface StudySystem {
 
   // ── Ordering ──────────────────────────────────────────────────────────────
   order?: number;
+  customTopics?: { id: string; name: string; deleted?: boolean }[];
 
   // ── Revision engine fields (v4) ─────────────────────────────────────────
   /** Set when both contentCompleted and qbankDone first become true. */
@@ -153,6 +156,7 @@ export interface CurriculumSet {
   topicIds: string[];
   color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray';
   order?: number;
+  customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;

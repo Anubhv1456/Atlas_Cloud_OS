@@ -10,8 +10,8 @@ export function GlobalAnnouncements() {
   const [location] = useLocation();
 
   useEffect(() => {
-    // Hide announcements in admin panel or login
-    if (location.startsWith('/admin') || location === '/login') {
+    // Hide announcements in admin panel or accept-invitation
+    if (location.startsWith('/admin') || location === '/accept-invitation') {
       return;
     }
     
@@ -25,7 +25,7 @@ export function GlobalAnnouncements() {
     return () => { isMounted = false; };
   }, [location]);
 
-  if (location.startsWith('/admin') || location === '/login') {
+  if (location.startsWith('/admin') || location === '/accept-invitation') {
     return null;
   }
 

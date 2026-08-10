@@ -219,7 +219,7 @@ export function MistakeRecoveryQueue() {
             const systemName = systemMap.get(sysId) || `System #${sysId}`;
             const firstLog = logs[0];
             const subjectName = subjectMap.get(firstLog.subjectId) || 
-              ALL_SUBJECTS.find(s => s.id === firstLog.subjectId)?.name || 'Subject';
+              ALL_SUBJECTS.find(s => String(s.id) === String(firstLog.subjectId))?.name || 'Subject';
 
             return (
               <div 

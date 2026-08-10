@@ -10,7 +10,7 @@ import { generateHLC } from '@/lib/hlc';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Edit2, Trash2, FolderPlus, Plus } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { CurriculumSetForm } from './CurriculumSetForm';
 import { toast } from 'sonner';
 

@@ -116,7 +116,7 @@ export async function getNextActionRecommendation(
     }
 
     const subjectName = subjectMap.get(set.subjectId) || 
-      ALL_SUBJECTS.find(s => s.id === set.subjectId)?.name || 'Medical Subject';
+      ALL_SUBJECTS.find(s => String(s.id) === String(set.subjectId))?.name || 'Medical Subject';
     const systemName = parentSystem?.name || 'System';
 
     const isLengthy = Boolean(parentSystem?.isLengthy) || (set.topicIds && set.topicIds.length > 8);
@@ -307,7 +307,7 @@ export async function getNextActionRecommendation(
     if (skipIds.has(candidateId)) continue;
 
     const subjectName = subjectMap.get(sys.subjectId) || 
-      ALL_SUBJECTS.find(s => s.id === sys.subjectId)?.name || 'Medical Subject';
+      ALL_SUBJECTS.find(s => String(s.id) === String(sys.subjectId))?.name || 'Medical Subject';
     const isLengthy = Boolean(sys.isLengthy);
 
     const sysScores = systemScoreMap.get(sys.id) || [];
