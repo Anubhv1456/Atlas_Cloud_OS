@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { logCompletion } from '@/db/mutations';
 import { OntologyTopic } from '@/data/ontology';
@@ -47,7 +47,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
         .where('systemId')
         .equals(systemId)
         .filter(s => !s.deletedAt)
-        .sortBy('order')
+        .toArray().then(arr => arr.sort((a, b) => (a.order || 0) - (b.order || 0)))
         .then(res => res || []);
     },
     [systemId]
@@ -58,7 +58,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
       if (!topics || topics.length === 0) return [];
       return db.topicProgress.where('topicId').anyOf(topics.map(t => t.id)).toArray();
     },
-    [topics]
+    [topics.map(t => t.id).join(',')]
   ) || [];
 
   const handleDragEnd = async (result: any) => {
@@ -99,7 +99,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
             systemId: set.systemId,
             systemName: set.name,
             taskKey: 'curriculum_set_content',
-            taskLabel: set.name + ' Content',
+            taskLabel: set.name + ' ',
             completedAt: new Date()
         });
       }
@@ -112,7 +112,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
             systemId: set.systemId,
             systemName: set.name,
             taskKey: 'curriculum_set_qbank',
-            taskLabel: set.name + ' QBank',
+            taskLabel: set.name + ' ',
             completedAt: new Date()
         });
       }
@@ -127,7 +127,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
             <Folder className="w-3.5 h-3.5" /> Study Blocks
           </h4>
           <button
-            onClick={() => { setEditSet(undefined); setFormOpen(true); }}
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
             className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors"
           >
             + New Set
@@ -157,7 +157,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
           <Folder className="w-3.5 h-3.5" /> Study Blocks
         </h4>
         <button
-          onClick={() => { setEditSet(undefined); setFormOpen(true); }}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
           className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors"
         >
           + New Set
@@ -222,7 +222,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                               <MoreVertical className="w-4 h-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => { setEditSet(rs); setFormOpen(true); }}>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(rs); setFormOpen(true); }}>
                                 <Edit className="w-4 h-4 mr-2" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -247,31 +247,12 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                             )}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2">
-                            <button 
-                              onClick={() => togglePhase(rs.id!, 'content', rs.contentCompleted)}
-                              className={cn(
-                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
-                                rs.contentCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
-                              )}
-                            >
-                              {rs.contentCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                              Content
-                            </button>
-
-                            <button 
-                              onClick={() => togglePhase(rs.id!, 'qbank', rs.qbankCompleted)}
-                              className={cn(
-                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
-                                rs.qbankCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5"
-                              )}
-                            >
-                              {rs.qbankCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                              QBank
-                            </button>
+                          <div className="flex flex-wrap items-center gap-2"> 
+ <button onClick={() => togglePhase(rs.id!, "content", rs.contentCompleted)} className={cn("px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.contentCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.contentCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} Content </button> <button onClick={() => togglePhase(rs.id!, "qbank", rs.qbankCompleted)} className={cn("px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.qbankCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.qbankCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} QBank </button>
+                            
 
                             <button
-                              onClick={() => {
+                              onClick={(e) => { e.stopPropagation(); e.preventDefault();
                               setScoreModalSet(rs);
                               setScoreModalOpen(true);
                             }}

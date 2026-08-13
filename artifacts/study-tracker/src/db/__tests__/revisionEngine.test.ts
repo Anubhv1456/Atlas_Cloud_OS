@@ -14,7 +14,7 @@ describe('Revision Engine - Decay Scoring', () => {
       status: 'Mastered' as const,
     } as StudySystem;
     
-    expect(calculateDecayScore(sys, mockNow)).toBe(0);
+    expect(calculateDecayScore(sys, [], mockNow)).toBe(0);
   });
 
   it('should calculate higher decay score for overdue systems', () => {
@@ -40,8 +40,8 @@ describe('Revision Engine - Decay Scoring', () => {
       decayFactor: 1.0
     } as StudySystem;
 
-    const overdueScore = calculateDecayScore(overdueSys, mockNow);
-    const notDueScore = calculateDecayScore(notDueSys, mockNow);
+    const overdueScore = calculateDecayScore(overdueSys, [], mockNow);
+    const notDueScore = calculateDecayScore(notDueSys, [], mockNow);
 
     expect(overdueScore).toBeGreaterThan(notDueScore);
     expect(isRevisionDue(overdueSys, mockNow)).toBe(true);

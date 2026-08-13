@@ -17,31 +17,78 @@ export function getSubjectTotalTopics(subject: Subject, systems: StudySystem[]):
 
 export function calculateProgressFromSets(curriculumSets: CurriculumSet[], totalTopics: number): number {
   if (totalTopics === 0) return 0;
-  
-  const contentCompletedTopics = new Set<string>();
-  const qbankCompletedTopics = new Set<string>();
-  
+  const completedTopicsContent = new Set<string>();
+  const completedTopicsQbank = new Set<string>();
   curriculumSets.forEach(set => {
     if (set.contentCompleted) {
-      set.topicIds.forEach(id => contentCompletedTopics.add(id));
+      set.topicIds.forEach(id => completedTopicsContent.add(id));
     }
     if (set.qbankCompleted) {
-      set.topicIds.forEach(id => qbankCompletedTopics.add(id));
+      set.topicIds.forEach(id => completedTopicsQbank.add(id));
     }
   });
-  
-  const completed = contentCompletedTopics.size + qbankCompletedTopics.size;
-  return Math.round((Math.min(completed, totalTopics * 2) / (totalTopics * 2)) * 100);
+  const contentScore = Math.min(completedTopicsContent.size, totalTopics);
+  const qbankScore = Math.min(completedTopicsQbank.size, totalTopics);
+  return Math.round(((contentScore + qbankScore) / (totalTopics * 2)) * 100);
+}
+
+export function calculateSystemContentCoverage(system: StudySystem, subjectName: string, curriculumSets: CurriculumSet[]): number {
+  const total = getSystemTotalTopics(system, subjectName);
+  if (total === 0) return 0;
+  const completedTopics = new Set<string>();
+  curriculumSets.filter(s => s.systemId === system.id).forEach(set => {
+    if (set.contentCompleted) {
+      set.topicIds.forEach(id => completedTopics.add(id));
+    }
+  });
+  return Math.round((Math.min(completedTopics.size, total) / total) * 100);
+}
+
+export function calculateSystemQbankCoverage(system: StudySystem, subjectName: string, curriculumSets: CurriculumSet[]): number {
+  const total = getSystemTotalTopics(system, subjectName);
+  if (total === 0) return 0;
+  const completedTopics = new Set<string>();
+  curriculumSets.filter(s => s.systemId === system.id).forEach(set => {
+    if (set.qbankCompleted) {
+      set.topicIds.forEach(id => completedTopics.add(id));
+    }
+  });
+  return Math.round((Math.min(completedTopics.size, total) / total) * 100);
+}
+
+export function calculateSubjectCoverage(subject: Subject, systems: StudySystem[], curriculumSets: CurriculumSet[]): { content: number, qbank: number, overall: number } {
+  const total = getSubjectTotalTopics(subject, systems);
+  if (total === 0) return { content: 0, qbank: 0, overall: 0 };
+  const subSets = curriculumSets.filter(s => s.subjectId === subject.id);
+  const completedTopicsContent = new Set<string>();
+  const completedTopicsQbank = new Set<string>();
+  subSets.forEach(set => {
+    if (set.contentCompleted) {
+      set.topicIds.forEach(id => completedTopicsContent.add(id));
+    }
+    if (set.qbankCompleted) {
+      set.topicIds.forEach(id => completedTopicsQbank.add(id));
+    }
+  });
+  const content = Math.round((Math.min(completedTopicsContent.size, total) / total) * 100);
+  const qbank = Math.round((Math.min(completedTopicsQbank.size, total) / total) * 100);
+  const overall = calculateProgressFromSets(subSets, total);
+  return { content, qbank, overall };
+}
+
+export function isSystemComplete(system: StudySystem, subjectName: string, curriculumSets: CurriculumSet[]): boolean {
+  const contentCoverage = calculateSystemContentCoverage(system, subjectName, curriculumSets);
+  return contentCoverage === 100;
 }
 
 export function calculateSystemProgress(system: StudySystem, subjectName: string, curriculumSets: CurriculumSet[]): number {
   const total = getSystemTotalTopics(system, subjectName);
-  return calculateProgressFromSets(curriculumSets, total);
+  return calculateProgressFromSets(curriculumSets.filter(s => s.systemId === system.id), total);
 }
 
 export function calculateSubjectProgress(subject: Subject, systems: StudySystem[], curriculumSets: CurriculumSet[]): number {
   const total = getSubjectTotalTopics(subject, systems);
-  return calculateProgressFromSets(curriculumSets, total);
+  return calculateProgressFromSets(curriculumSets.filter(s => s.subjectId === subject.id), total);
 }
 
 export function calculateOverallProgress(subjects: Subject[], systems: StudySystem[], curriculumSets: CurriculumSet[]): number {
@@ -51,4 +98,3 @@ export function calculateOverallProgress(subjects: Subject[], systems: StudySyst
   });
   return calculateProgressFromSets(curriculumSets, total);
 }
-

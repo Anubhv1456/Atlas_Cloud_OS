@@ -5,7 +5,7 @@ import { Subject, StudySystem, db, updateSubject, deleteSubject } from "@/db";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import { ALL_SYSTEMS, ALL_SUBJECTS } from "@/data/ontology";
-import { useLiveQuery } from "dexie-react-hooks";
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +34,9 @@ export function SubjectCard({
     async () => {
       const table = db.curriculumSets || db.revisionSets;
       if (systemIds.length === 0) return [];
-      return await table.where('systemId').anyOf(systemIds).toArray();
+      return await table.where('subjectId').equals(subject.id!).toArray().then(arr => arr.filter(s => !s.deletedAt));
     },
-    [systemIds.join(',')]
+    [subject.id]
   ) || [];
 
   const progress = calculateSubjectProgress(subject, systems, curriculumSets);

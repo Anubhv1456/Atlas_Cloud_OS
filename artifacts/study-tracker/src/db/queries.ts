@@ -1,4 +1,4 @@
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from './schema';
 import { Subject, StudySystem, HistoryEntry, PYQYear, ScoreLog } from './types';
 import { SystemStatus } from './types';
@@ -22,7 +22,7 @@ export function useSubjects() {
   }) ?? [];
 }
 
-export function useSubject(id: number) {
+export function useSubject(id: number | string) {
   return useLiveQuery(async () => {
     const sub = await db.subjects.get(id);
     if (!sub || sub.deletedAt) return undefined;
@@ -36,7 +36,7 @@ export function useSubject(id: number) {
   }, [id]);
 }
 
-export function useSystemsBySubject(subjectId: number) {
+export function useSystemsBySubject(subjectId: number | string) {
   return useLiveQuery(async () => {
     const systems = await db.systems.where('subjectId').equals(subjectId).toArray().then(res => res.filter(s => !s.deletedAt));
     const prefs = await db.uiPreferences.where('type').equals('system').toArray();
@@ -100,7 +100,7 @@ export function useHistoryByMonth(year: number, month: number) {
 
 export function useEarliestHistoryDate(): Date | null {
   return useLiveQuery(async () => {
-    const entry = await db.history.orderBy('completedAt').first();
+    const entry = await db.history.orderBy('completedAt').toArray().then(res => res[0]);
     return entry ? new Date(entry.completedAt) : null;
   }) ?? null;
 }
@@ -109,7 +109,7 @@ export function useEarliestHistoryDate(): Date | null {
 export function useRevisionsDue(): StudySystem[] {
   const systems = useLiveQuery(() => db.systems.toArray()) ?? [];
   const now = today();
-  return systems.filter(s => isRevisionDue(s, now));
+  return systems.filter(s => isRevisionDue(s, [], now));
 }
 
 /** Systems currently in active multi-day revision. */
@@ -118,9 +118,9 @@ export function useActiveRevisions(): StudySystem[] {
 }
 
 /** All PYQ years for a specific subject, ordered by year label. */
-export function usePYQsBySubject(subjectId: number): PYQYear[] {
+export function usePYQsBySubject(subjectId: number | string): PYQYear[] {
   return useLiveQuery(
-    () => db.pyqYears.where('subjectId').equals(subjectId).sortBy('year'),
+    () => db.pyqYears.where('subjectId').equals(subjectId).toArray().then(arr => arr.sort((a, b) => Number(a.year) - Number(b.year))),
     [subjectId],
   ) ?? [];
 }
@@ -131,7 +131,7 @@ export function useAllPYQs(): PYQYear[] {
 }
 
 /** All score logs for a specific subject. */
-export function useScoreLogsBySubject(subjectId: number): ScoreLog[] {
+export function useScoreLogsBySubject(subjectId: number | string): ScoreLog[] {
   return useLiveQuery(
     () => db.scoreLogs.where('subjectId').equals(subjectId).toArray(),
     [subjectId]
@@ -174,7 +174,7 @@ export function useCurrentStreak(): number {
 }
 
 export async function getDaysSinceLastStudy(): Promise<number> {
-  const latestLog = await db.scoreLogs.orderBy('timestamp').reverse().first();
+  const latestLog = await db.scoreLogs.orderBy('timestamp').reverse().toArray().then(res => res[0]);
   if (!latestLog) return 0;
   
   const now = new Date();

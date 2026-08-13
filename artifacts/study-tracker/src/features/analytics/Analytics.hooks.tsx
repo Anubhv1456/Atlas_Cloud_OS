@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { ALL_SYSTEMS } from '@/data/ontology';
 import { filterScoreLogs, applyDensityLimit, calculateAnalyticsStats, formatChartData, calculateSystemBreakdown } from '@/features/analytics/analyticsUtils';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
 import { 
@@ -20,9 +20,10 @@ export function useAnalyticsLogic() {
   const scoreLogs = useLiveQuery(() => db.scoreLogs.orderBy('timestamp').toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const subjects = useLiveQuery(() => db.subjects.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
+  const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.filter(s => !s.deletedAt).toArray(), []) || [];
 
   // Filter state
-  const [selectedType, setSelectedType] = useState<'all' | 'revision' | 'pyq' | 'set'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'revision' | 'pyq' | 'set' | 'gt'>('all');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
   const [selectedSystemId, setSelectedSystemId] = useState<string>('all');
   const [densityLimit, setDensityLimit] = useState<string>('10'); // Default: Last 10 results
@@ -47,7 +48,7 @@ export function useAnalyticsLogic() {
   // Available systems for selected subject
   const availableSystems = useMemo(() => {
     if (selectedSubjectId === 'all') return systems;
-    const subId = Number(selectedSubjectId);
+    const subId = selectedSubjectId as string | number;
     return systems.filter(sys => sys.subjectId === subId);
   }, [systems, selectedSubjectId]);
 
@@ -134,13 +135,13 @@ export function useAnalyticsLogic() {
     }
 
     // 2. Check for highest priority system that is DUE or WEAK
-    const sortedByDecay = sortSystemsByRevisionPriority(systems);
+    const sortedByDecay = sortSystemsByRevisionPriority(systems, curriculumSets);
     const topVulnerable = sortedByDecay.length > 0 ? sortedByDecay[0] : null;
 
-    if (topVulnerable && (isRevisionDue(topVulnerable) || topVulnerable.status === 'Weak')) {
+    if (topVulnerable && (isRevisionDue(topVulnerable, curriculumSets) || topVulnerable.status === 'Weak')) {
       const subName = subjectMap.get(topVulnerable.subjectId)?.name ?? 'Subject';
-      const overdue = daysOverdue(topVulnerable);
-      const isDueToday = isRevisionDue(topVulnerable) && overdue === 0;
+      const overdue = daysOverdue(topVulnerable, curriculumSets);
+      const isDueToday = isRevisionDue(topVulnerable, curriculumSets) && overdue === 0;
 
       let reason = '';
       let badge = '';

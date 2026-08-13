@@ -1,302 +1,281 @@
-import Dexie, { Table } from 'dexie';
+import { auth, firestoreDb } from '@/lib/firebase';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, writeBatch } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+class SimpleEventEmitter {
+  private listeners: Record<string, Function[]> = {};
+  on(event: string, fn: Function) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(fn);
+  }
+  off(event: string, fn: Function) {
+    if (!this.listeners[event]) return;
+    this.listeners[event] = this.listeners[event].filter(l => l !== fn);
+  }
+  emit(event: string, ...args: any[]) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(fn => fn(...args));
+  }
+  setMaxListeners() {}
+}
+import { generateHLC } from '@/lib/hlc';
 import * as T from './types';
-export class AtlasDB extends Dexie {
-  subjects!: Table<T.Subject, number>;
-  systems!: Table<T.StudySystem, number>;
-  history!: Table<T.HistoryEntry, number>;
-  pyqYears!: Table<T.PYQYear, number>;
-  scoreLogs!: Table<T.ScoreLog, number>;
-  uiPreferences!: Table<T.UIPreference, string>;
-  topicProgress!: Table<T.TopicProgress, string>;
-  curriculumSets!: Table<T.CurriculumSet, string>;
-  revisionSets!: Table<T.CurriculumSet, string>;
-  mistakeLogs!: Table<T.MistakeLog, number>;
-  recommendationSkips!: Table<T.RecommendationSkip, number>;
+
+export const dbEvents = new SimpleEventEmitter();
+dbEvents.setMaxListeners(100);
+
+class FirestoreTable<T> {
+  private cache: Map<string, T> = new Map();
+  private unsubscribe: (() => void) | null = null;
+
+  constructor(public name: string) {}
+
+  public startListener(uid: string) {
+    if (this.unsubscribe) this.unsubscribe();
+    const q = collection(firestoreDb, `users/${uid}/${this.name}`);
+    this.unsubscribe = onSnapshot(q, (snapshot) => {
+       snapshot.docChanges().forEach((change) => {
+         const data = change.doc.data();
+         // Parse date objects properly
+         for (const key in data) {
+           if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
+              data[key] = data[key].toDate();
+           }
+         }
+         
+         if (change.type === "added" || change.type === "modified") {
+             this.cache.set(change.doc.id, { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T);
+         }
+         if (change.type === "removed") {
+             this.cache.delete(change.doc.id);
+         }
+       });
+       dbEvents.emit('change', this.name);
+    });
+  }
+
+  public stopListener() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+    this.cache.clear();
+  }
+
+  getCollectionRef() {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    return collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`);
+  }
+
+  async toArray(): Promise<T[]> {
+    return Array.from(this.cache.values());
+  }
+
+  async get(id: string | number): Promise<T | undefined> {
+    return this.cache.get(String(id));
+  }
+
+  async add(item: any): Promise<string | number> {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    const id = (item as any).id || generateHLC();
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    await setDoc(docRef, { ...item, hlc: generateHLC() });
+    return id;
+  }
+
+  async put(item: T): Promise<string | number> {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    const id = (item as any).id || generateHLC();
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    await setDoc(docRef, { ...item, hlc: generateHLC() }, { merge: true });
+    return id;
+  }
+
+  async bulkAdd(items: T[]) {
+    if (!auth.currentUser) return;
+    const batch = writeBatch(firestoreDb);
+    items.forEach(item => {
+      const id = (item as any).id || generateHLC();
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      batch.set(docRef, { ...item, hlc: generateHLC() });
+    });
+    await batch.commit();
+  }
+
+  async bulkPut(items: T[]) {
+    if (!auth.currentUser) return;
+    const batch = writeBatch(firestoreDb);
+    items.forEach(item => {
+      const id = (item as any).id || generateHLC();
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      batch.set(docRef, { ...item, hlc: generateHLC() }, { merge: true });
+    });
+    await batch.commit();
+  }
+
+  async update(id: string | number, changes: Partial<T>) {
+    if (!auth.currentUser) return 0;
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    await setDoc(docRef, { ...changes, hlc: generateHLC() }, { merge: true });
+    return 1;
+  }
+
+  async delete(id: string | number) {
+    if (!auth.currentUser) return;
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    await deleteDoc(docRef);
+  }
+
+  where(field: string) {
+    return {
+      equals: (value: any) => {
+         return {
+            toArray: async (): Promise<T[]> => {
+               const all = await this.toArray();
+               return all.filter((item: any) => item[field] === value);
+            },
+            filter: (predicate: any) => {
+               return {
+                  toArray: async (): Promise<T[]> => {
+                     const all = await this.toArray();
+                     return all.filter((item: any) => item[field] === value).filter(predicate);
+                  }
+               }
+            }
+         }
+      },
+      between: (lower: any, upper: any, includeLower: boolean = true, includeUpper: boolean = false) => {
+         return {
+            toArray: async (): Promise<T[]> => {
+               const all = await this.toArray();
+               return all.filter((item: any) => {
+                  const val = item[field];
+                  const passLower = includeLower ? val >= lower : val > lower;
+                  const passUpper = includeUpper ? val <= upper : val < upper;
+                  return passLower && passUpper;
+               });
+            },
+            reverse: () => {
+               return {
+                  toArray: async (): Promise<T[]> => {
+                     const all = await this.toArray();
+                     return all.filter((item: any) => {
+                        const val = item[field];
+                        const passLower = includeLower ? val >= lower : val > lower;
+                        const passUpper = includeUpper ? val <= upper : val < upper;
+                        return passLower && passUpper;
+                     }).sort((a: any, b: any) => (a[field] < b[field] ? 1 : -1));
+                  }
+               }
+            }
+         }
+      },
+      anyOf: (values: any[]) => {
+         return {
+            toArray: async (): Promise<T[]> => {
+               const all = await this.toArray();
+               return all.filter((item: any) => values.includes(item[field]));
+            },
+            filter: (predicate: any) => {
+               return {
+                  toArray: async (): Promise<T[]> => {
+                     const all = await this.toArray();
+                     return all.filter((item: any) => values.includes(item[field])).filter(predicate);
+                  }
+               }
+            }
+         }
+      }
+    }
+  }
+
+  filter(predicate: (item: T) => boolean) {
+     return {
+        toArray: async (): Promise<T[]> => {
+           const all = await this.toArray();
+           return all.filter(predicate);
+        }
+     }
+  }
+
+  orderBy(field: string) {
+     return {
+         toArray: async (): Promise<T[]> => {
+            const all = await this.toArray();
+            return all.sort((a: any, b: any) => (a[field] > b[field] ? 1 : -1));
+         },
+         reverse: () => ({
+             toArray: async (): Promise<T[]> => {
+                 const all = await this.toArray();
+                 return all.sort((a: any, b: any) => (a[field] < b[field] ? 1 : -1));
+             }
+         })
+     }
+  }
+
+  async each(callback: (item: T) => void) {
+     const all = await this.toArray();
+     all.forEach(callback);
+  }
+
+  async clear() {
+    if (!auth.currentUser) return;
+    const all = await this.toArray();
+    await Promise.all(all.map(item => {
+      const id = (item as any).id;
+      if (id) return this.delete(id);
+      return Promise.resolve();
+    }));
+  }
+}
+
+class AtlasDB {
+  subjects = new FirestoreTable<T.Subject>('subjects');
+  systems = new FirestoreTable<T.StudySystem>('systems');
+  history = new FirestoreTable<T.HistoryEntry>('history');
+  pyqYears = new FirestoreTable<T.PYQYear>('pyqYears');
+  scoreLogs = new FirestoreTable<T.ScoreLog>('scoreLogs');
+  uiPreferences = new FirestoreTable<T.UIPreference>('uiPreferences');
+  topicProgress = new FirestoreTable<T.TopicProgress>('topicProgress');
+  curriculumSets = new FirestoreTable<T.CurriculumSet>('curriculumSets');
+  revisionSets = new FirestoreTable<T.CurriculumSet>('revisionSets');
+  mistakeLogs = new FirestoreTable<T.MistakeLog>('mistakeLogs');
+  recommendationSkips = new FirestoreTable<T.RecommendationSkip>('recommendationSkips');
 
   constructor() {
-    super('AtlasDB');
-    this.version(1).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt',
-    });
-    this.version(2).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt',
-      history: '++id, subjectId, systemId, completedAt',
-    });
-    // v3: replace binary contentDone with incremental content progress
-    this.version(3)
-      .stores({
-        subjects: '++id, name',
-        systems: '++id, subjectId, name, updatedAt',
-        history: '++id, subjectId, systemId, completedAt',
-      })
-      .upgrade(tx => {
-        return tx
-          .table('systems')
-          .toCollection()
-          .modify((sys: Record<string, unknown>) => {
-            const wasDone = Boolean(sys['contentDone']);
-            sys['contentInitialized'] = wasDone;
-            sys['contentUnitsTotal'] = wasDone ? 1 : 0;
-            sys['contentUnitsCompleted'] = wasDone ? 1 : 0;
-            sys['contentCompleted'] = wasDone;
-          });
-      });
-    // v4: add revision engine fields
-    this.version(4)
-      .stores({
-        subjects: '++id, name',
-        systems: '++id, subjectId, name, updatedAt, nextRevisionDate',
-        history: '++id, subjectId, systemId, completedAt',
-      })
-      .upgrade(tx => {
-        return tx
-          .table('systems')
-          .toCollection()
-          .modify((sys: Record<string, unknown>) => {
-            if (!('completionDate' in sys))          sys['completionDate'] = null;
-            if (!('revisionCount' in sys))           sys['revisionCount'] = 0;
-            if (!('lastRevisionDate' in sys))        sys['lastRevisionDate'] = null;
-            if (!('currentRevisionInterval' in sys)) sys['currentRevisionInterval'] = null;
-            if (!('nextRevisionDate' in sys))        sys['nextRevisionDate'] = null;
-          });
-      });
-    // v6: add focus field
-    this.version(6).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-    }).upgrade(tx => {
-      return tx
-        .table('systems')
-        .toCollection()
-        .modify((sys: Record<string, unknown>) => {
-          if (!('focus' in sys)) sys['focus'] = null;
-        });
-    });
-    // v7: add order field
-    this.version(7).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-    }).upgrade(tx => {
-      let currentOrder = 0;
-      let currentSubjectId = -1;
-      return tx
-        .table('systems')
-        .orderBy('subjectId')
-        .modify((sys: Record<string, unknown>) => {
-          if (sys['subjectId'] !== currentSubjectId) {
-            currentSubjectId = sys['subjectId'] as number;
-            currentOrder = 0;
-          }
-          if (!('order' in sys)) {
-             sys['order'] = currentOrder++;
-          }
-        });
-    });
-    // v8: add order field to subjects
-    this.version(8).stores({
-      subjects: '++id, name, order',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-    }).upgrade(tx => {
-      let currentOrder = 0;
-      return tx
-        .table('subjects')
-        .toCollection()
-        .modify((sub: Record<string, unknown>) => {
-          if (!('order' in sub)) {
-            sub['order'] = currentOrder++;
-          }
-        });
-    });
-    // v9: add scoreLogs table
-    this.version(9).stores({
-      subjects: '++id, name, order',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-    });
-    // v10: add system-level decay calibration factor
-    this.version(10).stores({
-      subjects: '++id, name, order',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-    }).upgrade(tx => {
-      return tx
-        .table('systems')
-        .toCollection()
-        .modify((sys: Record<string, unknown>) => {
-          if (!('decayFactor' in sys) || sys['decayFactor'] === undefined || sys['decayFactor'] === null) {
-            sys['decayFactor'] = 1.0;
-          }
-        });
-    });
-
-    // v11: add multi-day active revision tracking fields
-    this.version(11).stores({
-      subjects: '++id, name, order',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, focus, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-    }).upgrade(tx => {
-      return tx
-        .table('systems')
-        .toCollection()
-        .modify((sys: Record<string, unknown>) => {
-          if (!('isLengthy' in sys)) sys['isLengthy'] = false;
-          if (!('revisionState' in sys)) sys['revisionState'] = 'idle';
-          if (!('revisionStartedAt' in sys)) sys['revisionStartedAt'] = null;
-          if (!('revisionLastCheckInDate' in sys)) sys['revisionLastCheckInDate'] = null;
-          if (!('revisionDaysLogged' in sys)) sys['revisionDaysLogged'] = 0;
-          if (!('revisionProgressPercent' in sys)) sys['revisionProgressPercent'] = 0;
-        });
-    });
-    // v13: ensure status, qbankDone, weakAreas
-    this.version(13).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-    }).upgrade(tx => {
-      return tx
-        .table('systems')
-        .toCollection()
-        .modify((sys: Record<string, unknown>) => {
-          if (!sys.status) sys.status = 'Average';
-          if (!('qbankDone' in sys) || sys.qbankDone === undefined) sys.qbankDone = false;
-          if (!('weakAreas' in sys) || sys.weakAreas === undefined) sys.weakAreas = '';
-        });
-    });
-
-    // v12: move order and focus to uiPreferences
-    this.version(12).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-    }).upgrade(async tx => {
-      const prefs: any[] = [];
-      await tx.table('subjects').toCollection().modify((sub: any) => {
-        if (sub.id) {
-          prefs.push({
-            id: 'subject:' + sub.id,
-            type: 'subject',
-            entityId: sub.id,
-            order: sub.order,
-            focus: sub.focus ?? null,
-            updatedAt: new Date()
-          });
-        }
-        delete sub.order;
-        delete sub.focus;
-      });
-
-      await tx.table('systems').toCollection().modify((sys: any) => {
-        if (sys.id) {
-          prefs.push({
-            id: 'system:' + sys.id,
-            type: 'system',
-            entityId: sys.id,
-            order: sys.order,
-            focus: sys.focus ?? null,
-            updatedAt: new Date()
-          });
-        }
-        delete sys.order;
-        delete sys.focus;
-      });
-
-      if (prefs.length > 0) {
-        await tx.table('uiPreferences').bulkAdd(prefs);
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.subjects.startListener(user.uid);
+        this.systems.startListener(user.uid);
+        this.history.startListener(user.uid);
+        this.pyqYears.startListener(user.uid);
+        this.scoreLogs.startListener(user.uid);
+        this.uiPreferences.startListener(user.uid);
+        this.topicProgress.startListener(user.uid);
+        this.curriculumSets.startListener(user.uid);
+        this.revisionSets.startListener(user.uid);
+        this.mistakeLogs.startListener(user.uid);
+        this.recommendationSkips.startListener(user.uid);
+      } else {
+        this.subjects.stopListener();
+        this.systems.stopListener();
+        this.history.stopListener();
+        this.pyqYears.stopListener();
+        this.scoreLogs.stopListener();
+        this.uiPreferences.stopListener();
+        this.topicProgress.stopListener();
+        this.curriculumSets.stopListener();
+        this.revisionSets.stopListener();
+        this.mistakeLogs.stopListener();
+        this.recommendationSkips.stopListener();
       }
     });
+  }
 
-    this.version(14).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt'
-    });
-
-    this.version(15).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
-      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt'
-    });
-
-    this.version(16).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
-      curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
-      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt'
-    }).upgrade(async tx => {
-      try {
-        const oldSets = await tx.table('revisionSets').toArray();
-        if (oldSets && oldSets.length > 0) {
-          await tx.table('curriculumSets').bulkAdd(oldSets);
-        }
-      } catch (e) {
-        console.warn('Migration upgrade note:', e);
-      }
-    });
-
-    this.version(17).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
-      curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
-      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
-      mistakeLogs: '++id, subjectId, systemId, curriculumSetId, topicId, errorType, resolved, createdAt'
-    });
-
-    this.version(18).stores({
-      subjects: '++id, name',
-      systems: '++id, subjectId, name, updatedAt, nextRevisionDate, revisionState',
-      history: '++id, subjectId, systemId, completedAt',
-      pyqYears: '++id, subjectId',
-      scoreLogs: '++id, type, subjectId, systemId, pyqYearId, timestamp',
-      uiPreferences: 'id, type, entityId',
-      topicProgress: 'topicId, contentStatus, qbankStatus, nextRevisionDate, updatedAt',
-      curriculumSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
-      revisionSets: 'id, subjectId, systemId, name, createdAt, updatedAt',
-      mistakeLogs: '++id, subjectId, systemId, curriculumSetId, topicId, errorType, resolved, createdAt',
-      recommendationSkips: '++id, targetId, expiresAt'
-    });
+  transaction(mode: string, ...args: any[]) {
+      const callback = args[args.length - 1];
+      return callback();
+      return callback();
   }
 }
 
 export const db = new AtlasDB();
-
-// ── Export / Import ────────────────────────────────────────────────────────
-

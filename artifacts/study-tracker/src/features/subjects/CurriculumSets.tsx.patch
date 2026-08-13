@@ -1,0 +1,29 @@
+--- /app/applet/artifacts/study-tracker/src/features/subjects/CurriculumSets.tsx
++++ /app/applet/artifacts/study-tracker/src/features/subjects/CurriculumSets.tsx
+@@ -249,26 +249,6 @@
+ 
+                           <div className="flex flex-wrap items-center gap-2">
+-                            <button 
+-                              
+-                              className={cn(
+-                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+-                                
+-                              )}
+-                            >
+-                              
+-                              
+-                            </button>
+-
+-                            <button 
+-                              
+-                              className={cn(
+-                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+-                                
+-                              )}
+-                            >
+-                              
+-                              
+-                            </button>
+-
+                             <button
+                               onClick={() => {

@@ -41,6 +41,8 @@ export interface NextActionEngineResult {
   totalCandidatesEvaluated: number;
   quickEligibleCount: number;
   isTriageMode: boolean;
+  hasAnyCurriculumSets: boolean;
+  hasPendingSyllabus: boolean;
 }
 
 export interface EngineOptions {
@@ -95,7 +97,7 @@ export async function getNextActionRecommendation(
     const parentSystem = systemMap.get(set.systemId);
     if (parentSystem) {
       systemsWithSets.add(parentSystem.id!);
-      if (!set.contentCompleted || !set.qbankCompleted) {
+      if (false) {
         systemsWithIncompleteSets.add(parentSystem.id!);
       }
     }
@@ -205,8 +207,7 @@ export async function getNextActionRecommendation(
     let statusText = '';
     if (isOverdue) statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
     else if (isDueToday) statusText = `Due today (Pass #${revisionCount + 1})`;
-    else if (set.contentCompleted && set.qbankCompleted) statusText = `Completed • Pass #${revisionCount}`;
-    else statusText = `In Progress • ${topicCount} topics`;
+    else statusText = `Completed • Pass #${revisionCount}`;
     
     rawCandidates.push({
       id: candidateId,
@@ -249,7 +250,13 @@ export async function getNextActionRecommendation(
   const primary = filteredCandidates[0] || null;
   const fallback = filteredCandidates[1] || (filteredCandidates.length > 1 ? filteredCandidates.find(c => c.id !== primary?.id) : null) || null;
 
+  const hasAnyCurriculumSets = curriculumSets.length > 0;
+  const totalSyllabusSystemCount = ALL_SYSTEMS.length;
+  const hasPendingSyllabus = systems.some(s => !s.contentCompleted) || systems.length < totalSyllabusSystemCount;
+
   return {
+    hasAnyCurriculumSets,
+    hasPendingSyllabus,
     primary,
     fallback,
     sessionBudget,

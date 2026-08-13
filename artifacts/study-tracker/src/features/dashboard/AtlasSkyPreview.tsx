@@ -1,5 +1,6 @@
+import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { Sparkles } from 'lucide-react';
 import { AtlasSkyModal } from './AtlasSkyModal';
@@ -11,7 +12,7 @@ export function AtlasSkyPreview() {
   const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
   const systems = useLiveQuery(() => db.systems.toArray()) || [];
   const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
-  const masteredCount = curriculumSets.filter(s => s.contentCompleted && s.qbankCompleted).length;
+  const masteredCount = curriculumSets.filter(s => (s.contentCompleted && s.qbankCompleted)).length;
 
   // Generate a tiny random star pattern for the preview
   const stars = Array.from({ length: Math.min(masteredCount, 50) }).map((_, i) => {

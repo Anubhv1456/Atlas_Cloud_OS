@@ -1,4 +1,6 @@
-import { useLiveQuery } from 'dexie-react-hooks';
+import { ALL_SUBJECTS } from "@/data/ontology";
+import { isSystemComplete } from '@/lib/progress';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { ALL_SYSTEMS } from '@/data/ontology';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
@@ -15,7 +17,6 @@ import {
 import { calculateSubjectProgress } from '@/lib/progress';
 import { determineFocusSystems } from '@/features/dashboard/homeUtils';
 import { DropResult } from '@hello-pangea/dnd';
-import { useAIInsights } from '@/hooks/useAIInsights';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 export function useHomeLogic() {
@@ -53,7 +54,7 @@ export function useHomeLogic() {
     isSecondaryOverriddenByRevision,
     dueRevisions,
     secondaryDaysOverdue
-  } = determineFocusSystems(subjects, systems, today());
+  } = determineFocusSystems(subjects, systems, curriculumSets, today());
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -84,7 +85,7 @@ export function useHomeLogic() {
     if (customPrimarySubject || customSecondarySubject) {
       const activeFocusedSub = customPrimarySubject || customSecondarySubject;
       const subSystems = systems.filter(s => s.subjectId === activeFocusedSub?.id);
-      const subIncomplete = subSystems.filter(s => !(s.contentCompleted && s.qbankDone));
+      const subIncomplete = subSystems.filter(s => !(isSystemComplete(s, ALL_SUBJECTS.find(sub => sub.id === s.subjectId)?.name || '', curriculumSets)));
       
       candidates.push({
         id: `subject-focus-${activeFocusedSub?.id}`,
@@ -103,13 +104,13 @@ export function useHomeLogic() {
     }
 
     // 1. KNOWLEDGE DECAY & REVISION DEBT (Highest Priority: 98-100)
-    const sortedByDecay = sortSystemsByRevisionPriority(systems, now);
+    const sortedByDecay = sortSystemsByRevisionPriority(systems, curriculumSets, now);
     const topDecaySystem = sortedByDecay[0];
-    if (topDecaySystem && (isRevisionDue(topDecaySystem, now) || topDecaySystem.status === 'Weak' || topDecaySystem.revisionState === 'in_progress')) {
+    if (topDecaySystem && (isRevisionDue(topDecaySystem, curriculumSets, now) || topDecaySystem.status === 'Weak' || topDecaySystem.revisionState === 'in_progress')) {
       const sub = subjects.find(s => s.id === topDecaySystem.subjectId);
-      const overdue = daysOverdue(topDecaySystem, now);
-      const decayScore = calculateDecayScore(topDecaySystem, now);
-      const isDueToday = isRevisionDue(topDecaySystem, now) && overdue === 0;
+      const overdue = daysOverdue(topDecaySystem, curriculumSets, now);
+      const decayScore = calculateDecayScore(topDecaySystem, curriculumSets, now);
+      const isDueToday = isRevisionDue(topDecaySystem, curriculumSets, now) && overdue === 0;
 
       let badge = 'REVISION DUE';
       let badgeClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
@@ -146,7 +147,7 @@ export function useHomeLogic() {
     }
 
     // 2. PRIMARY FOCUS STEP AWAY (Confidence: 94)
-    if (primaryFocus && !(primaryFocus.contentCompleted && primaryFocus.qbankDone)) {
+    if (primaryFocus && !(isSystemComplete(primaryFocus, ALL_SUBJECTS.find(sub => sub.id === primaryFocus.subjectId)?.name || '', curriculumSets))) {
       const sub = subjects.find(s => s.id === primaryFocus!.subjectId);
       const missingTask = 'Topics';
       candidates.push({
@@ -229,7 +230,7 @@ export function useHomeLogic() {
     for (const sub of subjects) {
       const subSys = systems.filter(s => s.subjectId === sub.id);
       if (subSys.length > 1) {
-        const incomplete = subSys.filter(s => !(s.contentCompleted && s.qbankDone));
+        const incomplete = subSys.filter(s => !(isSystemComplete(s, ALL_SUBJECTS.find(sub => sub.id === s.subjectId)?.name || '', curriculumSets)));
         if (incomplete.length === 1) {
           const target = incomplete[0];
           candidates.push({

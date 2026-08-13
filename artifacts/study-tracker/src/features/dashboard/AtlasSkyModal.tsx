@@ -1,3 +1,4 @@
+import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import React, { useMemo, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
@@ -40,6 +41,7 @@ const FIXED_SUBJECTS = [
 export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculumSets }: AtlasSkyModalProps) {
   const [mounted, setMounted] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [cursorPos, setCursorPos] = useState({ x: -1000, y: -1000 });
   const [winSize, setWinSize] = useState({ w: 1000, h: 800 });
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     const x = (e.clientX / winSize.w - 0.5) * 20; 
     const y = (e.clientY / winSize.h - 0.5) * 20;
     setMousePos({ x, y });
+    setCursorPos({ x: e.clientX, y: e.clientY });
   };
 
   const { mappedStars, globalHealth } = useMemo(() => {
@@ -135,78 +138,108 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       health = (syllabusHealth * 0.5) + (qbankHealth * 0.3) + (statusHealth * 0.2);
     }
 
-    return { mappedStars: mapped, globalHealth: health };
+    
+    const sortedMapped = mapped.sort((a, b) => {
+      const distA = Math.sqrt(Math.pow(a.x - 50, 2) + Math.pow(a.y - 50, 2));
+      const distB = Math.sqrt(Math.pow(b.x - 50, 2) + Math.pow(b.y - 50, 2));
+      return distA - distB;
+    });
+    return { mappedStars: sortedMapped, globalHealth: health };
   }, [subjects, systems, curriculumSets]);
 
   const completedStars = mappedStars.filter(s => s.state === 'completed').sort((a, b) => a.completionTime - b.completionTime);
   const allCompleted = completedStars.length === 19;
   const northStarOpacity = globalHealth / 100;
 
-  const hour = new Date().getHours();
-  let bgGradient = "from-teal-900/20 via-[#050816] to-[#050816]";
-  if (hour >= 5 && hour < 8) bgGradient = "from-indigo-900/30 via-[#050816] to-[#050816]";
-  else if (hour >= 8 && hour < 17) bgGradient = "from-sky-900/20 via-[#050816] to-[#050816]";
-  else if (hour >= 17 && hour < 20) bgGradient = "from-purple-900/20 via-[#050816] to-[#050816]";
-
-  return (
+    return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent hideCloseButton className={cn(
         "!max-w-none !w-screen !h-screen !max-h-none !m-0 !p-0 !rounded-none !border-none overflow-hidden flex flex-col [&>button]:hidden",
-        "bg-[#050816] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
+        "bg-[#030303] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
       )}>
         <DialogTitle className="sr-only">Atlas Sky Constellation</DialogTitle>
         
-        <div className="absolute inset-0 w-full h-full" onMouseMove={handleMouseMove}>
+        <div className="absolute inset-0 w-full h-full bg-[#030303] overflow-hidden" onMouseMove={handleMouseMove}>
           
-          <div className="absolute inset-0 z-0 pointer-events-none">
+          {/* Subtle desaturated teal radial gradient only at the absolute center */}
+          <div className={cn(
+            "absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] opacity-60 pointer-events-none",
+            allCompleted ? "from-amber-900/10 via-transparent to-transparent" : "from-teal-900/10 via-transparent to-transparent"
+          )} />
+
+          {/* Distant ambient noise/dust (moves very slowly) */}
+          <motion.div 
+            className="absolute inset-[-10%] z-0 pointer-events-none"
+            animate={{ x: mousePos.x * 0.2, y: mousePos.y * 0.2 }}
+            transition={{ type: "spring", stiffness: 40, damping: 25 }}
+          >
             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
             <div 
-              className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_#ffffff_1px,_transparent_1px)]" 
+              className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_#ffffff_1px,_transparent_1px)]"
               style={{ backgroundSize: '60px 60px', transform: 'rotate(15deg)' }} 
             />
              <div 
-              className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_1.5px,_transparent_1.5px)]" 
+              className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_1.5px,_transparent_1.5px)]"
               style={{ backgroundSize: '120px 120px', transform: 'rotate(-5deg)' }} 
             />
-          </div>
-
-          <div className={cn("absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] opacity-80 pointer-events-none", bgGradient)} />
+          </motion.div>
 
           <button 
             onClick={() => onOpenChange(false)}
-            className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 w-12 h-12 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 w-12 h-12 rounded-full bg-transparent flex items-center justify-center text-slate-500/30 hover:text-white hover:bg-white/5 transition-all duration-500 hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
           >
             <X className="w-5 h-5" />
           </button>
 
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes drawCurve {
+              from { stroke-dasharray: 2000; stroke-dashoffset: 2000; }
+              to { stroke-dasharray: 2000; stroke-dashoffset: 0; }
+            }
+            @keyframes pulseGlowSlow {
+              0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 15px 2px rgba(251,191,36,0.4); }
+              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 0 20px 4px rgba(251,191,36,0.6); }
+            }
+            @keyframes pulseFlicker {
+              0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px 1px rgba(94,234,212,0.4); }
+              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 12px 2px rgba(94,234,212,0.6); }
+            }
+            @keyframes travelLight {
+              0% { stroke-dasharray: 0 3000; stroke-dashoffset: 0; opacity: 0; }
+              10% { opacity: 0.8; }
+              90% { opacity: 0.8; }
+              100% { stroke-dasharray: 150 3000; stroke-dashoffset: -800; opacity: 0; }
+            }
+            @keyframes sonarRing {
+              0% { transform: scale(0.5); opacity: 0.8; }
+              100% { transform: scale(3.5); opacity: 0; }
+            }
+            @keyframes igniteStar {
+              0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+            @keyframes fadeNode {
+              0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+          `}} />
+
+          {/* The constellation SVG lines (moves at medium speed) */}
           <motion.div 
-            className="relative flex-1 w-full h-full z-10 overflow-hidden"
-            animate={{ x: mousePos.x, y: mousePos.y }}
+            className="absolute inset-[-5%] z-10 pointer-events-none"
+            animate={{ x: mousePos.x * 0.6, y: mousePos.y * 0.6 }}
             transition={{ type: "spring", stiffness: 40, damping: 25 }}
           >
-            <style dangerouslySetInnerHTML={{ __html: `
-              @keyframes drawCurve {
-                from { stroke-dasharray: 2000; stroke-dashoffset: 2000; }
-                to { stroke-dasharray: 2000; stroke-dashoffset: 0; }
-              }
-              @keyframes pulseGlow {
-                0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-                50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-              }
-              @keyframes travelLight {
-                0% { stroke-dasharray: 20 3000; stroke-dashoffset: 0; }
-                100% { stroke-dasharray: 20 3000; stroke-dashoffset: -3000; }
-              }
-            `}} />
-
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox={`0 0 ${winSize.w} ${winSize.h}`}>
-              {(mounted || open) && completedStars.length > 1 && completedStars.map((star, i) => {
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox={`0 0 ${winSize.w * 1.1} ${winSize.h * 1.1}`}>
+              {(mounted || open) && mappedStars.length > 1 && mappedStars.map((star, i) => {
                 if (i === 0) return null;
-                const prev = completedStars[i - 1];
-                const x1 = (prev.x / 100) * winSize.w;
-                const y1 = (prev.y / 100) * winSize.h;
-                const x2 = (star.x / 100) * winSize.w;
-                const y2 = (star.y / 100) * winSize.h;
+                // Connect to a previous star that is closer to center to form a web
+                const prev = mappedStars[Math.max(0, i - 1)]; 
+                const x1 = (prev.x / 100) * (winSize.w * 1.1);
+                const y1 = (prev.y / 100) * (winSize.h * 1.1);
+                const x2 = (star.x / 100) * (winSize.w * 1.1);
+                const y2 = (star.y / 100) * (winSize.h * 1.1);
                 
                 const cx = (x1 + x2) / 2 + (y2 - y1) * 0.15;
                 const cy = (y1 + y2) / 2 - (x2 - x1) * 0.15;
@@ -218,115 +251,134 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     <path
                       d={d}
                       fill="none"
-                      stroke={allCompleted ? "rgba(252, 211, 77, 0.15)" : "rgba(20, 184, 166, 0.15)"}
+                      stroke={allCompleted ? "rgba(252, 211, 77, 0.05)" : "rgba(20, 184, 166, 0.05)"}
                       strokeWidth="1.5"
                       className="transition-all duration-1000 ease-out"
-                      style={{ animation: `drawCurve 2s ease-out forwards`, animationDelay: `${i * 0.1}s` }}
+                      style={{ animation: `drawCurve 2.5s cubic-bezier(0.2, 0, 0, 1) forwards`, animationDelay: `${1 + (Math.sqrt(Math.pow(x1/winSize.w*100 - 50, 2) + Math.pow(y1/winSize.h*100 - 50, 2))/70) * 1.5}s`, strokeDasharray: 2000, strokeDashoffset: 2000 }}
                     />
                     <path
                       d={d}
                       fill="none"
-                      stroke={allCompleted ? "rgba(252, 211, 77, 0.8)" : "rgba(45, 212, 191, 0.8)"}
+                      stroke={allCompleted ? "rgba(252, 211, 77, 0.3)" : "rgba(45, 212, 191, 0.3)"}
                       strokeWidth="2"
                       strokeLinecap="round"
                       className="opacity-60"
-                      style={{ animation: `travelLight 3s linear infinite`, animationDelay: `${i * 0.3}s` }}
+                      style={{ animation: `travelLight 8s ease-in-out forwards infinite`, animationDelay: `${2.5 + (Math.sqrt(Math.pow(x1/winSize.w*100 - 50, 2) + Math.pow(y1/winSize.h*100 - 50, 2))/70) * 2}s`, strokeDasharray: 0, opacity: 0 }}
                     />
                   </g>
                 );
               })}
             </svg>
+          </motion.div>
 
-            <div className="absolute inset-0 z-20 pointer-events-none">
-              
+          {/* Interactive star nodes (moves fastest) */}
+          <motion.div 
+            className="absolute inset-[-5%] z-20 pointer-events-none"
+            animate={{ x: mousePos.x, y: mousePos.y }}
+            transition={{ type: "spring", stiffness: 40, damping: 25 }}
+          >
               <div 
                 className="absolute transition-all duration-1000 flex items-center justify-center"
                 style={{ 
                    left: '50%', top: '50%',
-                   opacity: Math.max(0.15, northStarOpacity),
-                   transform: 'translate(-50%, -50%)',
+                   opacity: 0,
+                   transform: 'translate(-50%, -50%) scale(0)',
+                   animation: 'igniteStar 1.5s cubic-bezier(0.1, 0, 0.9, 1) forwards'
                 }}
               >
+                {/* Sonar Ring */}
                 <div 
-                  className={cn(
-                    "rounded-full transition-all duration-1000",
-                    globalHealth >= 90 ? "bg-amber-100 shadow-[0_0_40px_15px_rgba(252,211,77,0.4)]" : "bg-sky-100 shadow-[0_0_30px_10px_rgba(224,242,254,0.3)]"
-                  )}
+                  className="absolute rounded-full border border-teal-500/20"
                   style={{
-                    width: `${10 + (globalHealth / 100) * 8}px`,
-                    height: `${10 + (globalHealth / 100) * 8}px`,
+                    width: '120px', height: '120px',
+                    animation: 'sonarRing 10s cubic-bezier(0.1, 0, 0.9, 1) 1.5s infinite'
                   }}
-                 />
+                />
+                <AtlasNorthStar globalHealth={globalHealth} />
               </div>
 
               {mappedStars.map((star, i) => {
+                // Calculate proximity
+                const containerX = -0.05 * winSize.w + mousePos.x;
+                const containerY = -0.05 * winSize.h + mousePos.y;
+                const starScreenX = containerX + (star.x / 100) * (1.1 * winSize.w);
+                const starScreenY = containerY + (star.y / 100) * (1.1 * winSize.h);
+                
+                const dx = cursorPos.x - starScreenX;
+                const dy = cursorPos.y - starScreenY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const maxDist = 180;
+                const isHovered = dist < maxDist;
+                const labelOpacity = isHovered ? Math.max(0, 1 - dist / maxDist) : 0;
+                // Add a tiny baseline opacity if not hovered
+                const finalLabelOpacity = Math.max(0.05, labelOpacity);
+                const isNearest = isHovered && dist < 60; // Very close
+                
                 let starClasses = "absolute rounded-full transition-all duration-1000 origin-center flex items-center justify-center ";
-                let textClasses = "absolute top-5 left-1/2 -translate-x-1/2 text-[10px] sm:text-[11px] whitespace-nowrap transition-colors duration-1000 font-medium tracking-wide ";
+                let textClasses = "absolute top-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.25em] font-medium whitespace-nowrap transition-all duration-500 ";
                 let animation = '';
                 let sizeStyle = {};
                 
+                const distToCenter = Math.sqrt(Math.pow(star.x - 50, 2) + Math.pow(star.y - 50, 2));
+                const enterDelay = 1.2 + (distToCenter / 70) * 1.5;
+                const enterAnim = `fadeNode 1s ease-out forwards ${enterDelay}s`;
+                
+                
                 switch (star.state) {
                   case 'not_started':
-                    starClasses += "bg-slate-600/30";
-                    textClasses += "text-slate-500/40";
-                    sizeStyle = { width: '4px', height: '4px' };
+                    starClasses += "bg-white/10";
+                    textClasses += "text-slate-500/30";
+                    sizeStyle = { width: '1.5px', height: '1.5px' };
                     break;
                   case 'in_progress':
-                    starClasses += "bg-teal-500/20 border border-teal-500/40 shadow-[0_0_10px_rgba(20,184,166,0.3)]";
-                    textClasses += "text-teal-500/70";
-                    const size = 8 + (star.progress / 100) * 8; 
-                    sizeStyle = { width: `${size}px`, height: `${size}px` };
+                    starClasses += "bg-white/40 shadow-[0_0_6px_rgba(20,184,166,0.3)]";
+                    textClasses += "text-teal-500/50";
+                    sizeStyle = { width: '2px', height: '2px' };
                     break;
                   case 'strong':
-                    starClasses += "bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.6)]";
-                    textClasses += "text-teal-400/80";
-                    sizeStyle = { width: '8px', height: '8px' };
+                    starClasses += "bg-white/80 shadow-[0_0_8px_rgba(45,212,191,0.5)]";
+                    textClasses += "text-teal-200/60";
+                    sizeStyle = { width: '2px', height: '2px' };
                     break;
                   case 'revising':
-                    starClasses += "bg-teal-300 shadow-[0_0_15px_rgba(94,234,212,0.8)]";
-                    animation = 'pulseGlow 3s ease-in-out infinite';
-                    textClasses += "text-teal-300";
-                    sizeStyle = { width: '10px', height: '10px' };
+                    starClasses += "bg-white shadow-[0_0_10px_rgba(94,234,212,0.6)]";
+                    animation = 'pulseFlicker 4s ease-in-out infinite';
+                    textClasses += "text-teal-100/80";
+                    sizeStyle = { width: '2px', height: '2px' };
                     break;
                   case 'completed':
-                    starClasses += "bg-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.8)]";
-                    animation = 'pulseGlow 4s ease-in-out infinite';
-                    textClasses += "text-amber-200/90";
-                    sizeStyle = { width: '12px', height: '12px' };
+                    starClasses += "bg-white shadow-[0_0_15px_rgba(251,191,36,0.6)]";
+                    animation = 'pulseGlowSlow 8s ease-in-out infinite';
+                    textClasses += "text-amber-100/90";
+                    sizeStyle = { width: '2px', height: '2px' };
                     break;
                 }
 
                 return (
-                  <div key={star.name} className="absolute" style={{ left: `${star.x}%`, top: `${star.y}%` }}>
+                  <div key={star.name} className="absolute" style={{ left: `${star.x}%`, top: `${star.y}%`, opacity: 0, animation: `fadeNode 1.5s cubic-bezier(0.2, 0, 0, 1) forwards ${enterDelay}s` }}>
                     <div 
                       className={starClasses} 
-                      style={{ 
-                        transform: 'translate(-50%, -50%)', 
-                        ...sizeStyle, 
-                        ...(animation ? { animation } : {}) 
+                      style={{
+                        transform: `translate(-50%, -50%) scale(${isNearest ? 1.5 : 1})`,
+                        ...sizeStyle,
+                        animation
                       }}
                     >
-                       {star.state === 'in_progress' && (
-                         <div 
-                           className="bg-teal-400 rounded-full opacity-80" 
-                           style={{ 
-                             width: `${Math.max(20, star.progress)}%`, 
-                             height: `${Math.max(20, star.progress)}%` 
-                           }} 
-                         />
-                       )}
                     </div>
-                    <span className={textClasses}>{star.name}</span>
+                    <span className={textClasses} style={{ opacity: finalLabelOpacity }}>{star.name}</span>
                   </div>
                 );
               })}
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
 
+          {/* Heavy Vignette (z-30 to cover edges) */}
+          <div className="absolute inset-0 z-30 pointer-events-none bg-[radial-gradient(ellipse_at_center,_transparent_40%,_#030303_100%)] opacity-100" />
+
+        </div>
         <div className="absolute bottom-10 left-0 w-full flex justify-center pointer-events-none z-30 opacity-70">
             <div className="text-center px-6 max-w-sm">
-              <p className="text-xs sm:text-sm font-medium text-teal-100/60 italic">"The art of medicine consists of amusing the patient while nature cures the disease."</p>
+              <p className="text-sm sm:text-base font-serif text-teal-100/70 italic tracking-wide">"The art of medicine consists of amusing the patient while nature cures the disease."</p>
               <p className="text-[10px] text-teal-100/40 uppercase tracking-[0.2em] mt-3 border-t border-white/10 pt-2 inline-block">Your Atlas OS Journey</p>
             </div>
           </div>

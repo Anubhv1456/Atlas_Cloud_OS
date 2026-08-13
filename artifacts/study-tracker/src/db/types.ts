@@ -30,15 +30,15 @@ export type SystemStatus = 'Strong' | 'Average' | 'Weak';
 export interface StudySystem {
   isHighYield?: boolean;
   id?: number;
-  subjectId: number;
+  subjectId?: number | string;
   name: string;
   // Content — incremental progress
-  contentInitialized: boolean;
-  contentUnitsTotal: number;
-  contentUnitsCompleted: number;
-  contentCompleted: boolean;
+  contentInitialized?: boolean;
+  contentUnitsTotal?: number;
+  contentUnitsCompleted?: number;
+  contentCompleted?: boolean;
   // QBank — binary
-  qbankDone: boolean;
+  qbankDone?: boolean;
   // Notes & metadata
   weakAreas: string;
   // Confidence (Strong / Average / Weak) — doubles as spaced-rep confidence
@@ -55,7 +55,6 @@ export interface StudySystem {
 
   // ── Revision engine fields (v4) ─────────────────────────────────────────
   /** Set when both contentCompleted and qbankDone first become true. */
-  completionDate: Date | null;
   /** How many revisions have been completed. */
   revisionCount: number;
   /** Date of most recent completed revision. */
@@ -87,7 +86,7 @@ export interface StudySystem {
 /** One year entry under a subject's PYQ section. */
 export interface PYQYear {
   id?: number;
-  subjectId: number;
+  subjectId?: number | string;
   /** User-defined year label, e.g. "2024". */
   year: string;
   completed: boolean;
@@ -100,8 +99,8 @@ export interface PYQYear {
 
 export interface ScoreLog {
   id?: number;
-  type: 'revision' | 'pyq' | 'set';
-  subjectId: number;
+  type: 'revision' | 'pyq' | 'set' | 'gt';
+  subjectId?: number | string;
   systemId?: number;
   topicId?: string;
   curriculumSetId?: string;
@@ -119,7 +118,7 @@ export interface ScoreLog {
 
 export interface HistoryEntry {
   id?: number;
-  subjectId: number;
+  subjectId?: number | string;
   subjectName: string;
   /** 0 for subject-level entries (PYQs). */
   systemId: number;
@@ -154,7 +153,7 @@ export type TopicLivingState = 'not_started' | 'learning' | 'practicing' | 'revi
 
 export interface CurriculumSet {
   id?: string;
-  subjectId: number;
+  subjectId?: number | string;
   systemId: number;
   name: string;
   topicIds: string[];
@@ -186,7 +185,7 @@ export type RevisionSet = CurriculumSet;
 
 export interface MistakeLog {
   id?: number;
-  subjectId: number;
+  subjectId?: number | string;
   systemId: number;          // required
   curriculumSetId?: string; // optional
   topicId?: string;         // optional

@@ -1,0 +1,34 @@
+--- /app/applet/artifacts/study-tracker/src/features/subjects/SubjectDetail.hooks.ts
++++ /app/applet/artifacts/study-tracker/src/features/subjects/SubjectDetail.hooks.ts
+@@ -16,3 +16,2 @@
+ 
+-type StageKey = 'contentCompleted' | 'qbankDone';
+ 
+@@ -205,17 +204,6 @@
+ 
+-  const totalTasks     = revisionSets.length * 2;
+-  const completedTasks = revisionSets.reduce((acc, rs) => acc + (rs.contentCompleted ? 1 : 0) + (rs.qbankCompleted ? 1 : 0), 0);
+-  const progress = revisionSets.length > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
++  const totalTasks     = revisionSets.length;
++  const completedTasks = revisionSets.reduce((acc, rs) => acc + ((rs.revisionCount || 0) > 0 ? 1 : 0), 0);
++  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+ 
+-  const pyqUnlocked = revisionSets.length > 0 && revisionSets.every(rs => rs.contentCompleted && rs.qbankCompleted);
+-
+-  const stagePct = (key: StageKey) => {
+-    if (revisionSets.length === 0) return 0;
+-    
+-    let done = 0;
+-    for (const rs of revisionSets) {
+-      if (key === 'contentCompleted' && rs.contentCompleted) done++;
+-      if (key === 'qbankDone' && rs.qbankCompleted) done++;
+-    }
+-    return Math.round((done / revisionSets.length) * 100);
+-  };
++  const pyqUnlocked = totalTasks > 0 && revisionSets.every(rs => (rs.revisionCount || 0) > 0);
+ 
+@@ -232,3 +220,3 @@
+     totalTasks, completedTasks, progress,
+-    pyqUnlocked, stagePct, 
++    pyqUnlocked, 
+   };

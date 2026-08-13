@@ -1,0 +1,7 @@
+--- ./artifacts/study-tracker/src/features/dashboard/useHomeStats.ts
++++ ./artifacts/study-tracker/src/features/dashboard/useHomeStats.ts
+@@ -46,3 +46,3 @@
+         const v1 = set.contentCompleted ? 50 : 0;
+-        const v2 = set.qbankCompleted ? 50 : 0;
++        const v2 = 0;
+         return acc + v1 + v2;

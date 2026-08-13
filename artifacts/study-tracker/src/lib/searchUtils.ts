@@ -18,17 +18,17 @@ export function extractKeywords(q: string): { keywords: Keyword[]; freeText: str
 }
 
 /** True when a system satisfies ALL supplied keyword filters. */
-export function systemMatchesKeywords(sys: StudySystem, keywords: Keyword[]): boolean {
+export function systemMatchesKeywords(sys: StudySystem, keywords: Keyword[], curriculumSets: any[]): boolean {
   if (keywords.length === 0) return true;
   return keywords.every(kw => {
     switch (kw) {
       case 'strong':    return sys.status === 'Strong';
       case 'average':   return sys.status === 'Average';
       case 'weak':      return sys.status === 'Weak';
-      case 'revision':  return hasRevisionScheduled(sys);
-      case 'due':       return isRevisionDue(sys);
-      case 'overdue':   return isRevisionOverdue(sys);
-      case 'completed': return sys.contentCompleted && sys.qbankDone;
+      case 'revision':  return hasRevisionScheduled(sys, curriculumSets);
+      case 'due':       return isRevisionDue(sys, curriculumSets);
+      case 'overdue':   return isRevisionOverdue(sys, curriculumSets);
+      case 'completed': return false;
     }
   });
 }
@@ -46,6 +46,7 @@ export function runSearch(
   rawQuery: string,
   subjects: Subject[],
   systems: StudySystem[],
+  curriculumSets: any[]
 ): SearchResult {
   const { keywords, freeText } = extractKeywords(rawQuery);
   const ft = freeText.toLowerCase().trim();
@@ -65,7 +66,7 @@ export function runSearch(
       const nameMatch = ft
         ? sys.name.toLowerCase().includes(ft) || subName.includes(ft)
         : true;
-      return nameMatch && systemMatchesKeywords(sys, keywords);
+      return nameMatch && systemMatchesKeywords(sys, keywords, curriculumSets);
     })
     .map(sys => {
       const sub = subjects.find(s => s.id === sys.subjectId);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { 
   getNextActionRecommendation, 
   NextActionEngineResult, 
@@ -366,36 +366,73 @@ export function NextActionCard() {
           </div>
         </div>
       ) : (
-        <div className="py-6 text-center space-y-3">
+                <div className="py-6 text-center space-y-3">
           <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 mb-1">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-foreground">All Clear & Up to Date!</h3>
+          <h3 className="text-base font-bold text-foreground">
+             {result && !result.hasAnyCurriculumSets
+               ? "Welcome to Atlas"
+               : result && !result.hasPendingSyllabus
+               ? "Syllabus Completed"
+               : "All Clear & Up to Date!"
+             }
+          </h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-            {sessionBudget === 'quick' && result?.quickEligibleCount === 0
-              ? `No quick reviews pending. You have ${(result?.totalCandidatesEvaluated || 0) - (result?.quickEligibleCount || 0)} Deep Study Blocks due.`
-              : 'You have no pending revisions or overdue items right now. Add new subjects or create study blocks to get recommendations.'}
+             {result && !result.hasAnyCurriculumSets 
+              ? "Let's get started by creating your first study block."
+              : sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (result?.totalCandidatesEvaluated || 0) > 0
+              ? `No quick reviews pending. You have ${(result?.totalCandidatesEvaluated || 0)} Deep Study Blocks due.`
+              : result && !result.hasPendingSyllabus
+              ? "You've conquered the entire syllabus! Take a well-deserved break, give a Grand Test (GT), or review your upcoming revision schedule."
+              : "You've completed all your scheduled blocks. Make new study blocks for your pending syllabus to continue studying."
+            }
           </p>
-          {sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSessionBudget('deep')}
-              className="mt-2 text-xs font-semibold border-primary/30 text-primary cursor-pointer"
-            >
-              Switch to Deep Work Block
-            </Button>
-          )}
-          {skipIds.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetSkips}
-              className="mt-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              Reset Skipped Topics ({skipIds.length})
-            </Button>
-          )}
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
+            {sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (result?.totalCandidatesEvaluated || 0) > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSessionBudget('deep')}
+                className="text-xs font-semibold border-primary/30 text-primary cursor-pointer w-full sm:w-auto"
+              >
+                Switch to Deep Work Block
+              </Button>
+            )}
+            
+            {result && !result.hasAnyCurriculumSets && (
+               <Button
+                  onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+                  size="sm"
+                  className="text-xs font-semibold bg-primary text-primary-foreground cursor-pointer w-full sm:w-auto"
+               >
+                  Go to Subjects
+               </Button>
+            )}
+            
+            {result && result.hasAnyCurriculumSets && result.hasPendingSyllabus && (sessionBudget !== 'quick' || (result?.totalCandidatesEvaluated || 0) === 0) && (
+               <Button
+                  onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+                  size="sm"
+                  className="text-xs font-semibold border-primary/30 text-primary cursor-pointer w-full sm:w-auto"
+                  variant="outline"
+               >
+                  Create New Blocks
+               </Button>
+            )}
+
+            {skipIds.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetSkips}
+                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer w-full sm:w-auto"
+              >
+                Reset Skipped ({skipIds.length})
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>

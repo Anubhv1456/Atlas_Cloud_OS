@@ -13,11 +13,11 @@ export function filterScoreLogs(
     result = result.filter(log => log.type === selectedType);
   }
   if (selectedSubjectId !== 'all') {
-    const subId = Number(selectedSubjectId);
+    const subId = selectedSubjectId as string | number;
     result = result.filter(log => log.subjectId === subId);
   }
   if (selectedSystemId !== 'all') {
-    const sysId = Number(selectedSystemId);
+    const sysId = selectedSystemId as string | number;
     result = result.filter(log => log.systemId === sysId);
   }
   if (searchQuery.trim()) {
@@ -44,20 +44,65 @@ export function calculateAnalyticsStats(filteredLogs: ScoreLog[]) {
       avgPercentage: 0,
       totalLogs: 0,
       targetPassRate: 0,
-      totalSubjectsCovered: 0
+      totalSubjectsCovered: 0,
+      avgGtScore: 0,
+      gtCount: 0,
+      readinessIndex: 0,
+      readinessTrend: 0
     };
   }
+
+  // Calculate traditional stats
   const totalPct = filteredLogs.reduce((acc, log) => acc + log.percentage, 0);
   const avgPercentage = Math.round((totalPct / filteredLogs.length) * 10) / 10;
   const targetPassed = filteredLogs.filter(log => log.percentage >= 75).length;
   const targetPassRate = Math.round((targetPassed / filteredLogs.length) * 100);
-  const subIds = new Set(filteredLogs.map(l => l.subjectId));
+  const subIds = new Set(filteredLogs.map(l => l.subjectId).filter(id => id && id !== 'gt'));
   
+  const gtLogs = filteredLogs.filter(log => log.type === 'gt');
+  const avgGtScore = gtLogs.length > 0 
+    ? Math.round((gtLogs.reduce((acc, log) => acc + log.score, 0) / gtLogs.length) * 10) / 10 
+    : 0;
+
+  // Calculate Readiness Index (time-decayed)
+  const now = Date.now();
+  let totalWeight = 0;
+  let weightedScore = 0;
+  let recentScore = 0; let recentWeight = 0;
+  let pastScore = 0; let pastWeight = 0;
+
+  filteredLogs.forEach(log => {
+    const daysOld = Math.max(0, (now - new Date(log.timestamp).getTime()) / (1000 * 60 * 60 * 24));
+    const weight = Math.exp(-daysOld / 30); // 30-day decay constant
+    totalWeight += weight;
+    weightedScore += log.percentage * weight;
+    
+    if (daysOld <= 7) {
+        recentWeight += weight;
+        recentScore += log.percentage * weight;
+    } else if (daysOld > 7 && daysOld <= 14) {
+        pastWeight += weight;
+        pastScore += log.percentage * weight;
+    }
+  });
+
+  const readinessIndex = totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 10) / 10 : 0;
+  
+  // Trend calculation
+  const recentReadiness = recentWeight > 0 ? (recentScore / recentWeight) : readinessIndex;
+  const pastReadiness = pastWeight > 0 ? (pastScore / pastWeight) : readinessIndex;
+  const rawTrend = recentReadiness - pastReadiness;
+  const readinessTrend = Math.round(rawTrend * 10) / 10;
+    
   return {
     avgPercentage,
     totalLogs: filteredLogs.length,
     targetPassRate,
     totalSubjectsCovered: subIds.size,
+    avgGtScore,
+    gtCount: gtLogs.length,
+    readinessIndex,
+    readinessTrend
   };
 }
 
@@ -65,22 +110,74 @@ export function formatChartData(
   displayLogs: ScoreLog[],
   subjectMap: Map<number, Subject>
 ) {
-  return displayLogs.map((log, index) => {
-    const dateLabel = format(new Date(log.timestamp), 'MMM d');
+  if (displayLogs.length === 0) return [];
+  
+  // Sort logs chronologically to build the curve
+  const sorted = [...displayLogs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  const chartData = [];
+  
+  for (let i = 0; i < sorted.length; i++) {
+    const log = sorted[i];
+    const logDate = new Date(log.timestamp);
     const subName = subjectMap.get(log.subjectId)?.name || '';
-    return {
+    
+    // Real data point
+    chartData.push({
       id: log.id,
-      index: index + 1,
-      date: dateLabel,
-      fullDate: format(new Date(log.timestamp), 'PPP'),
+      index: i + 1,
+      date: format(logDate, 'MMM d'),
+      fullDate: format(logDate, 'PPP'),
       percentage: log.percentage,
       scoreStr: `${log.score} / ${log.total}`,
       title: log.title,
-      type: log.type === 'revision' ? 'System Revision' : 'PYQ Test',
+      type: log.type === 'gt' ? 'Grand Test' : log.type === 'revision' ? 'System Revision' : log.type === 'pyq' ? 'PYQ Test' : 'Custom Set',
       subjectName: subName,
       notes: log.notes || '',
-    };
-  });
+      isRealPoint: true,
+    });
+    
+    // Calculate decay curve before the next log
+    if (i < sorted.length - 1) {
+      const nextLog = sorted[i + 1];
+      const nextLogDate = new Date(nextLog.timestamp);
+      const daysDiff = (nextLogDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // If gap is more than 2 days, insert a decay point to create the dropping arc
+      if (daysDiff > 2) {
+        // Ebbinghaus forgetting curve simulation (simplified exponential decay)
+        const decayedPercentage = Math.max(10, Math.round(log.percentage * Math.exp(-daysDiff / 15)));
+        const decayDate = new Date(nextLogDate.getTime() - (1000 * 60 * 60 * 24)); // 1 day before next test
+        
+        chartData.push({
+          id: `decay-${log.id}`,
+          date: '', // Hide tick for fake point
+          fullDate: format(decayDate, 'PPP'),
+          percentage: decayedPercentage,
+          title: 'Memory Decay',
+          type: 'Decay',
+          isRealPoint: false,
+        });
+      }
+    }
+  }
+  
+  // Add a final 'Today' point if the last log was over 2 days ago
+  const lastLog = sorted[sorted.length - 1];
+  const daysSinceLast = (Date.now() - new Date(lastLog.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceLast > 2) {
+    const decayedPercentage = Math.max(10, Math.round(lastLog.percentage * Math.exp(-daysSinceLast / 15)));
+    chartData.push({
+      id: 'decay-now',
+      date: 'Today',
+      fullDate: format(new Date(), 'PPP'),
+      percentage: decayedPercentage,
+      title: 'Current Estimated Retention',
+      type: 'Decay',
+      isRealPoint: false,
+    });
+  }
+  
+  return chartData;
 }
 
 export function calculateSystemBreakdown(

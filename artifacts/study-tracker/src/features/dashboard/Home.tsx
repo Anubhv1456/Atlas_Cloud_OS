@@ -25,7 +25,7 @@ import { format } from 'date-fns';
 import { StudySystem, Subject } from '@/db';
 import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progress';
 import { ALL_SYSTEMS } from '@/data/ontology';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
@@ -47,28 +47,6 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
   );
 }
 
-function RevisionPill({ sys }: { sys: StudySystem }) {
-  if (!sys.completionDate) return null;
-  const retrievability = getRetrievability(sys);
-  const health = getRetrievabilityHealth(retrievability);
-
-  if (isRevisionOverdue(sys)) return (
-    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-500 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />Pending Review
-    </span>
-  );
-  if (isRevisionDue(sys)) return (
-    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-500 shrink-0 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />Due
-    </span>
-  );
-  if (sys.nextRevisionDate) return (
-    <span className={cn("flex items-center gap-1 text-[10px] font-semibold shrink-0 px-2.5 py-0.5 rounded-full bg-muted/60 border border-border/40", health.colorClass)}>
-      <div className={cn("w-1.5 h-1.5 rounded-full", health.colorClass.includes("destructive") ? "bg-destructive" : health.colorClass.includes("amber") ? "bg-amber-500" : "bg-emerald-500")} />Healthy
-    </span>
-  );
-  return null;
-}
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -103,6 +81,7 @@ export default function Home() {
     return os ? os.topics.map(t => t.id) : [];
   });
   
+  const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
   const stats = useLiveQuery(async () => {
     let completedTasks = 0;
     let strongSystems = 0;
@@ -116,17 +95,17 @@ export default function Home() {
       if (tp.isWeak) weakTopicsCount++;
     });
     await (db.curriculumSets || db.revisionSets).each(set => {
-      if (set.contentCompleted && set.qbankCompleted) completedTasks++;
+      if ((set.contentCompleted && set.qbankCompleted)) completedTasks++;
       if (set.averageScore && set.averageScore >= 80) strongSystems++;
       if (set.nextRevisionDate && new Date(set.nextRevisionDate) <= now) dueRevisionsCount++;
-      if (set.contentCompleted || set.qbankCompleted) {
-        if (!(set.contentCompleted && set.qbankCompleted)) {
+      if (false) {
+        if (false) {
           learningTopicsCount++;
         }
       }
       
-      const v1 = set.contentCompleted ? 50 : 0;
-      const v2 = set.qbankCompleted ? 50 : 0;
+      const v1 = (set.contentCompleted && set.qbankCompleted) ? 100 : 0;
+      const v2 = 0;
       sum += (v1 + v2);
     });
     
@@ -134,12 +113,7 @@ export default function Home() {
   }, []) || { completedTasks: 0, strongSystems: 0, dueRevisionsCount: 0, weakTopicsCount: 0, learningTopicsCount: 0, sum: 0 };
 
   
-  let topicOverallProgress = 0;
-  if (allTopicIds.length > 0) {
-    let sum = 0;
-    
-    topicOverallProgress = Math.round((sum / allTopicIds.length) * 100);
-  }
+  const topicOverallProgress = calculateOverallProgress(subjects, systems, curriculumSets);
 
   useEffect(() => {
     // Auto trigger onboarding if completed flag is missing

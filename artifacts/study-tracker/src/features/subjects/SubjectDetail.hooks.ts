@@ -10,12 +10,12 @@ import {
 import { PYQYear, StudySystem } from '@/db';
 import { calculateSubjectProgress } from '@/lib/progress';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { calculateYearScoreMap, generateCustomYearRange } from '@/features/subjects/subjectUtils';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
-type StageKey = 'contentCompleted' | 'qbankDone';
+
 
 export function usePYQSectionLogic(subjectId: number, subjectName: string, years: PYQYear[]) {
   const [expanded,             setExpanded]             = useState(true);
@@ -139,7 +139,7 @@ export function usePYQSectionLogic(subjectId: number, subjectName: string, years
 
 export function useSubjectDetailLogic(id: string | undefined) {
   const search  = useSearch();
-  const subjectId = parseInt(id || '0', 10);
+  const subjectId = id as string | number; // allow string IDs
   const [, setLocation] = useLocation();
 
   const subject  = useSubject(subjectId);
@@ -158,7 +158,7 @@ export function useSubjectDetailLogic(id: string | undefined) {
   const highlightId = (() => {
     const params = new URLSearchParams(search);
     const v = params.get('highlight');
-    return v ? parseInt(v, 10) : null;
+    return v ? v : null;
   })();
 
   const handleDragEnd = async (result: DropResult) => {
@@ -203,23 +203,13 @@ export function useSubjectDetailLogic(id: string | undefined) {
     [subject?.id]
   ) || [];
 
-  const totalTasks     = revisionSets.length * 2;
-  const completedTasks = revisionSets.reduce((acc, rs) => acc + (rs.contentCompleted ? 1 : 0) + (rs.qbankCompleted ? 1 : 0), 0);
-  const progress = revisionSets.length > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const totalTasks = revisionSets.length;
+  const completedTasks = revisionSets.reduce((acc, rs) => acc + ((rs.contentCompleted && rs.qbankCompleted) ? 1 : 0), 0);
+  const progress = subject && systems ? calculateSubjectProgress(subject, systems, revisionSets) : 0;
 
-  const pyqUnlocked = revisionSets.length > 0 && revisionSets.every(rs => rs.contentCompleted && rs.qbankCompleted);
+  const pyqUnlocked = totalTasks > 0 && revisionSets.every(rs => (rs.contentCompleted && rs.qbankCompleted));
 
-  const stagePct = (key: StageKey) => {
-    if (revisionSets.length === 0) return 0;
-    
-    let done = 0;
-    for (const rs of revisionSets) {
-      if (key === 'contentCompleted' && rs.contentCompleted) done++;
-      if (key === 'qbankDone' && rs.qbankCompleted) done++;
-    }
-    return Math.round((done / revisionSets.length) * 100);
-  };
-
+  
   
   
   return {
@@ -230,6 +220,6 @@ export function useSubjectDetailLogic(id: string | undefined) {
     
         highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked, stagePct, 
+    pyqUnlocked, 
   };
 }

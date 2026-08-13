@@ -37,7 +37,7 @@ export function SubjectsGrid({
   }, [subjects, activeFilter]);
 
   return (
-    <section className="flex-1">
+    <section id="subject-portfolio" className="flex-1">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -123,7 +123,7 @@ export function SubjectsGrid({
                         <SubjectCard
                           subject={subject}
                           systems={systems.filter(s => s.subjectId === subject.id)}
-                          dragHandleProps={activeFilter === 'All' ? provided.dragHandleProps : undefined}
+                          dragHandleProps={provided.dragHandleProps}
                         />
                       </div>
                     )}

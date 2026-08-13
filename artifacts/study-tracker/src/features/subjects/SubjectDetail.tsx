@@ -27,7 +27,7 @@ import { calculateSubjectProgress } from '@/lib/progress';
 import { usePYQSectionLogic, useSubjectDetailLogic } from './SubjectDetail.hooks';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
-type StageKey = 'contentCompleted' | 'qbankDone';
+
 
 // ── PYQ section component ──────────────────────────────────────────────────────
 
@@ -615,7 +615,7 @@ export default function SubjectDetail() {
     
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked, stagePct
+    pyqUnlocked
   } = useSubjectDetailLogic(id);
 
   if (!subject && id) {
@@ -700,6 +700,7 @@ export default function SubjectDetail() {
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
+                          {...provided.dragHandleProps}
                           className={cn(snapshot.isDragging && "opacity-80 z-50")}
                           style={provided.draggableProps.style}
                         >

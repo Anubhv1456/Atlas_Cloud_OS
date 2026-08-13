@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db, ScoreLog } from '@/db';
 import {
   Dialog,
@@ -21,7 +21,7 @@ import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 interface ScoreLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialType?: 'revision' | 'pyq';
+  initialType?: 'revision' | 'pyq' | 'gt';
   initialSubjectId?: number;
   initialSystemId?: number;
   initialTopicId?: string;
@@ -48,7 +48,7 @@ export function ScoreLogModal({
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const pyqYears = useLiveQuery(() => db.pyqYears.toArray().then(res => res.filter(p => !p.deletedAt)), []) || [];
 
-  const [type, setType] = useState<'revision' | 'pyq'>(initialType);
+  const [type, setType] = useState<'revision' | 'pyq' | 'gt'>(initialType);
   const [subjectId, setSubjectId] = useState<number | undefined>(initialSubjectId);
   const [systemId, setSystemId] = useState<number | undefined>(initialSystemId);
   const [topicId, setTopicId] = useState<string | undefined>(initialTopicId);
@@ -134,7 +134,7 @@ export function ScoreLogModal({
       return;
     }
 
-    if (!subjectId) {
+    if (!subjectId && type !== 'gt') {
       toast({
         title: 'Subject Required',
         description: 'Please select a subject for this score entry.',
@@ -153,30 +153,39 @@ export function ScoreLogModal({
       if (!logTitle) {
         if (type === 'revision') {
           logTitle = selectedSys ? `${selectedSys.name} Revision` : `${selectedSub?.name} Revision`;
-        } else {
+        } else if (type === 'pyq') {
           logTitle = selectedPyq ? `${selectedSub?.name} ${selectedPyq.year} PYQ` : `${selectedSub?.name} PYQ`;
+        } else {
+          logTitle = 'Grand Test';
         }
       }
 
-      const logData: Omit<ScoreLog, 'id'> = {
+      const logData: any = {
         type,
-        subjectId,
-        systemId: systemId || undefined,
-        topicId: topicId || undefined,
-        pyqYearId: pyqYearId || undefined,
+        subjectId: subjectId || 'gt',
+        systemId: systemId || null,
+        topicId: topicId || null,
+        pyqYearId: pyqYearId || null,
         title: logTitle,
         score: scoreNum,
         total: totalNum,
         percentage,
         timestamp: new Date(dateStr),
-        notes: notes.trim() || undefined,
+        notes: notes.trim() || null,
       };
+      
+      // Clean undefined and nulls to prevent Firestore errors
+      Object.keys(logData).forEach(key => {
+        if (logData[key] === undefined || logData[key] === null) {
+          delete logData[key];
+        }
+      });
 
       await db.scoreLogs.add(logData as ScoreLog);
 
       
       // Calculate global retention score
-      const recentLogs = await db.scoreLogs.orderBy('timestamp').reverse().limit(50).toArray();
+      const recentLogs = (await db.scoreLogs.orderBy('timestamp').reverse().toArray()).slice(0, 50);
       let globalRetentionScore = 0.70;
       if (recentLogs.length > 0) {
         const sum = recentLogs.reduce((acc, log) => acc + (log.percentage / 100), 0);
@@ -232,7 +241,7 @@ export function ScoreLogModal({
 
         <form onSubmit={handleSave} className="space-y-4 pt-2">
           {/* Entry Type Toggle */}
-          <div className="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-lg border border-border">
+          <div className="grid grid-cols-3 gap-2 bg-muted/50 p-1 rounded-lg border border-border">
             <button
               type="button"
               onClick={() => { setType('revision'); setPyqYearId(undefined); }}
@@ -253,78 +262,94 @@ export function ScoreLogModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              PYQ / Practice Test
+              PYQ / Test
+            </button>
+            <button
+              type="button"
+              onClick={() => { setType('gt'); setSystemId(undefined); setPyqYearId(undefined); }}
+              className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                type === 'gt'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Grand Test (GT)
             </button>
           </div>
 
-          {/* Subject Selector */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Subject *</Label>
-            <Select
-              value={subjectId ? String(subjectId) : ''}
-              onValueChange={(val) => {
-                const sId = Number(val);
-                setSubjectId(sId);
-                setSystemId(undefined);
-                setPyqYearId(undefined);
-              }}
-            >
-              <SelectTrigger className="w-full bg-background border-border text-xs">
-                <SelectValue placeholder="Select a Subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((sub) => (
-                  <SelectItem key={sub.id} value={String(sub.id)}>
-                    {sub.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Selectors */}
+          {type !== 'gt' && (
+            <>
+              {/* Subject Selector */}
+              <div className="space-y-1.5 mb-4">
+                <Label className="text-xs font-semibold text-foreground">Subject *</Label>
+                <Select
+                  value={subjectId ? String(subjectId) : ''}
+                  onValueChange={(val) => {
+                    const sId = val;
+                    setSubjectId(sId);
+                    setSystemId(undefined);
+                    setPyqYearId(undefined);
+                  }}
+                >
+                  <SelectTrigger className="w-full bg-background border-border text-xs">
+                    <SelectValue placeholder="Select a Subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((sub) => (
+                      <SelectItem key={sub.id} value={String(sub.id)}>
+                        {sub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* System or PYQ Year Selector */}
-          {type === 'revision' ? (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">System (Optional)</Label>
-              <Select
-                value={systemId ? String(systemId) : 'none'}
-                onValueChange={(val) => setSystemId(val === 'none' ? undefined : Number(val))}
-              >
-                <SelectTrigger className="w-full bg-background border-border text-xs">
-                  <SelectValue placeholder="All Systems / Overall Subject Revision" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Overall Subject Revision</SelectItem>
-                  {availableSystems.map((sys) => (
-                    <SelectItem key={sys.id} value={String(sys.id)}>
-                      {sys.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">PYQ Year (Optional)</Label>
-              <Select
-                value={pyqYearId ? String(pyqYearId) : 'none'}
-                onValueChange={(val) => setPyqYearId(val === 'none' ? undefined : Number(val))}
-              >
-                <SelectTrigger className="w-full bg-background border-border text-xs">
-                  <SelectValue placeholder="Select PYQ Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">General Subject PYQ</SelectItem>
-                  {availablePyqs.map((pyq) => (
-                    <SelectItem key={pyq.id} value={String(pyq.id)}>
-                      {pyq.year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* System or PYQ Year Selector */}
+              {type === 'revision' ? (
+                <div className="space-y-1.5 mb-4">
+                  <Label className="text-xs font-semibold text-foreground">System (Optional)</Label>
+                  <Select
+                    value={systemId ? String(systemId) : 'none'}
+                    onValueChange={(val) => setSystemId(val === 'none' ? undefined : val)}
+                  >
+                    <SelectTrigger className="w-full bg-background border-border text-xs">
+                      <SelectValue placeholder="All Systems / Overall Subject Revision" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Overall Subject Revision</SelectItem>
+                      {availableSystems.map((sys) => (
+                        <SelectItem key={sys.id} value={String(sys.id)}>
+                          {sys.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-1.5 mb-4">
+                  <Label className="text-xs font-semibold text-foreground">PYQ Year (Optional)</Label>
+                  <Select
+                    value={pyqYearId ? String(pyqYearId) : 'none'}
+                    onValueChange={(val) => setPyqYearId(val === 'none' ? undefined : val)}
+                  >
+                    <SelectTrigger className="w-full bg-background border-border text-xs">
+                      <SelectValue placeholder="Select PYQ Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">General Subject PYQ</SelectItem>
+                      {availablePyqs.map((pyq) => (
+                        <SelectItem key={pyq.id} value={String(pyq.id)}>
+                          {pyq.year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
-
+          
           {/* Title / Description */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-foreground">Entry Title</Label>
@@ -443,7 +468,7 @@ export function ScoreLogModal({
             <Button type="button" variant="outline" onClick={onClose} className="text-xs">
               Skip / Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isValidScore || !subjectId} className="text-xs font-semibold">
+            <Button type="submit" disabled={isSubmitting || !isValidScore || (!subjectId && type !== 'gt')} className="text-xs font-semibold">
               {isSubmitting ? 'Saving...' : 'Record Score'}
             </Button>
           </DialogFooter>

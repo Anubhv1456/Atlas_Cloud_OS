@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { db } from '@/db';
 import { generateHLC } from '@/lib/hlc';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 
 interface CurriculumSetScoreModalProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export function CurriculumSetScoreModal({
       if (!setTopics || setTopics.length === 0) return [];
       return db.topicProgress.where('topicId').anyOf(setTopics.map(t => t.id)).toArray();
     },
-    [setTopics]
+    [setTopics.map(t => t.id).join(',')]
   ) || [];
 
   useEffect(() => {

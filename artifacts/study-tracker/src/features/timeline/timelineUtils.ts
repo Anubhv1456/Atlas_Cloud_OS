@@ -4,13 +4,13 @@ import { CurriculumSet } from '@/db/types';
 
 export function historyToEvent(h: HistoryEntry): TimelineEvent {
   const typeMap: Record<string, TimelineEvent['eventType']> = {
-    contentDone:     'contentCompleted',
-    contentProgress: 'contentCompleted',
+    contentDone:     'revisionSystem',
+    contentProgress: 'revisionSystem',
     qbankDone:       'qbankDone',
     pyqsDone:        'pyqsDone',
     revision:        'revisionSystem',
     curriculum_set_revision: 'revisionSystem',
-    curriculum_set_content: 'contentCompleted',
+    curriculum_set_content: 'revisionSystem',
     curriculum_set_qbank: 'qbankDone',
     topicMastered:   'topicMastered',
     topicWeak:       'topicWeak',
@@ -24,7 +24,7 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
   return {
     id:          String(h.id ?? `${h.systemId}-${h.taskKey}-${h.completedAt}`),
     dbHistoryId: h.id,
-    eventType:   typeMap[h.taskKey] ?? 'contentCompleted',
+    eventType:   typeMap[h.taskKey] ?? 'revisionSystem',
     entityName,
     subjectName: h.subjectName,
     date:        new Date(h.completedAt),
@@ -36,8 +36,9 @@ export function systemToRevisionEvent(
   sys: StudySystem,
   subjectName: string,
   status: 'upcoming' | 'overdue',
+  curriculumSets: CurriculumSet[]
 ): TimelineEvent {
-  const days = daysOverdue(sys);
+  const days = daysOverdue(sys, curriculumSets);
   return {
     id:          `rev-${sys.id}-${status}`,
     eventType:   'revisionSystem',

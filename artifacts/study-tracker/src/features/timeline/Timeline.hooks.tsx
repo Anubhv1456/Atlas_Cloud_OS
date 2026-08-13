@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { 
   useSubjects, useAllSystems, db, deleteHistoryEntry
 } from '@/db';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { 
   sortSystemsByRevisionPriority, isRevisionDueToday, isRevisionOverdue, isRevisionUpcoming, daysOverdue,
   eventMatchesFilter, TimelineEvent, TimelineFilter
@@ -68,39 +68,11 @@ export function useTimelineLogic() {
     .filter(e => e.date >= monthStart && e.date <= monthEnd);
 
   // ── Upcoming revision events in the visible month ────────────────────────
-  const upcomingRevisions: TimelineEvent[] = systems
-    .filter(sys => {
-      if (!sys.nextRevisionDate) return false;
-      const d = new Date(sys.nextRevisionDate);
-      return isRevisionUpcoming(sys) && d >= monthStart && d <= monthEnd;
-    })
-    .map(sys => {
-      const sub = subjects.find(s => s.id === sys.subjectId);
-      return systemToRevisionEvent(sys, sub?.name ?? '', 'upcoming');
-    });
-
+  const upcomingRevisions: TimelineEvent[] = [];
   // ── Overdue revision events — sorted strictly by Decay Score / Priority ──
-  const overdueRevisions: TimelineEvent[] = sortSystemsByRevisionPriority(systems.filter(sys => isRevisionOverdue(sys)))
-    .map(sys => {
-      const sub = subjects.find(s => s.id === sys.subjectId);
-      return systemToRevisionEvent(sys, sub?.name ?? '', 'overdue');
-    });
-
+  const overdueRevisions: TimelineEvent[] = [];
   // ── Due Today revision events ─────────────────────────────────────────────
-  const dueTodayRevisions: TimelineEvent[] = sortSystemsByRevisionPriority(systems.filter(sys => isRevisionDueToday(sys)))
-    .map(sys => {
-      const sub = subjects.find(s => s.id === sys.subjectId);
-      return {
-        id: `rev-${sys.id}-due-today`,
-        eventType: 'revisionSystem' as const,
-        entityName: `${sys.name} Revision`,
-        subjectName: sub?.name ?? '',
-        date: new Date(sys.nextRevisionDate!),
-        status: 'upcoming' as const,
-        meta: { isDueToday: true },
-      };
-    });
-
+  const dueTodayRevisions: TimelineEvent[] = [];
   // ── Study Blocks Revision Events ─────────────────────────────────────────
   const setUpcomingRevisions: TimelineEvent[] = curriculumSets
     .filter(sys => {
@@ -152,9 +124,9 @@ export function useTimelineLogic() {
       };
     });
 
-  const allUpcomingRevisions = [...upcomingRevisions, ...setUpcomingRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
-  const allOverdueRevisions = [...overdueRevisions, ...setOverdueRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
-  const allDueTodayRevisions = [...dueTodayRevisions, ...setDueTodayRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const allUpcomingRevisions = [...setUpcomingRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const allOverdueRevisions = [...setOverdueRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const allDueTodayRevisions = [...setDueTodayRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
 
 
   // ── Apply filter ──────────────────────────────────────────────────────────

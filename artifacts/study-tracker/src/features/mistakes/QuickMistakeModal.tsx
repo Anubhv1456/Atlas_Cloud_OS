@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { ALL_SUBJECTS, ALL_TOPICS } from '@/data/ontology';
 import { logMistake } from '@/db/mutations';
@@ -149,7 +149,7 @@ export function QuickMistakeModal({
               </Label>
               <select
                 value={subjectId}
-                onChange={e => setSubjectId(Number(e.target.value))}
+                onChange={e => setSubjectId(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
                 {subjects.map(s => (
@@ -166,7 +166,7 @@ export function QuickMistakeModal({
               </Label>
               <select
                 value={systemId}
-                onChange={e => setSystemId(Number(e.target.value))}
+                onChange={e => setSystemId(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
                 {availableSystems.length === 0 ? (

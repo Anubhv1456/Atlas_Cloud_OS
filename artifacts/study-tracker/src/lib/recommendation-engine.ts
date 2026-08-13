@@ -184,7 +184,7 @@ export function computeIntelligentRecommendation(
           reasons.push(`• Contains ${weakTopics.length} weak topics`);
         }
 
-        if (!set.contentCompleted) {
+        if (false) {
           score += REC_WEIGHTS.PENDING_CONTENT_BONUS;
           reasons.push('• Pending core content completion');
         } else if (!set.qbankCompleted) {
@@ -192,7 +192,7 @@ export function computeIntelligentRecommendation(
           reasons.push('• Pending QBank practice');
         }
 
-        if (set.contentCompleted && set.qbankCompleted) {
+        if (true) {
           if (set.nextRevisionDate && new Date(set.nextRevisionDate) < new Date()) {
             score += REC_WEIGHTS.REVISION_DUE_BONUS;
             reasons.push('• Active revision due based on spaced repetition');

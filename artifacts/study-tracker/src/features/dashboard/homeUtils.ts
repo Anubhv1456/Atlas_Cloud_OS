@@ -1,19 +1,26 @@
 import { ReactNode } from 'react';
 import { Subject, StudySystem, PYQYear } from '@/db';
+import { CurriculumSet } from '@/db/types';
 import { isRevisionDue, isRevisionDueToday, daysOverdue, calculateDecayScore, sortSystemsByRevisionPriority } from '@/db';
+import { isSystemComplete } from '@/lib/progress';
 import React from 'react';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 
 export function determineFocusSystems(
   subjects: Subject[],
   systems: StudySystem[],
-  now: Date) {
+  curriculumSets: CurriculumSet[],
+  now: Date
+) {
   const customPrimarySubject = subjects.find(s => s.focus === 'primary');
   const primarySubjectStale = customPrimarySubject?.focusUpdatedAt && (now.getTime() - new Date(customPrimarySubject.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
+  
   const customPrimarySystem = systems.find(s => s.focus === 'primary');
   const primarySystemStale = customPrimarySystem?.focusUpdatedAt && (now.getTime() - new Date(customPrimarySystem.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
+
   const customSecondarySubject = subjects.find(s => s.focus === 'secondary');
   const secondarySubjectStale = customSecondarySubject?.focusUpdatedAt && (now.getTime() - new Date(customSecondarySubject.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
+  
   const customSecondarySystem = systems.find(s => s.focus === 'secondary');
   const secondarySystemStale = customSecondarySystem?.focusUpdatedAt && (now.getTime() - new Date(customSecondarySystem.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
 
@@ -21,20 +28,23 @@ export function determineFocusSystems(
   subjects.forEach((sub, idx) => {
     if (sub.id !== undefined) subjectIndexMap.set(sub.id, idx);
   });
-
-    const sortSystemsByPriority = (a: StudySystem, b: StudySystem) => {
+  
+  const sortSystemsByPriority = (a: StudySystem, b: StudySystem) => {
     if (a.isHighYield && !b.isHighYield) return -1;
     if (!a.isHighYield && b.isHighYield) return 1;
-
+    
     const subIdxA = subjectIndexMap.get(a.subjectId) ?? Number.MAX_VALUE;
     const subIdxB = subjectIndexMap.get(b.subjectId) ?? Number.MAX_VALUE;
     if (subIdxA !== subIdxB) return subIdxA - subIdxB;
+    
     return (a.order ?? Number.MAX_VALUE) - (b.order ?? Number.MAX_VALUE);
   };
 
   const sortedSystemsByPriority = [...systems].sort(sortSystemsByPriority);
+  
   const incompleteSystems = sortedSystemsByPriority.filter(s => {
-    return !(s.contentCompleted && s.qbankDone);
+    const subName = subjects.find(sub => sub.id === s.subjectId)?.name || '';
+    return !isSystemComplete(s, subName, curriculumSets);
   });
 
   let primaryFocus: StudySystem | undefined = undefined;
@@ -47,7 +57,8 @@ export function determineFocusSystems(
     primaryFocusSubject = customPrimarySubject;
     const subSystems = sortedSystemsByPriority.filter(s => s.subjectId === customPrimarySubject.id);
     const subIncomplete = subSystems.filter(s => {
-      return !(s.contentCompleted && s.qbankDone);
+      const subName = customPrimarySubject.name;
+      return !isSystemComplete(s, subName, curriculumSets);
     });
     primaryFocus = subIncomplete[0] || subSystems[0];
   } else if (customPrimarySystem) {
@@ -60,8 +71,8 @@ export function determineFocusSystems(
   }
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  const unsortedDueRevisions = systems.filter(s => isRevisionDue(s) && s.id !== primaryFocus?.id);
-  const dueRevisions = sortSystemsByRevisionPriority(unsortedDueRevisions, now);
+  const unsortedDueRevisions = systems.filter(s => isRevisionDue(s, curriculumSets, now) && s.id !== primaryFocus?.id);
+  const dueRevisions = sortSystemsByRevisionPriority(unsortedDueRevisions, curriculumSets, now);
 
   let secondaryFocus: StudySystem | undefined = undefined;
   let secondaryFocusSubject: Subject | undefined = undefined;
@@ -70,7 +81,6 @@ export function determineFocusSystems(
   let isSecondaryIntentStale = !!(secondarySubjectStale || secondarySystemStale);
 
   const activeMultiDaySystem = systems.find(s => s.revisionState === 'in_progress');
-
   if (activeMultiDaySystem) {
     secondaryFocus = activeMultiDaySystem;
     secondaryFocusSubject = subjects.find(s => s.id === activeMultiDaySystem.subjectId);
@@ -84,7 +94,8 @@ export function determineFocusSystems(
     secondaryFocusSubject = customSecondarySubject;
     const subSystems = sortedSystemsByPriority.filter(s => s.subjectId === customSecondarySubject.id);
     const subIncomplete = subSystems.filter(s => {
-      return !(s.contentCompleted && s.qbankDone);
+      const subName = customSecondarySubject.name;
+      return !isSystemComplete(s, subName, curriculumSets);
     });
     secondaryFocus = subIncomplete[0] || subSystems[0];
   } else if (customSecondarySystem) {
@@ -100,12 +111,11 @@ export function determineFocusSystems(
   }
 
   let secondaryDaysOverdue = 0;
-  if (isSecondaryOverriddenByRevision && secondaryFocus?.nextRevisionDate) {
-    const revDate = new Date(secondaryFocus.nextRevisionDate);
-    if (revDate < todayStart) {
-      const diffTime = todayStart.getTime() - new Date(revDate.getFullYear(), revDate.getMonth(), revDate.getDate()).getTime();
-      secondaryDaysOverdue = Math.max(1, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-    }
+  if (isSecondaryOverriddenByRevision && secondaryFocus) {
+    // Wait, nextRevisionDate is now on CurriculumSets...
+    // Let's compute it from systems and curriculumSets.
+    // For now we will rely on daysOverdue logic in db/revisionEngine
+    secondaryDaysOverdue = daysOverdue(secondaryFocus, curriculumSets, now);
   }
 
   return {

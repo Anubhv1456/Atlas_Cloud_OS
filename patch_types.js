@@ -1,10 +1,5 @@
-const fs = require('fs');
-const file = './artifacts/study-tracker/src/db/types.ts';
-let code = fs.readFileSync(file, 'utf8');
-
-code = code.replace(
-  /export interface StudySystem \{\n  id\?: string;\n  subjectId: number;\n  name: string;\n  order\?: number;/g,
-  "export interface StudySystem {\n  id?: string;\n  subjectId: number;\n  name: string;\n  order?: number;\n  isHighYield?: boolean;"
-);
-
-fs.writeFileSync(file, code);
+const fs = require("fs");
+let c = fs.readFileSync("./artifacts/study-tracker/src/lib/exam-presets.ts", "utf-8");
+c = c.replace(/let subjectId: number \| string \| undefined = subject\?\.id;/g, "let subjectId = subject?.id as number;");
+c = c.replace(/let systemId = system\?\.id;/g, "let systemId = system?.id as number;");
+fs.writeFileSync("./artifacts/study-tracker/src/lib/exam-presets.ts", c);

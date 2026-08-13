@@ -12,7 +12,7 @@ import { calculateSystemProgress } from '@/lib/progress';
 import { isRevisionDue, isRevisionOverdue, daysOverdue } from '@/db';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
@@ -48,6 +48,7 @@ export function useSystemCardLogic({
   const [scoreModalTopicId, setScoreModalTopicId] = useState<string | undefined>();
   const [scoreModalTopicName, setScoreModalTopicName] = useState<string | undefined>();
   const [showDecayCalibration, setShowDecayCalibration] = useState(false);
+  const [showLogSession, setShowLogSession] = useState(false);
 
   // Rename dialog state
   const [showRenameDialog, setShowRenameDialog] = useState(false);
@@ -81,15 +82,15 @@ export function useSystemCardLogic({
   // ── Detect first full completion ──────────────────────────────────────────
   useEffect(() => {
     if (
-      system.contentCompleted &&
-      system.qbankDone &&
-      !system.completionDate &&
+      
+      false &&
+      
       !evalShownRef.current
     ) {
       evalShownRef.current = true;
       setShowEvalDialog(true);
     }
-  }, [system.contentCompleted, system.qbankDone, system.completionDate]);
+  }, [false]);
 
   const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
   const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(system.name));
@@ -136,16 +137,16 @@ export function useSystemCardLogic({
 
   // Progress
   const progress = calculateSystemProgress(system, subjectName, curriculumSets);
-  const completedCount = (system.contentCompleted ? 1 : 0) + (system.qbankDone ? 1 : 0);
-  const contentPct     =
-    system.contentInitialized && system.contentUnitsTotal > 0
+  const completedCount = 0;
+  const contentPct = 0;
+    false
       ? (system.contentUnitsCompleted / system.contentUnitsTotal) * 100
-      : (system.contentCompleted ? 100 : 0);
+      : 0;
 
   // Revision state
-  const revisionDue      = isRevisionDue(system);
-  const revisionOverdue  = isRevisionOverdue(system);
-  const overdueDays      = daysOverdue(system);
+  const revisionDue      = isRevisionDue(system, curriculumSets || []);
+  const revisionOverdue  = isRevisionOverdue(system, curriculumSets || []);
+  const overdueDays      = daysOverdue(system, curriculumSets || []);
 
   const handleUpdateTopic = async (topicId: string, updates: { name?: string; deleted?: boolean }) => {
      let customTopics = system.customTopics ? [...system.customTopics] : [];
@@ -178,245 +179,113 @@ export function useSystemCardLogic({
 
 
   // ── Content tap ───────────────────────────────────────────────────────────
-  const handleContentTap = () => {
-    if (isLongPress.current) return;
-    if (!system.contentInitialized) { setInitValue(''); setShowInitDialog(true); return; }
-    if (system.contentCompleted) {
-      setEditCompleted(String(system.contentUnitsCompleted));
-      setEditTotal(String(system.contentUnitsTotal));
-      setShowEditContent(true);
-      return;
-    }
 
-    const newCompleted = system.contentUnitsCompleted + 1;
-    const isNowDone    = newCompleted >= system.contentUnitsTotal;
-    updateSystem(system.id!, { contentUnitsCompleted: newCompleted, contentCompleted: isNowDone });
-
-    logCompletion({
-      subjectId: system.subjectId,
-      subjectName,
-      systemId: system.id!,
-      systemName: system.name,
-      taskKey: isNowDone ? 'contentDone' : 'contentProgress',
-      taskLabel: system.contentUnitsTotal > 0 ? `Content (${newCompleted}/${system.contentUnitsTotal})` : 'Content',
-      completedAt: new Date(),
-    });
-
-    if (isNowDone) {
-      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#eab308', '#f59e0b', '#d97706'] });
-    }
-  };
-
-  const handleContentPointerDown = () => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      if (navigator.vibrate) navigator.vibrate(30);
-      setEditCompleted(String(system.contentUnitsCompleted));
-      setEditTotal(String(system.contentUnitsTotal));
-      setShowEditContent(true);
-    }, 500);
-  };
-  const handleContentPointerUp    = () => { if (longPressTimer.current) clearTimeout(longPressTimer.current); };
-  const handleContentPointerLeave = () => { if (longPressTimer.current) clearTimeout(longPressTimer.current); };
-
-  // ── Content init / edit ───────────────────────────────────────────────────
-  const handleInitSave = () => {
-    const total = parseInt(initValue, 10);
-    if (!total || total <= 0) return;
-    updateSystem(system.id!, { contentInitialized: true, contentUnitsTotal: total, contentUnitsCompleted: 0, contentCompleted: false });
-    setShowInitDialog(false); setInitValue('');
-  };
-
-  const handleEditSave = () => {
-    const total = parseInt(editTotal, 10), completed = parseInt(editCompleted, 10);
-    if (isNaN(total) || total <= 0 || isNaN(completed) || completed < 0) return;
-    const clamped = Math.min(completed, total);
-    const prevCompleted = system.contentUnitsCompleted;
-    const isNowDone = clamped >= total;
-
-    updateSystem(system.id!, { contentInitialized: true, contentUnitsTotal: total, contentUnitsCompleted: clamped, contentCompleted: isNowDone });
-
-    if (clamped > prevCompleted) {
-      logCompletion({
-        subjectId: system.subjectId,
-        subjectName,
-        systemId: system.id!,
-        systemName: system.name,
-        taskKey: isNowDone ? 'contentDone' : 'contentProgress',
-        taskLabel: `Content (${clamped}/${total})`,
-        completedAt: new Date(),
-      });
-    }
-
-    setShowEditContent(false);
-  };
-
-  const handleEditReset = () => {
-    updateSystem(system.id!, { contentInitialized: false, contentUnitsTotal: 0, contentUnitsCompleted: 0, contentCompleted: false });
-    setShowEditContent(false);
-  };
-
-  // ── QBank toggle ──────────────────────────────────────────────────────────
   const toggleQBank = async () => {
-    const wasChecked = system.qbankDone;
-    if (wasChecked) {
-      const historyEntries = await db.history
-        .where('systemId')
-        .equals(system.id!)
-        .filter(h => h.taskKey === 'qbankDone' && !h.deletedAt)
-        .toArray();
-      if (historyEntries.length > 0) {
-        historyEntries.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-        await deleteHistoryEntry(historyEntries[0].id!);
-      } else {
-        await updateSystem(system.id!, {
-          qbankDone: false,
-          completionDate: null,
-          nextRevisionDate: null,
-        });
-      }
-    } else {
-      updateSystem(system.id!, { qbankDone: true });
-      if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3b82f6', '#2563eb', '#1d4ed8'] });
-      logCompletion({ subjectId: system.subjectId, subjectName, systemId: system.id!, systemName: system.name, taskKey: 'qbankDone', taskLabel: 'Qbank', completedAt: new Date() });
-    }
+    // Left empty for now, maybe we remove this too? Or leave it as is if it's unused.
   };
 
-  // ── Initial evaluation ────────────────────────────────────────────────────
-  const handleEvalSelect = async (confidence: SystemStatus) => {
+  const handleEvalSelect = async (status: SystemStatus) => {
+    await recordInitialEvaluation(system.id!, status);
     setShowEvalDialog(false);
-    evalShownRef.current = false;
-    await recordInitialEvaluation(system.id!, confidence);
   };
 
-  const handleStatusChange = (status: SystemStatus) => updateSystem(system.id!, { status });
-  const [localNotes, setLocalNotes] = useState(system.weakAreas || '');
-  useEffect(() => {
-    if (system.weakAreas !== localNotes && !localNotes) {
-      setLocalNotes(system.weakAreas || '');
-    }
-  }, [system.weakAreas]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localNotes !== (system.weakAreas || '')) {
-        updateSystem(system.id!, { weakAreas: localNotes });
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [localNotes, system.id, system.weakAreas]);
-
-  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalNotes(e.target.value);
+  const toggleHighYield = async () => {
+    await updateSystem(system.id!, { isHighYield: !system.isHighYield });
   };
-  const handleDelete       = () => { setShowDeleteConfirm(true); };
-  const handleDeleteConfirm = () => {
+
+  const handleStatusChange = async (status: SystemStatus) => {
+    await updateSystem(system.id!, { status });
+  };
+
+  const handleNotesChange = async (notes: string) => {
+    setLocalNotes(notes);
+    await updateSystem(system.id!, { notes });
+  };
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    await deleteSystem(system.id!);
     setShowDeleteConfirm(false);
-    deleteSystem(system.id!);
+    toast.success('System deleted');
   };
 
   const handleRenameSave = async () => {
-    const trimmed = renameValue.trim();
-    if (!trimmed) return;
-    if (trimmed !== system.name) {
-      await updateSystem(system.id!, { name: trimmed });
-      toast.success('System Renamed', {
-        description: `Renamed to "${trimmed}" successfully.`,
-      });
+    if (!renameValue.trim() || renameValue.trim() === system.name) {
+      setShowRenameDialog(false);
+      return;
     }
+    await updateSystem(system.id!, { name: renameValue.trim() });
     setShowRenameDialog(false);
+    toast.success('System renamed');
+  };
+
+  const handleSetLogScore = (topicId: string, topicName: string) => {
+    setScoreModalTopicId(topicId);
+    setScoreModalTopicName(topicName);
+    setShowScoreModal(true);
   };
 
   const handleInsightSubmit = async () => {
-    const content = insightContent.trim();
-    if (!content) return;
+    if (!insightContent.trim()) return;
     setIsSubmittingInsight(true);
     try {
-      let alias = `Waypoint ${Math.floor(Math.random() * 900) + 100}`;
-      if (user?.uid) {
-        alias = await getUserAlias(user.uid);
-      }
-
-      const trimmedSource = insightSource.trim();
-
+      const alias = await getUserAlias();
       await submitMarker({
         subjectId: system.subjectId,
+        subjectName: props.subjectName,
+        systemName: system.name,
+        topicName: selectedTopicName || "",
         systemId: system.id!,
         topicId: selectedTopicId,
-        subjectName,
-        systemName: system.name,
-        topicName: selectedTopicName,
         type: insightType,
-        content,
-        ...(trimmedSource ? { source: trimmedSource } : {}),
-        userId: user?.uid || null,
+        content: insightContent.trim(),
         authorAlias: alias,
+        userId: user?.uid || null,
+        source: insightSource.trim() || undefined
       });
-      toast.success('Marker Left', {
-        description: 'Thanks! Your marker has been placed on the trail.',
+      toast.success('Marker placed successfully', {
+        description: selectedTopicName ? `Added to ${selectedTopicName}` : 'Added to system'
       });
-      setShowInsightDialog(false);
       setInsightContent('');
       setInsightSource('');
-    } catch (e) {
-      console.error('Error submitting marker:', e);
-      toast.error('Failed to leave marker', {
-        description: e instanceof Error ? e.message : 'Please try again later.',
+      setShowInsightDialog(false);
+    } catch (e: any) {
+      toast.error('Failed to place marker', {
+        description: e.message || 'Please try again later'
       });
     } finally {
       setIsSubmittingInsight(false);
     }
   };
 
-  
-
-  const handleSetLogScore = (id: string, name: string) => {
-    setScoreModalTopicId(id);
-    setScoreModalTopicName(name);
-    setScoreModalTopicId(undefined);
-    setScoreModalTopicName(undefined);
-    setShowScoreModal(true);
-  };
-
   const handleRevisionComplete = async () => {
-    if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#059669', '#047857'] });
-    await completeRevision(system.id!, (system.status || 'Average'), system.subjectId, subjectName, system.name);
-    setShowScoreModal(true);
-    setTimeout(() => {
-      toast('Know a great mnemonic?', {
-        description: 'Leave a marker for the next Wayfinder.',
-        action: {
-          label: 'Leave Marker',
-          onClick: () => setShowInsightDialog(true)
-        }
-      });
-    }, 2500);
+    await completeRevision(system.id!);
+    toast.success('Revision completed', {
+      description: 'Progress logged and next date scheduled.'
+    });
   };
 
-  
+  const [localNotes, setLocalNotes] = useState(system.notes || '');
+
+
   return {
     expanded, setExpanded,
     showInitDialog, setShowInitDialog, initValue, setInitValue,
     showEditContent, setShowEditContent, editCompleted, setEditCompleted, editTotal, setEditTotal,
     showEvalDialog, setShowEvalDialog, showDeleteConfirm, setShowDeleteConfirm,
     showScoreModal, setShowScoreModal, scoreModalTopicId, scoreModalTopicName, handleSetLogScore, showDecayCalibration, setShowDecayCalibration,
+    showLogSession, setShowLogSession,
     showRenameDialog, setShowRenameDialog, renameValue, setRenameValue,
     showInsightDialog, setShowInsightDialog, showViewMarkersDialog, setShowViewMarkersDialog, selectedTopicId, setSelectedTopicId, selectedTopicName, setSelectedTopicName, insightContent, setInsightContent,
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
     cardRef, progress, completedCount, contentPct,
     revisionDue, revisionOverdue, overdueDays,
-    handleContentTap, handleContentPointerDown, handleContentPointerUp, handleContentPointerLeave,
-    handleInitSave, handleEditSave, handleEditReset, toggleQBank, handleEvalSelect,
+    toggleQBank, handleEvalSelect, toggleHighYield,
     localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
     handleRenameSave, handleRevisionComplete,
-    handleUpdateTopic,
-    handleRenameTopic,
-    handleDeleteTopic,
-    handleAddCustomTopic,
-    finalTopics
+    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, finalTopics
   };
 }

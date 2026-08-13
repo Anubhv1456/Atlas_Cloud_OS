@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { OntologyTopic } from '@/data/ontology';
 import { TopicProgress } from '@/db/types';
@@ -216,8 +216,8 @@ export function TopicList({
                                 const sets = revisionSets.filter(rs => rs.topicIds.includes(topic.id));
                                 let status = 'empty';
                                 if (sets.length > 0) {
-                                  if (sets.some(rs => rs.contentCompleted && rs.qbankCompleted)) status = 'checked';
-                                  else if (sets.some(rs => rs.contentCompleted || rs.qbankCompleted)) status = 'half';
+                                  if (sets.some(rs => (rs.contentCompleted && rs.qbankCompleted))) status = 'checked';
+                                  
                                 }
                                 if (status === 'checked') return <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />;
                                 if (status === 'half') return <CircleDashed className="w-4 h-4 text-amber-500 shrink-0" />;

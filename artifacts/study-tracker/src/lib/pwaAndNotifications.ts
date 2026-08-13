@@ -56,12 +56,18 @@ export async function getDueSpacedRepetitionTasks(): Promise<{
 
   // 2. Check Due System Revisions
   const now = new Date();
-  const allSystems = await db.systems.toArray().then(res => res.filter(s => !s.deletedAt));
-  const dueSystems = allSystems.filter(sys => {
-    if (!sys.nextRevisionDate) return false;
-    const nextDate = new Date(sys.nextRevisionDate);
-    return nextDate <= now && sys.completionDate !== null;
-  });
+  let dueSystems = [];
+  try {
+    const table = db.curriculumSets || db.revisionSets;
+    const sets = await table.filter(s => !s.deletedAt).toArray();
+    dueSystems = sets.filter(sys => {
+      if (!sys.nextRevisionDate) return false;
+      const nextDate = new Date(sys.nextRevisionDate);
+      return nextDate <= now;
+    });
+  } catch (e) {
+    console.error(e);
+  }
 
   return {
     ankiPending,

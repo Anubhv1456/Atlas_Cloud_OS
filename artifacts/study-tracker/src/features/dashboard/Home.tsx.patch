@@ -1,0 +1,6 @@
+--- ./artifacts/study-tracker/src/features/dashboard/Home.tsx
++++ ./artifacts/study-tracker/src/features/dashboard/Home.tsx
+@@ -104,2 +104,3 @@
+   });
++  const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
+   

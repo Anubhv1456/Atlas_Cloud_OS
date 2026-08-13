@@ -1,4 +1,4 @@
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from './schema';
 import { Subject, StudySystem, UIPreference, HistoryEntry, PYQYear, ScoreLog } from './types';
 import { SystemStatus } from './types';

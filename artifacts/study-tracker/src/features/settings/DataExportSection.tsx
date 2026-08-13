@@ -20,7 +20,9 @@ export function DataExportSection() {
       systems.forEach(sys => {
         const sub = subjects.find(s => s.id === sys.subjectId);
         const subName = sub ? sub.name : 'Unknown';
-        csvContent += `"${subName}","${sys.name}","${sys.status || 'Not Started'}","${sys.order || 0}","${sys.nextRevisionDate ? new Date(sys.nextRevisionDate).toLocaleDateString() : 'None'}"\n`;
+        let sysNextRev = 'None';
+        // Note: revisions are tracked in CurriculumSets now, so this export field is deprecated for sys
+        csvContent += `"${subName}","${sys.name}","${sys.status || 'Not Started'}","${sys.order || 0}","${sysNextRev}"\n`;
       });
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

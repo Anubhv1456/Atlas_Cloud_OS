@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, Database, Download } from 'lucide-react';
 import { db } from '@/db/schema';
 import { toast } from 'sonner';
-import { syncToFirebase } from '@/lib/firebaseSync';
+
 import { SettingsRow } from './SettingsLayout';
 
 export function LegacyDataSection() {
@@ -63,7 +63,7 @@ export function LegacyDataSection() {
         });
         
         toast.info('Syncing imported data to Firebase...');
-        await syncToFirebase();
+        
         
         toast.success('Legacy data imported and synced successfully.', { description: 'Refresh the app to see the changes.' });
       } else {

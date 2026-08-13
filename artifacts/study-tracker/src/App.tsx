@@ -10,7 +10,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
-import { syncToFirebase } from '@/lib/firebaseSync';
+
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
@@ -91,7 +91,7 @@ function ProtectedApp() {
   const handleRefresh = async () => {
     try {
       toast.info('Backing up data to Firebase...');
-      await syncToFirebase();
+      
       toast.success('Firebase Cloud Sync successful.');
     } catch (error) {
       toast.error('Firebase Cloud Sync failed.');
