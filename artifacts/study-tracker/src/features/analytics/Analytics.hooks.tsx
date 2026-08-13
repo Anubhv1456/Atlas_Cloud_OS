@@ -76,6 +76,7 @@ export function useAnalyticsLogic() {
     const qbankDone = 0; // Topic level qbank doesn't exist anymore
     const qbankCoverage = 0;
 
+  
     return {
       ...baseStats,
       topicsMastered: mastered,
@@ -118,90 +119,78 @@ export function useAnalyticsLogic() {
   const studyRecommendation = useMemo(() => {
     if (systems.length === 0) return null;
 
-    // 1. Check for active multi-day revision session
-    const activeMultiDay = systems.find(s => s.revisionState === 'in_progress');
-    if (activeMultiDay) {
-      const subName = subjectMap.get(activeMultiDay.subjectId)?.name ?? 'Subject';
-      const days = activeMultiDay.revisionDaysLogged || 1;
-      const progress = activeMultiDay.revisionProgressPercent || 0;
-      return {
-        system: activeMultiDay,
-        subjectName: subName,
-        title: activeMultiDay.name,
-        reason: `Active multi-day revision in progress (Day ${days} logged, ${progress}% completed).`,
-        badge: 'Active Revision Session',
-        badgeColor: 'bg-primary/10 text-primary border-primary/30',
-      };
-    }
-
-    // 2. Check for highest priority system that is DUE or WEAK
+    // Phase 5: The Clinical Intervention (The Apex Alert)
+    // We want strictly actionable, high-priority clinical thresholds based on retention metrics first.
+    
+    // Let's use the DB state to find the most vulnerable system by decay/status
     const sortedByDecay = sortSystemsByRevisionPriority(systems, curriculumSets);
     const topVulnerable = sortedByDecay.length > 0 ? sortedByDecay[0] : null;
 
     if (topVulnerable && (isRevisionDue(topVulnerable, curriculumSets) || topVulnerable.status === 'Weak')) {
       const subName = subjectMap.get(topVulnerable.subjectId)?.name ?? 'Subject';
       const overdue = daysOverdue(topVulnerable, curriculumSets);
-      const isDueToday = isRevisionDue(topVulnerable, curriculumSets) && overdue === 0;
-
+      
       let reason = '';
       let badge = '';
       let badgeColor = '';
+      let titlePrefix = '';
 
-      if (overdue > 0) {
-        reason = `Overdue by ${overdue} day${overdue !== 1 ? 's' : ''} with ${topVulnerable.status} confidence.`;
-        badge = 'Overdue Revision';
-        badgeColor = 'bg-destructive/10 text-destructive border-destructive/30';
-      } else if (isDueToday) {
-        reason = `Revision due today with ${topVulnerable.status} confidence.`;
-        badge = 'Due Today';
-        badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+      if (topVulnerable.status === 'Weak') {
+          reason = `Critical: ${topVulnerable.name} retention has dropped below safety thresholds.`;
+          badge = 'Critical Vulnerability';
+          badgeColor = 'bg-rose-500/15 text-rose-500 border-rose-500/30';
+          titlePrefix = 'CRITICAL: ';
+      } else if (overdue > 0) {
+        reason = `Warning: ${topVulnerable.name} is overdue by ${overdue} day${overdue !== 1 ? 's' : ''}. Memory decay accelerating.`;
+        badge = 'Accelerated Decay';
+        badgeColor = 'bg-amber-500/15 text-amber-500 border-amber-500/30';
+        titlePrefix = 'WARNING: ';
       } else {
-        reason = `Marked with Weak confidence — revision recommended.`;
-        badge = 'Weak Confidence';
-        badgeColor = 'bg-rose-500/10 text-rose-500 border-rose-500/30';
+        reason = `Targeted revision due today to maintain retention state.`;
+        badge = 'Scheduled Maintenance';
+        badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
       }
 
       return {
         system: topVulnerable,
         subjectName: subName,
-        title: topVulnerable.name,
+        title: titlePrefix + topVulnerable.name,
         reason,
         badge,
         badgeColor,
+        isCritical: topVulnerable.status === 'Weak' || overdue > 2
+      };
+    }
+    
+    // Fallback: Active multi-day
+    const activeMultiDay = systems.find(s => s.revisionState === 'in_progress');
+    if (activeMultiDay) {
+      const subName = subjectMap.get(activeMultiDay.subjectId)?.name ?? 'Subject';
+      return {
+        system: activeMultiDay,
+        subjectName: subName,
+        title: activeMultiDay.name,
+        reason: `Active multi-day revision in progress. Resume block to halt decay.`,
+        badge: 'Session In Progress',
+        badgeColor: 'bg-primary/10 text-primary border-primary/30',
+        isCritical: false
       };
     }
 
-    // 3. Check for system with lowest test average score if score logs exist (< 70%)
-    if (systemBreakdownData.length > 0) {
-      const lowestSysData = [...systemBreakdownData].sort((a, b) => a.average - b.average)[0];
-      if (lowestSysData && lowestSysData.average < 70) {
-        const matchingSys = systems.find(s => s.name === lowestSysData.fullName);
-        if (matchingSys) {
-          const subName = subjectMap.get(matchingSys.subjectId)?.name ?? 'Subject';
-          return {
-            system: matchingSys,
-            subjectName: subName,
-            title: matchingSys.name,
-            reason: `Lowest recorded retention score (${lowestSysData.average}% avg across ${lowestSysData.count} attempts).`,
-            badge: 'Low Test Score',
-            badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-          };
-        }
-      }
-    }
-
     return null;
-  }, [systems, subjectMap, systemBreakdownData]);
+  }, [systems, curriculumSets, subjectMap]);
 
-  const handleSetRecommendationAsPrimary = async (sys: StudySystem) => {
-    if (!sys.id) return;
-    await setFocus(sys.id, 'primary');
-    sonnerToast.success('Primary Focus Updated', {
-      description: `${sys.name} set as Primary Focus on Homepage.`,
-    });
+  const handleSetRecommendationAsPrimary = async (system: StudySystem) => {
+    try {
+      if (system.id) {
+        await setFocus(system.id, 'primary');
+        sonnerToast.success('Initiated Target Revision');
+      }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to set focus', variant: 'destructive' });
+    }
   };
 
-  
   return {
     scoreLogs, subjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
     isModalOpen, setIsModalOpen,

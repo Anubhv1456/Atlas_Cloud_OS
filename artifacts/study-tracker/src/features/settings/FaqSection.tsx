@@ -27,9 +27,9 @@ export function FaqSection() {
       />
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-zinc-800 text-zinc-100 rounded-3xl p-6">
+        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-white flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <HelpCircle className="w-4.5 h-4.5 text-primary" />
               Help & FAQ
             </DialogTitle>
@@ -39,17 +39,17 @@ export function FaqSection() {
             {FAQ_DATA.map(item => {
               const isOpen = !!openIds[item.id];
               return (
-                <div key={item.id} className="rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden transition-colors">
+                <div key={item.id} className="rounded-xl border border-border/60 bg-muted/20 overflow-hidden transition-colors">
                   <button
                     type="button"
                     onClick={() => toggleItem(item.id)}
-                    className="w-full flex items-center justify-between p-3 text-left text-xs font-semibold text-zinc-100 hover:bg-zinc-800/50 transition-colors gap-3 cursor-pointer"
+                    className="w-full flex items-center justify-between p-3 text-left text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors gap-3 cursor-pointer"
                   >
                     <span className="truncate">{item.question}</span>
-                    <ChevronDown className={`w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isOpen && (
-                    <div className="px-3.5 pb-3.5 pt-1 text-xs text-zinc-400 leading-relaxed border-t border-zinc-800 bg-zinc-900/20 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="px-3.5 pb-3.5 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/40 bg-muted/10 animate-in fade-in slide-in-from-top-1 duration-150">
                       {item.answer}
                     </div>
                   )}

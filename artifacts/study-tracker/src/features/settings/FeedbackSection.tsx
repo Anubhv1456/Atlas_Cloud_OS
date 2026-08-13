@@ -35,30 +35,30 @@ export function FeedbackSection() {
       />
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-zinc-800 text-zinc-100 rounded-3xl p-6">
+        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-extrabold text-white flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="w-4.5 h-4.5 text-primary" />
               Send Feedback
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
-              Transmits directly to the Atlas team.
+            <DialogDescription className="text-xs text-muted-foreground">
+              Transmits directly to the Atlas engineering team.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <Label htmlFor="subject" className="text-xs font-semibold text-zinc-300">Title / Subject</Label>
+              <Label htmlFor="subject" className="text-xs font-semibold text-foreground/80">Title / Subject</Label>
               <Input
                 id="subject"
                 placeholder="e.g. Bug report or feature idea"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="bg-zinc-900 border-zinc-800 text-xs rounded-xl text-zinc-100"
+                className="bg-muted/20 border-border/60 text-xs rounded-xl text-foreground focus-visible:ring-primary/20"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="message" className="text-xs font-semibold text-zinc-300">Details *</Label>
+              <Label htmlFor="message" className="text-xs font-semibold text-foreground/80">Details *</Label>
               <Textarea
                 id="message"
                 required
@@ -66,7 +66,7 @@ export function FeedbackSection() {
                 placeholder="Describe your feedback..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="bg-zinc-900 border-zinc-800 text-xs rounded-xl text-zinc-100 resize-none"
+                className="bg-muted/20 border-border/60 text-xs rounded-xl text-foreground resize-none focus-visible:ring-primary/20"
               />
             </div>
             <div className="flex items-center justify-end gap-2 pt-2">
@@ -74,14 +74,14 @@ export function FeedbackSection() {
                 type="button"
                 variant="ghost"
                 onClick={() => setModalOpen(false)}
-                className="text-xs rounded-xl text-zinc-400 hover:text-zinc-200"
+                className="text-xs rounded-xl text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={submitting}
-                className="text-xs font-semibold rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="text-xs font-semibold rounded-xl gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
               >
                 {submitting ? (
                   <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />

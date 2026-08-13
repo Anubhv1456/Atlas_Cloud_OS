@@ -11,3 +11,5 @@ export * from './FaqSection';
 export * from './FeedbackSection';
 export * from './AboutSection';
 export * from './DataExportSection';
+export * from './SystemPreferencesCard';
+export * from './DataVaultSection';

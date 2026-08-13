@@ -50,10 +50,8 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-import { ActiveRevisions } from '@/features/dashboard/ActiveRevisions';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { useHomeLogic } from './Home.hooks';
-import { useHomeStats } from './useHomeStats';
 
 export default function Home() {
   const {
@@ -61,7 +59,6 @@ export default function Home() {
     primaryFocus, primaryFocusSubject, customPrimarySubject, customPrimarySystem, isAutoPrimary, isPrimaryOverriddenByRevision, isPrimaryIntentStale, isSecondaryIntentStale,
     secondaryFocus, secondaryFocusSubject, customSecondarySubject, customSecondarySystem, isAutoSecondary, isSecondaryOverriddenByRevision,
     secondaryDaysOverdue, dueRevisions,     
-     
     
     focusDialogType, setFocusDialogType,
     
@@ -73,47 +70,6 @@ export default function Home() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
-
-    const allTopicIds = systems.flatMap(sys => {
-    const subject = subjects.find(sub => sub.id === sys.subjectId);
-    const ontologySubject = subject ? ALL_SUBJECTS.find(s => s.name === subject.name) : undefined;
-    const os = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(sys.name));
-    return os ? os.topics.map(t => t.id) : [];
-  });
-  
-  const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
-  const stats = useLiveQuery(async () => {
-    let completedTasks = 0;
-    let strongSystems = 0;
-    let dueRevisionsCount = 0;
-    let weakTopicsCount = 0;
-    let learningTopicsCount = 0;
-    let sum = 0;
-    
-    const now = new Date();
-    await db.topicProgress.each(tp => {
-      if (tp.isWeak) weakTopicsCount++;
-    });
-    await (db.curriculumSets || db.revisionSets).each(set => {
-      if ((set.contentCompleted && set.qbankCompleted)) completedTasks++;
-      if (set.averageScore && set.averageScore >= 80) strongSystems++;
-      if (set.nextRevisionDate && new Date(set.nextRevisionDate) <= now) dueRevisionsCount++;
-      if (false) {
-        if (false) {
-          learningTopicsCount++;
-        }
-      }
-      
-      const v1 = (set.contentCompleted && set.qbankCompleted) ? 100 : 0;
-      const v2 = 0;
-      sum += (v1 + v2);
-    });
-    
-    return { completedTasks, strongSystems, dueRevisionsCount, weakTopicsCount, learningTopicsCount, sum };
-  }, []) || { completedTasks: 0, strongSystems: 0, dueRevisionsCount: 0, weakTopicsCount: 0, learningTopicsCount: 0, sum: 0 };
-
-  
-  const topicOverallProgress = calculateOverallProgress(subjects, systems, curriculumSets);
 
   useEffect(() => {
     // Auto trigger onboarding if completed flag is missing
@@ -140,7 +96,7 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
-                    <Sparkles className="w-3 h-3" /> Medical Study Tracker
+                    <Sparkles className="w-3 h-3" /> Intelligent Medical OS
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
@@ -173,42 +129,25 @@ export default function Home() {
           </div>
         </header>
             
-            <div className="mb-12">
-              <NextActionCard />
-            </div>
-            <ActiveRevisions
-              primaryFocus={primaryFocus || null}
-              primaryFocusSubject={primaryFocusSubject || null}
-              isAutoPrimary={isAutoPrimary}
-              isPrimaryOverriddenByRevision={isPrimaryOverriddenByRevision}
-              isPrimaryIntentStale={isPrimaryIntentStale}
-              isSecondaryIntentStale={isSecondaryIntentStale}
-              secondaryFocus={secondaryFocus || null}
-              secondaryFocusSubject={secondaryFocusSubject || null}
-              isAutoSecondary={isAutoSecondary}
-              isSecondaryOverriddenByRevision={isSecondaryOverriddenByRevision}
-              secondaryDaysOverdue={secondaryDaysOverdue}
-              setFocusDialogType={setFocusDialogType}
-              setFocus={setFocus}
-              setSubjectFocus={setSubjectFocus}
-              goToSystem={goToSystem}
-              subjects={subjects}
-              systems={systems}
-              customPrimarySubject={customPrimarySubject}
-              customPrimarySystem={customPrimarySystem}
-              customSecondarySubject={customSecondarySubject}
-              customSecondarySystem={customSecondarySystem}
-            />
-<SubjectsGrid
-              subjects={subjects}
-              systems={systems}
-              
-              
-              
-              
-              handleSubjectDragEnd={handleSubjectDragEnd}
-            />
-</div>
+        {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
+        <div className="mb-10">
+          <NextActionCard
+            customPrimarySubject={customPrimarySubject}
+            customPrimarySystem={customPrimarySystem}
+            setFocusDialogType={setFocusDialogType}
+            setFocus={setFocus}
+            setSubjectFocus={setSubjectFocus}
+            goToSystem={goToSystem}
+          />
+        </div>
+
+        {/* ── Subjects Portfolio ─────────────────────────────────────────────── */}
+        <SubjectsGrid
+          subjects={subjects}
+          systems={systems}
+          handleSubjectDragEnd={handleSubjectDragEnd}
+        />
+      </div>
       </div>
 
       

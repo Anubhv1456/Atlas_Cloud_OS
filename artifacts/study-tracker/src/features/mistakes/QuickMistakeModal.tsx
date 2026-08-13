@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
-import { ALL_SUBJECTS, ALL_TOPICS } from '@/data/ontology';
 import { logMistake } from '@/db/mutations';
 import { 
   Dialog, 
@@ -14,17 +13,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { 
-  BookOpen, 
   Brain, 
-  Zap, 
   Eye, 
-  AlertTriangle, 
-  Plus, 
-  Check, 
+  RotateCcw,
+  Sparkles,
   FileText,
-  Sparkles 
+  Zap,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,7 +64,7 @@ export function QuickMistakeModal({
   }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId]);
 
   // Filter systems by selected subject
-  const availableSystems = systems.filter(sys => sys.subjectId === subjectId);
+  const availableSystems = systems.filter(sys => String(sys.subjectId) === String(subjectId));
 
   // Set default system when subject changes if current systemId is invalid
   useEffect(() => {
@@ -106,51 +102,75 @@ export function QuickMistakeModal({
     }
   };
 
+  const insertPromptShortcut = (prefix: string) => {
+    setKeyTakeaway(prev => {
+      if (!prev) return prefix;
+      if (prev.endsWith(' ') || prev.endsWith('.')) return `${prev} ${prefix}`;
+      return `${prev}. ${prefix}`;
+    });
+  };
+
   const errorTypePills = [
     {
       id: 'concept' as const,
       label: 'Knowledge Gap',
       icon: Brain,
-      color: 'border-rose-500/40 text-rose-600 bg-rose-500/10 dark:text-rose-400',
-      description: 'Missing concept'
+      color: 'border-rose-500/40 text-rose-500 bg-rose-500/10 dark:text-rose-400',
+      description: 'Missing core clinical concept'
     },
     {
       id: 'misread' as const,
-      label: 'Silly Mistake',
+      label: 'Execution Slip',
       icon: Eye,
-      color: 'border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400',
-      description: 'Read the question wrong'
+      color: 'border-amber-500/40 text-amber-500 bg-amber-500/10 dark:text-amber-400',
+      description: 'Misread option or question stem'
+    },
+    {
+      id: 'retrieval' as const,
+      label: 'Retrieval Failure',
+      icon: RotateCcw,
+      color: 'border-sky-500/40 text-sky-500 bg-sky-500/10 dark:text-sky-400',
+      description: 'Fact recall slip under time pressure'
+    },
+    {
+      id: 'fomo' as const,
+      label: 'Overthinking',
+      icon: HelpCircle,
+      color: 'border-purple-500/40 text-purple-500 bg-purple-500/10 dark:text-purple-400',
+      description: 'Changed right answer to wrong'
     }
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-3xl p-6 border-primary/20 shadow-xl bg-card">
-        <DialogHeader className="space-y-1.5 pb-2 border-b border-border/50">
+      <DialogContent className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
+        <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/10 text-destructive border border-destructive/20">
-              <FileText className="w-4 h-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <Zap className="w-4 h-4" />
             </div>
-            <DialogTitle className="text-lg font-bold text-foreground">
-              Log Mistake to Notebook
-            </DialogTitle>
+            <div>
+              <DialogTitle className="text-base font-extrabold text-foreground tracking-tight">
+                Express Mistake Capture
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Convert QBank & GT errors into high-yield active recall takeaways.
+              </DialogDescription>
+            </div>
           </div>
-          <DialogDescription className="text-xs text-muted-foreground">
-            2-tap capture to replace physical error logs. System-level aggregated for high-yield review.
-          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-3">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Subject & System Selection */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Subject
               </Label>
               <select
                 value={subjectId}
-                onChange={e => setSubjectId(e.target.value)}
-                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                onChange={e => setSubjectId(Number(e.target.value))}
+                className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {subjects.map(s => (
                   <option key={s.id} value={s.id}>
@@ -161,13 +181,13 @@ export function QuickMistakeModal({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 System
               </Label>
               <select
                 value={systemId}
-                onChange={e => setSystemId(e.target.value)}
-                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                onChange={e => setSystemId(Number(e.target.value))}
+                className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {availableSystems.length === 0 ? (
                   <option value={0}>No systems defined</option>
@@ -184,22 +204,24 @@ export function QuickMistakeModal({
 
           {/* Optional Topic Tag */}
           <div className="space-y-1">
-            <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-              <span>Topic Tag (Optional)</span>
+            <div className="flex items-center justify-between">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Topic Tag (Optional)
+              </Label>
               <span className="text-[10px] text-muted-foreground font-normal">e.g., Mitral Stenosis</span>
-            </Label>
+            </div>
             <Input
               value={topicId}
               onChange={e => setTopicId(e.target.value)}
-              placeholder="e.g. Wernicke Encephalopathy or Rheumatic Heart Disease"
-              className="h-9 text-xs rounded-xl border-border bg-background"
+              placeholder="e.g. Rheumatic Heart Disease or Wernicke Encephalopathy"
+              className="h-9 text-xs rounded-xl border-border/80 bg-muted/20 text-foreground"
             />
           </div>
 
-          {/* Error Type Selector Pills */}
+          {/* Error Classification Pills */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Error Classification
+            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Error Root Cause
             </Label>
             <div className="grid grid-cols-2 gap-2">
               {errorTypePills.map(pill => {
@@ -211,16 +233,16 @@ export function QuickMistakeModal({
                     type="button"
                     onClick={() => setErrorType(pill.id)}
                     className={cn(
-                      "flex items-start gap-2 p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                      "flex items-start gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer",
                       isSelected
                         ? `${pill.color} border-2 shadow-xs font-bold`
-                        : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                        : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                     )}
                   >
-                    <Icon className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
+                    <Icon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
                       <div className="text-xs font-bold leading-tight">{pill.label}</div>
-                      <div className="text-[10px] text-muted-foreground leading-none font-normal line-clamp-1">
+                      <div className="text-[10px] text-muted-foreground leading-none font-normal truncate mt-0.5">
                         {pill.description}
                       </div>
                     </div>
@@ -230,9 +252,9 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Source Selector */}
+          {/* Question Source Pills */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Question Source
             </Label>
             <div className="flex items-center gap-2">
@@ -245,45 +267,74 @@ export function QuickMistakeModal({
                     "flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer",
                     source === src
                       ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
-                  {src === 'GT' ? 'Grand Test (GT)' : src === 'QBank' ? 'QBank Session' : 'Custom Note'}
+                  {src === 'GT' ? 'Grand Test (GT)' : src === 'QBank' ? 'QBank' : 'Custom Note'}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Key Takeaway Text input */}
+          {/* Key Takeaway Text Input with Clinical Prompt Shortcuts */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              1-Line Key Takeaway / High-Yield Rule *
-            </Label>
+            <div className="flex items-center justify-between flex-wrap gap-1">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                1-Line High-Yield Rule *
+              </Label>
+              {/* Clinical Prompt Shortcuts */}
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-muted-foreground/70 font-medium mr-0.5">Insert:</span>
+                <button
+                  type="button"
+                  onClick={() => insertPromptShortcut('DOC:')}
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                >
+                  + DOC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertPromptShortcut('IOC:')}
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                >
+                  + IOC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertPromptShortcut('Classic triad:')}
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                >
+                  + Triad
+                </button>
+              </div>
+            </div>
+
             <textarea
               value={keyTakeaway}
               onChange={e => setKeyTakeaway(e.target.value)}
-              placeholder="e.g., Wernicke triad: confusion, ataxia, ophthalmoplegia. Give thiamine BEFORE glucose."
+              placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine BEFORE Glucose."
               rows={3}
               required
-              className="w-full rounded-xl border border-border bg-background p-3 text-xs font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+              className="w-full rounded-xl border border-border/80 bg-muted/20 p-3 text-xs font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             />
           </div>
 
-          <DialogFooter className="pt-2 border-t border-border/50 flex flex-row items-center justify-end gap-2">
+          <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-end gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl text-xs font-semibold"
+              className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !keyTakeaway.trim() || !systemId}
-              className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-md cursor-pointer px-5"
+              className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-5 gap-1.5"
             >
-              {isSubmitting ? 'Saving...' : 'Save to Mistake Log'}
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isSubmitting ? 'Saving...' : 'Save to Vault'}</span>
             </Button>
           </DialogFooter>
         </form>

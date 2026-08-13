@@ -1,27 +1,20 @@
 import { useState, useMemo } from 'react';
-import { historyToEvent, systemToRevisionEvent, setToRevisionEvent, buildActivityHeatmap, groupPastEntries } from '@/features/timeline/timelineUtils';
+import { historyToEvent, setToRevisionEvent, buildActivityHeatmap, groupPastEntries } from '@/features/timeline/timelineUtils';
 import { useLocation } from 'wouter';
 import { 
-  useSubjects, useAllSystems, db, deleteHistoryEntry
+  useSubjects, useAllSystems, db, deleteHistoryEntry, useHistory
 } from '@/db';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { 
-  sortSystemsByRevisionPriority, isRevisionDueToday, isRevisionOverdue, isRevisionUpcoming, daysOverdue,
   eventMatchesFilter, TimelineEvent, TimelineFilter
 } from '@/db';
-import { HistoryEntry, StudySystem, useHistory } from '@/db';
 import { 
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay,
-  isSameMonth, isSameDay, isToday, addMonths, subMonths 
+  isSameMonth, isSameDay
 } from 'date-fns';
 import { toast } from 'sonner';
 
-
-
-
-
 export function useTimelineLogic() {
-
   const [, setLocation] = useLocation();
   const history  = useHistory();
   const systems  = useAllSystems();
@@ -60,111 +53,110 @@ export function useTimelineLogic() {
   const monthEnd   = endOfMonth(calDate);
   const isCurrentMonth = isSameMonth(calDate, now);
 
-  const activityByDay = buildActivityHeatmap(history);
+  // 1. Memoized activity heatmap for past completed events
+  const activityByDay = useMemo(() => buildActivityHeatmap(history), [history]);
 
-  // ── Completed events in the visible month ────────────────────────────────
-  const monthCompleted: TimelineEvent[] = history
-    .map(historyToEvent)
-    .filter(e => e.date >= monthStart && e.date <= monthEnd);
+  // 2. Set of future dates with scheduled revisions (for dual-signal heatmap dots)
+  const upcomingRevisionDates = useMemo(() => {
+    const dates = new Set<string>();
+    const todayStart = new Date(now);
+    todayStart.setHours(0,0,0,0);
 
-  // ── Upcoming revision events in the visible month ────────────────────────
-  const upcomingRevisions: TimelineEvent[] = [];
-  // ── Overdue revision events — sorted strictly by Decay Score / Priority ──
-  const overdueRevisions: TimelineEvent[] = [];
-  // ── Due Today revision events ─────────────────────────────────────────────
-  const dueTodayRevisions: TimelineEvent[] = [];
-  // ── Study Blocks Revision Events ─────────────────────────────────────────
-  const setUpcomingRevisions: TimelineEvent[] = curriculumSets
-    .filter(sys => {
-      if (!sys.nextRevisionDate) return false;
-      const d = new Date(sys.nextRevisionDate);
-      d.setHours(0, 0, 0, 0);
-      const n = new Date(now);
-      n.setHours(0, 0, 0, 0);
-      return d > n && d >= monthStart && d <= monthEnd;
-    })
-    .map(set => {
+    curriculumSets.forEach(set => {
+      if (set.nextRevisionDate) {
+        const d = new Date(set.nextRevisionDate);
+        if (d > todayStart) {
+          dates.add(format(d, 'yyyy-MM-dd'));
+        }
+      }
+    });
+    return dates;
+  }, [curriculumSets, now]);
+
+  // 3. Actionable Queue & Upcoming Revisions derived from curriculumSets
+  const { actionableQueue, allUpcomingRevisions } = useMemo(() => {
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    const overdue: TimelineEvent[] = [];
+    const dueToday: TimelineEvent[] = [];
+    const upcoming: TimelineEvent[] = [];
+
+    curriculumSets.forEach(set => {
+      if (!set.nextRevisionDate) return;
       const sub = subjects.find(s => s.id === set.subjectId);
-      return setToRevisionEvent(set, sub?.name ?? '', 'upcoming');
+      const subName = sub?.name ?? '';
+
+      const due = new Date(set.nextRevisionDate);
+      const dueStart = new Date(due);
+      dueStart.setHours(0, 0, 0, 0);
+
+      if (dueStart.getTime() < todayStart.getTime()) {
+        overdue.push(setToRevisionEvent(set, subName, 'overdue'));
+      } else if (dueStart.getTime() === todayStart.getTime()) {
+        dueToday.push({
+          id: `rev-set-${set.id}-due-today`,
+          eventType: 'revisionSystem',
+          entityName: set.name,
+          subjectName: subName,
+          date: due,
+          status: 'upcoming',
+          meta: { isDueToday: true, subjectId: set.subjectId, systemId: set.systemId },
+        });
+      } else if (dueStart >= monthStart && dueStart <= monthEnd) {
+        upcoming.push(setToRevisionEvent(set, subName, 'upcoming'));
+      }
     });
 
-  const setOverdueRevisions: TimelineEvent[] = curriculumSets
-    .filter(sys => {
-      if (!sys.nextRevisionDate) return false;
-      const d = new Date(sys.nextRevisionDate);
-      d.setHours(0, 0, 0, 0);
-      const n = new Date(now);
-      n.setHours(0, 0, 0, 0);
-      return d < n;
-    })
-    .map(set => {
-      const sub = subjects.find(s => s.id === set.subjectId);
-      return setToRevisionEvent(set, sub?.name ?? '', 'overdue');
-    });
+    overdue.sort((a, b) => (b.meta?.daysOverdue ?? 0) - (a.meta?.daysOverdue ?? 0));
+    dueToday.sort((a, b) => a.date.getTime() - b.date.getTime());
+    upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  const setDueTodayRevisions: TimelineEvent[] = curriculumSets
-    .filter(sys => {
-      if (!sys.nextRevisionDate) return false;
-      const d = new Date(sys.nextRevisionDate);
-      d.setHours(0, 0, 0, 0);
-      const n = new Date(now);
-      n.setHours(0, 0, 0, 0);
-      return d.getTime() === n.getTime();
-    })
-    .map(set => {
-      const sub = subjects.find(s => s.id === set.subjectId);
-      return {
-        id: `rev-set-${set.id}-due-today`,
-        eventType: 'revisionSystem' as const,
-        entityName: `${set.name}`,
-        subjectName: sub?.name ?? '',
-        date: new Date(set.nextRevisionDate!),
-        status: 'upcoming' as const,
-        meta: { isDueToday: true },
-      };
-    });
+    return {
+      actionableQueue: [...overdue, ...dueToday],
+      allUpcomingRevisions: upcoming,
+    };
+  }, [curriculumSets, subjects, monthStart, monthEnd, now]);
 
-  const allUpcomingRevisions = [...setUpcomingRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
-  const allOverdueRevisions = [...setOverdueRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
-  const allDueTodayRevisions = [...setDueTodayRevisions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  // 4. Completed events in the visible month
+  const monthCompleted = useMemo(() => {
+    return history
+      .map(historyToEvent)
+      .filter(e => e.date >= monthStart && e.date <= monthEnd);
+  }, [history, monthStart, monthEnd]);
 
-
-  // ── Apply filter ──────────────────────────────────────────────────────────
-  const filtered = (events: TimelineEvent[]) => events.filter(e => {
+  // Filter helper function
+  const filterEvents = (events: TimelineEvent[]) => events.filter(e => {
     const matchesCategory = eventMatchesFilter(e, filter);
     if (!matchesCategory) return false;
     if (selectedDate) return isSameDay(e.date, selectedDate);
     return true;
   });
 
-  // ── Calendar structure ───────────────────────────────────────────────────
-  const days     = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const filteredActionable = useMemo(() => filterEvents(actionableQueue), [actionableQueue, filter, selectedDate]);
+  const filteredUpcoming   = useMemo(() => filterEvents(allUpcomingRevisions), [allUpcomingRevisions, filter, selectedDate]);
+  const filteredCompleted  = useMemo(() => filterEvents(monthCompleted), [monthCompleted, filter, selectedDate]);
+
+  // Grouped completed past entries for virtualized history list
+  const pastGrouped = useMemo(() => groupPastEntries(filteredCompleted), [filteredCompleted]);
+
+  // Calendar structure
+  const days     = useMemo(() => eachDayOfInterval({ start: monthStart, end: monthEnd }), [monthStart, monthEnd]);
   const startDow = (getDay(monthStart) + 6) % 7;
-  const blanks   = Array.from({ length: startDow });
+  const blanks   = useMemo(() => Array.from({ length: startDow }), [startDow]);
 
-  // ── Section data ──────────────────────────────────────────────────────────
-  const todayDue             = (isCurrentMonth && (!selectedDate || isSameDay(now, selectedDate))) ? filtered(allDueTodayRevisions) : [];
-  const todayCompleted       = (isCurrentMonth && (!selectedDate || isSameDay(now, selectedDate))) ? filtered(monthCompleted).filter(e => isToday(e.date)) : [];
-  const todayEvents          = [...todayDue, ...todayCompleted];
-  const filteredUpcoming     = filtered(allUpcomingRevisions);
-  const filteredOverdue      = isCurrentMonth ? filtered(allOverdueRevisions) : [];
-
-  // Past days in the selected month, most recent first
-  const pastEntries = filtered(monthCompleted).filter(e => isCurrentMonth ? (!selectedDate ? !isToday(e.date) : true) : true);
-  const pastGrouped = groupPastEntries(pastEntries);
-
-  const everythingEmpty =
-    todayEvents.length === 0 && filteredUpcoming.length === 0 &&
-    filteredOverdue.length === 0 && pastGrouped.length === 0;
-
-  
-  const goToSystem = (subjectId: number, systemId: number) => {
-    setLocation(`/subjects/${subjectId}?highlight=${systemId}`);
+  const goToSystem = (subjectId?: number, systemId?: number) => {
+    if (subjectId && systemId) {
+      setLocation(`/subjects/${subjectId}?highlight=${systemId}`);
+    } else if (subjectId) {
+      setLocation(`/subjects/${subjectId}`);
+    } else {
+      setLocation(`/subjects`);
+    }
   };
 
+  const everythingEmpty = filteredActionable.length === 0 && filteredUpcoming.length === 0 && pastGrouped.length === 0;
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  
   return {
     history, subjects, systems,
     calDate, setCalDate,
@@ -173,9 +165,12 @@ export function useTimelineLogic() {
     pendingRollbackId, setPendingRollbackId,
     goToSystem, confirmRollback, handleRollbackRequest,
     now, monthStart, monthEnd, isCurrentMonth,
-    activityByDay, monthCompleted, upcomingRevisions, overdueRevisions, dueTodayRevisions,
+    activityByDay, upcomingRevisionDates,
     days, startDow, blanks,
-    todayDue, todayCompleted, todayEvents, filteredUpcoming, filteredOverdue,
-    pastEntries, pastGrouped, everythingEmpty
+    actionableQueue: filteredActionable,
+    filteredUpcoming,
+    completedHistory: filteredCompleted,
+    pastGrouped, everythingEmpty
   };
 }
+

@@ -32,7 +32,26 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { db } from '@/db';
 
-export function NextActionCard() {
+import { StudySystem, Subject } from '@/db';
+import { Pencil, X } from 'lucide-react';
+
+interface NextActionCardProps {
+  customPrimarySubject?: Subject;
+  customPrimarySystem?: StudySystem;
+  setFocusDialogType?: (type: 'primary' | 'secondary' | null) => void;
+  setFocus?: (sysId: number, type: 'primary' | 'secondary' | null) => void;
+  setSubjectFocus?: (subId: number, type: 'primary' | 'secondary' | null) => void;
+  goToSystem?: (subjectId: number, systemId: number) => void;
+}
+
+export function NextActionCard({
+  customPrimarySubject,
+  customPrimarySystem,
+  setFocusDialogType,
+  setFocus,
+  setSubjectFocus,
+  goToSystem
+}: NextActionCardProps = {}) {
   const [, setLocation] = useLocation();
   const [sessionBudget, setSessionBudget] = useState<'quick' | 'deep'>('quick');
   const [skipIds, setSkipIds] = useState<string[]>([]);
@@ -143,6 +162,8 @@ export function NextActionCard() {
     ? primary.rationaleBadges.filter(b => b.label !== '⚡ Pending Review')
     : primary?.rationaleBadges || [];
 
+  const isCustomFocusPinned = !!(customPrimarySubject || customPrimarySystem);
+
   return (
     <div className="bg-card border border-border/60 rounded-3xl p-5 sm:p-6 shadow-sm shadow-primary/5 hover:shadow-md transition-all hover:border-primary/40 relative overflow-hidden">
       {/* Decorative background glow */}
@@ -152,63 +173,136 @@ export function NextActionCard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-border/60">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 shrink-0 shadow-sm">
-            <Compass className="h-5 w-5 animate-pulse" />
+            {isCustomFocusPinned ? (
+              <Target className="h-5 w-5" />
+            ) : (
+              <Compass className="h-5 w-5 animate-pulse" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               {result?.isTriageMode && (
                 <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold mb-1 w-full sm:w-auto">
-                  Welcome back. We've reorganized your reviews so you can restart comfortably.
+                  Welcome back. Reviews reorganized for comfortable restart.
                 </Badge>
               )}
               <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
-                Next Best Action
+                {isCustomFocusPinned ? "Primary Focus Directive" : "Next Best Action"}
               </span>
               <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0 border-primary/30 text-primary font-mono">
-                Sub-10s Engine
+                {isCustomFocusPinned ? "Custom Pinned" : "Sub-10s Engine"}
               </Badge>
             </div>
-            {!result?.isTriageMode && (
-              <p className="text-xs text-muted-foreground">
-                Zero decision fatigue • Priority-ranked for maximum score impact
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {isCustomFocusPinned 
+                ? "Manually targeted focus • Highest study priority"
+                : "Zero decision fatigue • Priority-ranked for maximum score impact"}
+            </p>
           </div>
         </div>
 
-        {/* Time Budget Selector Toggle */}
-        <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50 self-start sm:self-auto shrink-0">
-          <button
-            type="button"
-            onClick={() => setSessionBudget('quick')}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-              sessionBudget === 'quick'
-                ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            Quick (10–20m)
-          </button>
-          <button
-            type="button"
-            onClick={() => setSessionBudget('deep')}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-              sessionBudget === 'deep'
-                ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-            Deep Work (45m+)
-          </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          {/* Custom Focus Pin/Edit button */}
+          {setFocusDialogType && (
+            <button
+              type="button"
+              onClick={() => setFocusDialogType('primary')}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border/60 hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+              title={isCustomFocusPinned ? "Change pinned focus" : "Pin custom focus"}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isCustomFocusPinned ? "Change Focus" : "Set Focus"}</span>
+            </button>
+          )}
+
+          {/* Time Budget Selector Toggle */}
+          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50">
+            <button
+              type="button"
+              onClick={() => setSessionBudget('quick')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                sessionBudget === 'quick'
+                  ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              Quick (15m)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSessionBudget('deep')}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                sessionBudget === 'deep'
+                  ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+              Deep (45m+)
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      {primary ? (
+      {isCustomFocusPinned ? (
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
+                <span className="flex items-center gap-1 text-foreground font-semibold">
+                  <Folder className="w-3.5 h-3.5 text-primary" />
+                  {customPrimarySubject?.name || 'Medical Curriculum'}
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug">
+                {customPrimarySystem?.name || customPrimarySubject?.name}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-primary shrink-0" />
+                Explicit student target • High priority mastery target
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  if (customPrimarySystem && goToSystem) {
+                    goToSystem(customPrimarySystem.subjectId, customPrimarySystem.id!);
+                  } else if (customPrimarySubject) {
+                    setLocation(`/subjects/${customPrimarySubject.id}`);
+                  }
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm"
+              >
+                <span>Initiate Focus Revision</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (customPrimarySubject && setSubjectFocus) {
+                    setSubjectFocus(customPrimarySubject.id!, null);
+                  }
+                  if (customPrimarySystem && setFocus) {
+                    setFocus(customPrimarySystem.id!, null);
+                  }
+                }}
+                className="border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl px-3.5 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Clear Pin</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : primary ? (
         <div className={cn("transition-opacity duration-200", isSwapping ? "opacity-30" : "opacity-100")}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div className="space-y-1.5">
@@ -296,7 +390,7 @@ export function NextActionCard() {
                     onClick={() => handleStartRevision(primary)}
                     className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none"
                   >
-                    <span>Start Revision</span>
+                    <span>Initiate Revision</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                   <DropdownMenu>

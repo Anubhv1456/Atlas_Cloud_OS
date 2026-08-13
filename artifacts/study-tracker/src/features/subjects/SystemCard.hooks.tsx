@@ -271,6 +271,11 @@ export function useSystemCardLogic({
   const [localNotes, setLocalNotes] = useState(system.notes || '');
 
 
+  const weakTopicsCount = topicProgresses.filter(tp => tp.isWeak).length;
+  const totalTopicsCount = finalTopics.length;
+  const blocksCompleted = curriculumSets.filter(s => s.contentCompleted && s.qbankCompleted).length;
+  const blocksTotal = curriculumSets.length;
+
   return {
     expanded, setExpanded,
     showInitDialog, setShowInitDialog, initValue, setInitValue,
@@ -283,6 +288,7 @@ export function useSystemCardLogic({
     insightType, setInsightType, insightSource, setInsightSource, isSubmittingInsight, handleInsightSubmit,
     cardRef, progress, completedCount, contentPct,
     revisionDue, revisionOverdue, overdueDays,
+    weakTopicsCount, totalTopicsCount, blocksCompleted, blocksTotal,
     toggleQBank, handleEvalSelect, toggleHighYield,
     localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
     handleRenameSave, handleRevisionComplete,

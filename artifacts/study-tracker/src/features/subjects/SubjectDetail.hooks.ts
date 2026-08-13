@@ -207,19 +207,36 @@ export function useSubjectDetailLogic(id: string | undefined) {
   const completedTasks = revisionSets.reduce((acc, rs) => acc + ((rs.contentCompleted && rs.qbankCompleted) ? 1 : 0), 0);
   const progress = subject && systems ? calculateSubjectProgress(subject, systems, revisionSets) : 0;
 
-  const pyqUnlocked = totalTasks > 0 && revisionSets.every(rs => (rs.contentCompleted && rs.qbankCompleted));
+  const pyqCompletedCount = pyqYears.filter(y => y.completed).length;
+  const pyqTotalCount = pyqYears.length;
 
-  
-  
-  
+  const now = new Date();
+  const overdueSetSystemIds = new Set(
+    revisionSets
+      .filter(rs => rs.nextRevisionDate && new Date(rs.nextRevisionDate) <= now)
+      .map(rs => rs.systemId)
+  );
+
+  const overdueSystems = systems.filter(sys => 
+    sys.id && (overdueSetSystemIds.has(sys.id) || sys.status === 'Weak')
+  );
+
+  const recommendedSystem = useMemo(() => {
+    if (systems.length === 0) return null;
+    if (overdueSystems.length > 0) return overdueSystems[0];
+    const highYieldUnfinished = systems.find(sys => sys.isHighYield);
+    if (highYieldUnfinished) return highYieldUnfinished;
+    return systems[0];
+  }, [systems, overdueSystems]);
+
   return {
     subjectId, subject, systems, pyqYears,
     showAddSystem, setShowAddSystem,
-    
-    
-    
-        highlightId, handleDragEnd,
+    highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked, 
+    pyqCompletedCount, pyqTotalCount,
+    overdueSystemsCount: overdueSystems.length,
+    recommendedSystem,
+    pyqUnlocked: true, 
   };
 }

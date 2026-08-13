@@ -609,13 +609,10 @@ export default function SubjectDetail() {
   const {
     subjectId, subject, systems, pyqYears,
     showAddSystem, setShowAddSystem,
-    
-    
-    
-    
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
-    pyqUnlocked
+    pyqCompletedCount, pyqTotalCount,
+    overdueSystemsCount, recommendedSystem,
   } = useSubjectDetailLogic(id);
 
   if (!subject && id) {
@@ -624,57 +621,125 @@ export default function SubjectDetail() {
   if (!subject) return null;
 
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-5xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Header */}
-      <header className="mb-10">
-        <div className="flex items-center justify-between mb-4">
+      <header className="mb-8 space-y-6">
+        <div className="flex items-center justify-between">
           <Link href="/">
-            <button className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
+            <button className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors cursor-pointer">
               <ChevronLeft className="w-6 h-6" />
             </button>
           </Link>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors ml-auto"
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors ml-auto cursor-pointer"
             title="Search topics"
           >
             <Search className="w-5 h-5" />
           </button>
-          
         </div>
 
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground tracking-tight min-w-0">{subject.name}</h1>
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+            Curriculum Command
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-0.5">{subject.name}</h1>
         </div>
 
-        {/* Overall progress card */}
-        <div className="bg-card border shadow-sm p-4 rounded-2xl flex items-center gap-4">
-          <div className="flex-1">
-            <div className="flex justify-between items-end mb-2 text-sm">
-              <span className="font-semibold text-foreground">Progress</span>
-              <span className="font-bold text-primary">{progress}%</span>
+        {/* Unified Overall Health Telemetry Card */}
+        <div className="bg-card border border-border/60 shadow-sm p-5 rounded-2xl space-y-4">
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center text-sm">
+              <span className="font-bold text-foreground">Curriculum Completion</span>
+              <span className="font-bold font-mono text-primary text-base">{progress}%</span>
             </div>
-            
+            <ProgressBar progress={progress} className="h-2.5" />
           </div>
-          <div className="h-10 w-px bg-border mx-2" />
-          <div className="text-center min-w-[3rem]">
-            <div className="text-xl font-bold text-foreground leading-none mb-1">{systems.length}</div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Systems</div>
+
+          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/40 text-center">
+            <div className="p-2 rounded-xl bg-muted/40 border border-border/40">
+              <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">{systems.length}</div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Systems</div>
+            </div>
+            <div className="p-2 rounded-xl bg-muted/40 border border-border/40">
+              <div className={cn("text-lg font-bold leading-none mb-1 font-mono", overdueSystemsCount > 0 ? "text-amber-500" : "text-emerald-500")}>
+                {overdueSystemsCount}
+              </div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Overdue / Weak</div>
+            </div>
+            <div className="p-2 rounded-xl bg-muted/40 border border-border/40">
+              <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">
+                {pyqTotalCount > 0 ? `${pyqCompletedCount}/${pyqTotalCount}` : '0'}
+              </div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">PYQ Solved</div>
+            </div>
           </div>
         </div>
 
-        
+        {/* Recommended Next System Banner */}
+        {recommendedSystem && (
+          <div className="bg-primary/10 border border-primary/25 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary text-primary-foreground shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Target Focus System</span>
+                <h4 className="font-bold text-foreground text-sm leading-tight">{recommendedSystem.name}</h4>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                const el = document.getElementById(`system-card-${recommendedSystem.id}`);
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl text-xs gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <span>Resume System</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </header>
 
-      {/* Systems list */}
-      <section>
+      {/* ── Ungated Integrated PYQ Horizon Strip ───────────────────────────── */}
+      <section className="mb-8">
+        {systems.length > 0 && (
+          <PYQSection
+            subjectId={subject.id!}
+            subjectName={subject.name}
+            years={pyqYears}
+          />
+        )}
+      </section>
+
+      {/* Systems Accordion List */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Systems Breakdown ({systems.length})
+          </h3>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowAddSystem(true)}
+            className="h-8 text-xs font-semibold rounded-xl gap-1.5 border-border/60 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add System</span>
+          </Button>
+        </div>
+
         {systems.length === 0 ? (
           <EmptyStateGraphic
             icon={LayoutList}
             title="Start Structuring Your Subject"
             description={`Break down ${subject.name} into specific modules or systems. This enables precise task tracking and unlocks spaced repetition tracking.`}
             action={
-              <Button onClick={() => setShowAddSystem(true)} size="sm" className="gap-1.5 rounded-xl shadow-xs">
+              <Button onClick={() => setShowAddSystem(true)} size="sm" className="gap-1.5 rounded-xl shadow-xs cursor-pointer">
                 <Plus className="w-4 h-4" /> Add First System
               </Button>
             }
@@ -685,7 +750,7 @@ export default function SubjectDetail() {
             <Droppable droppableId="systems-list" isDropDisabled={false}>
               {(provided) => (
                 <div 
-                  className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4"
+                  className="flex flex-col gap-3.5"
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                 >
@@ -698,6 +763,7 @@ export default function SubjectDetail() {
                     >
                       {(provided, snapshot) => (
                         <div
+                          id={`system-card-${system.id}`}
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
@@ -722,38 +788,13 @@ export default function SubjectDetail() {
         )}
       </section>
 
-      {/* ── PYQ Section ─────────────────────────────────────────────────────── */}
-      <section className="mt-6">
-        {systems.length > 0 && (
-          pyqUnlocked ? (
-            <PYQSection
-              subjectId={subject.id!}
-              subjectName={subject.name}
-              years={pyqYears}
-            />
-          ) : (
-            <div className="bg-muted/20 rounded-2xl border border-dashed p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5 text-muted-foreground/60" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm text-foreground">PYQs</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Complete Content and QBank for all systems to unlock PYQs
-                </p>
-              </div>
-            </div>
-          )
-        )}
-      </section>
-
       {/* FAB */}
       {systems.length > 0 && (
         <button
           onClick={() => setShowAddSystem(true)}
-          className="fixed right-6 w-12 h-12 bg-primary/10 text-primary border border-primary/20 rounded-full flex items-center justify-center hover:bg-primary/20 transition-all z-40 backdrop-blur-sm shadow-sm"
+          className="fixed right-6 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary/90 transition-all z-40 shadow-lg cursor-pointer"
           style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}
-          aria-label="Add Waypoint"
+          aria-label="Add System"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -766,12 +807,6 @@ export default function SubjectDetail() {
         placeholder="e.g. Cardiology"
         onSave={(name) => addSystem(subject.id!, name)}
       />
-
-      {/* Rename dialog */}
-      
-
-      {/* Delete Subject confirmation dialog */}
-      
     </div>
   );
 }

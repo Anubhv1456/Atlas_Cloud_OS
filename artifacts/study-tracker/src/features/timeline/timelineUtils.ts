@@ -71,7 +71,11 @@ export function setToRevisionEvent(
     subjectName,
     date:        new Date(set.nextRevisionDate!),
     status,
-    meta:        status === 'overdue' ? { daysOverdue: days } : undefined,
+    meta:        { 
+      daysOverdue: status === 'overdue' ? days : 0,
+      subjectId: set.subjectId,
+      systemId: set.systemId,
+    },
   };
 }
 
