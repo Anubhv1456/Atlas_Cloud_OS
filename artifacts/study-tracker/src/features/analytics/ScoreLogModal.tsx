@@ -48,6 +48,14 @@ export function ScoreLogModal({
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const pyqYears = useLiveQuery(() => db.pyqYears.toArray().then(res => res.filter(p => !p.deletedAt)), []) || [];
 
+  const getTodayLocalDateStr = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [type, setType] = useState<'revision' | 'pyq' | 'gt'>(initialType);
   const [subjectId, setSubjectId] = useState<number | undefined>(initialSubjectId);
   const [systemId, setSystemId] = useState<number | undefined>(initialSystemId);
@@ -57,7 +65,7 @@ export function ScoreLogModal({
   const [title, setTitle] = useState<string>(initialTitle || '');
   const [score, setScore] = useState<string>('');
   const [total, setTotal] = useState<string>('100');
-  const [dateStr, setDateStr] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dateStr, setDateStr] = useState<string>(getTodayLocalDateStr());
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +81,7 @@ export function ScoreLogModal({
       setTitle(initialTitle || '');
       setScore('');
       setTotal('100');
-      setDateStr(new Date().toISOString().split('T')[0]);
+      setDateStr(getTodayLocalDateStr());
       setNotes('');
     }
   }, [isOpen, initialType, initialSubjectId, initialSystemId, initialTopicId, initialTopicName, initialPyqYearId, initialTitle]);
@@ -160,6 +168,17 @@ export function ScoreLogModal({
         }
       }
 
+      const todayLocal = getTodayLocalDateStr();
+      let logTimestamp: Date;
+      if (dateStr === todayLocal) {
+        logTimestamp = new Date();
+      } else if (dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        logTimestamp = new Date(y, m - 1, d, 12, 0, 0);
+      } else {
+        logTimestamp = new Date();
+      }
+
       const logData: any = {
         type,
         subjectId: subjectId || 'gt',
@@ -170,7 +189,9 @@ export function ScoreLogModal({
         score: scoreNum,
         total: totalNum,
         percentage,
-        timestamp: new Date(dateStr),
+        timestamp: logTimestamp,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         notes: notes.trim() || null,
       };
       

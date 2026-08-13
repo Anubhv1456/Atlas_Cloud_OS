@@ -1,6 +1,26 @@
 import { format } from 'date-fns';
 import { ScoreLog, StudySystem, Subject } from '@/db';
 
+export function getLogTimestamp(log: any): Date {
+  if (!log || !log.timestamp) return new Date();
+  const d = new Date(log.timestamp);
+
+  // If timestamp was parsed from date-only string like "YYYY-MM-DD", it defaults to 00:00:00.000 UTC.
+  // In negative timezones (e.g. UTC-7), 00:00:00 UTC on Aug 13 appears as 17:00 on Aug 12 (11+ hrs ago).
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) {
+    if (log.createdAt) {
+      return new Date(log.createdAt);
+    }
+    const now = new Date();
+    const todayLocalStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const logUtcDateStr = d.toISOString().split('T')[0];
+    if (logUtcDateStr === todayLocalStr) {
+      return now;
+    }
+  }
+  return d;
+}
+
 export function filterScoreLogs(
   scoreLogs: ScoreLog[],
   selectedType: string,
@@ -27,7 +47,7 @@ export function filterScoreLogs(
       (log.notes && log.notes.toLowerCase().includes(q))
     );
   }
-  result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  result.sort((a, b) => getLogTimestamp(a).getTime() - getLogTimestamp(b).getTime());
   return result;
 }
 
@@ -72,7 +92,7 @@ export function calculateAnalyticsStats(filteredLogs: ScoreLog[]) {
   let pastScore = 0; let pastWeight = 0;
 
   filteredLogs.forEach(log => {
-    const daysOld = Math.max(0, (now - new Date(log.timestamp).getTime()) / (1000 * 60 * 60 * 24));
+    const daysOld = Math.max(0, (now - getLogTimestamp(log).getTime()) / (1000 * 60 * 60 * 24));
     const weight = Math.exp(-daysOld / 30); // 30-day decay constant
     totalWeight += weight;
     weightedScore += log.percentage * weight;

@@ -9,6 +9,8 @@ import {
   daysOverdue,
 } from '@/db';
 import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
+import { getLogTimestamp } from '@/features/analytics/analyticsUtils';
+import { formatDistanceToNow } from 'date-fns';
 import { toast as sonnerToast } from 'sonner';
 import {
   AreaChart,
@@ -310,7 +312,7 @@ export default function Analytics() {
           </div>
         ) : (
           <VirtualizedScoreTable
-            displayLogs={displayLogs}
+            displayLogs={[...displayLogs].reverse()}
             subjectMap={subjectMap}
             handleDeleteLog={handleDeleteLog}
             getPercentageColorBadge={getPercentageColorBadge}
@@ -390,7 +392,7 @@ function VirtualizedScoreTable({
                     </span>
                   </div>
                   <div className="text-[11px] text-muted-foreground flex items-center gap-2 truncate">
-                    <span className="font-medium">{formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}</span>
+                    <span className="font-medium">{formatDistanceToNow(getLogTimestamp(log), { addSuffix: true })}</span>
                     {subName && (
                       <>
                         <span className="opacity-30">•</span>
