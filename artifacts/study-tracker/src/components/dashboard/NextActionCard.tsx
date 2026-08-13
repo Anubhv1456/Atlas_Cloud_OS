@@ -7,6 +7,7 @@ import {
   NextActionRecommendation,
   RationaleBadge 
 } from '@/lib/recommendations/nextActionEngine';
+import { getNextActionWithFallback } from '@/lib/api/recommendations';
 import { 
   Sparkles, 
   Zap, 
@@ -61,7 +62,7 @@ export function NextActionCard({
 
   const result: NextActionEngineResult | null = useLiveQuery(async () => {
     try {
-      return await getNextActionRecommendation({
+      return await getNextActionWithFallback({
         sessionBudget,
         skipIds,
         targetExam: 'NEET PG'

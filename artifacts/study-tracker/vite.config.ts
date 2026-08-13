@@ -151,10 +151,14 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   root: path.resolve(import.meta.dirname),
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,
     sourcemap: false,
+    minify: 'esbuild',
     cssMinify: true,
     target: 'es2020',
     rollupOptions: {
