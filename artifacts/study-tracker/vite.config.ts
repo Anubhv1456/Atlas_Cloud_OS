@@ -21,7 +21,10 @@ export default defineConfig({
         'favicon-32x32.png', 
         'favicon-16x16.png', 
         'apple-touch-icon.png', 
+        'apple-touch-icon-180x180.png',
         'apple-touch-icon-167x167.png',
+        'apple-touch-icon-152x152.png',
+        'apple-touch-icon-120x120.png',
         'apple-touch-icon-precomposed.png', 
         'logo.svg', 
         'emblem.svg', 
@@ -99,7 +102,14 @@ export default defineConfig({
       workbox: {
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        navigateFallbackDenylist: [
+          /^\/api/,
+          /^\/apple-touch-icon/,
+          /^\/pwa-/,
+          /^\/favicon/,
+          /^\/manifest\.json/,
+          /\.(png|ico|svg|json)$/i
+        ],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff,woff2,wasm}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,

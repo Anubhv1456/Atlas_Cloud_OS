@@ -22,7 +22,19 @@
       "destination": "https://responsible-collector-6n50x.firebaseapp.com/__/auth/:path*"
     },
     {
-      "source": "/((?!assets/|.*\\.[\\w]+$).*)",
+      "source": "/apple-touch-icon",
+      "destination": "/apple-touch-icon.png"
+    },
+    {
+      "source": "/apple-touch-icon-precomposed",
+      "destination": "/apple-touch-icon-precomposed.png"
+    },
+    {
+      "source": "/apple-touch-icon-:size",
+      "destination": "/apple-touch-icon-:size.png"
+    },
+    {
+      "source": "/((?!assets/|apple-touch-icon|pwa-|favicon|manifest\\.json|.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }
   ]

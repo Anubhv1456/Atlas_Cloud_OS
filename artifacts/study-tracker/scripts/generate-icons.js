@@ -22,7 +22,10 @@ const iconConfigs = [
   { name: 'pwa-maskable-512x512.png', width: 512, height: 512 },
   { name: 'pwa-maskable-192x192.png', width: 192, height: 192 },
   { name: 'apple-touch-icon.png', width: 180, height: 180 },
+  { name: 'apple-touch-icon-180x180.png', width: 180, height: 180 },
   { name: 'apple-touch-icon-167x167.png', width: 167, height: 167 },
+  { name: 'apple-touch-icon-152x152.png', width: 152, height: 152 },
+  { name: 'apple-touch-icon-120x120.png', width: 120, height: 120 },
   { name: 'apple-touch-icon-precomposed.png', width: 180, height: 180 },
   { name: 'favicon-32x32.png', width: 32, height: 32 },
   { name: 'favicon-16x16.png', width: 16, height: 16 },
@@ -31,7 +34,7 @@ const iconConfigs = [
 ];
 
 async function generateIcons() {
-  console.log('Generating high-density PWA icons...');
+  console.log('Generating high-density Truecolor PWA icons...');
   
   for (const config of iconConfigs) {
     const outputPath = path.join(publicDir, config.name);
@@ -42,13 +45,13 @@ async function generateIcons() {
       })
       .removeAlpha() // Ensures 100% opaque background, eliminating iPadOS black box bug!
       .flatten({ background: '#14161a' })
-      .png({ quality: 100, compressionLevel: 9 })
+      .png({ palette: false, quality: 100, compressionLevel: 6 }) // Forces Truecolor RGB (PNG-24) required by WebKit
       .toFile(outputPath);
       
     console.log(`Generated: ${config.name} (${config.width}x${config.height})`);
   }
 
-  console.log('All PWA icons generated successfully with 100% opaque backgrounds!');
+  console.log('All PWA icons generated successfully as Truecolor RGB PNGs!');
 }
 
 generateIcons().catch((err) => {
