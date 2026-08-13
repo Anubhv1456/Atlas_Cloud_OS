@@ -75,10 +75,7 @@ function ProtectedApp() {
           return;
         }
         if (!hasAccess) {
-          const isAccepted = localStorage.getItem(`invitation_accepted_${user.uid}`);
-          if (!isAccepted && paymentStatus === null) {
-            if (location !== '/accept-invitation') setLocation('/accept-invitation');
-          } else if (location !== '/beta-access') {
+          if (location !== '/beta-access' && location !== '/accept-invitation') {
             setLocation('/beta-access');
           }
         } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation')) {

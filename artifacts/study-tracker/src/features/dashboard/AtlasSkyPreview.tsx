@@ -1,42 +1,40 @@
-import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import React, { useState } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { Sparkles } from 'lucide-react';
 import { AtlasSkyModal } from './AtlasSkyModal';
+import { calculateOverallProgress } from '@/lib/progress';
 
 export function AtlasSkyPreview() {
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Get completed topics/systems (e.g. anything with 100% progress or mastered)
   const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
   const systems = useLiveQuery(() => db.systems.toArray()) || [];
   const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
-  const masteredCount = curriculumSets.filter(s => (s.contentCompleted && s.qbankCompleted)).length;
-
-  // Generate a tiny random star pattern for the preview
-  const stars = Array.from({ length: Math.min(masteredCount, 50) }).map((_, i) => {
-    return {
-      x: 10 + Math.random() * 80,
-      y: 10 + Math.random() * 80,
-      size: Math.random() * 2 + 1,
-      opacity: Math.random() * 0.5 + 0.3
-    };
-  });
+  
+  const overallProgress = Math.round(calculateOverallProgress(subjects, systems, curriculumSets));
 
   return (
     <>
       <button 
         onClick={() => setModalOpen(true)}
-        className="text-muted-foreground hover:text-foreground rounded-full w-10 h-10 flex items-center justify-center transition-colors relative group"
-        title="Atlas Sky"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] dark:bg-white/[0.04] border border-border/60 hover:border-teal-500/40 hover:bg-teal-500/10 text-xs font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer group shadow-2xs"
+        title="Open Atlas Sky Constellation Map"
       >
-        <Sparkles className="w-5 h-5 group-hover:text-amber-300 transition-colors" />
-        {masteredCount > 0 && (
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-        )}
+        <Sparkles className="w-3.5 h-3.5 text-teal-500 group-hover:text-amber-400 group-hover:scale-110 transition-all" />
+        <span className="font-semibold text-foreground">Atlas Sky</span>
+        <span className="text-[10px] font-mono text-teal-500 bg-teal-500/10 px-1.5 py-0.5 rounded-md border border-teal-500/20">
+          {overallProgress}% Lit
+        </span>
       </button>
-      <AtlasSkyModal open={modalOpen} onOpenChange={setModalOpen} subjects={subjects} systems={systems} curriculumSets={curriculumSets} />
+      
+      <AtlasSkyModal 
+        open={modalOpen} 
+        onOpenChange={setModalOpen} 
+        subjects={subjects} 
+        systems={systems} 
+        curriculumSets={curriculumSets} 
+      />
     </>
   );
 }

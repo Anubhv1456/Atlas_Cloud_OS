@@ -165,35 +165,37 @@ export function NextActionCard({
   const isCustomFocusPinned = !!(customPrimarySubject || customPrimarySystem);
 
   return (
-    <div className="bg-card border border-border/60 rounded-3xl p-5 sm:p-6 shadow-sm shadow-primary/5 hover:shadow-md transition-all hover:border-primary/40 relative overflow-hidden">
+    <div className="bg-card border border-border/60 rounded-3xl p-4 sm:p-6 shadow-sm shadow-primary/5 hover:shadow-md transition-all hover:border-primary/40 relative overflow-hidden">
       {/* Decorative background glow */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
 
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-border/60">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 shrink-0 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 pb-4 mb-4 border-b border-border/60">
+        <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 shrink-0 shadow-sm mt-0.5 sm:mt-0">
             {isCustomFocusPinned ? (
               <Target className="h-5 w-5" />
             ) : (
               <Compass className="h-5 w-5 animate-pulse" />
             )}
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {result?.isTriageMode && (
-                <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold mb-1 w-full sm:w-auto">
+          <div className="min-w-0 flex-1">
+            {result?.isTriageMode && (
+              <div className="mb-1.5">
+                <Badge variant="outline" className="text-[11px] sm:text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold py-0.5 px-2.5 leading-snug whitespace-normal inline-block">
                   Welcome back. Reviews reorganized for comfortable restart.
                 </Badge>
-              )}
-              <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-primary truncate">
                 {isCustomFocusPinned ? "Primary Focus Directive" : "Next Best Action"}
               </span>
-              <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0 border-primary/30 text-primary font-mono">
+              <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0 border-primary/30 text-primary font-mono shrink-0">
                 {isCustomFocusPinned ? "Custom Pinned" : "Sub-10s Engine"}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {isCustomFocusPinned 
                 ? "Manually targeted focus • Highest study priority"
                 : "Zero decision fatigue • Priority-ranked for maximum score impact"}
@@ -201,47 +203,47 @@ export function NextActionCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between sm:justify-end shrink-0 pt-1 md:pt-0">
           {/* Custom Focus Pin/Edit button */}
           {setFocusDialogType && (
             <button
               type="button"
               onClick={() => setFocusDialogType('primary')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border/60 hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border/60 hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
               title={isCustomFocusPinned ? "Change pinned focus" : "Pin custom focus"}
             >
               <Pencil className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isCustomFocusPinned ? "Change Focus" : "Set Focus"}</span>
+              <span>{isCustomFocusPinned ? "Change Focus" : "Set Focus"}</span>
             </button>
           )}
 
           {/* Time Budget Selector Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50">
+          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 max-w-full overflow-x-auto">
             <button
               type="button"
               onClick={() => setSessionBudget('quick')}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
                 sessionBudget === 'quick'
                   ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              Quick (15m)
+              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Quick (15m)</span>
             </button>
             <button
               type="button"
               onClick={() => setSessionBudget('deep')}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
                 sessionBudget === 'deep'
                   ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-              Deep (45m+)
+              <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>Deep (45m+)</span>
             </button>
           </div>
         </div>
@@ -249,16 +251,16 @@ export function NextActionCard({
 
       {/* Main Content Area */}
       {isCustomFocusPinned ? (
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
-                <span className="flex items-center gap-1 text-foreground font-semibold">
-                  <Folder className="w-3.5 h-3.5 text-primary" />
+        <div className="space-y-4 min-w-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
+                <span className="flex items-center gap-1 text-foreground font-semibold truncate">
+                  <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
                   {customPrimarySubject?.name || 'Medical Curriculum'}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug break-words">
                 {customPrimarySystem?.name || customPrimarySubject?.name}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5">
@@ -269,7 +271,7 @@ export function NextActionCard({
           </div>
 
           <div className="flex items-center justify-between gap-3 pt-3 border-t border-border/50">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => {
                   if (customPrimarySystem && goToSystem) {
@@ -278,7 +280,7 @@ export function NextActionCard({
                     setLocation(`/subjects/${customPrimarySubject.id}`);
                   }
                 }}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none"
               >
                 <span>Initiate Focus Revision</span>
                 <ArrowRight className="w-4 h-4" />
@@ -294,7 +296,7 @@ export function NextActionCard({
                     setFocus(customPrimarySystem.id!, null);
                   }
                 }}
-                className="border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl px-3.5 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                className="border-border/80 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl px-3.5 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5 flex-1 sm:flex-none"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Clear Pin</span>
@@ -303,22 +305,22 @@ export function NextActionCard({
           </div>
         </div>
       ) : primary ? (
-        <div className={cn("transition-opacity duration-200", isSwapping ? "opacity-30" : "opacity-100")}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium">
-                <span className="flex items-center gap-1 text-foreground font-semibold">
-                  <Folder className="w-3.5 h-3.5 text-primary" />
+        <div className={cn("transition-opacity duration-200 min-w-0", isSwapping ? "opacity-30" : "opacity-100")}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 min-w-0">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
+                <span className="flex items-center gap-1 text-foreground font-semibold truncate">
+                  <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
                   {primary.subjectName}
                 </span>
                 {primary.systemName !== primary.title && (
                   <>
                     <span>•</span>
-                    <span>{primary.systemName}</span>
+                    <span className="truncate">{primary.systemName}</span>
                   </>
                 )}
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug break-words">
                 {primary.title}
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5">
@@ -329,15 +331,15 @@ export function NextActionCard({
           </div>
 
           {/* Rationale Badges */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-5 pt-1">
-            <span className="text-[11px] font-semibold text-muted-foreground mr-1">
+          <div className="flex flex-wrap items-center gap-1.5 mb-5 pt-1 min-w-0">
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
               Why this now:
             </span>
             {displayBadges.map((badge, idx) => (
               <span
                 key={idx}
                 className={cn(
-                  "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-lg border shadow-2xs",
+                  "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-lg border shadow-2xs whitespace-normal break-words",
                   getBadgeClass(badge.variant)
                 )}
               >

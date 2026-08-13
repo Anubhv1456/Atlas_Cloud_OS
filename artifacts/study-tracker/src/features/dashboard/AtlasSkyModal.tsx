@@ -1,12 +1,16 @@
-import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import React, { useMemo, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+import { 
+  X, ArrowRight, Brain, Target, Sparkles, Filter, 
+  RotateCcw, ShieldAlert, CheckCircle2, BookOpen 
+} from 'lucide-react';
 import { Subject, StudySystem } from '@/db';
 import { CurriculumSet } from '@/db/types';
 import { cn } from '@/lib/utils';
 import { calculateSubjectProgress, calculateOverallProgress } from '@/lib/progress';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AtlasNorthStar } from '@/components/AtlasNorthStar';
+import { useLocation } from 'wouter';
 
 interface AtlasSkyModalProps {
   open: boolean;
@@ -16,372 +20,572 @@ interface AtlasSkyModalProps {
   curriculumSets: CurriculumSet[];
 }
 
-const FIXED_SUBJECTS = [
-  { name: 'Anatomy', x: 28, y: 28 },
-  { name: 'Physiology', x: 68, y: 32 },
-  { name: 'Biochemistry', x: 48, y: 42 },
-  { name: 'Pathology', x: 78, y: 52 },
-  { name: 'Pharmacology', x: 32, y: 58 },
-  { name: 'Microbiology', x: 58, y: 68 },
-  { name: 'Forensic Medicine & Toxicology', x: 18, y: 72 },
-  { name: 'Community Medicine (PSM)', x: 42, y: 82 },
-  { name: 'ENT (Otorhinolaryngology)', x: 72, y: 82 },
-  { name: 'Ophthalmology', x: 82, y: 38 },
-  { name: 'Medicine', x: 52, y: 58 },
-  { name: 'General Surgery', x: 22, y: 42 },
-  { name: 'Obstetrics & Gynaecology', x: 62, y: 45 },
-  { name: 'Pediatrics', x: 85, y: 70 },
-  { name: 'Orthopedics', x: 12, y: 52 },
-  { name: 'Psychiatry', x: 55, y: 22 },
-  { name: 'Dermatology', x: 38, y: 22 },
-  { name: 'Radiology', x: 38, y: 70 },
-  { name: 'Anaesthesiology', x: 62, y: 85 }
+export type PhaseType = 'pre_clinical' | 'para_clinical' | 'clinical';
+
+export interface CelestialSubject {
+  name: string;
+  phase: PhaseType;
+  phaseLabel: string;
+  angle: number; // in degrees
+  radiusPercent: number; // percentage radius from center
+  x: number; // calculated percentage x (0..100)
+  y: number; // calculated percentage y (0..100)
+  bridgeTo?: string[]; // Subject names to connect via inter-orbit bridge
+}
+
+// 19 MBBS / NEET PG Subjects arranged into 3 Concentric Medical Phase Orbits
+const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
+  // --- PRE-CLINICAL FOUNDATION (Orbit 1: r = 18%) ---
+  {
+    name: 'Anatomy',
+    phase: 'pre_clinical',
+    phaseLabel: 'Pre-Clinical Foundation',
+    angle: 270,
+    radiusPercent: 18,
+    bridgeTo: ['Pathology', 'General Surgery']
+  },
+  {
+    name: 'Physiology',
+    phase: 'pre_clinical',
+    phaseLabel: 'Pre-Clinical Foundation',
+    angle: 30,
+    radiusPercent: 18,
+    bridgeTo: ['Pharmacology', 'Medicine']
+  },
+  {
+    name: 'Biochemistry',
+    phase: 'pre_clinical',
+    phaseLabel: 'Pre-Clinical Foundation',
+    angle: 150,
+    radiusPercent: 18,
+    bridgeTo: ['Microbiology', 'Pediatrics']
+  },
+
+  // --- PARA-CLINICAL BRIDGE (Orbit 2: r = 31%) ---
+  {
+    name: 'Pathology',
+    phase: 'para_clinical',
+    phaseLabel: 'Para-Clinical Bridge',
+    angle: 234,
+    radiusPercent: 31,
+    bridgeTo: ['Medicine', 'General Surgery']
+  },
+  {
+    name: 'Pharmacology',
+    phase: 'para_clinical',
+    phaseLabel: 'Para-Clinical Bridge',
+    angle: 306,
+    radiusPercent: 31,
+    bridgeTo: ['Anaesthesiology', 'Psychiatry']
+  },
+  {
+    name: 'Microbiology',
+    phase: 'para_clinical',
+    phaseLabel: 'Para-Clinical Bridge',
+    angle: 18,
+    radiusPercent: 31,
+    bridgeTo: ['Dermatology', 'Pediatrics']
+  },
+  {
+    name: 'Forensic Medicine & Toxicology',
+    phase: 'para_clinical',
+    phaseLabel: 'Para-Clinical Bridge',
+    angle: 90,
+    radiusPercent: 31,
+    bridgeTo: ['Community Medicine (PSM)']
+  },
+  {
+    name: 'Community Medicine (PSM)',
+    phase: 'para_clinical',
+    phaseLabel: 'Para-Clinical Bridge',
+    angle: 162,
+    radiusPercent: 31,
+    bridgeTo: ['Obstetrics & Gynaecology']
+  },
+
+  // --- CLINICAL SPECIALTIES (Orbit 3: r = 43%) ---
+  {
+    name: 'Medicine',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 270,
+    radiusPercent: 43
+  },
+  {
+    name: 'General Surgery',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 302.7,
+    radiusPercent: 43
+  },
+  {
+    name: 'Obstetrics & Gynaecology',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 335.5,
+    radiusPercent: 43
+  },
+  {
+    name: 'Pediatrics',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 8.2,
+    radiusPercent: 43
+  },
+  {
+    name: 'Orthopedics',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 40.9,
+    radiusPercent: 43
+  },
+  {
+    name: 'ENT (Otorhinolaryngology)',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 73.6,
+    radiusPercent: 43
+  },
+  {
+    name: 'Ophthalmology',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 106.4,
+    radiusPercent: 43
+  },
+  {
+    name: 'Psychiatry',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 139.1,
+    radiusPercent: 43
+  },
+  {
+    name: 'Dermatology',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 171.8,
+    radiusPercent: 43
+  },
+  {
+    name: 'Radiology',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 204.5,
+    radiusPercent: 43
+  },
+  {
+    name: 'Anaesthesiology',
+    phase: 'clinical',
+    phaseLabel: 'Clinical Specialty',
+    angle: 237.3,
+    radiusPercent: 43
+  }
 ];
 
-export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculumSets }: AtlasSkyModalProps) {
-  const [mounted, setMounted] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [cursorPos, setCursorPos] = useState({ x: -1000, y: -1000 });
-  const [winSize, setWinSize] = useState({ w: 1000, h: 800 });
+// Helper to compute Cartesian percentages from polar angles
+const CELESTIAL_SUBJECTS: CelestialSubject[] = CELESTIAL_CONFIG.map(item => {
+  const rad = (item.angle * Math.PI) / 180;
+  const x = 50 + item.radiusPercent * Math.cos(rad);
+  const y = 50 + item.radiusPercent * Math.sin(rad);
+  return {
+    ...item,
+    x: Number(x.toFixed(2)),
+    y: Number(y.toFixed(2))
+  };
+});
 
+export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculumSets }: AtlasSkyModalProps) {
+  const [, setLocation] = useLocation();
+  const [activeFilter, setActiveFilter] = useState<'all' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
+  const [selectedStarName, setSelectedStarName] = useState<string | null>(null);
+
+  // Clear selected star when modal opens/closes
   useEffect(() => {
-    if (open) {
-      setMounted(true);
-      setWinSize({ w: window.innerWidth, h: window.innerHeight });
-      const handleResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    } else {
-      const timer = setTimeout(() => setMounted(false), 500);
-      return () => clearTimeout(timer);
+    if (!open) {
+      setSelectedStarName(null);
     }
   }, [open]);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!open) return;
-    const x = (e.clientX / winSize.w - 0.5) * 20; 
-    const y = (e.clientY / winSize.h - 0.5) * 20;
-    setMousePos({ x, y });
-    setCursorPos({ x: e.clientX, y: e.clientY });
-  };
-
-  const { mappedStars, globalHealth } = useMemo(() => {
+  // Compute live progress and retentive status for all 19 stars
+  const { mappedStars, globalHealth, decayCount } = useMemo(() => {
     const aliasMap: Record<string, string> = {
       'General Medicine': 'Medicine',
       'Surgery': 'General Surgery',
       'OBGY': 'Obstetrics & Gynaecology'
     };
 
-    const mapped = FIXED_SUBJECTS.map(fixed => {
-      let dbSubject = subjects.find(s => s.name === fixed.name || aliasMap[s.name] === fixed.name);
-      
+    let totalDecayAlerts = 0;
+
+    const mapped = CELESTIAL_SUBJECTS.map(star => {
+      const dbSubject = subjects.find(s => s.name === star.name || aliasMap[s.name] === star.name);
+
       let state: 'not_started' | 'in_progress' | 'revising' | 'strong' | 'completed' = 'not_started';
-      let completionTime = 0;
       let progress = 0;
+      let dbSubjectId: string | null = null;
+      let totalSystemsCount = 0;
+      let strongSystemsCount = 0;
+      let weakSystemsCount = 0;
 
       if (dbSubject) {
-        const subSets = curriculumSets.filter(c => c.subjectId === dbSubject!.id);
-        progress = calculateSubjectProgress(dbSubject, systems, subSets);
-        const totalTasks = subSets.length * 2;
-        const isCompleted = progress === 100 && totalTasks > 0;
+        dbSubjectId = dbSubject.id;
+        const subSets = curriculumSets.filter(c => c.subjectId === dbSubject.id);
+        progress = Math.round(calculateSubjectProgress(dbSubject, systems, subSets));
 
-        const subSystems = systems.filter(s => s.subjectId === dbSubject!.id);
-        const isRevising = subSystems.some(s => s.revisionState === 'in_progress');
-        const isStrong = subSystems.some(s => s.status === 'Strong') && !subSystems.some(s => s.status === 'Weak');
+        const subSystems = systems.filter(s => s.subjectId === dbSubject.id);
+        totalSystemsCount = subSystems.length;
+        weakSystemsCount = subSystems.filter(s => s.status === 'Weak').length;
+        strongSystemsCount = subSystems.filter(s => s.status === 'Strong').length;
+
+        const isRevising = subSystems.some(s => s.revisionState === 'in_progress' || s.status === 'Weak');
+        const isCompleted = progress === 100 && subSets.length > 0;
 
         if (isCompleted) {
           state = 'completed';
-          completionTime = Math.max(...subSystems.map(s => s.completionDate ? new Date(s.completionDate).getTime() : 0));
-        } else if (isRevising) {
+        } else if (isRevising || weakSystemsCount > 0) {
           state = 'revising';
+          totalDecayAlerts++;
         } else if (progress > 0) {
-          state = isStrong ? 'strong' : 'in_progress';
+          state = strongSystemsCount > 0 ? 'strong' : 'in_progress';
         }
       }
 
       return {
-        ...fixed,
+        ...star,
         state,
-        completionTime,
-        progress
+        progress,
+        dbSubjectId,
+        totalSystemsCount,
+        strongSystemsCount,
+        weakSystemsCount
       };
     });
 
-    const syllabusProgress = calculateOverallProgress(subjects, systems, curriculumSets);
-    let totalQbankScore = 0;
-    let qbankCount = 0;
-    
-    curriculumSets.forEach(s => {
-      if (s.averageScore) {
-        totalQbankScore += s.averageScore;
-        qbankCount++;
-      }
-    });
+    const overallProgress = calculateOverallProgress(subjects, systems, curriculumSets);
 
-    const syllabusHealth = syllabusProgress;
-    const qbankHealth = qbankCount > 0 ? (totalQbankScore / qbankCount) : 0;
-    
-    const totalSystems = systems.length;
-    let weakSystems = 0;
-    let strongSystems = 0;
-    systems.forEach(s => {
-       if (s.status === 'Weak') weakSystems++;
-       if (s.status === 'Strong') strongSystems++;
-    });
-    
-    const statusHealth = totalSystems > 0 ? ((strongSystems + (totalSystems - weakSystems - strongSystems) * 0.5) / totalSystems) * 100 : 0;
-    
-    let health = 0;
-    if (syllabusProgress === 0 && qbankHealth === 0 && statusHealth === 0) {
-      health = 0;
-    } else {
-      health = (syllabusHealth * 0.5) + (qbankHealth * 0.3) + (statusHealth * 0.2);
-    }
-
-    
-    const sortedMapped = mapped.sort((a, b) => {
-      const distA = Math.sqrt(Math.pow(a.x - 50, 2) + Math.pow(a.y - 50, 2));
-      const distB = Math.sqrt(Math.pow(b.x - 50, 2) + Math.pow(b.y - 50, 2));
-      return distA - distB;
-    });
-    return { mappedStars: sortedMapped, globalHealth: health };
+    return {
+      mappedStars: mapped,
+      globalHealth: overallProgress,
+      decayCount: totalDecayAlerts
+    };
   }, [subjects, systems, curriculumSets]);
 
-  const completedStars = mappedStars.filter(s => s.state === 'completed').sort((a, b) => a.completionTime - b.completionTime);
-  const allCompleted = completedStars.length === 19;
-  const northStarOpacity = globalHealth / 100;
+  // Currently selected star details for the HUD Inspector
+  const selectedStar = useMemo(() => {
+    if (!selectedStarName) return null;
+    return mappedStars.find(s => s.name === selectedStarName) || null;
+  }, [selectedStarName, mappedStars]);
 
-    return (
+  const handleNavigateToSubject = (subjectId: string | null) => {
+    onOpenChange(false);
+    if (subjectId) {
+      setLocation(`/subjects/${subjectId}`);
+    } else {
+      setLocation('/');
+    }
+  };
+
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent hideCloseButton className={cn(
-        "!max-w-none !w-screen !h-screen !max-h-none !m-0 !p-0 !rounded-none !border-none overflow-hidden flex flex-col [&>button]:hidden",
-        "bg-[#030303] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
-      )}>
-        <DialogTitle className="sr-only">Atlas Sky Constellation</DialogTitle>
-        
-        <div className="absolute inset-0 w-full h-full bg-[#030303] overflow-hidden" onMouseMove={handleMouseMove}>
+      <DialogContent 
+        hideCloseButton 
+        className={cn(
+          "!max-w-none !w-screen !h-screen !max-h-none !m-0 !p-0 !rounded-none !border-none overflow-hidden flex flex-col [&>button]:hidden",
+          "bg-[#030303] text-zinc-100 selection:bg-teal-500/30 font-sans"
+        )}
+      >
+        <DialogTitle className="sr-only">Atlas Sky Astronomical Map</DialogTitle>
+
+        {/* Outer Viewport Container */}
+        <div className="relative w-full h-full bg-[#030303] overflow-hidden flex flex-col justify-between p-4 sm:p-6">
           
-          {/* Subtle desaturated teal radial gradient only at the absolute center */}
-          <div className={cn(
-            "absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] opacity-60 pointer-events-none",
-            allCompleted ? "from-amber-900/10 via-transparent to-transparent" : "from-teal-900/10 via-transparent to-transparent"
-          )} />
+          {/* Subtle Ambient Nebula Glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-transparent to-transparent pointer-events-none z-0" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-teal-500/[0.02] rounded-full blur-[150px] pointer-events-none z-0" />
 
-          {/* Distant ambient noise/dust (moves very slowly) */}
-          <motion.div 
-            className="absolute inset-[-10%] z-0 pointer-events-none"
-            animate={{ x: mousePos.x * 0.2, y: mousePos.y * 0.2 }}
-            transition={{ type: "spring", stiffness: 40, damping: 25 }}
-          >
-            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
-            <div 
-              className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_#ffffff_1px,_transparent_1px)]"
-              style={{ backgroundSize: '60px 60px', transform: 'rotate(15deg)' }} 
-            />
-             <div 
-              className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_#ffffff_1.5px,_transparent_1.5px)]"
-              style={{ backgroundSize: '120px 120px', transform: 'rotate(-5deg)' }} 
-            />
-          </motion.div>
+          {/* TOP HUD HEADER BAR */}
+          <div className="z-30 flex items-center justify-between gap-4 w-full max-w-7xl mx-auto">
+            
+            {/* Title & Luminosity HUD Indicator */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center backdrop-blur-md shadow-md">
+                <Sparkles className="w-4 h-4 text-teal-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-semibold text-zinc-100 tracking-tight">Atlas Sky</h2>
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                    {Math.round(globalHealth)}% Luminosity
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 hidden sm:block">
+                  Astronomical Map of Medical Retention • 19 MBBS Subjects
+                </p>
+              </div>
+            </div>
 
-          <button 
-            onClick={() => onOpenChange(false)}
-            className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50 w-12 h-12 rounded-full bg-transparent flex items-center justify-center text-slate-500/30 hover:text-white hover:bg-white/5 transition-all duration-500 hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            {/* Close Modal Button */}
+            <button 
+              onClick={() => onOpenChange(false)}
+              className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md"
+              title="Close Sky View"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-          <style dangerouslySetInnerHTML={{ __html: `
-            @keyframes drawCurve {
-              from { stroke-dasharray: 2000; stroke-dashoffset: 2000; }
-              to { stroke-dasharray: 2000; stroke-dashoffset: 0; }
-            }
-            @keyframes pulseGlowSlow {
-              0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 15px 2px rgba(251,191,36,0.4); }
-              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 0 20px 4px rgba(251,191,36,0.6); }
-            }
-            @keyframes pulseFlicker {
-              0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px 1px rgba(94,234,212,0.4); }
-              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 12px 2px rgba(94,234,212,0.6); }
-            }
-            @keyframes travelLight {
-              0% { stroke-dasharray: 0 3000; stroke-dashoffset: 0; opacity: 0; }
-              10% { opacity: 0.8; }
-              90% { opacity: 0.8; }
-              100% { stroke-dasharray: 150 3000; stroke-dashoffset: -800; opacity: 0; }
-            }
-            @keyframes sonarRing {
-              0% { transform: scale(0.5); opacity: 0.8; }
-              100% { transform: scale(3.5); opacity: 0; }
-            }
-            @keyframes igniteStar {
-              0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
-              50% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
-              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-            @keyframes fadeNode {
-              0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-          `}} />
+          {/* CENTER CELESTIAL CANVAS AREA */}
+          <div className="relative flex-1 w-full max-w-5xl mx-auto my-2 z-10 flex items-center justify-center">
+            
+            {/* SVG Orbit Rings & Constellation Inter-Orbit Bridges */}
+            <svg 
+              className="absolute inset-0 w-full h-full pointer-events-none z-10" 
+              viewBox="0 0 100 100" 
+              preserveAspectRatio="xMidYMid meet"
+            >
+              {/* Concentric Orbit Rings */}
+              <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1 1.5" />
+              <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1.5 2" />
+              <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="2 3" />
 
-          {/* The constellation SVG lines (moves at medium speed) */}
-          <motion.div 
-            className="absolute inset-[-5%] z-10 pointer-events-none"
-            animate={{ x: mousePos.x * 0.6, y: mousePos.y * 0.6 }}
-            transition={{ type: "spring", stiffness: 40, damping: 25 }}
-          >
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox={`0 0 ${winSize.w * 1.1} ${winSize.h * 1.1}`}>
-              {(mounted || open) && mappedStars.length > 1 && mappedStars.map((star, i) => {
-                if (i === 0) return null;
-                // Connect to a previous star that is closer to center to form a web
-                const prev = mappedStars[Math.max(0, i - 1)]; 
-                const x1 = (prev.x / 100) * (winSize.w * 1.1);
-                const y1 = (prev.y / 100) * (winSize.h * 1.1);
-                const x2 = (star.x / 100) * (winSize.w * 1.1);
-                const y2 = (star.y / 100) * (winSize.h * 1.1);
-                
-                const cx = (x1 + x2) / 2 + (y2 - y1) * 0.15;
-                const cy = (y1 + y2) / 2 - (x2 - x1) * 0.15;
-                
-                const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+              {/* Inter-Orbit Constellation Bridges */}
+              {mappedStars.map(star => {
+                if (!star.bridgeTo) return null;
+                return star.bridgeTo.map(targetName => {
+                  const targetStar = mappedStars.find(s => s.name === targetName);
+                  if (!targetStar) return null;
 
-                return (
-                  <g key={`path-${i}`}>
-                    <path
-                      d={d}
-                      fill="none"
-                      stroke={allCompleted ? "rgba(252, 211, 77, 0.05)" : "rgba(20, 184, 166, 0.05)"}
-                      strokeWidth="1.5"
-                      className="transition-all duration-1000 ease-out"
-                      style={{ animation: `drawCurve 2.5s cubic-bezier(0.2, 0, 0, 1) forwards`, animationDelay: `${1 + (Math.sqrt(Math.pow(x1/winSize.w*100 - 50, 2) + Math.pow(y1/winSize.h*100 - 50, 2))/70) * 1.5}s`, strokeDasharray: 2000, strokeDashoffset: 2000 }}
+                  const isFiltered = activeFilter === 'all' || star.phase === activeFilter || targetStar.phase === activeFilter;
+                  const strokeColor = isFiltered ? "rgba(45, 212, 191, 0.15)" : "rgba(255, 255, 255, 0.03)";
+
+                  return (
+                    <line 
+                      key={`${star.name}-${targetName}`}
+                      x1={star.x}
+                      y1={star.y}
+                      x2={targetStar.x}
+                      y2={targetStar.y}
+                      stroke={strokeColor}
+                      strokeWidth="0.3"
+                      strokeDasharray="0.8 1"
+                      className="transition-colors duration-500"
                     />
-                    <path
-                      d={d}
-                      fill="none"
-                      stroke={allCompleted ? "rgba(252, 211, 77, 0.3)" : "rgba(45, 212, 191, 0.3)"}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      className="opacity-60"
-                      style={{ animation: `travelLight 8s ease-in-out forwards infinite`, animationDelay: `${2.5 + (Math.sqrt(Math.pow(x1/winSize.w*100 - 50, 2) + Math.pow(y1/winSize.h*100 - 50, 2))/70) * 2}s`, strokeDasharray: 0, opacity: 0 }}
-                    />
-                  </g>
-                );
+                  );
+                });
               })}
             </svg>
-          </motion.div>
 
-          {/* Interactive star nodes (moves fastest) */}
-          <motion.div 
-            className="absolute inset-[-5%] z-20 pointer-events-none"
-            animate={{ x: mousePos.x, y: mousePos.y }}
-            transition={{ type: "spring", stiffness: 40, damping: 25 }}
-          >
-              <div 
-                className="absolute transition-all duration-1000 flex items-center justify-center"
-                style={{ 
-                   left: '50%', top: '50%',
-                   opacity: 0,
-                   transform: 'translate(-50%, -50%) scale(0)',
-                   animation: 'igniteStar 1.5s cubic-bezier(0.1, 0, 0.9, 1) forwards'
-                }}
-              >
-                {/* Sonar Ring */}
-                <div 
-                  className="absolute rounded-full border border-teal-500/20"
-                  style={{
-                    width: '120px', height: '120px',
-                    animation: 'sonarRing 10s cubic-bezier(0.1, 0, 0.9, 1) 1.5s infinite'
-                  }}
-                />
-                <AtlasNorthStar globalHealth={globalHealth} />
-              </div>
+            {/* Central North Star (Readiness Anchor) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+              <AtlasNorthStar globalHealth={globalHealth} />
+            </div>
 
-              {mappedStars.map((star, i) => {
-                // Calculate proximity
-                const containerX = -0.05 * winSize.w + mousePos.x;
-                const containerY = -0.05 * winSize.h + mousePos.y;
-                const starScreenX = containerX + (star.x / 100) * (1.1 * winSize.w);
-                const starScreenY = containerY + (star.y / 100) * (1.1 * winSize.h);
+            {/* Interactive Subject Stars */}
+            <div className="absolute inset-0 w-full h-full z-20">
+              {mappedStars.map(star => {
+                const isSelected = selectedStarName === star.name;
                 
-                const dx = cursorPos.x - starScreenX;
-                const dy = cursorPos.y - starScreenY;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                // Filter matching logic
+                let matchesFilter = true;
+                if (activeFilter === 'pre_clinical') matchesFilter = star.phase === 'pre_clinical';
+                else if (activeFilter === 'para_clinical') matchesFilter = star.phase === 'para_clinical';
+                else if (activeFilter === 'clinical') matchesFilter = star.phase === 'clinical';
+                else if (activeFilter === 'decay') matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
+
+                // Color & glow styling based on retentive state
+                let dotColorClass = "bg-zinc-600 shadow-none";
+                let pulseRingClass = "";
                 
-                const maxDist = 180;
-                const isHovered = dist < maxDist;
-                const labelOpacity = isHovered ? Math.max(0, 1 - dist / maxDist) : 0;
-                // Add a tiny baseline opacity if not hovered
-                const finalLabelOpacity = Math.max(0.05, labelOpacity);
-                const isNearest = isHovered && dist < 60; // Very close
-                
-                let starClasses = "absolute rounded-full transition-all duration-1000 origin-center flex items-center justify-center ";
-                let textClasses = "absolute top-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.25em] font-medium whitespace-nowrap transition-all duration-500 ";
-                let animation = '';
-                let sizeStyle = {};
-                
-                const distToCenter = Math.sqrt(Math.pow(star.x - 50, 2) + Math.pow(star.y - 50, 2));
-                const enterDelay = 1.2 + (distToCenter / 70) * 1.5;
-                const enterAnim = `fadeNode 1s ease-out forwards ${enterDelay}s`;
-                
-                
-                switch (star.state) {
-                  case 'not_started':
-                    starClasses += "bg-white/10";
-                    textClasses += "text-slate-500/30";
-                    sizeStyle = { width: '1.5px', height: '1.5px' };
-                    break;
-                  case 'in_progress':
-                    starClasses += "bg-white/40 shadow-[0_0_6px_rgba(20,184,166,0.3)]";
-                    textClasses += "text-teal-500/50";
-                    sizeStyle = { width: '2px', height: '2px' };
-                    break;
-                  case 'strong':
-                    starClasses += "bg-white/80 shadow-[0_0_8px_rgba(45,212,191,0.5)]";
-                    textClasses += "text-teal-200/60";
-                    sizeStyle = { width: '2px', height: '2px' };
-                    break;
-                  case 'revising':
-                    starClasses += "bg-white shadow-[0_0_10px_rgba(94,234,212,0.6)]";
-                    animation = 'pulseFlicker 4s ease-in-out infinite';
-                    textClasses += "text-teal-100/80";
-                    sizeStyle = { width: '2px', height: '2px' };
-                    break;
-                  case 'completed':
-                    starClasses += "bg-white shadow-[0_0_15px_rgba(251,191,36,0.6)]";
-                    animation = 'pulseGlowSlow 8s ease-in-out infinite';
-                    textClasses += "text-amber-100/90";
-                    sizeStyle = { width: '2px', height: '2px' };
-                    break;
+                if (star.state === 'completed') {
+                  dotColorClass = "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]";
+                  pulseRingClass = "border-amber-400/40 animate-ping";
+                } else if (star.state === 'revising') {
+                  dotColorClass = "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]";
+                  pulseRingClass = "border-amber-500/50 animate-pulse";
+                } else if (star.state === 'strong') {
+                  dotColorClass = "bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.8)]";
+                } else if (star.state === 'in_progress') {
+                  dotColorClass = "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]";
                 }
 
                 return (
-                  <div key={star.name} className="absolute" style={{ left: `${star.x}%`, top: `${star.y}%`, opacity: 0, animation: `fadeNode 1.5s cubic-bezier(0.2, 0, 0, 1) forwards ${enterDelay}s` }}>
-                    <div 
-                      className={starClasses} 
-                      style={{
-                        transform: `translate(-50%, -50%) scale(${isNearest ? 1.5 : 1})`,
-                        ...sizeStyle,
-                        animation
-                      }}
-                    >
+                  <div
+                    key={star.name}
+                    style={{ left: `${star.x}%`, top: `${star.y}%` }}
+                    className={cn(
+                      "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 cursor-pointer group p-2",
+                      matchesFilter ? "opacity-100 z-30" : "opacity-20 z-10 hover:opacity-80"
+                    )}
+                    onClick={() => setSelectedStarName(isSelected ? null : star.name)}
+                  >
+                    {/* Outer Tap Target Ring */}
+                    <div className="relative flex items-center justify-center">
+                      
+                      {/* Pulse Ring for Active/Completed Stars */}
+                      {pulseRingClass && matchesFilter && (
+                        <div className={cn("absolute w-6 h-6 rounded-full border", pulseRingClass)} />
+                      )}
+
+                      {/* Selection Aura Highlight */}
+                      {isSelected && (
+                        <div className="absolute w-8 h-8 rounded-full bg-teal-500/20 border border-teal-400/60 animate-pulse" />
+                      )}
+
+                      {/* Main Star Node Dot */}
+                      <div className={cn(
+                        "w-2.5 h-2.5 rounded-full transition-transform duration-200 group-hover:scale-150",
+                        dotColorClass,
+                        isSelected && "scale-150 ring-2 ring-white"
+                      )} />
+
+                      {/* Label Text */}
+                      <span className={cn(
+                        "absolute top-4 left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-200 pointer-events-none",
+                        isSelected ? "text-teal-300 font-bold scale-105" : "text-zinc-400 group-hover:text-zinc-100"
+                      )}>
+                        {star.name}
+                      </span>
                     </div>
-                    <span className={textClasses} style={{ opacity: finalLabelOpacity }}>{star.name}</span>
                   </div>
                 );
               })}
-            </motion.div>
-
-          {/* Heavy Vignette (z-30 to cover edges) */}
-          <div className="absolute inset-0 z-30 pointer-events-none bg-[radial-gradient(ellipse_at_center,_transparent_40%,_#030303_100%)] opacity-100" />
-
-        </div>
-        <div className="absolute bottom-10 left-0 w-full flex justify-center pointer-events-none z-30 opacity-70">
-            <div className="text-center px-6 max-w-sm">
-              <p className="text-sm sm:text-base font-serif text-teal-100/70 italic tracking-wide">"The art of medicine consists of amusing the patient while nature cures the disease."</p>
-              <p className="text-[10px] text-teal-100/40 uppercase tracking-[0.2em] mt-3 border-t border-white/10 pt-2 inline-block">Your Atlas OS Journey</p>
             </div>
           </div>
+
+          {/* BOTTOM HUD INSPECTOR & FILTER BAR CONTAINER */}
+          <div className="z-30 w-full max-w-xl mx-auto space-y-3">
+            
+            {/* Selected Star Details Card (HUD Inspector Drawer) */}
+            <AnimatePresence mode="wait">
+              {selectedStar ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="bg-[#0a0a0a] border border-teal-500/30 rounded-2xl p-4 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.9)] space-y-3 relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                        <Brain className="w-3 h-3" />
+                        <span>{selectedStar.phaseLabel}</span>
+                      </div>
+                      <h3 className="text-base font-semibold text-zinc-100 tracking-tight">
+                        {selectedStar.name}
+                      </h3>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedStarName(null)}
+                      className="text-zinc-500 hover:text-zinc-300 p-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Retention Status Bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-zinc-400">
+                      <span>Syllabus & Retention Progress</span>
+                      <span className="font-mono font-semibold text-teal-400">{selectedStar.progress}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-teal-400 rounded-full transition-all duration-500" 
+                        style={{ width: `${selectedStar.progress}%` }} 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Systems Breakdown & Focus Action */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 border-t border-white/[0.06]">
+                    <div className="text-xs text-zinc-400 flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-teal-400" />
+                      <span>
+                        {selectedStar.totalSystemsCount > 0 
+                          ? `${selectedStar.strongSystemsCount} / ${selectedStar.totalSystemsCount} Systems Mastered`
+                          : "Curriculum Pending"}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleNavigateToSubject(selectedStar.dbSubjectId)}
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <span>Initiate Focus Revision</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            {/* Medical Phase Filter Strip */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md">
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
+                  activeFilter === 'all'
+                    ? "bg-white/10 text-zinc-100 border border-white/10 font-semibold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                )}
+              >
+                All 19
+              </button>
+              <button
+                onClick={() => setActiveFilter('pre_clinical')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
+                  activeFilter === 'pre_clinical'
+                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                )}
+              >
+                Pre-Clinical (3)
+              </button>
+              <button
+                onClick={() => setActiveFilter('para_clinical')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
+                  activeFilter === 'para_clinical'
+                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                )}
+              >
+                Para-Clinical (5)
+              </button>
+              <button
+                onClick={() => setActiveFilter('clinical')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
+                  activeFilter === 'clinical'
+                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                )}
+              >
+                Clinical (11)
+              </button>
+              {decayCount > 0 && (
+                <button
+                  onClick={() => setActiveFilter('decay')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                    activeFilter === 'decay'
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold"
+                      : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
+                  )}
+                >
+                  <ShieldAlert className="w-3 h-3 text-amber-400" />
+                  <span>Revision Alert ({decayCount})</span>
+                </button>
+              )}
+            </div>
+
+          </div>
+
+        </div>
       </DialogContent>
     </Dialog>
   );
