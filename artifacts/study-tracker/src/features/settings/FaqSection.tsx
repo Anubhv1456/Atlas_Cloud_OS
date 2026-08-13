@@ -1,64 +1,34 @@
-import React, { useState } from 'react';
-import { HelpCircle, ChevronRight, ChevronDown } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import { SettingsRow } from './SettingsLayout';
-
-const FAQ_DATA = [
-  { id: '1', question: 'How do recommendations work?', answer: 'Atlas uses an algorithm based on spaced repetition, your past scores, and syllabus completion to suggest what to study next.' },
-  { id: '2', question: 'Is my data backed up?', answer: 'Yes, your data is securely stored and synced via Firebase.' },
-  { id: '3', question: 'How can I renew beta access?', answer: 'As Atlas evolves, early members will be transitioned to the full release automatically.' }
-];
+import { HelpGuideModal } from '@/components/HelpGuideModal';
 
 export function FaqSection() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
-  const toggleItem = (id: string) => {
-    setOpenIds(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  useEffect(() => {
+    const handleOpenManual = () => setModalOpen(true);
+    window.addEventListener('open-masterclass', handleOpenManual);
+    window.addEventListener('open-user-manual', handleOpenManual);
+    window.addEventListener('open-manual', handleOpenManual);
+    return () => {
+      window.removeEventListener('open-masterclass', handleOpenManual);
+      window.removeEventListener('open-user-manual', handleOpenManual);
+      window.removeEventListener('open-manual', handleOpenManual);
+    };
+  }, []);
 
   return (
     <>
       <SettingsRow
-        icon={HelpCircle}
-        label="Help & FAQ"
+        icon={BookOpen}
+        label="User Manual and FAQs"
         control={<ChevronRight className="w-4 h-4 text-muted-foreground" />}
         onClick={() => setModalOpen(true)}
       />
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-              <HelpCircle className="w-4.5 h-4.5 text-primary" />
-              Help & FAQ
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-            {FAQ_DATA.map(item => {
-              const isOpen = !!openIds[item.id];
-              return (
-                <div key={item.id} className="rounded-xl border border-border/60 bg-muted/20 overflow-hidden transition-colors">
-                  <button
-                    type="button"
-                    onClick={() => toggleItem(item.id)}
-                    className="w-full flex items-center justify-between p-3 text-left text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors gap-3 cursor-pointer"
-                  >
-                    <span className="truncate">{item.question}</span>
-                    <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {isOpen && (
-                    <div className="px-3.5 pb-3.5 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/40 bg-muted/10 animate-in fade-in slide-in-from-top-1 duration-150">
-                      {item.answer}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <HelpGuideModal open={modalOpen} onOpenChange={setModalOpen} />
     </>
   );
 }
+

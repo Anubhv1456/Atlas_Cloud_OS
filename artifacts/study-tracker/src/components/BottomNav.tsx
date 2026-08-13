@@ -1,14 +1,14 @@
 import { Link, useLocation } from 'wouter';
-import { Home, CalendarDays, BarChart3, Settings, Search, Sparkles, Target, ShieldCheck, User, ShieldAlert } from 'lucide-react';
+import { Home, CalendarDays, BarChart3, Settings, Sparkles, Target, ShieldCheck, User, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { TargetExamModal } from '@/components/TargetExamModal';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function BottomNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { profile, isConfigured } = useExamProfile();
   const { user } = useAuth();
   const [examModalOpen, setExamModalOpen] = useState(false);
@@ -21,13 +21,74 @@ export function BottomNav() {
     { href: '/settings',  icon: Settings,      label: 'Settings',  shortcut: '4' },
   ];
 
-    
+  // Robust path matching supporting subroutes (e.g. /subjects/:id)
+  const isPathActive = useCallback((href: string) => {
+    if (href === '/') {
+      return location === '/' || location.startsWith('/subjects');
+    }
+    return location === href || location.startsWith(href + '/') || location.startsWith(href + '?');
+  }, [location]);
+
+  // Keyboard shortcut listener (⌘1, ⌘2, ⌘M, ⌘3, ⌘4 or Alt+1...)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.getAttribute('role') === 'textbox')
+      ) {
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) {
+        const key = e.key.toUpperCase();
+        if (key === '1') {
+          e.preventDefault();
+          setLocation('/');
+        } else if (key === '2') {
+          e.preventDefault();
+          setLocation('/timeline');
+        } else if (key === 'M') {
+          e.preventDefault();
+          setLocation('/mistakes');
+        } else if (key === '3') {
+          e.preventDefault();
+          setLocation('/analytics');
+        } else if (key === '4') {
+          e.preventDefault();
+          setLocation('/settings');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setLocation]);
+
+  // Handle tap/click: Scroll to top if re-clicking active tab, plus tactile haptics
+  const handleTabClick = (href: string, e: React.MouseEvent) => {
+    if (isPathActive(href)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(8);
+        } catch {
+          // Ignore if vibration unsupported or restricted
+        }
+      }
+    }
+  };
+
   return (
     <>
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
 
       {/* ── DESKTOP SIDEBAR (Visible on md+ screens) ────────────────────────── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 lg:w-72 z-40 bg-card/75 backdrop-blur-2xl border-r border-border/60 flex-col justify-between p-4 shadow-sm select-none">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 lg:w-72 z-40 bg-card/80 backdrop-blur-2xl border-r border-border/60 flex-col justify-between p-4 shadow-sm select-none">
         <div className="space-y-6">
           {/* Brand Header */}
           <Link href="/" className="flex items-center gap-3 px-2 py-1.5 group cursor-pointer">
@@ -44,31 +105,31 @@ export function BottomNav() {
             </div>
           </Link>
 
-
           {/* Navigation Links */}
           <nav className="space-y-1">
             <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Navigation</div>
             {links.map(({ href, icon: Icon, label, shortcut }) => {
-              const isActive = location === href;
+              const active = isPathActive(href);
               return (
                 <Link
                   key={href}
                   href={href}
+                  onClick={(e) => handleTabClick(href, e)}
                   className={cn(
-                    "relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group cursor-pointer",
-                    isActive
+                    "relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group cursor-pointer select-none",
+                    active
                       ? "text-primary font-bold bg-primary/10 dark:bg-primary/15 border border-primary/25 shadow-2xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
                   <div className="flex items-center gap-3 z-10">
-                    <Icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                    <Icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                     <span>{label}</span>
                   </div>
                   {shortcut && (
                     <span className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors",
-                      isActive ? "bg-primary/20 text-primary" : "text-muted-foreground/60 group-hover:text-muted-foreground"
+                      "text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors z-10",
+                      active ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground/60 group-hover:text-muted-foreground"
                     )}>
                       ⌘{shortcut}
                     </span>
@@ -118,31 +179,32 @@ export function BottomNav() {
 
       {/* ── MOBILE FLOATING DOCK (Visible on small screens < md) ────────────── */}
       <div 
-        className="md:hidden fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/80 bg-background/80 dark:bg-card/85 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.18)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.45)] px-2 py-1.5 flex items-center justify-around transition-all duration-300"
+        className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/80 bg-background/85 dark:bg-card/90 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.2)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.55)] px-2 py-1.5 flex items-center justify-around transition-all duration-300 pointer-events-auto select-none"
         style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
-        <div className="relative w-full flex items-center justify-around gap-1">
+        <div className="relative w-full flex items-center justify-around gap-1 h-full">
           {links.map(({ href, icon: Icon, label }) => {
-            const isActive = location === href;
+            const active = isPathActive(href);
             return (
               <Link
                 key={href}
                 href={href}
+                onClick={(e) => handleTabClick(href, e)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center h-12 flex-1 group rounded-full py-1 px-2 transition-colors duration-200 cursor-pointer select-none",
-                  isActive ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+                  "relative flex flex-col items-center justify-center h-full flex-1 group rounded-full py-1 px-1 transition-colors duration-200 cursor-pointer select-none touch-manipulation active:scale-95 overflow-hidden",
+                  active ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {/* Active Sliding Glowing Pill */}
-                {isActive && (
+                {active && (
                   <motion.div
                     layoutId="activeNavPillMobile"
-                    className="absolute inset-0 bg-primary/15 dark:bg-primary/22 rounded-full border border-primary/35 shadow-[0_2px_14px_rgba(31,168,155,0.22)]"
+                    className="absolute inset-0 bg-primary/15 dark:bg-primary/22 rounded-full border border-primary/35 shadow-[0_2px_12px_rgba(31,168,155,0.2)]"
                     transition={{
                       type: "spring",
-                      stiffness: 520,
-                      damping: 38,
-                      mass: 0.5
+                      stiffness: 420,
+                      damping: 32,
+                      mass: 0.6
                     }}
                   />
                 )}
@@ -150,12 +212,12 @@ export function BottomNav() {
                 <div className="z-10 flex flex-col items-center justify-center gap-0.5">
                   <Icon className={cn(
                     "w-5 h-5 transition-all duration-150",
-                    isActive ? "text-primary scale-105" : "text-muted-foreground group-hover:text-foreground"
+                    active ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
                   )} />
 
                   <span className={cn(
-                    "text-[10px] font-medium tracking-tight transition-colors duration-150 mt-0.5",
-                    isActive ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"
+                    "text-[10px] tracking-tight transition-colors duration-150 mt-0.5",
+                    active ? "text-primary font-bold" : "text-muted-foreground font-medium group-hover:text-foreground"
                   )}>
                     {label}
                   </span>
@@ -168,6 +230,7 @@ export function BottomNav() {
     </>
   );
 }
+
 
 
 

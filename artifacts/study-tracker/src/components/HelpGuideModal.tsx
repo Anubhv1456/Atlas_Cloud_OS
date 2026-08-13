@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown } from 'lucide-react';
+import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown, HelpCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -206,6 +206,52 @@ const CHAPTERS = [
         </section>
       </div>
     )
+  },
+  {
+    id: 'faq',
+    title: 'Frequently Asked Questions',
+    icon: HelpCircle,
+    searchTerms: 'faq question answer help backup firebase recommendations decay retrievability focus mode triage beta access',
+    content: (
+      <div className="space-y-6">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">How do recommendations work?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas uses an intelligent algorithm based on spaced memory decay, past confidence ratings, PYQ weighting, and exam yield to calculate what system or topic deserves your attention next.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Is my study data backed up?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Yes. Your progress, custom study blocks, and mistake recovery logs are saved locally and synced securely to the cloud via Firebase when connected.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Can I override the recommendation engine?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Absolutely. Click the Target icon (Focus Mode) on the home screen or inside any subject to pin a primary or secondary focus area for upcoming college internal exams or targeted study sprints.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">What happens if I miss several days of study?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas automatically triggers <strong>Triage Mode</strong> after prolonged inactivity, reorganizing overdue reviews by yield and urgency without overwhelming you or punishing your stats.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">How do High-Yield tags work?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Tagging a system as High-Yield gives it a massive priority multiplier in the recommendation queue, ensuring high-yield exam concepts surface more frequently.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">How can I renew or maintain beta access?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            As Atlas transitions to official releases, early cohort members will be seamlessly migrated to full production tiers.
+          </p>
+        </section>
+      </div>
+    )
   }
 ];
 
@@ -236,10 +282,10 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
         <DialogHeader className="p-4 md:p-6 pb-4 border-b border-border/50 bg-card/30 flex-shrink-0">
           <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-            Atlas Masterclass
+            User Manual & FAQs
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm mt-1">
-            The definitive guide to unlocking your strategic brain.
+            The complete operating guide, philosophy, and reference manual for Atlas.
           </DialogDescription>
           <div className="mt-4 relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -268,7 +314,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
                       key={chapter.id}
                       onClick={() => setActiveTabId(chapter.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer",
                         isActive 
                           ? "bg-primary text-primary-foreground shadow-md" 
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -316,7 +362,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
                     <button
                       onClick={() => setExpandedMobileId(isExpanded ? null : chapter.id)}
                       className={cn(
-                        "w-full flex items-center justify-between p-4 text-left transition-colors focus:outline-none",
+                        "w-full flex items-center justify-between p-4 text-left transition-colors focus:outline-none cursor-pointer",
                         isExpanded ? "bg-muted/30" : "hover:bg-muted/10"
                       )}
                     >
@@ -344,3 +390,4 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
     </Dialog>
   );
 }
+

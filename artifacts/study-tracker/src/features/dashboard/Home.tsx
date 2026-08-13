@@ -80,8 +80,13 @@ export default function Home() {
 
   useEffect(() => {
     const handleOpenOnboarding = () => setOnboardingOpen(true);
+    const handleOpenMasterclass = () => setHelpOpen(true);
     window.addEventListener('open-onboarding', handleOpenOnboarding);
-    return () => window.removeEventListener('open-onboarding', handleOpenOnboarding);
+    window.addEventListener('open-masterclass', handleOpenMasterclass);
+    return () => {
+      window.removeEventListener('open-onboarding', handleOpenOnboarding);
+      window.removeEventListener('open-masterclass', handleOpenMasterclass);
+    };
   }, []);
 
   return (
@@ -110,15 +115,6 @@ export default function Home() {
           {/* Action controls - Top Right Corner */}
           <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
             <AtlasSkyPreview />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-foreground rounded-full w-9 h-9 shrink-0"
-              onClick={() => setHelpOpen(true)}
-              title="Atlas Guidance & Help"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Button>
           </div>
         </header>
             
