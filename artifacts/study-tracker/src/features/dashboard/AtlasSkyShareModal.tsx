@@ -8,6 +8,7 @@ import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 
 export interface MappedStar {
   name: string;
+  shortName?: string;
   phase: PhaseType;
   phaseLabel: string;
   angle: number;
@@ -215,19 +216,31 @@ export function AtlasSkyShareModal({
                 preserveAspectRatio="none"
               >
                 <defs>
-                  <filter id="goldenExportGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="0.8" result="blur" />
+                  <filter id="goldenExportGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="0.4" result="blur" />
                     <feMerge>
                       <feMergeNode in="blur" />
                       <feMergeNode in="SourceGraphic" />
                     </feMerge>
                   </filter>
+
+                  <linearGradient id="exportStarlightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.9" />
+                    <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#FCD34D" stopOpacity="0.9" />
+                  </linearGradient>
+
+                  <radialGradient id="exportJointHalo">
+                    <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
 
                 {/* Concentric Orbit Rings */}
-                <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.3" strokeDasharray="1 1.5" />
-                <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.3" strokeDasharray="1.5 2" />
-                <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.3" strokeDasharray="2 2.5" />
+                <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.25" strokeDasharray="1 1.5" />
+                <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.25" strokeDasharray="1.5 2" />
+                <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.25" strokeDasharray="2 2.5" />
 
                 {/* Chronological Golden Constellation Lines */}
                 {completedChronologicalChain.map((currStar, index) => {
@@ -236,23 +249,29 @@ export function AtlasSkyShareModal({
 
                   return (
                     <g key={`export-line-${prevStar.name}-${currStar.name}`}>
+                      {/* Ambient outer glow */}
                       <line 
                         x1={prevStar.x}
                         y1={prevStar.y}
                         x2={currStar.x}
                         y2={currStar.y}
-                        stroke="rgba(251, 191, 36, 0.4)"
-                        strokeWidth="1.2"
+                        stroke="rgba(251, 191, 36, 0.35)"
+                        strokeWidth="0.65"
                         filter="url(#goldenExportGlow)"
                       />
+                      {/* Core starlight vector line */}
                       <line 
                         x1={prevStar.x}
                         y1={prevStar.y}
                         x2={currStar.x}
                         y2={currStar.y}
-                        stroke="rgba(251, 191, 36, 0.9)"
-                        strokeWidth="0.5"
+                        stroke="url(#exportStarlightGrad)"
+                        strokeWidth="0.26"
+                        strokeLinecap="round"
                       />
+                      {/* Endpoint Joint Halos */}
+                      <circle cx={prevStar.x} cy={prevStar.y} r="0.75" fill="url(#exportJointHalo)" opacity="0.9" />
+                      <circle cx={currStar.x} cy={currStar.y} r="0.75" fill="url(#exportJointHalo)" opacity="0.9" />
                     </g>
                   );
                 })}
@@ -267,6 +286,7 @@ export function AtlasSkyShareModal({
               {mappedStars.map(star => {
                 const isCompleted = star.state === 'completed';
                 const isRevising = star.state === 'revising' || star.state === 'in_progress' || star.state === 'strong';
+                const isUpperHemisphere = star.y < 48;
 
                 return (
                   <div
@@ -279,25 +299,26 @@ export function AtlasSkyShareModal({
                       className={cn(
                         "rounded-full transition-all duration-300 flex items-center justify-center",
                         isCompleted
-                          ? "w-3 h-3 bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/40"
+                          ? "w-2.5 h-2.5 bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/40"
                           : isRevising
-                            ? "w-2.5 h-2.5 bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.7)]"
-                            : "w-2 h-2 bg-zinc-600/60"
+                            ? "w-2 h-2 bg-teal-400 shadow-[0_0_6px_rgba(45,212,191,0.7)]"
+                            : "w-1.5 h-1.5 bg-zinc-600/60"
                       )}
                     />
 
                     {/* Star Label */}
                     <span 
                       className={cn(
-                        "mt-1 text-[8px] font-medium tracking-tight text-center whitespace-nowrap leading-tight px-1 rounded-xs backdrop-blur-xs",
+                        "absolute left-1/2 -translate-x-1/2 text-[8px] font-semibold tracking-tight text-center whitespace-nowrap leading-tight px-0.5 rounded-xs pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+                        isUpperHemisphere ? "-top-3.5" : "top-2.5",
                         isCompleted
-                          ? "text-amber-300 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                          ? "text-amber-300 font-bold"
                           : isRevising
                             ? "text-zinc-200"
                             : "text-zinc-500/70"
                       )}
                     >
-                      {star.name}
+                      {star.shortName || star.name}
                     </span>
                   </div>
                 );

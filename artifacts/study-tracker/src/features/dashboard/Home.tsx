@@ -89,38 +89,36 @@ export default function Home() {
       <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="relative z-10 flex-1 flex flex-col">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center justify-between w-full sm:w-auto gap-3.5">
-            <div className="flex items-center gap-3.5">
-              <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
-              <div>
-                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                  <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5" /> NEET PG 2026 • Cohort Active
+        <header className="mb-8 flex items-start justify-between gap-3 sm:gap-4">
+          <div className="flex items-start gap-3 sm:gap-3.5 min-w-0">
+            <img src="/emblem.svg" alt="Atlas Logo" className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" /> NEET PG 2026 • Cohort Active
+                </span>
+                {streak > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                    <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d Streak
                   </span>
-                  {streak > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500">
-                      <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d Streak
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
+                )}
               </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight truncate">{greeting}</h1>
             </div>
+          </div>
 
-            {/* Action controls for header */}
-            <div className="flex items-center gap-1.5">
-              <AtlasSkyPreview />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-muted-foreground hover:text-foreground rounded-full w-9 h-9"
-                onClick={() => setHelpOpen(true)}
-                title="Atlas Guidance & Help"
-              >
-                <HelpCircle className="w-5 h-5" />
-              </Button>
-            </div>
+          {/* Action controls - Top Right Corner */}
+          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+            <AtlasSkyPreview />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-foreground rounded-full w-9 h-9 shrink-0"
+              onClick={() => setHelpOpen(true)}
+              title="Atlas Guidance & Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Button>
           </div>
         </header>
             

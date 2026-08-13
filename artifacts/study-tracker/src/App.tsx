@@ -19,19 +19,44 @@ import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 
 import NotFound from '@/pages/not-found';
 
-const Home = lazy(() => import('@/features/dashboard/Home'));
-const Landing = lazy(() => import('@/pages/Landing'));
-const AcceptInvitation = lazy(() => import('@/pages/AcceptInvitation'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const Contact = lazy(() => import('@/pages/Contact'));
-const BetaAccess = lazy(() => import('@/pages/BetaAccess'));
-const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
-const Analytics = lazy(() => import('@/features/analytics/Analytics'));
-const Settings = lazy(() => import('@/features/settings/Settings'));
-const Timeline = lazy(() => import('@/features/timeline/Timeline'));
-const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
-const MistakeRecoveryQueue = lazy(() => import('@/features/mistakes/MistakeRecoveryQueue'));
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  componentImport: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.warn('Dynamic import failed, retrying module fetch:', error);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return await componentImport();
+      } catch (retryError) {
+        const hasRefreshed = sessionStorage.getItem('atlas_chunk_retry_refreshed');
+        if (!hasRefreshed) {
+          sessionStorage.setItem('atlas_chunk_retry_refreshed', 'true');
+          window.location.reload();
+          return new Promise<{ default: T }>(() => {});
+        }
+        sessionStorage.removeItem('atlas_chunk_retry_refreshed');
+        throw retryError;
+      }
+    }
+  });
+}
+
+const Home = lazyWithRetry(() => import('@/features/dashboard/Home'));
+const Landing = lazyWithRetry(() => import('@/pages/Landing'));
+const AcceptInvitation = lazyWithRetry(() => import('@/pages/AcceptInvitation'));
+const PrivacyPolicy = lazyWithRetry(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'));
+const Contact = lazyWithRetry(() => import('@/pages/Contact'));
+const BetaAccess = lazyWithRetry(() => import('@/pages/BetaAccess'));
+const AdminDashboard = lazyWithRetry(() => import('@/features/admin/AdminDashboard'));
+const Analytics = lazyWithRetry(() => import('@/features/analytics/Analytics'));
+const Settings = lazyWithRetry(() => import('@/features/settings/Settings'));
+const Timeline = lazyWithRetry(() => import('@/features/timeline/Timeline'));
+const SubjectDetail = lazyWithRetry(() => import('@/features/subjects/SubjectDetail'));
+const MistakeRecoveryQueue = lazyWithRetry(() => import('@/features/mistakes/MistakeRecoveryQueue'));
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';

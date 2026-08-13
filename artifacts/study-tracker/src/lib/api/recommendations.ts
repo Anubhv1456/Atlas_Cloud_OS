@@ -31,14 +31,41 @@ export async function getNextActionWithFallback(
 
       if (token) {
         // Collect current IndexedDB data to send to serverless handler
-        const subjects = await db.subjects.filter((s) => !s.deletedAt).toArray().catch(() => []);
-        const systems = await db.systems.filter((s) => !s.deletedAt).toArray().catch(() => []);
+        const rawSubjects = await db.subjects.filter((s) => !s.deletedAt).toArray().catch(() => []);
+        const rawSystems = await db.systems.filter((s) => !s.deletedAt).toArray().catch(() => []);
         const setTable = db.curriculumSets || db.revisionSets;
-        const curriculumSets = setTable
+        const rawCurriculumSets = setTable
           ? await setTable.filter((s) => !s.deletedAt).toArray().catch(() => [])
           : [];
-        const topicProgresses = await db.topicProgress.toArray().catch(() => []);
+        const rawTopicProgresses = await db.topicProgress.toArray().catch(() => []);
         const daysSinceLastStudy = await getDaysSinceLastStudy().catch(() => 0);
+
+        // Map to lightweight payloads to optimize request body size
+        const subjects = rawSubjects.map(s => ({ id: s.id, name: s.name }));
+        const systems = rawSystems.map(sys => ({
+          id: sys.id,
+          name: sys.name,
+          decayFactor: sys.decayFactor,
+          contentCompleted: sys.contentCompleted
+        }));
+        const curriculumSets = rawCurriculumSets.map(set => ({
+          id: set.id,
+          name: set.name,
+          subjectId: set.subjectId,
+          systemId: set.systemId,
+          topicIds: set.topicIds,
+          focus: set.focus,
+          focusUpdatedAt: set.focusUpdatedAt,
+          nextRevisionDate: set.nextRevisionDate,
+          lastRevisionDate: set.lastRevisionDate,
+          currentRevisionInterval: set.currentRevisionInterval,
+          revisionCount: set.revisionCount,
+          updatedAt: set.updatedAt
+        }));
+        const topicProgresses = rawTopicProgresses.map(tp => ({
+          topicId: tp.topicId,
+          isWeak: tp.isWeak
+        }));
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);

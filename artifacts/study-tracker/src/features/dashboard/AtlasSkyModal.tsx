@@ -25,6 +25,7 @@ export type PhaseType = 'pre_clinical' | 'para_clinical' | 'clinical';
 
 export interface CelestialSubject {
   name: string;
+  shortName: string;
   phase: PhaseType;
   phaseLabel: string;
   angle: number; // in degrees
@@ -33,11 +34,12 @@ export interface CelestialSubject {
   y: number; // calculated percentage y (0..100)
 }
 
-// 19 MBBS / NEET PG Subjects arranged into 3 Concentric Medical Phase Orbits
+// 19 MBBS / NEET PG Subjects arranged into 3 Concentric Medical Phase Orbits with non-overlapping celestial angles
 const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   // --- PRE-CLINICAL FOUNDATION (Orbit 1: r = 18%) ---
   {
     name: 'Anatomy',
+    shortName: 'Anatomy',
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 270,
@@ -45,6 +47,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Physiology',
+    shortName: 'Physiology',
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 30,
@@ -52,6 +55,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Biochemistry',
+    shortName: 'Biochemistry',
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 150,
@@ -61,27 +65,31 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   // --- PARA-CLINICAL BRIDGE (Orbit 2: r = 31%) ---
   {
     name: 'Pathology',
+    shortName: 'Pathology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
-    angle: 234,
+    angle: 220,
     radiusPercent: 31
   },
   {
     name: 'Pharmacology',
+    shortName: 'Pharmacology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
-    angle: 306,
+    angle: 330,
     radiusPercent: 31
   },
   {
     name: 'Microbiology',
+    shortName: 'Microbiology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
-    angle: 18,
+    angle: 35,
     radiusPercent: 31
   },
   {
     name: 'Forensic Medicine & Toxicology',
+    shortName: 'Forensic Med',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 90,
@@ -89,15 +97,17 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Community Medicine (PSM)',
+    shortName: 'Community Med',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
-    angle: 162,
+    angle: 172,
     radiusPercent: 31
   },
 
   // --- CLINICAL SPECIALTIES (Orbit 3: r = 43%) ---
   {
     name: 'Medicine',
+    shortName: 'Medicine',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 270,
@@ -105,6 +115,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'General Surgery',
+    shortName: 'Surgery',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 302.7,
@@ -112,6 +123,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Obstetrics & Gynaecology',
+    shortName: 'OBGY',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 335.5,
@@ -119,6 +131,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Pediatrics',
+    shortName: 'Pediatrics',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 8.2,
@@ -126,6 +139,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Orthopedics',
+    shortName: 'Orthopedics',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 40.9,
@@ -133,6 +147,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'ENT (Otorhinolaryngology)',
+    shortName: 'ENT',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 73.6,
@@ -140,6 +155,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Ophthalmology',
+    shortName: 'Ophthal',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 106.4,
@@ -147,6 +163,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Psychiatry',
+    shortName: 'Psychiatry',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 139.1,
@@ -154,6 +171,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Dermatology',
+    shortName: 'Dermatology',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 171.8,
@@ -161,6 +179,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Radiology',
+    shortName: 'Radiology',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 204.5,
@@ -168,6 +187,7 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
   },
   {
     name: 'Anaesthesiology',
+    shortName: 'Anaesthesia',
     phase: 'clinical',
     phaseLabel: 'Clinical Specialty',
     angle: 237.3,
@@ -370,19 +390,31 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 preserveAspectRatio="none"
               >
               <defs>
-                <filter id="goldenConstellationGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="0.8" result="blur" />
+                <filter id="goldenConstellationGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="0.4" result="blur" />
                   <feMerge>
                     <feMergeNode in="blur" />
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+
+                <linearGradient id="starlightGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#FCD34D" stopOpacity="0.9" />
+                </linearGradient>
+
+                <radialGradient id="starlightJointHalo">
+                  <stop offset="0%" stopColor="#FDE68A" stopOpacity="0.8" />
+                  <stop offset="40%" stopColor="#F59E0B" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+                </radialGradient>
               </defs>
 
               {/* Concentric Orbit Rings */}
-              <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1 1.5" />
-              <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1.5 2" />
-              <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="2 3" />
+              <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.25" strokeDasharray="1 1.5" />
+              <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.25" strokeDasharray="1.5 2" />
+              <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.25" strokeDasharray="2 3" />
 
               {/* Chronological Golden Constellation Lines connecting 100% completed subjects in order of completion */}
               {completedChronologicalChain.map((currStar, index) => {
@@ -395,26 +427,43 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
                 return (
                   <g key={`constellation-line-${prevStar.name}-${currStar.name}`}>
-                    {/* Soft background glow line */}
+                    {/* Outer ambient ethereal glow */}
                     <line 
                       x1={prevStar.x}
                       y1={prevStar.y}
                       x2={currStar.x}
                       y2={currStar.y}
-                      stroke={isFiltered ? "rgba(251, 191, 36, 0.4)" : "rgba(251, 191, 36, 0.1)"}
-                      strokeWidth="1.2"
+                      stroke={isFiltered ? "rgba(251, 191, 36, 0.35)" : "rgba(251, 191, 36, 0.08)"}
+                      strokeWidth="0.65"
                       filter="url(#goldenConstellationGlow)"
                     />
-                    {/* Primary straight pulsating golden line */}
+                    {/* Refined core starlight vector beam */}
                     <line 
                       x1={prevStar.x}
                       y1={prevStar.y}
                       x2={currStar.x}
                       y2={currStar.y}
-                      stroke={isFiltered ? "rgba(251, 191, 36, 0.85)" : "rgba(251, 191, 36, 0.2)"}
-                      strokeWidth="0.45"
-                      className="animate-pulse transition-all duration-500"
+                      stroke={isFiltered ? "url(#starlightGoldGrad)" : "rgba(251, 191, 36, 0.2)"}
+                      strokeWidth="0.26"
+                      strokeLinecap="round"
                     />
+                    {/* Animated white starlight dash pulse */}
+                    {isFiltered && (
+                      <line 
+                        x1={prevStar.x}
+                        y1={prevStar.y}
+                        x2={currStar.x}
+                        y2={currStar.y}
+                        stroke="#FFFFFF"
+                        strokeWidth="0.28"
+                        strokeDasharray="1 3.5"
+                        strokeOpacity="0.6"
+                        className="animate-pulse"
+                      />
+                    )}
+                    {/* Endpoint Joint Halos */}
+                    <circle cx={prevStar.x} cy={prevStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
+                    <circle cx={currStar.x} cy={currStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
                   </g>
                 );
               })}
@@ -453,6 +502,9 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                   dotColorClass = "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]";
                 }
 
+                // Smart label position: Upper hemisphere = label above; Lower hemisphere = label below
+                const isUpperHemisphere = star.y < 48;
+
                 return (
                   <div
                     key={star.name}
@@ -483,12 +535,13 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                         isSelected && "scale-150 ring-2 ring-white"
                       )} />
 
-                      {/* Label Text */}
+                      {/* Smart Radial Label Text */}
                       <span className={cn(
-                        "absolute top-4 left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-200 pointer-events-none",
+                        "absolute left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-200 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
+                        isUpperHemisphere ? "-top-4" : "top-3.5",
                         isSelected ? "text-teal-300 font-bold scale-105" : "text-zinc-400 group-hover:text-zinc-100"
                       )}>
-                        {star.name}
+                        {star.shortName || star.name}
                       </span>
                     </div>
                   </div>
