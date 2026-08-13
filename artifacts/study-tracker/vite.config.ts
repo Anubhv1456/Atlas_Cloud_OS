@@ -15,26 +15,83 @@ export default defineConfig({
       selfDestroying: false,
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'favicon.png', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png', 'logo.svg', 'emblem.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.ico', 
+        'favicon.png', 
+        'favicon-32x32.png', 
+        'favicon-16x16.png', 
+        'apple-touch-icon.png', 
+        'apple-touch-icon-precomposed.png', 
+        'logo.svg', 
+        'emblem.svg', 
+        'pwa-192x192.png', 
+        'pwa-512x512.png',
+        'pwa-maskable-192x192.png',
+        'pwa-maskable-512x512.png'
+      ],
       manifestFilename: 'manifest.json',
       manifest: {
+        id: '/',
         name: 'Atlas Study Tracker',
         short_name: 'Atlas',
         description: 'An intelligent medical study operating system for MBBS students.',
         theme_color: '#121315',
         background_color: '#121315',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        categories: ['education', 'medical', 'productivity'],
+        dir: 'ltr',
+        lang: 'en-US',
         icons: [
           { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
           { src: '/favicon-32x32.png', sizes: '32x32', type: 'image/png', purpose: 'any' },
           { src: '/favicon.png', sizes: '64x64', type: 'image/png', purpose: 'any' }
+        ],
+        shortcuts: [
+          {
+            name: 'Atlas Sky',
+            short_name: 'Sky',
+            description: 'View retention constellation map',
+            url: '/?openSky=true',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Timeline',
+            short_name: 'Timeline',
+            description: 'View revision timeline',
+            url: '/timeline',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Analytics',
+            short_name: 'Analytics',
+            description: 'View spaced retention analytics',
+            url: '/analytics',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          }
+        ],
+        screenshots: [
+          {
+            src: '/screenshots/home.svg',
+            sizes: '1280x720',
+            type: 'image/svg+xml',
+            form_factor: 'wide',
+            label: 'Atlas Dashboard & Intelligent Recommendations'
+          },
+          {
+            src: '/screenshots/analytics.svg',
+            sizes: '720x1280',
+            type: 'image/svg+xml',
+            form_factor: 'narrow',
+            label: 'Spaced Retention Analytics'
+          }
         ]
       },
       workbox: {

@@ -135,7 +135,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
         </div>
         <div className="p-4 rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
           <p className="text-sm text-muted-foreground">
-            Organize topics the way you revise on Marrow, PrepLadder, or your own notes.
+            Organize topics the way you revise across your primary QBank, notes, or lecture sets.
           </p>
         </div>
         <CurriculumSetForm

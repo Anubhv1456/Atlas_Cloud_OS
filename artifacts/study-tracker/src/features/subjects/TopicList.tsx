@@ -3,7 +3,7 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { OntologyTopic } from '@/data/ontology';
 import { TopicProgress } from '@/db/types';
-import { CheckCircle2, Circle, CircleDashed, Target, MessageSquarePlus, MessageCircle, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';
+import { CheckCircle2, Circle, CircleDashed, Target, MessageSquarePlus, Compass, TriangleAlert, ChevronDown, FolderPlus, Plus, GripVertical, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { generateHLC } from '@/lib/hlc';
@@ -268,15 +268,15 @@ export function TopicList({
                   <div className="flex items-center gap-1 border-r border-border/50 pr-1.5 mr-0.5">
                     <button 
                       onClick={() => onViewMarkers?.(topic.id, topic.name)}
-                      className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10"
-                      title="View Markers"
+                      className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10 cursor-pointer"
+                      title="Trail Markers"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
+                      <Compass className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => onLeaveMarker?.(topic.id, topic.name)}
-                      className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10"
-                      title="Leave Marker"
+                      className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-primary/10 cursor-pointer"
+                      title="Leave Trail Marker"
                     >
                       <MessageSquarePlus className="w-3.5 h-3.5" />
                     </button>

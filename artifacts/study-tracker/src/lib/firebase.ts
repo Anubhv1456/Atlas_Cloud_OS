@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, initializeAuth, Auth, browserLocalPersistence, browserPopupRedirectResolver } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDocFromServer } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 import firebaseConfig from "../firebase-applet-config.json";
 
@@ -43,17 +43,5 @@ try {
 export const firestoreDb = dbInstance;
 export const googleProvider = new GoogleAuthProvider();
 
-// Validate Connection to Firestore as per Firebase skill guidelines
-async function testConnection() {
-  if (!firestoreDb) return;
-  try {
-    await getDocFromServer(doc(firestoreDb, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn("Firestore connectivity notice: client operating in offline/cached mode.");
-    }
-  }
-}
-testConnection();
 
 

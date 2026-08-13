@@ -32,25 +32,31 @@ class FirestoreTable<T> {
   public startListener(uid: string) {
     if (this.unsubscribe) this.unsubscribe();
     const q = collection(firestoreDb, `users/${uid}/${this.name}`);
-    this.unsubscribe = onSnapshot(q, (snapshot) => {
-       snapshot.docChanges().forEach((change) => {
-         const data = change.doc.data();
-         // Parse date objects properly
-         for (const key in data) {
-           if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
+    this.unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data();
+          // Parse date objects properly
+          for (const key in data) {
+            if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
               data[key] = data[key].toDate();
-           }
-         }
-         
-         if (change.type === "added" || change.type === "modified") {
-             this.cache.set(change.doc.id, { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T);
-         }
-         if (change.type === "removed") {
-             this.cache.delete(change.doc.id);
-         }
-       });
-       dbEvents.emit('change', this.name);
-    });
+            }
+          }
+          
+          if (change.type === "added" || change.type === "modified") {
+            this.cache.set(change.doc.id, { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T);
+          }
+          if (change.type === "removed") {
+            this.cache.delete(change.doc.id);
+          }
+        });
+        dbEvents.emit('change', this.name);
+      },
+      (error) => {
+        console.warn(`[FirestoreTable:${this.name}] Snapshot listener operating in offline/cache mode:`, error);
+      }
+    );
   }
 
   public stopListener() {

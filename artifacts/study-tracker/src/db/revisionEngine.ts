@@ -23,10 +23,11 @@ export function getSystemDecayFactor(sys: StudySystem): number {
   return sys.decayFactor ?? 1.0;
 }
 
-export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): number {
-  if (!hasRevisionScheduled(sys, curriculumSets)) return 0;
+export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+  if (!hasRevisionScheduled(sys, safeSets)) return 0;
   
-  const sets = curriculumSets.filter(s => s.systemId === sys.id && true && s.nextRevisionDate);
+  const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   if (sets.length === 0) return 0;
 
   // Compute memory loss per set
@@ -50,7 +51,7 @@ export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: Curriculum
   return Math.min(100, Math.max(0, Math.round(blockLoss * 10) / 10));
 }
 
-export function getRetrievability(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): number {
+export function getRetrievability(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {
   return 100 - getSystemMemoryLoss(sys, curriculumSets, now);
 }
 
@@ -70,20 +71,23 @@ export function getRetrievabilityHealth(retrievability: number): {
   }
 }
 
-export function getActiveRevisionSystems(systems: StudySystem[]): StudySystem[] {
-  return systems.filter(sys => sys.revisionState === 'in_progress');
+export function getActiveRevisionSystems(systems: StudySystem[] = []): StudySystem[] {
+  const safeSystems = Array.isArray(systems) ? systems : [];
+  return safeSystems.filter(sys => sys && sys.revisionState === 'in_progress');
 }
 
-export function hasActiveRevisionInProgress(systems: StudySystem[]): boolean {
+export function hasActiveRevisionInProgress(systems: StudySystem[] = []): boolean {
   return getActiveRevisionSystems(systems).length > 0;
 }
 
-export function hasRevisionScheduled(sys: StudySystem, curriculumSets: CurriculumSet[]): boolean {
-  return curriculumSets.some(s => s.systemId === sys.id && true && s.nextRevisionDate);
+export function hasRevisionScheduled(sys: StudySystem, curriculumSets: CurriculumSet[] = []): boolean {
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+  return safeSets.some(s => s && s.systemId === sys.id && s.nextRevisionDate);
 }
 
-export function isRevisionDue(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): boolean {
-  const sets = curriculumSets.filter(s => s.systemId === sys.id && true && s.nextRevisionDate);
+export function isRevisionDue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+  const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   const n = new Date(now);
   n.setHours(0, 0, 0, 0);
   
@@ -94,8 +98,9 @@ export function isRevisionDue(sys: StudySystem, curriculumSets: CurriculumSet[],
   });
 }
 
-export function isRevisionOverdue(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): boolean {
-  const sets = curriculumSets.filter(s => s.systemId === sys.id && true && s.nextRevisionDate);
+export function isRevisionOverdue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+  const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   const n = new Date(now);
   n.setHours(0, 0, 0, 0);
   
@@ -106,12 +111,13 @@ export function isRevisionOverdue(sys: StudySystem, curriculumSets: CurriculumSe
   });
 }
 
-export function isRevisionDueToday(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): boolean {
+export function isRevisionDueToday(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
   return isRevisionDue(sys, curriculumSets, now) && !isRevisionOverdue(sys, curriculumSets, now);
 }
 
-export function daysOverdue(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): number {
-  const sets = curriculumSets.filter(s => s.systemId === sys.id && true && s.nextRevisionDate);
+export function daysOverdue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+  const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   const n = new Date(now);
   n.setHours(0, 0, 0, 0);
   

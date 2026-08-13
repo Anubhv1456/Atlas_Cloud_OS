@@ -10,55 +10,64 @@ import { cn } from '@/lib/utils';
 
 interface SubjectsGridProps {
   subjects: Subject[];
-  systems: StudySystem[];
+  systems?: StudySystem[];
   handleSubjectDragEnd: (result: DropResult) => void;
 }
+
+const PHASE_MAPPING: Record<string, string[]> = {
+  'Pre-Clinical': ['Anatomy', 'Physiology', 'Biochemistry'],
+  'Para-Clinical': ['Pathology', 'Microbiology', 'Pharmacology', 'Forensic Medicine & Toxicology', 'Community Medicine (PSM)'],
+  'Clinical': ['General Medicine', 'Medicine', 'General Surgery', 'Surgery', 'Obstetrics & Gynaecology', 'OBGY', 'Pediatrics', 'Orthopedics', 'ENT (Otorhinolaryngology)', 'Ophthalmology', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
+};
 
 const YEAR_MAPPING: Record<string, string[]> = {
   '1st Year': ['Anatomy', 'Physiology', 'Biochemistry'],
   '2nd Year': ['Pathology', 'Microbiology', 'Pharmacology'],
   '3rd Year': ['Forensic Medicine & Toxicology', 'Community Medicine (PSM)', 'ENT (Otorhinolaryngology)', 'Ophthalmology'],
-  'Final Year': ['General Medicine', 'General Surgery', 'Obstetrics & Gynaecology', 'Pediatrics', 'Orthopedics', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
+  'Final Year': ['General Medicine', 'Medicine', 'General Surgery', 'Surgery', 'Obstetrics & Gynaecology', 'OBGY', 'Pediatrics', 'Orthopedics', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
 };
 
-type FilterOption = 'All' | '1st Year' | '2nd Year' | '3rd Year' | 'Final Year';
+type FilterOption = 'All' | 'Pre-Clinical' | 'Para-Clinical' | 'Clinical' | '1st Year' | 'Final Year';
 
 export function SubjectsGrid({
-  subjects,
-  systems,
+  subjects = [],
+  systems = [],
   handleSubjectDragEnd
 }: SubjectsGridProps) {
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
 
+  const safeSubjects = Array.isArray(subjects) ? subjects : [];
+  const safeSystems = Array.isArray(systems) ? systems : [];
+
   const filteredSubjects = React.useMemo(() => {
-    if (activeFilter === 'All') return subjects;
-    const allowedNames = YEAR_MAPPING[activeFilter] || [];
-    return subjects.filter(sub => allowedNames.includes(sub.name));
-  }, [subjects, activeFilter]);
+    if (activeFilter === 'All') return safeSubjects;
+    const allowedNames = PHASE_MAPPING[activeFilter] || YEAR_MAPPING[activeFilter] || [];
+    return safeSubjects.filter(sub => sub && allowedNames.includes(sub.name));
+  }, [safeSubjects, activeFilter]);
 
   return (
     <section id="subject-portfolio" className="flex-1">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5" /> Subject Portfolio
+            <BookOpen className="w-3.5 h-3.5 text-teal-500" /> Subject Radar
           </h2>
           <span className="text-[10px] font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
-            {filteredSubjects.length}
+            {filteredSubjects.length} / {subjects.length}
           </span>
         </div>
         
-        {/* Year Filter */}
+        {/* Medical Phase / Year Filter */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none">
           <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1 hidden sm:block" />
-          {(['All', '1st Year', '2nd Year', '3rd Year', 'Final Year'] as FilterOption[]).map(filter => (
+          {(['All', 'Pre-Clinical', 'Para-Clinical', 'Clinical'] as FilterOption[]).map(filter => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer",
                 activeFilter === filter 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  ? "bg-primary text-primary-foreground shadow-sm font-semibold" 
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -122,7 +131,7 @@ export function SubjectsGrid({
                       >
                         <SubjectCard
                           subject={subject}
-                          systems={systems.filter(s => s.subjectId === subject.id)}
+                          systems={safeSystems.filter(s => s && s.subjectId === subject.id)}
                           dragHandleProps={provided.dragHandleProps}
                         />
                       </div>

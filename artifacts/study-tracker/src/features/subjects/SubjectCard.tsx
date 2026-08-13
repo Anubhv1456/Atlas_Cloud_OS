@@ -1,7 +1,7 @@
 import { normalizeName } from "@/lib/exam-presets";
 import { Link } from "wouter";
 import { ChevronRight, MoreVertical, PencilLine, Trash2 } from "lucide-react";
-import { Subject, StudySystem, db, updateSubject, deleteSubject } from "@/db";
+import { Subject, StudySystem, db, updateSubject, deleteSubject, isRevisionDue } from "@/db";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import { ALL_SYSTEMS, ALL_SUBJECTS } from "@/data/ontology";
@@ -25,22 +25,27 @@ interface SubjectCardProps {
 
 export function SubjectCard({
   subject,
-  systems,
+  systems = [],
   dragHandleProps,
 }: SubjectCardProps) {
-  const systemIds = systems.map(s => s.id!);
+  const safeSystems = Array.isArray(systems) ? systems : [];
+  const systemIds = safeSystems.map(s => s?.id!).filter(Boolean);
   
   const curriculumSets = useLiveQuery(
     async () => {
       const table = db.curriculumSets || db.revisionSets;
-      if (systemIds.length === 0) return [];
-      return await table.where('subjectId').equals(subject.id!).toArray().then(arr => arr.filter(s => !s.deletedAt));
+      if (!table || systemIds.length === 0 || !subject?.id) return [];
+      return await table.where('subjectId').equals(subject.id).toArray().then(arr => (arr || []).filter(s => s && !s.deletedAt));
     },
-    [subject.id]
+    [subject?.id, systemIds.length]
   ) || [];
 
-  const progress = calculateSubjectProgress(subject, systems, curriculumSets);
-  const isFullyComplete = progress === 100 && systems.length > 0;
+  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+
+  const progress = calculateSubjectProgress(subject, safeSystems, safeSets);
+  const isFullyComplete = progress === 100 && safeSystems.length > 0;
+  const weakCount = safeSystems.filter(s => s?.status === 'Weak').length;
+  const overdueCount = safeSystems.filter(s => s && isRevisionDue(s, safeSets)).length;
 
   return (
     <div
@@ -72,11 +77,21 @@ export function SubjectCard({
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-2.5 flex-wrap text-xs font-medium text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-              {systems.length} {systems.length === 1 ? "System" : "Systems"}
+              {safeSystems.length} {safeSystems.length === 1 ? "System" : "Systems"}
             </span>
+            {overdueCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                ⚡ {overdueCount} Due
+              </span>
+            )}
+            {weakCount > 0 && overdueCount === 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                {weakCount} Weak
+              </span>
+            )}
           </div>
         </Link>
 

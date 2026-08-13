@@ -1,7 +1,7 @@
 import { firestoreDb } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 
-export type MarkerType = 'mnemonic' | 'pitfall' | 'high_yield' | 'resource' | 'clinical_pearl' | 'memory_trick';
+export type MarkerType = 'clinical_pearl' | 'mnemonic' | 'pitfall' | 'resource' | 'high_yield' | 'memory_trick';
 export type MarkerStatus = 'pending' | 'published' | 'trusted' | 'featured' | 'low_quality' | 'archived';
 
 export interface MarkerSubmission {
@@ -44,7 +44,7 @@ export async function submitMarker(marker: MarkerSubmission) {
     subjectName: marker.subjectName || '',
     systemName: marker.systemName || '',
     topicName: marker.topicName || '',
-    type: marker.type || 'mnemonic',
+    type: marker.type || 'clinical_pearl',
     content: marker.content,
     userId: marker.userId || null,
     authorAlias: marker.authorAlias || 'Wayfinder',
@@ -55,7 +55,7 @@ export async function submitMarker(marker: MarkerSubmission) {
     reportedBy: [],
     readCount: 0,
     qualityScore: 50,
-    status: 'published', // For V1 preview, set to published so users can see it immediately.
+    status: 'published', // Published for instant peer access
     createdAt: serverTimestamp(),
   };
 
@@ -69,7 +69,7 @@ export async function submitMarker(marker: MarkerSubmission) {
 export async function interactWithMarker(
   markerId: string,
   userId: string,
-  action: 'helpful' | 'not_helpful' | 'save' | 'report' | 'read'
+  action: 'helpful' | 'save' | 'report' | 'read' | 'not_helpful'
 ) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const markerRef = doc(firestoreDb, 'insights', markerId);
@@ -82,38 +82,24 @@ export async function interactWithMarker(
 
   if (action === 'helpful') {
     const helpfulBy = Array.isArray(data.helpfulBy) ? data.helpfulBy : [];
-    const notHelpfulBy = Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [];
     if (!helpfulBy.includes(userId)) {
       updates.helpfulBy = arrayUnion(userId);
       updates.usefulCount = increment(1);
-      currentScore += 2;
-      
-      if (notHelpfulBy.includes(userId)) {
-        updates.notHelpfulBy = arrayRemove(userId);
-        currentScore += 2;
-      }
-    }
-  } else if (action === 'not_helpful') {
-    const notHelpfulBy = Array.isArray(data.notHelpfulBy) ? data.notHelpfulBy : [];
-    const helpfulBy = Array.isArray(data.helpfulBy) ? data.helpfulBy : [];
-    if (!notHelpfulBy.includes(userId)) {
-      updates.notHelpfulBy = arrayUnion(userId);
-      currentScore -= 2;
-      
-      if (helpfulBy.includes(userId)) {
-        updates.helpfulBy = arrayRemove(userId);
-        updates.usefulCount = increment(-1);
-        currentScore -= 2;
-      }
+      currentScore += 5;
+    } else {
+      // Toggle off verification
+      updates.helpfulBy = arrayRemove(userId);
+      updates.usefulCount = increment(-1);
+      currentScore -= 5;
     }
   } else if (action === 'save') {
     const savedBy = Array.isArray(data.savedBy) ? data.savedBy : [];
     if (!savedBy.includes(userId)) {
       updates.savedBy = arrayUnion(userId);
-      currentScore += 4;
+      currentScore += 3;
     } else {
       updates.savedBy = arrayRemove(userId);
-      currentScore -= 4; // Unsave
+      currentScore -= 3;
     }
   } else if (action === 'report') {
     const reportedBy = Array.isArray(data.reportedBy) ? data.reportedBy : [];
@@ -128,13 +114,11 @@ export async function interactWithMarker(
   if (Object.keys(updates).length > 0 || action === 'read') {
     updates.qualityScore = Math.max(0, Math.min(100, currentScore));
     
-    // Auto-hide logic based on score
+    // Auto-promote or auto-flag based on peer verifications
     if (updates.qualityScore < 30 && data.status === 'published') {
       updates.status = 'low_quality';
-    } else if (updates.qualityScore < 10 && data.status !== 'archived') {
-      updates.status = 'archived';
-    } else if (updates.qualityScore >= 30 && data.status === 'low_quality') {
-      updates.status = 'published';
+    } else if (updates.qualityScore >= 70 && data.status === 'published') {
+      updates.status = 'trusted';
     }
 
     await updateDoc(markerRef, updates);

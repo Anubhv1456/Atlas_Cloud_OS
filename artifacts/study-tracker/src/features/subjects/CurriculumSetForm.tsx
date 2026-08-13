@@ -98,7 +98,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                 autoFocus
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. PrepLadder RR, Marrow Block 1..."
+                placeholder="e.g. Revision QBank, Main Content Block 1..."
                 required
               />
             </div>

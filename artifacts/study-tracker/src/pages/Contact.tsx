@@ -17,7 +17,9 @@ import {
   Youtube, 
   Instagram, 
   ExternalLink,
-  Share2
+  Share2,
+  Brain,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +40,7 @@ export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    category: 'Beta Feedback',
+    category: 'Algorithm & Direction',
     subject: '',
     message: '',
   });
@@ -81,7 +83,7 @@ export default function Contact() {
         userId: user?.uid,
       });
       setSubmitted(true);
-      toast.success('Your message has been transmitted directly to the Founder Console!');
+      toast.success('Your message has been transmitted to the Atlas Engineering team.');
     } catch (err: any) {
       console.error(err);
       toast.error('Failed to deliver message. Please try again.');
@@ -92,13 +94,20 @@ export default function Contact() {
 
   const socialChannels = [
     { key: 'twitter' as const, label: 'Twitter / X', icon: Twitter, ...socials.twitter, color: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
-    { key: 'discord' as const, label: 'Discord', icon: MessageSquare, ...socials.discord, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+    { key: 'discord' as const, label: 'Discord Community', icon: MessageSquare, ...socials.discord, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
     { key: 'github' as const, label: 'GitHub', icon: Github, ...socials.github, color: 'text-slate-300 bg-slate-500/10 border-slate-500/20' },
     { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, ...socials.linkedin, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-    { key: 'telegram' as const, label: 'Telegram', icon: SendIcon, ...socials.telegram, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+    { key: 'telegram' as const, label: 'Telegram Broadcast', icon: SendIcon, ...socials.telegram, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
     { key: 'youtube' as const, label: 'YouTube', icon: Youtube, ...socials.youtube, color: 'text-red-400 bg-red-500/10 border-red-500/20' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, ...socials.instagram, color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
   ].filter(c => c.enabled && c.url);
+
+  const categories = [
+    { id: 'algo', label: 'Algorithm & Direction', icon: Brain, description: 'Spaced decay & recommendations' },
+    { id: 'curriculum', label: 'Syllabus Mapping', icon: BookOpen, description: 'Subject/system hierarchy' },
+    { id: 'bug', label: 'Bug Report', icon: Bug, description: 'System performance or errors' },
+    { id: 'feature', label: 'Feature Request', icon: Lightbulb, description: 'Ideas to sharpen study OS' },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20">
@@ -110,7 +119,7 @@ export default function Contact() {
               variant="ghost"
               size="sm"
               onClick={() => window.history.length > 1 ? window.history.back() : setLocation('/')}
-              className="gap-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground"
+              className="gap-1.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
@@ -123,27 +132,27 @@ export default function Contact() {
               <span className="font-bold tracking-tight text-sm">Atlas OS</span>
             </Link>
           </div>
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-4 text-xs font-medium">
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-              Privacy
+              Privacy Policy
             </Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-              Terms
+              Terms of Service
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Header */}
-      <div className="border-b border-border/40 bg-muted/20 py-12 px-4 sm:px-6">
+      <div className="border-b border-border/40 bg-muted/15 py-12 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
             <MessageSquare className="w-3.5 h-3.5" />
-            Beta Support & Feedback
+            Product & Engineering Support
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Contact Founder & Team</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Direct Line to Atlas Engineers</h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-2xl leading-relaxed">
-            Every submission goes directly to the Founder Admin Console. Connect with us or send your feedback below.
+            Building the Intelligent Medical Study Operating System requires continuous feedback from medical candidates. Share your insights on recommendation accuracy, subject mapping, or system UX.
           </p>
         </div>
       </div>
@@ -151,15 +160,15 @@ export default function Contact() {
       {/* Main Grid */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Direct Channels (Social Media Platform Icons) */}
+          {/* Left Column: Direct Channels */}
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-primary" />
-                <h2 className="font-bold text-lg tracking-tight">Official Channels</h2>
+                <h2 className="font-bold text-lg tracking-tight">Verified Channels</h2>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Connect with our team across our verified social handles:
+                Connect with our product leads and medical engineering team across verified platforms:
               </p>
             </div>
 
@@ -178,7 +187,7 @@ export default function Contact() {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-card border border-border/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs hover:border-primary/50 transition-all hover:scale-[1.01] group"
+                    className="bg-card border border-border/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs hover:border-primary/50 transition-all hover:scale-[1.01] group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${color}`}>
@@ -204,8 +213,8 @@ export default function Contact() {
                 <Clock className="w-4.5 h-4.5" />
               </div>
               <div>
-                <div className="text-xs font-semibold text-foreground">Direct Admin Integration</div>
-                <div className="text-[11px] text-muted-foreground">Inquiries route live to Founder Console</div>
+                <div className="text-xs font-semibold text-foreground">Direct Engineering Sync</div>
+                <div className="text-[11px] text-muted-foreground">Submissions route live to Founder Console</div>
               </div>
             </div>
 
@@ -213,16 +222,16 @@ export default function Contact() {
             <div className="bg-muted/30 border border-border/60 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <HelpCircle className="w-4 h-4 text-primary" />
-                Frequently Asked
+                Frequently Asked Questions
               </div>
               <div className="space-y-3 text-xs text-muted-foreground">
                 <div>
-                  <span className="font-semibold text-foreground block mb-0.5">Where do these messages go?</span>
-                  Every form submission is stored securely in Firestore and monitored in real-time in the Admin Console.
+                  <span className="font-semibold text-foreground block mb-0.5">What feedback is most valuable?</span>
+                  Insights on recommendation relevance, Spaced Decay calibration, or curriculum mapping for MBBS, NEET PG, INICET, FMGE, and USMLE exams.
                 </div>
                 <div>
-                  <span className="font-semibold text-foreground block mb-0.5">Can I backup my local data?</span>
-                  Yes! Go to Settings → Export Data to download a complete JSON archive.
+                  <span className="font-semibold text-foreground block mb-0.5">How is my study data protected?</span>
+                  All study progress is stored locally on your device in IndexedDB. Local data exports (JSON) can be generated at any time in Settings.
                 </div>
               </div>
             </div>
@@ -232,9 +241,9 @@ export default function Contact() {
           <div className="lg:col-span-7">
             <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
               <div>
-                <h2 className="font-bold text-xl tracking-tight">Send Us a Message</h2>
+                <h2 className="font-bold text-xl tracking-tight">Transmit Feedback</h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Transmits directly to our Admin console inbox.
+                  Reaches the Atlas product team directly.
                 </p>
               </div>
 
@@ -244,9 +253,9 @@ export default function Contact() {
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-foreground">Message Transmitted!</h3>
+                    <h3 className="text-lg font-bold text-foreground">Message Delivered</h3>
                     <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
-                      Thank you! Your message is now waiting in the Founder Console inbox.
+                      Thank you for helping refine Atlas OS. Your message has been logged in the engineering queue.
                     </p>
                   </div>
                   <Button
@@ -256,18 +265,18 @@ export default function Contact() {
                       setSubmitted(false);
                       setFormData(prev => ({ ...prev, subject: '', message: '' }));
                     }}
-                    className="mt-2 rounded-xl text-xs"
+                    className="mt-2 rounded-xl text-xs cursor-pointer"
                   >
-                    Send Another Message
+                    Send Another Inquiry
                   </Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-xs font-semibold">Your Name *</Label>
+                      <Label htmlFor="contact-name" className="text-xs font-semibold">Your Name *</Label>
                       <Input
-                        id="name"
+                        id="contact-name"
                         placeholder="Dr. Alex Rivera"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -277,11 +286,11 @@ export default function Contact() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
+                      <Label htmlFor="contact-email" className="text-xs font-semibold">Email Address *</Label>
                       <Input
-                        id="email"
+                        id="contact-email"
                         type="email"
-                        placeholder="alex@medical.edu"
+                        placeholder="alex@med.edu"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                         required
@@ -291,36 +300,34 @@ export default function Contact() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Category</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { label: 'Beta Feedback', icon: Sparkles },
-                        { label: 'Bug Report', icon: Bug },
-                        { label: 'Feature Request', icon: Lightbulb },
-                        { label: 'General', icon: MessageSquare },
-                      ].map(({ label, icon: Icon }) => (
+                    <Label className="text-xs font-semibold">Inquiry Focus</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {categories.map(({ id, label, icon: Icon, description }) => (
                         <button
-                          key={label}
+                          key={id}
                           type="button"
                           onClick={() => setFormData({ ...formData, category: label })}
-                          className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-medium transition-all ${
+                          className={`flex items-start gap-3 p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                             formData.category === label
                               ? 'bg-primary/10 border-primary text-primary shadow-xs'
-                              : 'border-border/60 hover:border-border text-muted-foreground hover:text-foreground'
+                              : 'border-border/60 hover:border-border text-muted-foreground hover:text-foreground bg-muted/20'
                           }`}
                         >
-                          <Icon className="w-4 h-4 mb-1" />
-                          <span>{label}</span>
+                          <Icon className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
+                          <div>
+                            <div className="font-semibold text-foreground">{label}</div>
+                            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{description}</div>
+                          </div>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="subject" className="text-xs font-semibold">Subject</Label>
+                    <Label htmlFor="contact-subject" className="text-xs font-semibold">Subject</Label>
                     <Input
-                      id="subject"
-                      placeholder="Brief title for your query..."
+                      id="contact-subject"
+                      placeholder="e.g. NEET PG System weights or recommendation feedback"
                       value={formData.subject}
                       onChange={e => setFormData({ ...formData, subject: e.target.value })}
                       className="rounded-xl text-xs"
@@ -328,11 +335,11 @@ export default function Contact() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="message" className="text-xs font-semibold">Message *</Label>
+                    <Label htmlFor="contact-message" className="text-xs font-semibold">Message *</Label>
                     <Textarea
-                      id="message"
+                      id="contact-message"
                       rows={5}
-                      placeholder="Describe your question, issue, or feedback in detail..."
+                      placeholder="Share your thoughts on study algorithms, subject hierarchy mapping, memory decay calibration, or report a technical issue..."
                       value={formData.message}
                       onChange={e => setFormData({ ...formData, message: e.target.value })}
                       required
@@ -343,14 +350,14 @@ export default function Contact() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl gap-2 font-semibold text-xs py-5"
+                    className="w-full rounded-xl gap-2 font-semibold text-xs py-5 cursor-pointer"
                   >
                     {loading ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
                         <SendIcon className="w-4 h-4" />
-                        Send to Admin Console
+                        Send to Engineering Team
                       </>
                     )}
                   </Button>
@@ -366,8 +373,8 @@ export default function Contact() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-foreground">Atlas OS</span>
-            <span>© 2026. Beta Support Desk.</span>
+            <span className="font-semibold text-foreground">Atlas Operating System</span>
+            <span>© 2026. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>

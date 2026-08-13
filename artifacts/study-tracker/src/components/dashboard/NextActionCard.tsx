@@ -183,22 +183,22 @@ export function NextActionCard({
             {result?.isTriageMode && (
               <div className="mb-1.5">
                 <Badge variant="outline" className="text-[11px] sm:text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold py-0.5 px-2.5 leading-snug whitespace-normal inline-block">
-                  Welcome back. Reviews reorganized for comfortable restart.
+                  Session calibrated for optimal retention.
                 </Badge>
               </div>
             )}
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <span className="text-[11px] font-bold uppercase tracking-wider text-primary truncate">
-                {isCustomFocusPinned ? "Primary Focus Directive" : "Next Best Action"}
+                {isCustomFocusPinned ? "Target Focus" : "Recommended Action"}
               </span>
               <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0 border-primary/30 text-primary font-mono shrink-0">
-                {isCustomFocusPinned ? "Custom Pinned" : "Sub-10s Engine"}
+                {isCustomFocusPinned ? "Manually Pinned" : "Calculated Focus"}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {isCustomFocusPinned 
-                ? "Manually targeted focus • Highest study priority"
-                : "Zero decision fatigue • Priority-ranked for maximum score impact"}
+                ? "Manually pinned for immediate review"
+                : "Calculated based on memory decay and exam weightage"}
             </p>
           </div>
         </div>
@@ -265,7 +265,7 @@ export function NextActionCard({
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-primary shrink-0" />
-                Explicit student target • High priority mastery target
+                Target focus pinned for study session
               </p>
             </div>
           </div>

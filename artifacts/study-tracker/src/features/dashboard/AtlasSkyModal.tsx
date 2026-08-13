@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { 
   X, ArrowRight, Brain, Target, Sparkles, Filter, 
-  RotateCcw, ShieldAlert, CheckCircle2, BookOpen 
+  RotateCcw, ShieldAlert, CheckCircle2, BookOpen, Share2 
 } from 'lucide-react';
 import { Subject, StudySystem } from '@/db';
 import { CurriculumSet } from '@/db/types';
@@ -11,6 +11,7 @@ import { calculateSubjectProgress, calculateOverallProgress } from '@/lib/progre
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import { useLocation } from 'wouter';
+import { AtlasSkyShareModal } from './AtlasSkyShareModal';
 
 interface AtlasSkyModalProps {
   open: boolean;
@@ -30,7 +31,6 @@ export interface CelestialSubject {
   radiusPercent: number; // percentage radius from center
   x: number; // calculated percentage x (0..100)
   y: number; // calculated percentage y (0..100)
-  bridgeTo?: string[]; // Subject names to connect via inter-orbit bridge
 }
 
 // 19 MBBS / NEET PG Subjects arranged into 3 Concentric Medical Phase Orbits
@@ -41,24 +41,21 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 270,
-    radiusPercent: 18,
-    bridgeTo: ['Pathology', 'General Surgery']
+    radiusPercent: 18
   },
   {
     name: 'Physiology',
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 30,
-    radiusPercent: 18,
-    bridgeTo: ['Pharmacology', 'Medicine']
+    radiusPercent: 18
   },
   {
     name: 'Biochemistry',
     phase: 'pre_clinical',
     phaseLabel: 'Pre-Clinical Foundation',
     angle: 150,
-    radiusPercent: 18,
-    bridgeTo: ['Microbiology', 'Pediatrics']
+    radiusPercent: 18
   },
 
   // --- PARA-CLINICAL BRIDGE (Orbit 2: r = 31%) ---
@@ -67,40 +64,35 @@ const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 234,
-    radiusPercent: 31,
-    bridgeTo: ['Medicine', 'General Surgery']
+    radiusPercent: 31
   },
   {
     name: 'Pharmacology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 306,
-    radiusPercent: 31,
-    bridgeTo: ['Anaesthesiology', 'Psychiatry']
+    radiusPercent: 31
   },
   {
     name: 'Microbiology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 18,
-    radiusPercent: 31,
-    bridgeTo: ['Dermatology', 'Pediatrics']
+    radiusPercent: 31
   },
   {
     name: 'Forensic Medicine & Toxicology',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 90,
-    radiusPercent: 31,
-    bridgeTo: ['Community Medicine (PSM)']
+    radiusPercent: 31
   },
   {
     name: 'Community Medicine (PSM)',
     phase: 'para_clinical',
     phaseLabel: 'Para-Clinical Bridge',
     angle: 162,
-    radiusPercent: 31,
-    bridgeTo: ['Obstetrics & Gynaecology']
+    radiusPercent: 31
   },
 
   // --- CLINICAL SPECIALTIES (Orbit 3: r = 43%) ---
@@ -199,6 +191,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
   const [, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState<'all' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
   const [selectedStarName, setSelectedStarName] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Clear selected star when modal opens/closes
   useEffect(() => {
@@ -207,8 +200,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     }
   }, [open]);
 
-  // Compute live progress and retentive status for all 19 stars
-  const { mappedStars, globalHealth, decayCount } = useMemo(() => {
+  // Compute live progress, retentive status, and chronological completion chain for all 19 stars
+  const { mappedStars, completedChronologicalChain, globalHealth, decayCount } = useMemo(() => {
     const aliasMap: Record<string, string> = {
       'General Medicine': 'Medicine',
       'Surgery': 'General Surgery',
@@ -226,6 +219,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       let totalSystemsCount = 0;
       let strongSystemsCount = 0;
       let weakSystemsCount = 0;
+      let completedAtTime = 0;
 
       if (dbSubject) {
         dbSubjectId = dbSubject.id;
@@ -242,6 +236,14 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
         if (isCompleted) {
           state = 'completed';
+          const setTimes = subSets
+            .map(s => s.completedAt ? new Date(s.completedAt).getTime() : (s.updatedAt ? new Date(s.updatedAt).getTime() : 0))
+            .filter(t => t > 0);
+          if (setTimes.length > 0) {
+            completedAtTime = Math.max(...setTimes);
+          } else if (dbSubject.updatedAt) {
+            completedAtTime = new Date(dbSubject.updatedAt).getTime();
+          }
         } else if (isRevising || weakSystemsCount > 0) {
           state = 'revising';
           totalDecayAlerts++;
@@ -257,14 +259,26 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
         dbSubjectId,
         totalSystemsCount,
         strongSystemsCount,
-        weakSystemsCount
+        weakSystemsCount,
+        completedAtTime
       };
     });
+
+    // Chronological constellation chain connecting only 100% completed golden subjects in order
+    const completedChain = mapped
+      .filter(star => star.state === 'completed')
+      .sort((a, b) => {
+        if (a.completedAtTime !== b.completedAtTime) {
+          return a.completedAtTime - b.completedAtTime;
+        }
+        return CELESTIAL_SUBJECTS.findIndex(s => s.name === a.name) - CELESTIAL_SUBJECTS.findIndex(s => s.name === b.name);
+      });
 
     const overallProgress = calculateOverallProgress(subjects, systems, curriculumSets);
 
     return {
       mappedStars: mapped,
+      completedChronologicalChain: completedChain,
       globalHealth: overallProgress,
       decayCount: totalDecayAlerts
     };
@@ -324,54 +338,85 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               </div>
             </div>
 
-            {/* Close Modal Button */}
-            <button 
-              onClick={() => onOpenChange(false)}
-              className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md"
-              title="Close Sky View"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Top Right Action Controls */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShareModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 text-xs font-medium transition-all cursor-pointer backdrop-blur-md shadow-xs group"
+                title="Share Atlas Sky Constellation"
+              >
+                <Share2 className="w-3.5 h-3.5 text-teal-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline font-medium">Share Map</span>
+              </button>
+
+              <button 
+                onClick={() => onOpenChange(false)}
+                className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.02] hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md"
+                title="Close Sky View"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* CENTER CELESTIAL CANVAS AREA */}
-          <div className="relative flex-1 w-full max-w-5xl mx-auto my-2 z-10 flex items-center justify-center">
-            
-            {/* SVG Orbit Rings & Constellation Inter-Orbit Bridges */}
-            <svg 
-              className="absolute inset-0 w-full h-full pointer-events-none z-10" 
-              viewBox="0 0 100 100" 
-              preserveAspectRatio="xMidYMid meet"
-            >
+          <div className="relative flex-1 w-full flex items-center justify-center z-10 my-auto py-2 overflow-hidden">
+            <div className="relative w-full aspect-square max-w-[min(100%,68vh,520px)] max-h-[min(100%,68vh,520px)] mx-auto flex items-center justify-center">
+              
+              {/* SVG Orbit Rings & Chronological Golden Constellation Lines */}
+              <svg 
+                className="absolute inset-0 w-full h-full pointer-events-none z-10" 
+                viewBox="0 0 100 100" 
+                preserveAspectRatio="none"
+              >
+              <defs>
+                <filter id="goldenConstellationGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="0.8" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
               {/* Concentric Orbit Rings */}
               <circle cx="50" cy="50" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1 1.5" />
               <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="1.5 2" />
               <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.3" strokeDasharray="2 3" />
 
-              {/* Inter-Orbit Constellation Bridges */}
-              {mappedStars.map(star => {
-                if (!star.bridgeTo) return null;
-                return star.bridgeTo.map(targetName => {
-                  const targetStar = mappedStars.find(s => s.name === targetName);
-                  if (!targetStar) return null;
+              {/* Chronological Golden Constellation Lines connecting 100% completed subjects in order of completion */}
+              {completedChronologicalChain.map((currStar, index) => {
+                if (index === 0) return null;
+                const prevStar = completedChronologicalChain[index - 1];
 
-                  const isFiltered = activeFilter === 'all' || star.phase === activeFilter || targetStar.phase === activeFilter;
-                  const strokeColor = isFiltered ? "rgba(45, 212, 191, 0.15)" : "rgba(255, 255, 255, 0.03)";
+                const isFiltered = activeFilter === 'all' 
+                  || currStar.phase === activeFilter 
+                  || prevStar.phase === activeFilter;
 
-                  return (
+                return (
+                  <g key={`constellation-line-${prevStar.name}-${currStar.name}`}>
+                    {/* Soft background glow line */}
                     <line 
-                      key={`${star.name}-${targetName}`}
-                      x1={star.x}
-                      y1={star.y}
-                      x2={targetStar.x}
-                      y2={targetStar.y}
-                      stroke={strokeColor}
-                      strokeWidth="0.3"
-                      strokeDasharray="0.8 1"
-                      className="transition-colors duration-500"
+                      x1={prevStar.x}
+                      y1={prevStar.y}
+                      x2={currStar.x}
+                      y2={currStar.y}
+                      stroke={isFiltered ? "rgba(251, 191, 36, 0.4)" : "rgba(251, 191, 36, 0.1)"}
+                      strokeWidth="1.2"
+                      filter="url(#goldenConstellationGlow)"
                     />
-                  );
-                });
+                    {/* Primary straight pulsating golden line */}
+                    <line 
+                      x1={prevStar.x}
+                      y1={prevStar.y}
+                      x2={currStar.x}
+                      y2={currStar.y}
+                      stroke={isFiltered ? "rgba(251, 191, 36, 0.85)" : "rgba(251, 191, 36, 0.2)"}
+                      strokeWidth="0.45"
+                      className="animate-pulse transition-all duration-500"
+                    />
+                  </g>
+                );
               })}
             </svg>
 
@@ -451,8 +496,9 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               })}
             </div>
           </div>
+        </div>
 
-          {/* BOTTOM HUD INSPECTOR & FILTER BAR CONTAINER */}
+        {/* BOTTOM HUD INSPECTOR & FILTER BAR CONTAINER */}
           <div className="z-30 w-full max-w-xl mx-auto space-y-3">
             
             {/* Selected Star Details Card (HUD Inspector Drawer) */}
@@ -587,6 +633,14 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
         </div>
       </DialogContent>
+
+      <AtlasSkyShareModal 
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        globalHealth={globalHealth}
+        mappedStars={mappedStars}
+        completedChronologicalChain={completedChronologicalChain}
+      />
     </Dialog>
   );
 }

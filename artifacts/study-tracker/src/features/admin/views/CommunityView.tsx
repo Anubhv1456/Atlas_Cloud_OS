@@ -32,7 +32,7 @@ export function CommunityView() {
     try {
       await updateMarkerStatusAdmin(markerId, status);
       setMarkers(prev => prev.map(m => m.id === markerId ? { ...m, status } : m));
-      toast.success(`Marker updated to ${status}`);
+      toast.success(`Marker status set to ${status}`);
     } catch (e) {
       console.error(e);
       toast.error('Failed to update status');
@@ -47,9 +47,9 @@ export function CommunityView() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Community Markers</h1>
-        <p className="text-muted-foreground text-lg">Review, approve, and manage community insights.</p>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Trail Intelligence Moderation</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Review, verify, and moderate candidate-contributed medical markers across all subjects.</p>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-2">

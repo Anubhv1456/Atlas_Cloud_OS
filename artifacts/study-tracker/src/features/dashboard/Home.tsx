@@ -90,42 +90,37 @@ export default function Home() {
       <div className="relative z-10 flex-1 flex flex-col">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 w-full justify-between sm:justify-start sm:w-auto">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-3.5">
             <div className="flex items-center gap-3.5">
-              <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95" />
+              <img src="/emblem.svg" alt="Atlas Logo" className="w-12 h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
               <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="flex items-center gap-1 text-primary text-[11px] font-semibold uppercase tracking-wider">
-                    <Sparkles className="w-3 h-3" /> Intelligent Medical OS
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" /> NEET PG 2026 • Cohort Active
                   </span>
+                  {streak > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                      <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d Streak
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">{greeting}</h1>
               </div>
             </div>
-            
-            <div className="flex items-center gap-1 sm:hidden">
+
+            {/* Action controls for header */}
+            <div className="flex items-center gap-1.5">
               <AtlasSkyPreview />
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-muted-foreground hover:text-foreground rounded-full"
+                className="text-muted-foreground hover:text-foreground rounded-full w-9 h-9"
                 onClick={() => setHelpOpen(true)}
+                title="Atlas Guidance & Help"
               >
                 <HelpCircle className="w-5 h-5" />
               </Button>
             </div>
-          </div>
-          
-          <div className="hidden sm:flex items-center gap-1">
-            <AtlasSkyPreview />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-foreground rounded-full"
-              onClick={() => setHelpOpen(true)}
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Button>
           </div>
         </header>
             

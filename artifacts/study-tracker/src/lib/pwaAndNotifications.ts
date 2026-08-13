@@ -1,10 +1,8 @@
 import { db } from '@/db';
-import { getDailyAnkiPass } from '@/lib/anki';
 
 export interface NotificationSettings {
   enabled: boolean;
   reminderTime: string; // e.g. "09:00"
-  notifyAnki: boolean;
   notifyRevisions: boolean;
   lastNotifiedDate?: string; // YYYY-MM-DD
 }
@@ -14,7 +12,6 @@ const SETTINGS_KEY = 'atlas_notification_settings_v1';
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: false,
   reminderTime: '09:00',
-  notifyAnki: true,
   notifyRevisions: true,
 };
 
@@ -41,20 +38,13 @@ export function saveNotificationSettings(settings: Partial<NotificationSettings>
 }
 
 /**
- * Queries pending spaced repetition tasks (Anki pass & due system revisions)
+ * Queries pending spaced repetition tasks (due system revisions)
  */
 export async function getDueSpacedRepetitionTasks(): Promise<{
-  ankiPending: boolean;
   dueRevisionsCount: number;
   dueRevisionNames: string[];
 }> {
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  // 1. Check Anki Pass
-  const ankiPass = getDailyAnkiPass(todayStr);
-  const ankiPending = !ankiPass.completed;
-
-  // 2. Check Due System Revisions
+  // Check Due System Revisions
   const now = new Date();
   let dueSystems = [];
   try {
@@ -70,7 +60,6 @@ export async function getDueSpacedRepetitionTasks(): Promise<{
   }
 
   return {
-    ankiPending,
     dueRevisionsCount: dueSystems.length,
     dueRevisionNames: dueSystems.map(s => s.name).slice(0, 3),
   };
@@ -128,7 +117,7 @@ async function dispatchLocalNotification(title: string, options: NotificationOpt
 }
 
 /**
- * Triggers separate local browser notifications for Anki daily reviews and scheduled system revisions.
+ * Triggers local browser notifications for scheduled system revisions.
  */
 export async function triggerSpacedRepetitionNotification(force = false): Promise<boolean> {
   if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -160,24 +149,7 @@ export async function triggerSpacedRepetitionNotification(force = false): Promis
 
   const notificationsToSend: Array<{ title: string; body: string; tag: string }> = [];
 
-  // 1. Separate Anki Notification
-  if (settings.notifyAnki) {
-    if (tasks.ankiPending) {
-      notificationsToSend.push({
-        title: '⚡ Anki Daily Review Pass',
-        body: "Today's Anki flashcard review is pending. Tap to launch your decks and maintain your streak!",
-        tag: 'atlas-anki-notification',
-      });
-    } else if (force) {
-      notificationsToSend.push({
-        title: '⚡ Anki Daily Review Pass',
-        body: "Today's Anki review is complete. (Test Notification)",
-        tag: 'atlas-anki-notification',
-      });
-    }
-  }
-
-  // 2. Separate System Revision Notification
+  // Scheduled System Revision Notification
   if (settings.notifyRevisions) {
     if (tasks.dueRevisionsCount > 0) {
       const topicList = tasks.dueRevisionNames.join(', ');

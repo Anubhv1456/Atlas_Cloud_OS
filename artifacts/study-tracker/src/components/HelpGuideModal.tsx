@@ -21,7 +21,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">The SDSR Engine</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Our <strong>Spaced Decay Study Routine</strong> calculates memory decay over time. You study on your platform of choice (Marrow, UWorld), and Atlas schedules the exact day you should revise it.
+            Our <strong>Spaced Decay Study Routine</strong> calculates memory decay over time. You study on your platform of choice (Primary QBank, Standard Video Course), and Atlas schedules the exact day you should revise it.
           </p>
         </section>
         <section className="space-y-2">
@@ -65,7 +65,7 @@ const CHAPTERS = [
             <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">3</span> 
             External Study
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">Use your primary content sources (like Marrow or PrepLadder) to study the recommended topic.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Use your primary content sources (like your core QBank or video lectures) to study the recommended topic.</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
