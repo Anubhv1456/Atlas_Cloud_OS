@@ -227,10 +227,15 @@ function ProtectedApp() {
 
 function App() {
   useEffect(() => {
+    // Non-blocking, idempotent check for initial database bootstrap
     const checkOntology = async () => {
-      if (!localStorage.getItem('ontology_psychiatry_fix')) {
-        await loadUniversalOntology();
-        localStorage.setItem('ontology_psychiatry_fix', 'true');
+      try {
+        const count = await db.subjects.count();
+        if (count === 0) {
+          await loadUniversalOntology();
+        }
+      } catch (err) {
+        console.warn('Initial ontology verification deferred:', err);
       }
     };
     checkOntology();

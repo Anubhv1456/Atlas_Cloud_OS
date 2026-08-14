@@ -3,6 +3,9 @@ import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, writeBa
 import { onAuthStateChanged } from 'firebase/auth';
 class SimpleEventEmitter {
   private listeners: Record<string, Function[]> = {};
+  private pendingEvents: Set<string> = new Set();
+  private timer: any = null;
+
   on(event: string, fn: Function) {
     if (!this.listeners[event]) this.listeners[event] = [];
     this.listeners[event].push(fn);
@@ -13,7 +16,34 @@ class SimpleEventEmitter {
   }
   emit(event: string, ...args: any[]) {
     if (!this.listeners[event]) return;
-    this.listeners[event].forEach(fn => fn(...args));
+    if (args.length > 0) {
+      this.listeners[event].forEach(fn => {
+        try { fn(...args); } catch (e) { console.error(e); }
+      });
+      return;
+    }
+    // Batch notifications within a 16ms window to prevent live query storms
+    this.pendingEvents.add(event);
+    if (!this.timer) {
+      this.timer = setTimeout(() => {
+        const events = Array.from(this.pendingEvents);
+        this.pendingEvents.clear();
+        this.timer = null;
+        for (const ev of events) {
+          if (this.listeners[ev]) {
+            this.listeners[ev].forEach(fn => {
+              try { fn(); } catch (e) { console.error(e); }
+            });
+          }
+        }
+      }, 16);
+    }
+  }
+  emitSync(event: string, ...args: any[]) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(fn => {
+      try { fn(...args); } catch (e) { console.error(e); }
+    });
   }
   setMaxListeners() {}
 }
@@ -93,6 +123,10 @@ class FirestoreTable<T> {
     return Array.from(this.cache.values());
   }
 
+  async count(): Promise<number> {
+    return this.cache.size;
+  }
+
   async get(id: string | number): Promise<T | undefined> {
     return this.cache.get(String(id));
   }
@@ -136,6 +170,7 @@ class FirestoreTable<T> {
   }
 
   async bulkAdd(items: T[]) {
+    if (!items.length) return;
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
       const cleanPayload = sanitizeForFirestore({
@@ -148,16 +183,20 @@ class FirestoreTable<T> {
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    const batch = writeBatch(firestoreDb);
-    items.forEach(item => {
-      const id = (item as any).id || generateHLC();
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-      batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }));
-    });
-    await batch.commit();
+    for (let i = 0; i < items.length; i += 400) {
+      const batch = writeBatch(firestoreDb);
+      const chunk = items.slice(i, i + 400);
+      chunk.forEach(item => {
+        const id = (item as any).id || generateHLC();
+        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
+        batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }));
+      });
+      await batch.commit();
+    }
   }
 
   async bulkPut(items: T[]) {
+    if (!items.length) return;
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
       const cleanPayload = sanitizeForFirestore({
@@ -170,13 +209,16 @@ class FirestoreTable<T> {
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    const batch = writeBatch(firestoreDb);
-    items.forEach(item => {
-      const id = (item as any).id || generateHLC();
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-      batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }), { merge: true });
-    });
-    await batch.commit();
+    for (let i = 0; i < items.length; i += 400) {
+      const batch = writeBatch(firestoreDb);
+      const chunk = items.slice(i, i + 400);
+      chunk.forEach(item => {
+        const id = (item as any).id || generateHLC();
+        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
+        batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }), { merge: true });
+      });
+      await batch.commit();
+    }
   }
 
   async update(id: string | number, changes: Partial<T>) {
@@ -299,13 +341,22 @@ class FirestoreTable<T> {
   }
 
   async clear() {
+    this.cache.clear();
+    dbEvents.emit('change', this.name);
     if (!auth.currentUser) return;
-    const all = await this.toArray();
-    await Promise.all(all.map(item => {
-      const id = (item as any).id;
-      if (id) return this.delete(id);
-      return Promise.resolve();
-    }));
+    try {
+      const q = collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`);
+      const snap = await getDocs(q);
+      if (snap.empty) return;
+      const docs = snap.docs;
+      for (let i = 0; i < docs.length; i += 400) {
+        const batch = writeBatch(firestoreDb);
+        docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.error(`Error clearing table ${this.name}:`, e);
+    }
   }
 }
 

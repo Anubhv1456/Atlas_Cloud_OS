@@ -257,6 +257,7 @@ export interface SocialLinks {
   telegram?: SocialLinkData;
   youtube?: SocialLinkData;
   instagram?: SocialLinkData;
+  reddit?: SocialLinkData;
 }
 
 export async function getSocialLinks(): Promise<SocialLinks> {
@@ -268,6 +269,7 @@ export async function getSocialLinks(): Promise<SocialLinks> {
     telegram: { url: 'https://t.me/atlas_study', enabled: false },
     youtube: { url: 'https://youtube.com/@atlas_os', enabled: false },
     instagram: { url: 'https://instagram.com/atlas_med_os', enabled: false },
+    reddit: { url: 'https://reddit.com/r/AtlasOS', enabled: false },
   };
   if (!firestoreDb) return defaultSocials;
   const docRef = doc(firestoreDb, 'config', 'socials');

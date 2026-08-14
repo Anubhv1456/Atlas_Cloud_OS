@@ -21,6 +21,7 @@ import {
   Brain,
   BookOpen
 } from 'lucide-react';
+import { RedditIcon } from '@/components/RedditIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -93,6 +94,7 @@ export default function Contact() {
   };
 
   const socialChannels = [
+    { key: 'reddit' as const, label: 'Subreddit Community', icon: RedditIcon, ...socials.reddit, color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
     { key: 'twitter' as const, label: 'Twitter / X', icon: Twitter, ...socials.twitter, color: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
     { key: 'discord' as const, label: 'Discord Community', icon: MessageSquare, ...socials.discord, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
     { key: 'github' as const, label: 'GitHub', icon: Github, ...socials.github, color: 'text-slate-300 bg-slate-500/10 border-slate-500/20' },

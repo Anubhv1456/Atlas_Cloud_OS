@@ -1,32 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { useSubjects, useAllSystems, db } from '@/db';
+import { db } from '@/db';
 import { useLocation } from 'wouter';
 import { 
   Sparkles, 
   BookOpen, 
-  Target, 
-  Calendar, 
   CheckCircle2, 
   ArrowRight, 
   ChevronRight, 
+  ChevronLeft,
   Loader2, 
   Brain, 
-  TrendingUp, 
-  Clock, 
-  Award,
-  Compass,
-  Check,
-  Flame,
-  Zap
+  Check, 
+  Flame, 
+  Zap,
+  ShieldCheck,
+  CalendarDays,
+  Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { computeIntelligentRecommendation, RecommendationResult } from '@/lib/recommendation-engine';
 import { toast } from 'sonner';
 
 interface OnboardingModalProps {
@@ -39,15 +38,13 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const [, setLocation] = useLocation();
   const { profile, updateProfile } = useExamProfile();
   const { markOnboarded } = useOnboardingStatus();
-  const subjects = useSubjects();
-  const systems = useAllSystems();
 
   // Step 2 state: Goal
   const [selectedGoal, setSelectedGoal] = useState<string>('MBBS Professional Exams');
 
-  // Step 3 state: Curriculum preset
-  
-  const [importingPreset, setImportingPreset] = useState<boolean>(false);
+  // Step 3 state: Curriculum loading progress
+  const [importProgress, setImportProgress] = useState<number>(0);
+  const [importStatusText, setImportStatusText] = useState<string>('Initializing Curriculum...');
 
   // Step 4 state: Personalization
   const [examDate, setExamDate] = useState<string>('');
@@ -58,13 +55,30 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const [computingStep, setComputingStep] = useState<number>(0);
 
   // Recommendation target system
-  const [recommendedSystem, setRecommendedSystem] = useState<{
-    subjectName: string;
-    systemName: string;
-    subjectId?: number;
-    systemId?: number;
-    reasons: string[];
-  } | null>(null);
+  const [recommendedSystem, setRecommendedSystem] = useState<RecommendationResult>({
+    subjectName: 'General Medicine',
+    systemName: 'Cardiology & Vascular',
+    reasons: [
+      'High-yield clinical foundation for medical licensing',
+      'Recommended starting point for medical curriculum calibration',
+      'Optimizes active recall and core question bank mastery'
+    ],
+    score: 100
+  });
+
+  // Track timers for safe cleanup on unmount
+  const timerRefs = useRef<NodeJS.Timeout[]>([]);
+
+  const clearTimers = () => {
+    timerRefs.current.forEach(t => clearTimeout(t));
+    timerRefs.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimers();
+    };
+  }, []);
 
   // Synchronize initial defaults from existing profile
   useEffect(() => {
@@ -73,6 +87,12 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     }
     if (profile.targetExamDate) {
       setExamDate(profile.targetExamDate);
+    }
+    if (profile.currentYear) {
+      setCurrentYear(profile.currentYear);
+    }
+    if (profile.startedStudying) {
+      setStartedStudying(profile.startedStudying);
     }
   }, [profile]);
 
@@ -106,92 +126,109 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
   // Step transitions
   const handleNextFromGoal = async () => {
-    setImportingPreset(true);
-    setStep(3); // reusing step 3 for loading state if needed, or jumping to 4
     try {
-      await loadUniversalOntology();
+      const count = await db.subjects.count();
+      if (count > 0) {
+        // Fast forward: curriculum already configured
+        setStep(4);
+        return;
+      }
+
+      setStep(3);
+      setImportProgress(15);
+      setImportStatusText('Preparing Universal Medical Curriculum...');
+
+      await loadUniversalOntology({
+        onProgress: (pct, msg) => {
+          setImportProgress(pct);
+          setImportStatusText(msg);
+        }
+      });
+
+      setStep(4);
     } catch (err) {
-      console.error(err);
-    } finally {
-      setImportingPreset(false);
+      console.error('Error during ontology setup:', err);
+      // Advance to personalization even on network fallback
       setStep(4);
     }
   };
-
-  
 
   const handleNextFromPersonalization = () => {
     updateProfile({
       targetExam: selectedGoal,
       targetExamDate: examDate,
       curriculum: 'Universal Ontology',
-      currentYear: currentYear
+      currentYear: currentYear,
+      startedStudying: startedStudying
     });
     setStep(5);
   };
 
-  const handleStartComputing = () => {
-    setStep(6);
-    setComputingStep(0);
+  const computeRecommendationSafe = async (): Promise<RecommendationResult> => {
+    try {
+      const allSubs = await db.subjects.toArray();
+      const allSys = await db.systems.toArray();
+      const topicProgresses = await db.topicProgress.toArray();
+      const curriculumSets = await (db.curriculumSets || db.revisionSets).toArray();
 
-    const timer1 = setTimeout(() => setComputingStep(1), 700);
-    const timer2 = setTimeout(() => setComputingStep(2), 1400);
-    const timer3 = setTimeout(() => setComputingStep(3), 2100);
-    const timer4 = setTimeout(() => {
-      // Find recommendation
-      computeRecommendation();
-      setStep(7);
-    }, 2800);
+      if (allSubs.length > 0 && allSys.length > 0) {
+        const result = computeIntelligentRecommendation(
+          allSubs,
+          allSys,
+          currentYear,
+          selectedGoal,
+          topicProgresses,
+          curriculumSets
+        );
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
+        if (result && result.subjectName && result.systemName) {
+          return result;
+        }
+      }
+    } catch (err) {
+      console.warn('Direct recommendation calculation fallback engaged:', err);
+    }
+
+    // Deterministic safe fallback
+    return {
+      subjectName: selectedGoal.includes('USMLE') ? 'General Pathology' : 'General Medicine',
+      systemName: selectedGoal.includes('USMLE') ? 'Cardiovascular System' : 'Cardiology & Vascular',
+      reasons: [
+        'Highest yield core organ system for medical licensing',
+        'Calibrated foundation for upcoming spaced repetition cycles',
+        'Immediate high-priority active recall target'
+      ],
+      score: 100
     };
   };
 
-  const computeRecommendation = async () => {
-    const allSubs = await db.subjects.toArray();
-    const allSys = await db.systems.toArray();
+  const handleStartComputing = () => {
+    clearTimers();
+    setStep(6);
+    setComputingStep(0);
 
-    const topicProgresses = await db.topicProgress.toArray();
-    const curriculumSets = await (db.curriculumSets || db.revisionSets).toArray();
-    
-    const worker = new Worker(new URL('@/lib/recommendation.worker.ts', import.meta.url), { type: 'module' });
-    worker.postMessage({
-      subjects: allSubs,
-      systems: allSys,
-      currentYear,
-      targetExam: selectedGoal,
-      topicProgresses,
-      curriculumSets
+    // Compute recommendation asynchronously in background immediately
+    const recPromise = computeRecommendationSafe().then(rec => {
+      setRecommendedSystem(rec);
+      return rec;
     });
-    
-    worker.onmessage = (e) => {
-      if (e.data.success) {
-        const result = e.data.result;
-        setRecommendedSystem({
-          subjectName: result.subjectName,
-          systemName: result.systemName,
-          subjectId: result.subjectId,
-          systemId: result.systemId,
-          reasons: result.reasons
-        });
-      }
-      worker.terminate();
-    };
-    worker.onerror = (err) => {
-      console.error('Worker error', err);
-      worker.terminate();
-    };
+
+    const t1 = setTimeout(() => setComputingStep(1), 600);
+    const t2 = setTimeout(() => setComputingStep(2), 1200);
+    const t3 = setTimeout(() => setComputingStep(3), 1800);
+    const t4 = setTimeout(async () => {
+      await recPromise;
+      setStep(7);
+    }, 2400);
+
+    timerRefs.current = [t1, t2, t3, t4];
   };
 
   const handleStartStudying = async () => {
     await markOnboarded();
     onOpenChange(false);
-    toast.success('Atlas Calibrated!', {
-      description: 'Your study system is configured. Happy learning!'
+    toast.success('Atlas Calibrated', {
+      description: 'Your intelligent study plan is active.'
     });
 
     if (recommendedSystem?.subjectId) {
@@ -207,18 +244,18 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] rounded-3xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
-        <div className="p-6 md:p-8 relative overflow-hidden min-h-[460px] flex flex-col justify-between">
-          {/* Subtle Ambient Background */}
-          <div className="pointer-events-none absolute -top-24 -right-24 w-60 h-60 bg-primary/10 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-24 w-60 h-60 bg-primary/5 rounded-full blur-3xl" />
+      <DialogContent className="sm:max-w-[540px] rounded-3xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
+        <div className="p-6 md:p-8 relative overflow-hidden min-h-[480px] flex flex-col justify-between">
+          {/* Subtle Ambient Background Glow */}
+          <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
 
           {/* Top Header / Progress Indicator */}
           {step > 1 && step < 6 && (
-            <div className="flex items-center justify-between mb-6 border-b border-border/40 pb-3 z-10">
+            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3 z-10">
               <div className="flex items-center gap-2">
                 <img src="/emblem.svg" alt="Atlas" className="w-5 h-5 rounded-md object-contain" />
-                <span className="text-xs font-bold text-foreground tracking-tight">Onboarding</span>
+                <span className="text-xs font-bold text-foreground tracking-tight">Onboarding Calibration</span>
               </div>
               <div className="flex items-center gap-1.5">
                 {[2, 3, 4, 5].map((s) => (
@@ -254,13 +291,14 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               <div className="space-y-2 max-w-sm">
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] font-bold px-3 py-0.5 rounded-full">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  System Calibration
+                  Medical Study Operating System
                 </Badge>
                 <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
                   Welcome to Atlas.
                 </h1>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Let's build your medical study system in under 2 minutes.
+                  Answers one critical question with mathematical precision: <br />
+                  <span className="font-semibold text-foreground">"What should I study next?"</span>
                 </p>
               </div>
 
@@ -269,7 +307,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 size="lg"
                 className="w-full max-w-xs rounded-2xl text-sm font-semibold h-12 shadow-md gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
-                Begin Setup
+                Begin Calibration
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </motion.div>
@@ -281,7 +319,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col justify-between space-y-5 z-10"
+              className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 1 of 3</span>
@@ -295,6 +333,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   return (
                     <button
                       key={goal.id}
+                      type="button"
                       onClick={() => setSelectedGoal(goal.id)}
                       className={cn(
                         "p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
@@ -313,7 +352,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 })}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/40">
                 <Button
                   onClick={handleNextFromGoal}
                   className="rounded-xl text-xs font-semibold h-10 px-5 gap-1.5 cursor-pointer"
@@ -325,20 +364,31 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
             </motion.div>
           )}
 
-          
-          {/* ── STEP 3: LOADING ONTOLOGY ─────────────────────────────────── */}
+          {/* ── STEP 3: INITIALIZING ONTOLOGY ───────────────────────────────── */}
           {step === 3 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col items-center justify-center space-y-4 z-10"
+              className="flex-1 flex flex-col items-center justify-center space-y-6 z-10 py-6 text-center"
             >
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              <p className="text-sm font-medium text-foreground">Importing Universal Curriculum...</p>
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+              <div className="space-y-2 max-w-xs">
+                <h3 className="text-base font-bold text-foreground">Setting Up Curriculum</h3>
+                <p className="text-xs text-muted-foreground">{importStatusText}</p>
+                <div className="w-full bg-muted/60 rounded-full h-1.5 overflow-hidden mt-3">
+                  <div 
+                    className="bg-primary h-full transition-all duration-300 rounded-full" 
+                    style={{ width: `${importProgress}%` }}
+                  />
+                </div>
+              </div>
             </motion.div>
           )}
-{/* ── STEP 4: OPTIONAL PERSONALIZATION ────────────────────────────── */}
+
+          {/* ── STEP 4: OPTIONAL PERSONALIZATION ────────────────────────────── */}
           {step === 4 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -347,12 +397,12 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 3 of 3</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 2 of 3</span>
                 <h2 className="text-xl font-bold text-foreground">Personalize Your Pacing</h2>
                 <p className="text-xs text-muted-foreground">Help Atlas tailor recommendations to your exact timeline.</p>
               </div>
 
-              <div className="space-y-4 max-h-[270px] overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-[270px] overflow-y-auto pr-1">
                 {/* Expected Exam Date */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center justify-between">
@@ -400,7 +450,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
                 {/* Have you started studying? */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">Have you already started studying?</label>
+                  <label className="text-xs font-semibold text-foreground">Current Study Status</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -412,7 +462,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                           : "bg-background border-border/60 text-muted-foreground"
                       )}
                     >
-                      Yes, existing progress
+                      Existing Progress
                     </button>
                     <button
                       type="button"
@@ -424,18 +474,19 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                           : "bg-background border-border/60 text-muted-foreground"
                       )}
                     >
-                      Starting fresh today
+                      Starting Fresh
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-border/40">
+              <div className="flex items-center justify-between pt-3 border-t border-border/40">
                 <Button
                   variant="ghost"
-                  onClick={() => setStep(3)}
-                  className="rounded-xl text-xs font-medium h-9 px-3 cursor-pointer"
+                  onClick={() => setStep(2)}
+                  className="rounded-xl text-xs font-medium h-9 px-3 cursor-pointer gap-1"
                 >
+                  <ChevronLeft className="w-3.5 h-3.5" />
                   Back
                 </Button>
 
@@ -443,7 +494,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   onClick={handleNextFromPersonalization}
                   className="rounded-xl text-xs font-semibold h-10 px-5 gap-1.5 cursor-pointer"
                 >
-                  Continue to Tour
+                  Continue to Principles
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -460,8 +511,9 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
             >
               <div className="flex items-center justify-between">
                 <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 3 of 3</span>
                   <h2 className="text-xl font-bold text-foreground">How Atlas Guides You</h2>
-                  <p className="text-xs text-muted-foreground">Four core principles that drive your personalized study recommendations.</p>
+                  <p className="text-xs text-muted-foreground">Four algorithmic pillars drive every study decision.</p>
                 </div>
                 <Button
                   variant="ghost"
@@ -477,50 +529,59 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    Progress
+                    Intelligent Direction
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Tracks completed topics, task units, and QBank question coverage.
+                    Curriculum weightage dynamically guides daily priorities.
                   </p>
                 </div>
 
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
-                    Confidence
+                    Active Recall
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Adapts to self-assessed weak, average, or strong topic tags.
+                    Prioritizes active retrieval practice over passive reading.
                   </p>
                 </div>
 
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-sky-500" />
-                    Revision
+                    Spaced Repetition
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Spaced repetition algorithms schedule timely recall callbacks.
+                    Schedules memory callbacks before knowledge decay occurs.
                   </p>
                 </div>
 
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-purple-500" />
-                    Performance
+                    Continuous Calibration
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Real-time memory decay health and trend performance analytics.
+                    Real-time adaptation to test scores and weak areas.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40">
+              <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                <Button
+                  variant="ghost"
+                  onClick={() => setStep(4)}
+                  className="rounded-xl text-xs font-medium h-9 px-3 cursor-pointer gap-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  Back
+                </Button>
+
                 <Button
                   onClick={handleStartComputing}
-                  className="w-full rounded-2xl text-xs font-semibold h-11 shadow-sm gap-2 cursor-pointer"
+                  className="rounded-2xl text-xs font-semibold h-10 px-5 shadow-sm gap-2 cursor-pointer"
                 >
-                  Generate First Recommendation
+                  Calibrate & Generate
                   <Sparkles className="w-4 h-4 text-amber-400" />
                 </Button>
               </div>
@@ -530,21 +591,21 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
           {/* ── STEP 6: COMPUTING ANIMATION ─────────────────────────────────── */}
           {step === 6 && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex-1 flex flex-col items-center justify-center text-center my-auto space-y-6 z-10 py-6"
             >
               <div className="relative">
                 <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center animate-pulse">
-                  <Brain className="w-10 h-10 text-primary animate-bounce" />
+                  <Brain className="w-10 h-10 text-primary" />
                 </div>
                 <div className="absolute inset-0 rounded-full border-2 border-primary/40 border-t-transparent animate-spin" />
               </div>
 
-              <div className="space-y-2 max-w-sm">
-                <h2 className="text-xl font-bold text-foreground">Welcome aboard.</h2>
+              <div className="space-y-1.5 max-w-sm">
+                <h2 className="text-xl font-bold text-foreground">Calibrating Atlas OS</h2>
                 <p className="text-xs text-muted-foreground">
-                  Computing your first study recommendation...
+                  Building your personalized medical study trajectory...
                 </p>
               </div>
 
@@ -577,11 +638,11 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
           )}
 
           {/* ── STEP 7: FIRST RECOMMENDATION ("AHA!" MOMENT) ────────────────── */}
-          {step === 7 && recommendedSystem && (
+          {step === 7 && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex-1 flex flex-col justify-between space-y-5 z-10"
+              className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="text-center space-y-1">
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold px-3 py-0.5 rounded-full">
@@ -589,17 +650,17 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   Calibration Complete
                 </Badge>
                 <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
-                  Today's Recommendation
+                  What to Study Next
                 </h2>
               </div>
 
               {/* Recommendation Card */}
-              <div className="bg-card border-2 border-primary/40 rounded-3xl p-5 shadow-lg space-y-4 relative overflow-hidden">
+              <div className="bg-card border-2 border-primary/40 rounded-3xl p-5 shadow-lg space-y-3.5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-3 bg-primary/10 rounded-bl-2xl border-l border-b border-primary/20 text-primary">
                   <Flame className="w-5 h-5 text-amber-500" />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <span className="text-xs font-semibold text-primary uppercase tracking-wider block">
                     {recommendedSystem.subjectName}
                   </span>
@@ -613,19 +674,26 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     Why Atlas Chose This
                   </span>
                   <ul className="space-y-1">
-                    {recommendedSystem.reasons.map((r, i) => (
-                      <li key={i} className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                    {recommendedSystem.reasons && recommendedSystem.reasons.length > 0 ? (
+                      recommendedSystem.reasons.map((r, i) => (
+                        <li key={i} className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span>{r.replace(/^[•\s]+/, '')}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                        {r}
+                        <span>High-yield medical curriculum priority</span>
                       </li>
-                    ))}
+                    )}
                   </ul>
                 </div>
               </div>
 
               {/* Micro-copy explanation */}
               <p className="text-center text-xs text-muted-foreground italic px-2">
-                "Atlas is now calibrated. Recommendations become smarter as you study."
+                "Atlas is now calibrated. Recommendations sharpen continuously as you log study units and active recall tests."
               </p>
 
               <Button

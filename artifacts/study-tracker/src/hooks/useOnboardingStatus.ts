@@ -4,11 +4,15 @@ import { firestoreDb } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export function useOnboardingStatus() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [hasOnboarded, setHasOnboarded] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     async function checkStatus() {
       if (!user) {
         setHasOnboarded(false);
@@ -44,7 +48,7 @@ export function useOnboardingStatus() {
     }
 
     checkStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   const markOnboarded = async () => {
     if (!user) return;

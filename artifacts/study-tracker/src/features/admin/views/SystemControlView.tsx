@@ -11,6 +11,7 @@ import {
   Twitter, Github, Linkedin, Send, Youtube, Instagram, MessageSquare, ExternalLink, Sparkles, ShieldCheck,
   Users, Sliders, TrendingUp, Check, Layers, Eye
 } from 'lucide-react';
+import { RedditIcon } from '@/components/RedditIcon';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -167,9 +168,11 @@ export function SystemControlView() {
 
   const platforms = [
     { key: 'telegram' as const, label: 'Telegram Channel', icon: Send, placeholder: 'https://t.me/your_channel' },
+    { key: 'reddit' as const, label: 'Subreddit / Reddit Community', icon: RedditIcon, placeholder: 'https://reddit.com/r/your_subreddit' },
     { key: 'twitter' as const, label: 'Twitter / X', icon: Twitter, placeholder: 'https://twitter.com/your_handle' },
     { key: 'discord' as const, label: 'Discord Community', icon: MessageSquare, placeholder: 'https://discord.gg/your_invite' },
     { key: 'github' as const, label: 'GitHub Repository', icon: Github, placeholder: 'https://github.com/your_org' },
+    { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/your_profile' },
     { key: 'youtube' as const, label: 'YouTube Channel', icon: Youtube, placeholder: 'https://youtube.com/@your_channel' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/your_handle' },
   ];

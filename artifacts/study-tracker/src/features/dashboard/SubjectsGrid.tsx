@@ -85,14 +85,13 @@ export function SubjectsGrid({
           action={
             <Button 
               onClick={async () => {
-                await loadUniversalOntology();
-                window.location.reload();
+                await loadUniversalOntology({ force: true, showToast: true });
               }} 
               variant="outline"
               size="sm" 
               className="gap-1.5 rounded-xl shadow-xs mt-2"
             >
-              <BookOpen className="w-4 h-4" /> Load MBBS Preset
+              <BookOpen className="w-4 h-4" /> Load Universal Curriculum
             </Button>
           }
         />

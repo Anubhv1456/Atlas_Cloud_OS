@@ -8,6 +8,7 @@ export interface ExamProfile {
   targetScore: string;
   dailyQuestionGoal: number;
   currentYear?: string;
+  startedStudying?: 'yes' | 'fresh';
 }
 
 const LOCAL_STORAGE_KEY = 'atlas_user_exam_profile';

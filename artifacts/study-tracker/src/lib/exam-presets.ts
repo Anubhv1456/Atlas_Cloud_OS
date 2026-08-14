@@ -11,21 +11,36 @@ export function normalizeName(name: string): string {
     .trim();
 }
 
-export async function loadUniversalOntology() {
+export interface LoadOntologyOptions {
+  force?: boolean;
+  showToast?: boolean;
+  onProgress?: (percent: number, stepLabel: string) => void;
+}
+
+export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
+  const { force = false, showToast = false, onProgress } = options;
+
   try {
-    toast.info("Loading MBBS Preset... Please wait.");
-    // Purge existing data
-    await db.subjects.clear();
-    await db.systems.clear();
-    await db.uiPreferences.clear();
-    await db.topicProgress.clear();
-    await db.history.clear();
-    await db.pyqYears.clear();
-    await db.scoreLogs.clear();
-    await db.curriculumSets.clear();
-    await db.revisionSets.clear();
-    await db.mistakeLogs.clear();
-    await db.recommendationSkips.clear();
+    // Check if ontology is already loaded (Idempotency)
+    const existingCount = await db.subjects.count();
+    if (existingCount > 0 && !force) {
+      if (onProgress) onProgress(100, 'Curriculum already loaded');
+      return { success: true, count: existingCount, reloaded: false };
+    }
+
+    if (showToast) {
+      toast.info("Configuring Medical Curriculum... Please wait.");
+    }
+
+    if (onProgress) onProgress(15, 'Preparing Universal Curriculum structure...');
+
+    // If forcing reset, only clear ontology hierarchy (subjects, systems, uiPreferences)
+    // NEVER purge student user history, score logs, topic progress, or mistake logs!
+    if (force) {
+      await db.subjects.clear();
+      await db.systems.clear();
+      await db.uiPreferences.clear();
+    }
 
     const newSubjects: T.Subject[] = [];
     const newSystems: T.StudySystem[] = [];
@@ -92,31 +107,21 @@ export async function loadUniversalOntology() {
       }
     }
 
-    const chunkArray = (arr: any[], size: number) => {
-      const chunked = [];
-      for (let i = 0; i < arr.length; i += size) {
-        chunked.push(arr.slice(i, i + size));
-      }
-      return chunked;
-    };
+    if (onProgress) onProgress(45, 'Writing subjects and organ systems...');
 
-    const subjectChunks = chunkArray(newSubjects, 400);
-    for (const chunk of subjectChunks) {
-      await db.subjects.bulkPut(chunk);
-    }
-    
-    const systemChunks = chunkArray(newSystems, 400);
-    for (const chunk of systemChunks) {
-      await db.systems.bulkPut(chunk);
-    }
+    // Bulk put efficiently
+    await db.subjects.bulkPut(newSubjects);
+    if (onProgress) onProgress(75, 'Configuring system preferences...');
+    await db.systems.bulkPut(newSystems);
+    await db.uiPreferences.bulkPut(newPrefs);
 
-    const prefChunks = chunkArray(newPrefs, 400);
-    for (const chunk of prefChunks) {
-      await db.uiPreferences.bulkPut(chunk);
-    }
-    
+    if (onProgress) onProgress(100, 'Curriculum ready');
+    return { success: true, count: newSubjects.length, reloaded: true };
   } catch (err) {
     console.error("loadUniversalOntology ERROR:", err);
-    toast.error("Error loading ontology: " + String(err));
+    if (showToast) {
+      toast.error("Error loading ontology: " + String(err));
+    }
+    throw err;
   }
 }

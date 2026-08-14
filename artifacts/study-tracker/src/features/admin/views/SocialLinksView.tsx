@@ -14,6 +14,7 @@ import {
   ExternalLink,
   CheckCircle2
 } from 'lucide-react';
+import { RedditIcon } from '@/components/RedditIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,6 +57,7 @@ export function SocialLinksView() {
 
   const platforms = [
     { key: 'twitter' as const, label: 'Twitter / X', icon: Twitter, placeholder: 'https://twitter.com/your_handle' },
+    { key: 'reddit' as const, label: 'Subreddit / Reddit Community', icon: RedditIcon, placeholder: 'https://reddit.com/r/your_subreddit' },
     { key: 'discord' as const, label: 'Discord Community', icon: MessageSquare, placeholder: 'https://discord.gg/your_invite' },
     { key: 'github' as const, label: 'GitHub Repository', icon: Github, placeholder: 'https://github.com/your_org' },
     { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/in/your_profile' },
