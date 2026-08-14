@@ -729,7 +729,14 @@ export async function deleteMistakeLog(id: number | string) {
     updatedAt: new Date(),
     hlc: generateHLC(),
   });
-  toast.info('Mistake takeaway removed');
+}
+
+export async function restoreMistakeLog(id: number | string) {
+  await db.mistakeLogs.update(id, {
+    deletedAt: undefined,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
 }
 
 

@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { 
   Brain, 
   Eye, 
@@ -21,7 +20,11 @@ import {
   Zap,
   HelpCircle,
   CheckCircle2,
-  CornerDownLeft
+  CornerDownLeft,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
@@ -41,6 +44,7 @@ let sessionSubjectId: string | number | undefined;
 let sessionSystemId: string | number | undefined;
 let sessionTopicId: string | undefined;
 let sessionSource: 'GT' | 'QBank' | 'Custom' = 'QBank';
+let sessionErrorType: 'concept' | 'retrieval' | 'misread' | 'fomo' = 'concept';
 
 export function QuickMistakeModal({
   open,
@@ -68,6 +72,7 @@ export function QuickMistakeModal({
   const [keyTakeaway, setKeyTakeaway] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedBatchCount, setSavedBatchCount] = useState(0);
+  const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -93,7 +98,7 @@ export function QuickMistakeModal({
       setCurriculumSetId(defaultCurriculumSetId || '');
       setTopicId(defaultTopicId !== undefined ? defaultTopicId : (sessionTopicId || ''));
       setKeyTakeaway('');
-      setErrorType('concept');
+      setErrorType(sessionErrorType || 'concept');
       setSource(sessionSource || 'QBank');
 
       // Find matching systems for initial subject
@@ -144,9 +149,14 @@ export function QuickMistakeModal({
     sessionSource = newSource;
   };
 
+  const handleErrorTypeChange = (newType: 'concept' | 'retrieval' | 'misread' | 'fomo') => {
+    setErrorType(newType);
+    sessionErrorType = newType;
+  };
+
   const executeSave = async (closeAfterSave = false) => {
     if (!keyTakeaway.trim()) {
-      toast.error('Please enter a 1-line key takeaway rule.');
+      toast.error('Please enter a clinical takeaway rule.');
       textareaRef.current?.focus();
       return;
     }
@@ -172,6 +182,7 @@ export function QuickMistakeModal({
       sessionSystemId = systemId;
       sessionTopicId = topicId;
       sessionSource = source;
+      sessionErrorType = errorType;
 
       const newBatchCount = savedBatchCount + 1;
       setSavedBatchCount(newBatchCount);
@@ -195,7 +206,7 @@ export function QuickMistakeModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeSave(false); // Default submit keeps the modal open for batch logging
+    executeSave(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -223,38 +234,36 @@ export function QuickMistakeModal({
       id: 'concept' as const,
       label: 'Knowledge Gap',
       icon: Brain,
-      color: 'border-rose-500/40 text-rose-500 bg-rose-500/10 dark:text-rose-400',
-      description: 'Missing core clinical concept'
+      color: 'border-rose-500/40 text-rose-500 bg-rose-500/10 dark:text-rose-400'
     },
     {
       id: 'misread' as const,
       label: 'Execution Slip',
       icon: Eye,
-      color: 'border-amber-500/40 text-amber-500 bg-amber-500/10 dark:text-amber-400',
-      description: 'Misread option or question stem'
+      color: 'border-amber-500/40 text-amber-500 bg-amber-500/10 dark:text-amber-400'
     },
     {
       id: 'retrieval' as const,
       label: 'Retrieval Failure',
       icon: RotateCcw,
-      color: 'border-sky-500/40 text-sky-500 bg-sky-500/10 dark:text-sky-400',
-      description: 'Fact recall slip under time pressure'
+      color: 'border-sky-500/40 text-sky-500 bg-sky-500/10 dark:text-sky-400'
     },
     {
       id: 'fomo' as const,
       label: 'Overthinking',
       icon: HelpCircle,
-      color: 'border-purple-500/40 text-purple-500 bg-purple-500/10 dark:text-purple-400',
-      description: 'Changed right answer to wrong'
+      color: 'border-purple-500/40 text-purple-500 bg-purple-500/10 dark:text-purple-400'
     }
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent id="quick-mistake-dialog" className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
+        
+        {/* Modal Header */}
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
                 <Zap className="w-4 h-4" />
               </div>
@@ -263,33 +272,56 @@ export function QuickMistakeModal({
                   Log Journal Takeaway
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Distill a one-line clinical rule into your 20th Notebook.
+                  Distill a high-yield clinical rule into your 20th Notebook.
                 </DialogDescription>
               </div>
             </div>
 
-            {/* Saved in batch pill */}
+            {/* Batch Counter Pill */}
             {savedBatchCount > 0 && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-bold animate-in fade-in zoom-in-95 duration-150">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-bold animate-in fade-in zoom-in-95 duration-150 shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{savedBatchCount} saved</span>
+                <span>{savedBatchCount} logged</span>
               </div>
             )}
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          {/* Subject & System Selection (Persistent across batch saves) */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="mistake-subject-select" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Subject *
-              </Label>
+          
+          {/* Path Navigation Bar (Subject › System & Source) */}
+          <div className="p-3 rounded-2xl bg-muted/20 border border-border/60 space-y-2.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Target Curriculum Path
+              </span>
+              
+              {/* Source Switcher */}
+              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-muted/50 border border-border/40">
+                {(['QBank', 'GT', 'Custom'] as const).map(src => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => handleSourceChange(src)}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
+                      source === src
+                        ? "bg-background text-foreground shadow-xs border border-border/60"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {src === 'GT' ? 'Grand Test' : src === 'QBank' ? 'QBank' : 'Custom'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <select
                 id="mistake-subject-select"
                 value={String(subjectId)}
                 onChange={e => handleSubjectChange(e.target.value)}
-                className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                className="w-full h-8.5 rounded-xl border border-border/70 bg-background px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer truncate"
               >
                 {subjects.map(s => (
                   <option key={String(s.id)} value={String(s.id)}>
@@ -297,20 +329,15 @@ export function QuickMistakeModal({
                   </option>
                 ))}
               </select>
-            </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="mistake-system-select" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                System
-              </Label>
               <select
                 id="mistake-system-select"
                 value={String(systemId)}
                 onChange={e => handleSystemChange(e.target.value)}
-                className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                className="w-full h-8.5 rounded-xl border border-border/70 bg-background px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer truncate"
               >
                 {availableSystems.length === 0 ? (
-                  <option value="0">General / All Systems</option>
+                  <option value="0">General System</option>
                 ) : (
                   availableSystems.map(sys => (
                     <option key={String(sys.id)} value={String(sys.id)}>
@@ -322,92 +349,15 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Optional Topic Tag (Persistent across batch saves) */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="mistake-topic-input" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Topic Tag (Persistent)
-              </Label>
-              <span className="text-[10px] text-muted-foreground font-normal">e.g. Rheumatic Heart Disease</span>
-            </div>
-            <Input
-              id="mistake-topic-input"
-              value={topicId}
-              onChange={e => handleTopicChange(e.target.value)}
-              placeholder="e.g. Rheumatic Heart Disease or Wernicke Encephalopathy"
-              className="h-9 text-xs rounded-xl border-border/80 bg-muted/20 text-foreground"
-            />
-          </div>
-
-          {/* Error Classification Pills */}
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Error Root Cause *
-            </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {errorTypePills.map(pill => {
-                const Icon = pill.icon;
-                const isSelected = errorType === pill.id;
-                return (
-                  <button
-                    key={pill.id}
-                    id={`btn-error-type-${pill.id}`}
-                    type="button"
-                    onClick={() => setErrorType(pill.id)}
-                    className={cn(
-                      "flex items-start gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer",
-                      isSelected
-                        ? `${pill.color} border-2 shadow-xs font-bold`
-                        : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold leading-tight">{pill.label}</div>
-                      <div className="text-[10px] text-muted-foreground leading-none font-normal truncate mt-0.5">
-                        {pill.description}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Question Source Pills */}
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Question Source
-            </Label>
-            <div className="flex items-center gap-2">
-              {(['QBank', 'GT', 'Custom'] as const).map(src => (
-                <button
-                  key={src}
-                  id={`btn-source-${src.toLowerCase()}`}
-                  type="button"
-                  onClick={() => handleSourceChange(src)}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer",
-                    source === src
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  )}
-                >
-                  {src === 'GT' ? 'Grand Test (GT)' : src === 'QBank' ? 'QBank' : 'Custom Note'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Key Takeaway Text Input with Clinical Prompt Shortcuts */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between flex-wrap gap-1">
-              <Label htmlFor="mistake-takeaway-input" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                1-Line High-Yield Rule *
-              </Label>
-              {/* Clinical Prompt Shortcuts */}
+          {/* Hero Clinical Rule Input */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-1.5">
+              <span className="text-[11px] font-bold text-foreground tracking-tight">
+                High-Yield Rule / Pearl *
+              </span>
+              
+              {/* Rapid Clinical Prefixes */}
               <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-[10px] text-muted-foreground/70 font-medium mr-0.5">Insert:</span>
                 <button
                   type="button"
                   onClick={() => insertPromptShortcut('DOC:')}
@@ -434,7 +384,7 @@ export function QuickMistakeModal({
                   onClick={() => insertPromptShortcut('Gold standard:')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
                 >
-                  + Gold Standard
+                  + Gold Std
                 </button>
               </div>
             </div>
@@ -445,19 +395,89 @@ export function QuickMistakeModal({
               value={keyTakeaway}
               onChange={e => setKeyTakeaway(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine BEFORE Glucose."
+              placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine before Glucose to prevent precipitation of acute crisis."
               rows={3}
               required
-              className="w-full rounded-xl border border-border/80 bg-muted/20 p-3 text-xs font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+              className="w-full rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all leading-relaxed"
             />
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 px-0.5">
-              <span>Path will stay pinned after saving</span>
+            
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 px-1">
+              <span>Path stays pinned for quick batch entry</span>
               <span className="flex items-center gap-1 font-mono">
-                <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save
+                <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save & next
               </span>
             </div>
           </div>
 
+          {/* Progressive Disclosure: Optional Details & Root Cause */}
+          <div className="border-t border-border/40 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedDetails(prev => !prev)}
+              className="flex items-center justify-between w-full py-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 text-[11px]">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+                <span>
+                  {showAdvancedDetails ? 'Hide additional classification' : '+ Add topic tag or root cause (optional)'}
+                </span>
+              </span>
+              {showAdvancedDetails ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            {showAdvancedDetails && (
+              <div className="space-y-3 pt-2.5 pb-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                {/* Topic Tag */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Specific Topic / Disease (Optional)
+                  </span>
+                  <Input
+                    id="mistake-topic-input"
+                    value={topicId}
+                    onChange={e => handleTopicChange(e.target.value)}
+                    placeholder="e.g. Rheumatic Fever or Status Epilepticus"
+                    className="h-8.5 text-xs rounded-xl border-border/70 bg-muted/20 text-foreground"
+                  />
+                </div>
+
+                {/* Root Cause Chips */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Error Root Cause
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {errorTypePills.map(pill => {
+                      const Icon = pill.icon;
+                      const isSelected = errorType === pill.id;
+                      return (
+                        <button
+                          key={pill.id}
+                          type="button"
+                          onClick={() => handleErrorTypeChange(pill.id)}
+                          className={cn(
+                            "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer text-xs",
+                            isSelected
+                              ? `${pill.color} font-bold shadow-xs`
+                              : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{pill.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Dialog Footer Actions */}
           <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-between gap-2">
             <Button
               id="btn-done-mistake"

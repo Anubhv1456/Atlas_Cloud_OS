@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { MistakeLog } from '@/db/types';
-import { deleteMistakeLog } from '@/db/mutations';
+import { deleteMistakeLog, restoreMistakeLog } from '@/db/mutations';
 import { QuickMistakeModal } from './QuickMistakeModal';
 import { 
   Plus, 
@@ -12,13 +12,20 @@ import {
   ChevronRight, 
   Search,
   X,
-  FileText
+  FileText,
+  ChevronDown,
+  Sparkles,
+  Zap,
+  ArrowUpRight,
+  SlidersHorizontal,
+  Command
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
+import { toast } from 'sonner';
 
 export default function MistakeRecoveryQueue() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,9 +35,42 @@ export default function MistakeRecoveryQueue() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [filterSubjectId, setFilterSubjectId] = useState<string>('all');
   
+  // Collapsible subject sections state (default all open)
+  const [collapsedSubjects, setCollapsedSubjects] = useState<Record<string, boolean>>({});
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray()) || [];
   const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
   const systems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
+
+  // Global keyboard shortcuts: 'N' to open modal, '⌘K' or '/' to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input or textarea or modal is open
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      if (!isInput && !modalOpen) {
+        if (e.key === 'n' || e.key === 'N') {
+          e.preventDefault();
+          setModalOpen(true);
+        } else if (e.key === '/') {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalOpen]);
 
   // Exclude soft-deleted logs and sort newest first
   const mistakeLogs = useMemo(() => {
@@ -63,24 +103,28 @@ export default function MistakeRecoveryQueue() {
   // Overview Metrics
   const totalLogs = mistakeLogs.length;
 
-  // Find Top Weak Subject
-  const topErrorSubject = useMemo(() => {
-    if (mistakeLogs.length === 0) return null;
+  // Find Top Weak Subject & Counts
+  const subjectErrorCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const log of mistakeLogs) {
       const subName = subjectMap.get(String(log.subjectId)) || 'Subject';
       counts[subName] = (counts[subName] || 0) + 1;
     }
+    return counts;
+  }, [mistakeLogs, subjectMap]);
+
+  const topErrorSubject = useMemo(() => {
+    if (mistakeLogs.length === 0) return null;
     let topName = '';
     let maxCount = 0;
-    for (const [name, count] of Object.entries(counts)) {
+    for (const [name, count] of Object.entries(subjectErrorCounts)) {
       if (count > maxCount) {
         maxCount = count;
         topName = name;
       }
     }
-    return topName ? `${topName} (${maxCount})` : null;
-  }, [mistakeLogs, subjectMap]);
+    return topName ? { name: topName, count: maxCount } : null;
+  }, [mistakeLogs, subjectErrorCounts]);
 
   // Filtered & Searched Logs
   const filteredLogs = useMemo(() => {
@@ -115,28 +159,69 @@ export default function MistakeRecoveryQueue() {
     });
   }, [mistakeLogs, typeFilter, filterSubjectId, searchQuery, subjectMap, systemMap]);
 
-  // Group filtered logs by Subject + System + Topic
-  const groupedMap = useMemo(() => {
-    const map = new Map<string, { subjectName: string; systemName: string; topicName?: string; logs: MistakeLog[] }>();
-    for (const log of filteredLogs) {
-      const subName = subjectMap.get(String(log.subjectId)) || 'Subject';
-      const sysName = systemMap.get(String(log.systemId)) || 'General';
-      const topName = log.topicId?.trim() || undefined;
+  // Hierarchical Grouping by Subject -> System
+  interface SubjectGroup {
+    subjectId: string;
+    subjectName: string;
+    totalCount: number;
+    systems: {
+      systemId: string;
+      systemName: string;
+      logs: MistakeLog[];
+    }[];
+  }
 
-      const groupKey = `${log.subjectId || 0}::${log.systemId || 0}::${topName || ''}`;
-      const existing = map.get(groupKey);
-      if (existing) {
-        existing.logs.push(log);
-      } else {
-        map.set(groupKey, {
+  const hierarchicalGroups = useMemo(() => {
+    const map = new Map<string, { subjectName: string; systemsMap: Map<string, { systemName: string; logs: MistakeLog[] }> }>();
+
+    for (const log of filteredLogs) {
+      const subId = String(log.subjectId || 0);
+      const subName = subjectMap.get(subId) || 'Subject';
+      const sysId = String(log.systemId || 0);
+      const sysName = systemMap.get(sysId) || 'General';
+
+      if (!map.has(subId)) {
+        map.set(subId, {
           subjectName: subName,
-          systemName: sysName,
-          topicName: topName,
-          logs: [log]
+          systemsMap: new Map()
         });
       }
+
+      const subEntry = map.get(subId)!;
+      if (!subEntry.systemsMap.has(sysId)) {
+        subEntry.systemsMap.set(sysId, {
+          systemName: sysName,
+          logs: []
+        });
+      }
+
+      subEntry.systemsMap.get(sysId)!.logs.push(log);
     }
-    return map;
+
+    const result: SubjectGroup[] = [];
+    map.forEach((subVal, subId) => {
+      let subTotal = 0;
+      const systemsArr: { systemId: string; systemName: string; logs: MistakeLog[] }[] = [];
+      
+      subVal.systemsMap.forEach((sysVal, sysId) => {
+        subTotal += sysVal.logs.length;
+        systemsArr.push({
+          systemId: sysId,
+          systemName: sysVal.systemName,
+          logs: sysVal.logs
+        });
+      });
+
+      result.push({
+        subjectId: subId,
+        subjectName: subVal.subjectName,
+        totalCount: subTotal,
+        systems: systemsArr
+      });
+    });
+
+    // Sort subjects by number of entries descending
+    return result.sort((a, b) => b.totalCount - a.totalCount);
   }, [filteredLogs, subjectMap, systemMap]);
 
   const hasActiveFilters = searchQuery.trim() !== '' || typeFilter !== 'all' || filterSubjectId !== 'all';
@@ -147,20 +232,48 @@ export default function MistakeRecoveryQueue() {
     setFilterSubjectId('all');
   };
 
+  const toggleSubjectCollapse = (subId: string) => {
+    setCollapsedSubjects(prev => ({
+      ...prev,
+      [subId]: !prev[subId]
+    }));
+  };
+
+  // Safe Deletion with Undo Toast
+  const handleDelete = (log: MistakeLog) => {
+    if (log.id === undefined) return;
+    const logId = log.id;
+    const rulePreview = log.keyTakeaway.slice(0, 30);
+
+    deleteMistakeLog(logId);
+
+    toast('Takeaway deleted', {
+      description: `"${rulePreview}..."`,
+      action: {
+        label: 'Undo',
+        onClick: () => restoreMistakeLog(logId)
+      },
+      duration: 5000
+    });
+  };
+
   return (
-    <div id="mistake-journal-page" className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div id="mistake-journal-page" className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
       
-      {/* 1. Header & Primary Action Bar */}
+      {/* 1. Header & Primary Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 text-primary font-bold tracking-wider uppercase text-[10px]">
             <BookOpen className="w-3.5 h-3.5" /> 20th Notebook
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Mistake Journal
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+            <span>Mistake Journal</span>
+            <span className="text-xs font-mono font-medium text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40">
+              {totalLogs} {totalLogs === 1 ? 'rule' : 'rules'}
+            </span>
           </h1>
           <p className="text-xs text-muted-foreground">
-            One-line clinical takeaways and high-yield rules extracted from QBank & Grand Test errors.
+            Distilled high-yield rules from your QBank & Grand Test errors. Press <kbd className="font-mono bg-muted/60 px-1 rounded text-[10px] text-foreground">N</kbd> to quick log.
           </p>
         </div>
 
@@ -176,50 +289,45 @@ export default function MistakeRecoveryQueue() {
         </div>
       </div>
 
-      {/* 2. Focused Overview Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div id="stat-total-takeaways" className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-            <FileText className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-              Journal Entries
-            </span>
-            <span className="text-base font-extrabold text-foreground leading-none">
-              {totalLogs} <span className="text-xs font-normal text-muted-foreground">distilled rules</span>
-            </span>
-          </div>
-        </div>
-
-        <div id="stat-top-weak-area" className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
-            <Brain className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-              Highest Error Density
-            </span>
-            <span className="text-xs font-bold text-foreground truncate block leading-tight mt-0.5">
-              {topErrorSubject || 'None (No mistakes recorded)'}
-            </span>
+      {/* 2. Intelligent High-Error Bridge (If High Concentration Exists) */}
+      {topErrorSubject && topErrorSubject.count >= 3 && (
+        <div id="high-error-density-card" className="p-3.5 rounded-2xl bg-card border border-primary/20 shadow-xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <Brain className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-bold text-foreground">
+                  High Mistake Density in {topErrorSubject.name}
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                  {topErrorSubject.count} entries
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate">
+                Consider prioritizing this subject during your next scheduled revision session.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 3. Search & Filter Strip */}
-      <div id="journal-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-card p-3 rounded-2xl border border-border/80 shadow-xs">
-        {/* Search Input */}
+      {/* 3. Search & Refined Filter Controls */}
+      <div id="journal-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-card p-2.5 rounded-2xl border border-border/80 shadow-xs">
+        
+        {/* Search Input with Keyboard Shortcut Indicator */}
         <div className="relative flex-1 min-w-0">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
+            ref={searchInputRef}
             id="input-search-mistakes"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search rules, drugs, triads, keywords (e.g. DOC, Thiamine, Stenosis)..."
-            className="pl-8.5 pr-8 h-9 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
+            placeholder="Search rules, drugs, triads, keywords (e.g. DOC, Thiamine, PSVT)..."
+            className="pl-8.5 pr-14 h-8.5 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
@@ -227,16 +335,20 @@ export default function MistakeRecoveryQueue() {
             >
               <X className="w-3.5 h-3.5" />
             </button>
+          ) : (
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted/60 text-[10px] text-muted-foreground font-mono pointer-events-none">
+              <Command className="w-2.5 h-2.5" />K
+            </div>
           )}
         </div>
 
-        {/* Classification & Subject Dropdowns */}
+        {/* Clean Dropdown Filters */}
         <div className="flex items-center gap-2 shrink-0">
           <select
             id="select-error-type-filter"
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}
-            className="h-9 rounded-xl border border-border/80 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            className="h-8.5 rounded-xl border border-border/70 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
           >
             <option value="all">All Root Causes</option>
             <option value="concept">Knowledge Gaps</option>
@@ -249,7 +361,7 @@ export default function MistakeRecoveryQueue() {
             id="select-subject-filter"
             value={filterSubjectId}
             onChange={e => setFilterSubjectId(e.target.value)}
-            className="h-9 rounded-xl border border-border/80 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[160px] truncate"
+            className="h-8.5 rounded-xl border border-border/70 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[150px] truncate"
           >
             <option value="all">All Subjects</option>
             {subjects.map(s => (
@@ -269,93 +381,124 @@ export default function MistakeRecoveryQueue() {
         </div>
       </div>
 
-      {/* 4. High-Density Journal Notebook Groupings */}
-      {Array.from(groupedMap.entries()).length > 0 ? (
-        <div id="mistakes-grouped-list" className="space-y-5">
-          {Array.from(groupedMap.entries()).map(([groupKey, group]) => {
+      {/* 4. Editorial Notebook View (The 20th Notebook) */}
+      {hierarchicalGroups.length > 0 ? (
+        <div id="mistakes-notebook-container" className="space-y-4">
+          {hierarchicalGroups.map(subjectGroup => {
+            const isCollapsed = !!collapsedSubjects[subjectGroup.subjectId];
+
             return (
-              <div key={groupKey} id={`group-${groupKey.replace(/[^a-zA-Z0-9]/g, '-')}`} className="space-y-2">
-                {/* Clean Group Header */}
-                <div className="flex items-center gap-1.5 px-1 pt-1 flex-wrap">
-                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    {group.subjectName}
-                  </span>
-                  <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
-                  <span className="text-xs font-bold text-foreground">
-                    {group.systemName}
-                  </span>
-                  {group.topicName && (
-                    <>
-                      <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
-                      <span className="text-xs font-medium text-primary">
-                        {group.topicName}
-                      </span>
-                    </>
-                  )}
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    ({group.logs.length})
-                  </span>
-                </div>
+              <div 
+                key={subjectGroup.subjectId} 
+                id={`subject-section-${subjectGroup.subjectId}`}
+                className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden transition-all"
+              >
+                {/* Collapsible Subject Section Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleSubjectCollapse(subjectGroup.subjectId)}
+                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 border-b border-border/60 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-extrabold text-xs sm:text-sm text-foreground tracking-tight uppercase">
+                      {subjectGroup.subjectName}
+                    </span>
+                    <span className="text-[11px] font-mono font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/40 shrink-0">
+                      {subjectGroup.totalCount} {subjectGroup.totalCount === 1 ? 'rule' : 'rules'}
+                    </span>
+                  </div>
 
-                {/* Journal Takeaway Rows */}
-                <div className="space-y-2">
-                  {group.logs.map(log => {
-                    return (
-                      <div 
-                        key={String(log.id)} 
-                        id={`mistake-card-${log.id}`}
-                        className="p-3.5 rounded-2xl border border-border/80 hover:border-border transition-all flex items-start justify-between gap-3 bg-card shadow-xs group"
-                      >
-                        {/* Content Area */}
-                        <div className="flex-1 space-y-1.5 min-w-0">
-                          <p className="text-xs sm:text-sm font-semibold text-foreground leading-relaxed select-text">
-                            {log.keyTakeaway}
-                          </p>
+                  <div className="flex items-center gap-1 text-muted-foreground shrink-0">
+                    <span className="text-[11px] font-medium hidden sm:inline-block">
+                      {isCollapsed ? 'Expand' : 'Collapse'}
+                    </span>
+                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", isCollapsed && "-rotate-90")} />
+                  </div>
+                </button>
 
-                          {/* Metadata Badges */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Error Type Badge */}
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0",
-                                log.errorType === 'concept' && "border-rose-500/30 text-rose-500 bg-rose-500/10",
-                                log.errorType === 'misread' && "border-amber-500/30 text-amber-500 bg-amber-500/10",
-                                log.errorType === 'retrieval' && "border-sky-500/30 text-sky-500 bg-sky-500/10",
-                                log.errorType === 'fomo' && "border-purple-500/30 text-purple-500 bg-purple-500/10"
-                              )}
-                            >
-                              {log.errorType === 'concept' ? 'Knowledge Gap' : 
-                               log.errorType === 'misread' ? 'Execution Slip' : 
-                               log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
-                            </Badge>
-
-                            {/* Source Badge */}
-                            <span className="text-[10px] font-mono font-medium text-muted-foreground px-1.5 py-0.5 rounded bg-muted/30 border border-border/40">
-                              {log.source === 'GT' ? 'Grand Test' : log.source}
-                            </span>
-
-                            {/* Date */}
-                            <span className="text-[10px] text-muted-foreground/70">
-                              {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            </span>
-                          </div>
+                {/* Subject Content (Systems & Rules) */}
+                {!isCollapsed && (
+                  <div className="divide-y divide-border/40">
+                    {subjectGroup.systems.map(systemGroup => (
+                      <div key={systemGroup.systemId} className="p-4 space-y-3">
+                        
+                        {/* System Header */}
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                          <span>{systemGroup.systemName}</span>
+                          <span className="text-[10px] text-muted-foreground/60 font-mono">
+                            ({systemGroup.logs.length})
+                          </span>
                         </div>
 
-                        {/* Delete Action */}
-                        <button
-                          id={`btn-delete-mistake-${log.id}`}
-                          type="button"
-                          onClick={() => log.id !== undefined && deleteMistakeLog(log.id)}
-                          className="p-1.5 rounded-xl text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
-                          title="Delete takeaway"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* List of Distilled Rules */}
+                        <div className="space-y-2.5 pl-1 sm:pl-3">
+                          {systemGroup.logs.map(log => {
+                            return (
+                              <div 
+                                key={String(log.id)} 
+                                id={`mistake-row-${log.id}`}
+                                className="group flex items-start justify-between gap-3 p-2.5 sm:p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
+                              >
+                                {/* Left Content */}
+                                <div className="flex-1 space-y-1.5 min-w-0">
+                                  {/* Clinical Rule Text */}
+                                  <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed select-text">
+                                    {log.keyTakeaway}
+                                  </p>
+
+                                  {/* Metadata Line */}
+                                  <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                                    {/* Topic Tag if present */}
+                                    {log.topicId && (
+                                      <span className="font-semibold text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                                        {log.topicId}
+                                      </span>
+                                    )}
+
+                                    {/* Source Pill */}
+                                    <span className="font-mono bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
+                                      {log.source === 'GT' ? 'Grand Test' : log.source}
+                                    </span>
+
+                                    {/* Error Cause */}
+                                    <span className={cn(
+                                      "font-semibold px-1.5 py-0.5 rounded border",
+                                      log.errorType === 'concept' && "border-rose-500/20 text-rose-400 bg-rose-500/10",
+                                      log.errorType === 'misread' && "border-amber-500/20 text-amber-400 bg-amber-500/10",
+                                      log.errorType === 'retrieval' && "border-sky-500/20 text-sky-400 bg-sky-500/10",
+                                      log.errorType === 'fomo' && "border-purple-500/20 text-purple-400 bg-purple-500/10"
+                                    )}>
+                                      {log.errorType === 'concept' ? 'Knowledge Gap' : 
+                                       log.errorType === 'misread' ? 'Execution Slip' : 
+                                       log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
+                                    </span>
+
+                                    {/* Date */}
+                                    <span className="text-muted-foreground/60">
+                                      {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Safe Delete Action */}
+                                <button
+                                  id={`btn-delete-mistake-${log.id}`}
+                                  type="button"
+                                  onClick={() => handleDelete(log)}
+                                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer shrink-0"
+                                  title="Delete takeaway (with undo)"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -367,12 +510,12 @@ export default function MistakeRecoveryQueue() {
             <BookOpen className="w-8 h-8" />
           </div>
           <h3 className="text-base font-bold text-foreground">
-            {hasActiveFilters ? 'No Matching Takeaways' : 'Journal is Empty'}
+            {hasActiveFilters ? 'No Matching Rules Found' : 'Your 20th Notebook is Empty'}
           </h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
             {hasActiveFilters 
-              ? 'No mistake takeaways matched your current search and filter criteria.'
-              : 'As you solve QBank blocks and Grand Tests, log high-yield 1-line takeaways to build your 20th Notebook for rapid pre-exam review.'}
+              ? 'No takeaways matched your current search filters.'
+              : 'As you complete QBank blocks and Grand Tests, log high-yield 1-line takeaways to build your personal pre-exam notebook.'}
           </p>
           <div className="pt-2 flex items-center justify-center gap-2">
             {hasActiveFilters ? (
@@ -392,7 +535,7 @@ export default function MistakeRecoveryQueue() {
                 className="bg-primary text-primary-foreground font-bold text-xs rounded-xl gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Log New Takeaway</span>
+                <span>Log First Takeaway</span>
               </Button>
             )}
           </div>
