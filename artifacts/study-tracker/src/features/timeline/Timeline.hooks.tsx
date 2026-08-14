@@ -53,11 +53,24 @@ export function useTimelineLogic() {
   const monthEnd   = endOfMonth(calDate);
   const isCurrentMonth = isSameMonth(calDate, now);
 
-  // 1. Memoized activity heatmap for past completed events
-  const activityByDay = useMemo(() => buildActivityHeatmap(history), [history]);
+  // 1. All completed events mapped to timeline model
+  const allCompletedEvents = useMemo(() => {
+    return history.map(historyToEvent);
+  }, [history]);
 
-  // 2. Set of future dates with scheduled revisions (for dual-signal heatmap dots)
+  // 2. Memoized activity heatmap for past completed events filtered by active category
+  const activityByDay = useMemo(() => {
+    const filtered = filter === 'all'
+      ? allCompletedEvents
+      : allCompletedEvents.filter(e => eventMatchesFilter(e, filter));
+    return buildActivityHeatmap(filtered);
+  }, [allCompletedEvents, filter]);
+
+  // 3. Set of future dates with scheduled revisions (for dual-signal heatmap dots)
   const upcomingRevisionDates = useMemo(() => {
+    if (filter !== 'all' && filter !== 'revision') {
+      return new Set<string>();
+    }
     const dates = new Set<string>();
     const todayStart = new Date(now);
     todayStart.setHours(0,0,0,0);
@@ -71,9 +84,9 @@ export function useTimelineLogic() {
       }
     });
     return dates;
-  }, [curriculumSets, now]);
+  }, [curriculumSets, now, filter]);
 
-  // 3. Actionable Queue & Upcoming Revisions derived from curriculumSets
+  // 4. Actionable Queue & Upcoming Revisions derived from curriculumSets
   const { actionableQueue, allUpcomingRevisions } = useMemo(() => {
     const todayStart = new Date(now);
     todayStart.setHours(0, 0, 0, 0);
@@ -118,12 +131,10 @@ export function useTimelineLogic() {
     };
   }, [curriculumSets, subjects, monthStart, monthEnd, now]);
 
-  // 4. Completed events in the visible month
+  // 5. Completed events in the visible month
   const monthCompleted = useMemo(() => {
-    return history
-      .map(historyToEvent)
-      .filter(e => e.date >= monthStart && e.date <= monthEnd);
-  }, [history, monthStart, monthEnd]);
+    return allCompletedEvents.filter(e => e.date >= monthStart && e.date <= monthEnd);
+  }, [allCompletedEvents, monthStart, monthEnd]);
 
   // Filter helper function
   const filterEvents = (events: TimelineEvent[]) => events.filter(e => {

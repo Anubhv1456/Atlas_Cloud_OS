@@ -32,6 +32,7 @@ import { useTimelineLogic } from './Timeline.hooks';
 
 // ── Visual config ─────────────────────────────────────────────────────────────
 const EVENT_STYLE: Record<TimelineEvent['eventType'], { bg: string; text: string; Icon: typeof BookOpen }> = {
+  contentCompleted: { bg: 'bg-teal-500/10 border-teal-500/20',     text: 'text-teal-500',         Icon: BookOpen },
   qbankDone:        { bg: 'bg-violet-500/10 border-violet-500/20',   text: 'text-violet-500',       Icon: Layers   },
   pyqsDone:         { bg: 'bg-amber-500/10 border-amber-500/20',     text: 'text-amber-500',        Icon: BookOpen },
   revisionSystem:   { bg: 'bg-primary/10 border-primary/20',          text: 'text-primary',          Icon: Clock    },
@@ -240,7 +241,7 @@ export default function Timeline() {
                 <button 
                   type="button"
                   onClick={() => setCalDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
-                  disabled={calDate >= startOfMonth(now)}
+                  disabled={calDate >= new Date(now.getFullYear() + 1, now.getMonth(), 1)}
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors border border-border/50 bg-background shadow-xs disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                   title="Next month"
                 >

@@ -144,21 +144,23 @@ export async function deleteHistoryEntry(id: number) {
 
         if (entry.taskKey === 'curriculum_set_content') {
       const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
-      const matchedSet = sets.find(s => entry.taskLabel.startsWith(s.name));
+      const matchedSet = sets.find(s => s.name === entry.systemName || s.name === entry.taskLabel.trim())
+        || sets.find(s => entry.taskLabel.startsWith(s.name) || entry.taskLabel.includes(s.name));
       if (matchedSet && matchedSet.id) {
         await db.curriculumSets.update(matchedSet.id, { contentCompleted: false, updatedAt: new Date(), hlc: generateHLC() });
       }
     } else if (entry.taskKey === 'curriculum_set_qbank') {
       const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
-      const matchedSet = sets.find(s => entry.taskLabel.startsWith(s.name));
+      const matchedSet = sets.find(s => s.name === entry.systemName || s.name === entry.taskLabel.trim())
+        || sets.find(s => entry.taskLabel.startsWith(s.name) || entry.taskLabel.includes(s.name));
       if (matchedSet && matchedSet.id) {
         await db.curriculumSets.update(matchedSet.id, { qbankCompleted: false, updatedAt: new Date(), hlc: generateHLC() });
       }
     } else if (entry.taskKey === 'curriculum_set_revision') {
       const sets = await db.curriculumSets.where('subjectId').equals(entry.subjectId).toArray();
-      const matchedSet = sets.find(s => entry.taskLabel.includes(s.name));
+      const matchedSet = sets.find(s => s.name === entry.systemName || s.name === entry.taskLabel.trim())
+        || sets.find(s => entry.taskLabel.includes(s.name) || entry.taskLabel.startsWith(s.name));
       if (matchedSet && matchedSet.id) {
-        // very basic rollback for Study Block revision: just decrement revision count
         const newRevCount = Math.max(0, (matchedSet.revisionCount ?? 1) - 1);
         await db.curriculumSets.update(matchedSet.id, { revisionCount: newRevCount, updatedAt: new Date(), hlc: generateHLC() });
       }
@@ -195,11 +197,13 @@ export async function deleteHistoryEntry(id: number) {
       }
     } else if (entry.taskKey === 'pyqsDone' && entry.subjectId) {
       const pyqs = await db.pyqYears.where('subjectId').equals(entry.subjectId).toArray();
-      const matchedPyq = pyqs.find(p => p.completed && entry.taskLabel.includes(p.year));
+      const matchedPyq = pyqs.find(p => p.completed && (p.year === entry.taskLabel || entry.taskLabel.includes(p.year)));
       if (matchedPyq) {
         await db.pyqYears.update(matchedPyq.id!, {
           completed: false,
           completedAt: null,
+          updatedAt: new Date(),
+          hlc: generateHLC(),
         });
       }
     } else if (entry.taskKey === 'revision' && entry.systemId) {

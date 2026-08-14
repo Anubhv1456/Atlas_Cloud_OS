@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { StudySystem, Topic, CurriculumSet, db } from '@/db';
+import { StudySystem, Topic, db } from '@/db';
+import { logCompletion } from '@/db/mutations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -40,9 +41,10 @@ export function LogSessionDialog({ isOpen, onOpenChange, system, subjectId, topi
     
     try {
       const now = new Date();
+      const sessionName = `${system.name} Session`;
       await db.curriculumSets.add({
         id: `set-${Date.now()}`,
-        name: `${system.name} Session`,
+        name: sessionName,
         subjectId,
         systemId: system.id!,
         topicIds: Array.from(selectedTopicIds),
@@ -55,6 +57,19 @@ export function LogSessionDialog({ isOpen, onOpenChange, system, subjectId, topi
         revisionCount: 1,
         createdAt: now,
         updatedAt: now,
+      });
+
+      const sub = await db.subjects.get(subjectId);
+      const subName = sub?.name ?? '';
+
+      await logCompletion({
+        subjectId,
+        subjectName: subName,
+        systemId: system.id!,
+        systemName: system.name,
+        taskKey: 'curriculum_set_content',
+        taskLabel: `${sessionName} (${selectedTopicIds.size} topics)`,
+        completedAt: now,
       });
       
       toast.success('Study Session Logged', {

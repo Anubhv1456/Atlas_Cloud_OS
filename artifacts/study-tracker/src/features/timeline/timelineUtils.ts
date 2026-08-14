@@ -4,13 +4,13 @@ import { CurriculumSet } from '@/db/types';
 
 export function historyToEvent(h: HistoryEntry): TimelineEvent {
   const typeMap: Record<string, TimelineEvent['eventType']> = {
-    contentDone:     'revisionSystem',
-    contentProgress: 'revisionSystem',
+    contentDone:     'contentCompleted',
+    contentProgress: 'contentCompleted',
     qbankDone:       'qbankDone',
     pyqsDone:        'pyqsDone',
     revision:        'revisionSystem',
     curriculum_set_revision: 'revisionSystem',
-    curriculum_set_content: 'revisionSystem',
+    curriculum_set_content: 'contentCompleted',
     curriculum_set_qbank: 'qbankDone',
     topicMastered:   'topicMastered',
     topicWeak:       'topicWeak',
@@ -19,12 +19,18 @@ export function historyToEvent(h: HistoryEntry): TimelineEvent {
   let entityName = `${h.systemName} ${h.taskLabel}`;
   if (h.taskKey === 'pyqsDone') entityName = h.taskLabel;
   if (h.taskKey === 'topicMastered' || h.taskKey === 'topicWeak') entityName = h.taskLabel;
-  if (h.taskKey === 'curriculum_set_revision' || h.taskKey === 'curriculum_set_content' || h.taskKey === 'curriculum_set_qbank') entityName = h.taskLabel;
+  if (h.taskKey === 'curriculum_set_content' || h.taskKey === 'curriculum_set_qbank') {
+    entityName = h.taskLabel.trim() || h.systemName;
+  }
+  if (h.taskKey === 'curriculum_set_revision') {
+    // Keep timeline clean without raw score percentage noise
+    entityName = h.taskLabel.replace(/\s*\(\d+%\)/, '').trim() || h.systemName;
+  }
 
   return {
     id:          String(h.id ?? `${h.systemId}-${h.taskKey}-${h.completedAt}`),
     dbHistoryId: h.id,
-    eventType:   typeMap[h.taskKey] ?? 'revisionSystem',
+    eventType:   typeMap[h.taskKey] ?? 'contentCompleted',
     entityName,
     subjectName: h.subjectName,
     date:        new Date(h.completedAt),
@@ -79,10 +85,11 @@ export function setToRevisionEvent(
   };
 }
 
-export function buildActivityHeatmap(history: HistoryEntry[]) {
+export function buildActivityHeatmap(entries: (HistoryEntry | TimelineEvent)[]) {
   const activityByDay = new Map<string, number>();
-  history.forEach(h => {
-    const d = format(new Date(h.completedAt), 'yyyy-MM-dd');
+  entries.forEach(item => {
+    const rawDate = 'completedAt' in item ? item.completedAt : item.date;
+    const d = format(new Date(rawDate), 'yyyy-MM-dd');
     activityByDay.set(d, (activityByDay.get(d) || 0) + 1);
   });
   return activityByDay;
