@@ -17,12 +17,9 @@ import {
   Brain, 
   Check, 
   Flame, 
-  Zap,
-  ShieldCheck,
-  CalendarDays,
-  Target
+  Zap
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { computeIntelligentRecommendation, RecommendationResult } from '@/lib/recommendation-engine';
@@ -124,12 +121,48 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     setExamDate(d.toISOString().split('T')[0]);
   };
 
+  // Safe skip & dismissal handler
+  const handleDismiss = async (showNotification = true) => {
+    clearTimers();
+
+    // Ensure default profile is stored if not configured yet
+    if (!profile.targetExam) {
+      updateProfile({
+        targetExam: selectedGoal || 'MBBS Professional Exams',
+        targetExamDate: examDate || '',
+        curriculum: 'Universal Ontology',
+        currentYear: currentYear || 'Final MBBS',
+        startedStudying: startedStudying || 'yes'
+      });
+    }
+
+    // Ensure base curriculum is loaded idempotently in background
+    loadUniversalOntology().catch(() => {});
+
+    // Permanently mark onboarding as completed
+    await markOnboarded();
+    onOpenChange(false);
+
+    if (showNotification) {
+      toast.info('Onboarding skipped', {
+        description: 'You can adjust your exam goal anytime from Exam Target.'
+      });
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      handleDismiss(true);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
   // Step transitions
   const handleNextFromGoal = async () => {
     try {
       const count = await db.subjects.count();
       if (count > 0) {
-        // Fast forward: curriculum already configured
         setStep(4);
         return;
       }
@@ -148,7 +181,6 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       setStep(4);
     } catch (err) {
       console.error('Error during ontology setup:', err);
-      // Advance to personalization even on network fallback
       setStep(4);
     }
   };
@@ -189,7 +221,6 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       console.warn('Direct recommendation calculation fallback engaged:', err);
     }
 
-    // Deterministic safe fallback
     return {
       subjectName: selectedGoal.includes('USMLE') ? 'General Pathology' : 'General Medicine',
       systemName: selectedGoal.includes('USMLE') ? 'Cardiovascular System' : 'Cardiology & Vascular',
@@ -207,7 +238,6 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     setStep(6);
     setComputingStep(0);
 
-    // Compute recommendation asynchronously in background immediately
     const recPromise = computeRecommendationSafe().then(rec => {
       setRecommendedSystem(rec);
       return rec;
@@ -243,7 +273,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[540px] rounded-3xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
         <div className="p-6 md:p-8 relative overflow-hidden min-h-[480px] flex flex-col justify-between">
           {/* Subtle Ambient Background Glow */}
@@ -252,7 +282,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
           {/* Top Header / Progress Indicator */}
           {step > 1 && step < 6 && (
-            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3 z-10">
+            <div className="flex items-center justify-between mb-5 border-b border-border/40 pb-3 z-10 pr-6">
               <div className="flex items-center gap-2">
                 <img src="/emblem.svg" alt="Atlas" className="w-5 h-5 rounded-md object-contain" />
                 <span className="text-xs font-bold text-foreground tracking-tight">Onboarding Calibration</span>
@@ -302,14 +332,23 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 </p>
               </div>
 
-              <Button
-                onClick={() => setStep(2)}
-                size="lg"
-                className="w-full max-w-xs rounded-2xl text-sm font-semibold h-12 shadow-md gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-              >
-                Begin Calibration
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <div className="w-full max-w-xs space-y-2.5">
+                <Button
+                  onClick={() => setStep(2)}
+                  size="lg"
+                  className="w-full rounded-2xl text-sm font-semibold h-12 shadow-md gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  Begin Calibration
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleDismiss(true)}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground h-9 cursor-pointer"
+                >
+                  Skip for now & explore
+                </Button>
+              </div>
             </motion.div>
           )}
 

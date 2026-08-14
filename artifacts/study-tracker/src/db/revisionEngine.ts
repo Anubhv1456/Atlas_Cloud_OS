@@ -28,7 +28,18 @@ export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: Curriculum
   if (!hasRevisionScheduled(sys, safeSets)) return 0;
   
   const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
-  if (sets.length === 0) return 0;
+  if (sets.length === 0) {
+    if (sys.nextRevisionDate) {
+      const lastDate = sys.lastRevisionDate ? new Date(sys.lastRevisionDate) : new Date(sys.nextRevisionDate);
+      const interval = sys.currentRevisionInterval || 1;
+      const decay = getSystemDecayFactor(sys);
+      const diffTime = Math.max(0, now.getTime() - lastDate.getTime());
+      const daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const loss = (daysElapsed / interval) * 100 * decay;
+      return Math.min(100, Math.max(0, Math.round(loss * 10) / 10));
+    }
+    return 0;
+  }
 
   // Compute memory loss per set
   const losses = sets.map(set => {
@@ -82,14 +93,24 @@ export function hasActiveRevisionInProgress(systems: StudySystem[] = []): boolea
 
 export function hasRevisionScheduled(sys: StudySystem, curriculumSets: CurriculumSet[] = []): boolean {
   const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
-  return safeSets.some(s => s && s.systemId === sys.id && s.nextRevisionDate);
+  if (safeSets.some(s => s && s.systemId === sys.id && s.nextRevisionDate)) return true;
+  return !!sys.nextRevisionDate;
 }
 
-export function isRevisionDue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
-  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+export function isRevisionDue(sys: StudySystem, curriculumSetsOrNow?: CurriculumSet[] | Date, nowDate?: Date): boolean {
+  const isSecondArgDate = curriculumSetsOrNow instanceof Date;
+  const safeSets = Array.isArray(curriculumSetsOrNow) ? curriculumSetsOrNow : [];
+  const now = isSecondArgDate ? (curriculumSetsOrNow as Date) : (nowDate || today());
+  
   const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   const n = new Date(now);
   n.setHours(0, 0, 0, 0);
+  
+  if (sets.length === 0 && sys.nextRevisionDate) {
+    const due = new Date(sys.nextRevisionDate);
+    due.setHours(0, 0, 0, 0);
+    return due <= n;
+  }
   
   return sets.some(set => {
     const due = new Date(set.nextRevisionDate!);
@@ -98,11 +119,20 @@ export function isRevisionDue(sys: StudySystem, curriculumSets: CurriculumSet[] 
   });
 }
 
-export function isRevisionOverdue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
-  const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
+export function isRevisionOverdue(sys: StudySystem, curriculumSetsOrNow?: CurriculumSet[] | Date, nowDate?: Date): boolean {
+  const isSecondArgDate = curriculumSetsOrNow instanceof Date;
+  const safeSets = Array.isArray(curriculumSetsOrNow) ? curriculumSetsOrNow : [];
+  const now = isSecondArgDate ? (curriculumSetsOrNow as Date) : (nowDate || today());
+
   const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   const n = new Date(now);
   n.setHours(0, 0, 0, 0);
+  
+  if (sets.length === 0 && sys.nextRevisionDate) {
+    const due = new Date(sys.nextRevisionDate);
+    due.setHours(0, 0, 0, 0);
+    return due < n;
+  }
   
   return sets.some(set => {
     const due = new Date(set.nextRevisionDate!);
@@ -111,8 +141,8 @@ export function isRevisionOverdue(sys: StudySystem, curriculumSets: CurriculumSe
   });
 }
 
-export function isRevisionDueToday(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): boolean {
-  return isRevisionDue(sys, curriculumSets, now) && !isRevisionOverdue(sys, curriculumSets, now);
+export function isRevisionDueToday(sys: StudySystem, curriculumSetsOrNow?: CurriculumSet[] | Date, nowDate?: Date): boolean {
+  return isRevisionDue(sys, curriculumSetsOrNow, nowDate) && !isRevisionOverdue(sys, curriculumSetsOrNow, nowDate);
 }
 
 export function daysOverdue(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {

@@ -1,23 +1,34 @@
 import React from 'react';
-import { Moon, Sun, Bell, BellOff, SlidersHorizontal } from 'lucide-react';
+import { Moon, Sun, Bell, BellOff, SlidersHorizontal, Sparkles, AlertCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/useTheme';
 import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
 export function SystemPreferencesCard() {
   const { isDark, toggleTheme } = useTheme();
-  const { notifSettings, toggleNotif } = useNotifications();
+  const { notifSettings, permissionStatus, isPwa, toggleNotif, testNotification } = useNotifications();
+
+  const isAlertsActive = notifSettings.notifyRevisions && notifSettings.enabled && permissionStatus !== 'denied';
 
   return (
     <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
-      <div className="flex items-center gap-2 pb-2 border-b border-border/40">
-        <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-between pb-2 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+          </div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            System Preferences
+          </h3>
         </div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          System Preferences
-        </h3>
+
+        {isPwa && (
+          <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            PWA Standalone
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -48,33 +59,70 @@ export function SystemPreferencesCard() {
 
         {/* Notifications Preference Tile */}
         <div 
-          onClick={() => toggleNotif('notifyRevisions', !notifSettings.notifyRevisions)}
+          onClick={() => toggleNotif('notifyRevisions', !isAlertsActive)}
           className="p-3.5 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer flex items-center justify-between gap-3 group"
         >
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
-              notifSettings.notifyRevisions 
+              isAlertsActive 
                 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
+                : permissionStatus === 'denied'
+                ? "bg-rose-500/10 border-rose-500/20 text-rose-500"
                 : "bg-muted border-border text-muted-foreground"
             )}>
-              {notifSettings.notifyRevisions ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+              {isAlertsActive ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
             </div>
             <div>
               <p className="text-xs font-bold text-foreground">Revision Alerts</p>
               <p className="text-[11px] text-muted-foreground">
-                {notifSettings.notifyRevisions ? 'Active' : 'Disabled'}
+                {permissionStatus === 'denied'
+                  ? 'Blocked in Browser'
+                  : isAlertsActive
+                  ? 'Active (PWA & Web)'
+                  : 'Disabled'}
               </p>
             </div>
           </div>
 
           <Switch 
-            checked={notifSettings.notifyRevisions} 
+            checked={isAlertsActive} 
             onCheckedChange={(val) => toggleNotif('notifyRevisions', val)}
             onClick={(e) => e.stopPropagation()}
           />
         </div>
       </div>
+
+      {/* Quick Test / Permission Status Footer */}
+      {permissionStatus === 'denied' && (
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] leading-relaxed">
+            Notifications are blocked in your browser or device permissions. To receive daily spaced repetition reminders, enable notifications in your browser's site settings or install Atlas as a PWA.
+          </p>
+        </div>
+      )}
+
+      {isAlertsActive && (
+        <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+          <span className="text-[11px]">
+            Alerts fire daily when spaced recall intervals mature.
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              testNotification();
+            }}
+            className="h-7 text-[11px] px-2.5 text-primary hover:text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            Send Test Alert
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

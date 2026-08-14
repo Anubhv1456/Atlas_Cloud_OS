@@ -26,20 +26,20 @@ window.ResizeObserver = class ResizeObserver extends _ResizeObserver {
   }
 };
 
-// Register PWA service worker with auto-update in production builds
-if (import.meta.env.PROD) {
+// Register PWA service worker with auto-update
+if ('serviceWorker' in navigator) {
   try {
     registerSW({
       immediate: true,
-      onRegisteredSW(swScriptUrl: string, registration: ServiceWorkerRegistration | undefined) {
-        console.log('[PWA] Service worker registered successfully at:', swScriptUrl);
+      onRegisteredSW(swScriptUrl: string) {
+        console.log('[PWA] Service worker registered at:', swScriptUrl);
       },
       onRegisterError(error: any) {
-        console.warn('[PWA] Service worker registration error:', error);
+        console.warn('[PWA] Service worker registration note:', error);
       },
     });
   } catch (err) {
-    console.warn('[PWA] registerSW call failed:', err);
+    console.warn('[PWA] registerSW call note:', err);
   }
 }
 

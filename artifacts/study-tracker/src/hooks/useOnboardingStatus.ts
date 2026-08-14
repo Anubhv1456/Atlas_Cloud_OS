@@ -15,7 +15,8 @@ export function useOnboardingStatus() {
 
     async function checkStatus() {
       if (!user) {
-        setHasOnboarded(false);
+        const guestStatus = localStorage.getItem('onboarding_completed_guest');
+        setHasOnboarded(guestStatus === 'true');
         setLoading(false);
         return;
       }
@@ -51,17 +52,19 @@ export function useOnboardingStatus() {
   }, [user, authLoading]);
 
   const markOnboarded = async () => {
-    if (!user) return;
-    
-    if (firestoreDb) {
-      try {
-        const userRef = doc(firestoreDb, 'users', user.uid);
-        await setDoc(userRef, { onboardingCompleted: true }, { merge: true });
-      } catch (e) {
-        console.error("Error granting onboarding status", e);
+    if (user) {
+      localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
+      if (firestoreDb) {
+        try {
+          const userRef = doc(firestoreDb, 'users', user.uid);
+          await setDoc(userRef, { onboardingCompleted: true }, { merge: true });
+        } catch (e) {
+          console.error("Error granting onboarding status", e);
+        }
       }
+    } else {
+      localStorage.setItem('onboarding_completed_guest', 'true');
     }
-    localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
     setHasOnboarded(true);
   };
 

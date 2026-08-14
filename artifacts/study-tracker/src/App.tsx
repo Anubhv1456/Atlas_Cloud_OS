@@ -242,9 +242,35 @@ function App() {
   }, []);
 
   useEffect(() => {
-    triggerSpacedRepetitionNotification(false).catch(err => {
-      console.warn('Background notification trigger suppressed:', err);
+    // 1. Initial trigger attempt on app launch
+    triggerSpacedRepetitionNotification(false).catch((err) => {
+      console.warn('Initial background notification check suppressed:', err);
     });
+
+    // 2. Trigger check when student returns to the tab/PWA window
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        triggerSpacedRepetitionNotification(false).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // 3. Periodic check every 30 minutes while app is alive
+    const interval = setInterval(() => {
+      triggerSpacedRepetitionNotification(false).catch(() => {});
+    }, 30 * 60 * 1000);
+
+    // 4. Trigger immediately if settings were updated
+    const handleSettingsUpdated = () => {
+      triggerSpacedRepetitionNotification(false).catch(() => {});
+    };
+    window.addEventListener('notification-settings-updated', handleSettingsUpdated);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
+      window.removeEventListener('notification-settings-updated', handleSettingsUpdated);
+    };
   }, []);
 
   return (

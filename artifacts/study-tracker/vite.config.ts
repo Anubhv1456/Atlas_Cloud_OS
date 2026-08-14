@@ -31,7 +31,8 @@ export default defineConfig({
         'pwa-192x192.png', 
         'pwa-512x512.png',
         'pwa-maskable-192x192.png',
-        'pwa-maskable-512x512.png'
+        'pwa-maskable-512x512.png',
+        'sw-custom.js'
       ],
       manifestFilename: 'manifest.json',
       manifest: {
@@ -100,6 +101,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        importScripts: ['/sw-custom.js'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [
