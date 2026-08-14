@@ -8,7 +8,8 @@ import {
 import { 
   ToggleLeft, Megaphone, CreditCard, Share2, Save, Plus, Trash2, 
   RefreshCw, CheckCircle2, AlertCircle, Info, TriangleAlert, QrCode, Upload,
-  Twitter, Github, Linkedin, Send, Youtube, Instagram, MessageSquare, ExternalLink, Sparkles, ShieldCheck
+  Twitter, Github, Linkedin, Send, Youtube, Instagram, MessageSquare, ExternalLink, Sparkles, ShieldCheck,
+  Users, Sliders, TrendingUp, Check, Layers, Eye
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -238,7 +239,7 @@ export function SystemControlView() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <CreditCard className="w-4 h-4" /> Payment Pricing & QR
+          <CreditCard className="w-4 h-4" /> Cohort Capacity & Pricing
         </button>
 
         <button
@@ -454,76 +455,290 @@ export function SystemControlView() {
             </div>
           )}
 
-          {/* TAB 3: PAYMENTS & QR CONFIG */}
+          {/* TAB 3: COHORT CAPACITY & PAYMENTS CONFIG */}
           {activeTab === 'payments' && (
-            <form onSubmit={handleSavePaymentConfig} className="bg-card border border-border/60 rounded-2xl p-6 space-y-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 border-b border-border/50">
+            <form onSubmit={handleSavePaymentConfig} className="bg-card border border-border/60 rounded-2xl p-6 space-y-8 shadow-xs">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/50">
                 <div>
-                  <h3 className="font-bold text-base">Closed Beta Pricing & Payment QR</h3>
-                  <p className="text-xs text-muted-foreground">Configure plan costs, UPI ID, QR codes, and student benefit bullets.</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base">Cohort Capacity Tracker & Beta Pricing</h3>
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
+                      Live Dynamic Controls
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Manually adjust cohort seat limits, claimed seats counter, banner titles, and UPI checkout pricing.
+                  </p>
                 </div>
                 <button
                   type="submit"
                   disabled={savingPaymentConfig}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all"
+                  className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-md shadow-teal-950/20 disabled:opacity-50 shrink-0 self-start sm:self-auto"
                 >
                   {savingPaymentConfig ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Pricing
+                  Save All Settings
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Plan Title</label>
-                  <Input
-                    value={paymentConfig.planTitle}
-                    onChange={(e) => setPaymentConfig(p => ({ ...p, planTitle: e.target.value }))}
-                    className="text-xs rounded-xl"
-                  />
+              {/* SECTION 1: COHORT CAPACITY TRACKER */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center">
+                      <Users className="w-3.5 h-3.5 text-teal-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground">1. Cohort Capacity Tracker</h4>
+                      <p className="text-[11px] text-muted-foreground">Controls the live seat counter and availability badges across Atlas.</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Price (₹)</label>
-                  <Input
-                    type="number"
-                    value={paymentConfig.price}
-                    onChange={(e) => setPaymentConfig(p => ({ ...p, price: Number(e.target.value) }))}
-                    className="text-xs rounded-xl"
-                  />
-                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Controls Column (7/12) */}
+                  <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Total Seats Limit */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span>Total Cohort Capacity (Seats)</span>
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={paymentConfig.totalSeats ?? 200}
+                        onChange={(e) => setPaymentConfig(p => ({ ...p, totalSeats: Math.max(1, parseInt(e.target.value) || 0) }))}
+                        className="text-xs font-mono font-semibold rounded-xl bg-background/60"
+                      />
+                      <p className="text-[10px] text-muted-foreground">e.g. 50, 200, 500 total available seats</p>
+                    </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">UPI VPA ID</label>
-                  <Input
-                    value={paymentConfig.upiId}
-                    onChange={(e) => setPaymentConfig(p => ({ ...p, upiId: e.target.value }))}
-                    placeholder="atlas@upi"
-                    className="text-xs rounded-xl font-mono"
-                  />
-                </div>
+                    {/* Claimed / Displayed Seats */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase">
+                          Claimed / Filled Seats
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.max(0, (p.claimedSeats ?? 38) - 1) }))}
+                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono font-bold text-muted-foreground"
+                            title="Decrease by 1"
+                          >
+                            -1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 1) }))}
+                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono font-bold text-teal-400"
+                            title="Increase by 1"
+                          >
+                            +1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 5) }))}
+                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono font-bold text-teal-400"
+                            title="Increase by 5"
+                          >
+                            +5
+                          </button>
+                        </div>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={paymentConfig.claimedSeats ?? 38}
+                        onChange={(e) => setPaymentConfig(p => ({ ...p, claimedSeats: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="text-xs font-mono font-semibold rounded-xl bg-background/60"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Manually editable seat counter displayed on checkout</p>
+                    </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Duration Text</label>
-                  <Input
-                    value={paymentConfig.durationText}
-                    onChange={(e) => setPaymentConfig(p => ({ ...p, durationText: e.target.value }))}
-                    placeholder="3 Months"
-                    className="text-xs rounded-xl"
-                  />
+                    {/* Cohort Header Banner Text */}
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase">
+                        Cohort Header Banner Text
+                      </label>
+                      <Input
+                        value={paymentConfig.cohortHeaderTitle ?? 'CLOSED BETA • 2026 MEDICAL COHORT'}
+                        onChange={(e) => setPaymentConfig(p => ({ ...p, cohortHeaderTitle: e.target.value }))}
+                        placeholder="CLOSED BETA • 2026 MEDICAL COHORT"
+                        className="text-xs rounded-xl bg-background/60"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Badge text at the top of the Beta Checkout canvas</p>
+                    </div>
+
+                    {/* Invitation Badge Label */}
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase">
+                        Invitation Verification Badge Label
+                      </label>
+                      <Input
+                        value={paymentConfig.cohortBadgeText ?? `${paymentConfig.totalSeats ?? 200} Closed Beta Seats`}
+                        onChange={(e) => setPaymentConfig(p => ({ ...p, cohortBadgeText: e.target.value }))}
+                        placeholder="200 Closed Beta Seats"
+                        className="text-xs rounded-xl bg-background/60"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Shown on the invitation confirmation screen (/accept-invitation)</p>
+                    </div>
+                  </div>
+
+                  {/* Live Student Preview Column (5/12) */}
+                  <div className="lg:col-span-5 p-4 rounded-2xl bg-black/50 border border-border/70 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
+                        <span className="text-[11px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5" />
+                          Live Student Preview
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-500">Real-time Simulation</span>
+                      </div>
+
+                      {/* Preview Box: Invitation Badge */}
+                      <div className="mt-3.5 space-y-3">
+                        <div>
+                          <span className="text-[10px] font-semibold text-zinc-500 uppercase block mb-1">Invitation Badge</span>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                            {paymentConfig.cohortBadgeText || `${paymentConfig.totalSeats ?? 200} Closed Beta Seats`}
+                          </div>
+                        </div>
+
+                        {/* Preview Box: Checkout Seat Counter */}
+                        <div className="pt-2">
+                          <span className="text-[10px] font-semibold text-zinc-500 uppercase block mb-1">Checkout Header & Capacity</span>
+                          <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                              {paymentConfig.cohortHeaderTitle || 'CLOSED BETA • 2026 MEDICAL COHORT'}
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs pt-1">
+                              <div className="flex items-center gap-1.5 text-zinc-300 font-medium">
+                                <Users className="w-3.5 h-3.5 text-teal-400" />
+                                <span>{paymentConfig.claimedSeats ?? 38} / {paymentConfig.totalSeats ?? 200} Seats Claimed</span>
+                              </div>
+                              <span className="text-[11px] font-mono text-teal-400 font-semibold">
+                                {Math.round(((paymentConfig.claimedSeats ?? 38) / Math.max(1, paymentConfig.totalSeats ?? 200)) * 100)}%
+                              </span>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-teal-400 h-full rounded-full transition-all duration-300"
+                                style={{ 
+                                  width: `${Math.min(100, Math.max(0, Math.round(((paymentConfig.claimedSeats ?? 38) / Math.max(1, paymentConfig.totalSeats ?? 200)) * 100)))}%` 
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-300 flex items-center justify-between">
+                      <span>Remaining available seats:</span>
+                      <strong className="font-mono text-teal-200">
+                        {Math.max(0, (paymentConfig.totalSeats ?? 200) - (paymentConfig.claimedSeats ?? 38))} Seats
+                      </strong>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* QR Upload */}
-              <div className="p-4 border border-border/60 rounded-xl bg-background/50 space-y-3">
-                <label className="text-xs font-semibold text-muted-foreground uppercase block">Custom UPI QR Code Image</label>
-                <div className="flex items-center gap-4">
-                  {paymentConfig.upiQrUrl ? (
-                    <img src={paymentConfig.upiQrUrl} alt="UPI QR" className="w-20 h-20 object-contain rounded-lg border border-border/60 bg-black/40" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-muted-foreground text-xs">
-                      No QR
+              {/* SECTION 2: PLAN PRICING & DURATION */}
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+                    <CreditCard className="w-3.5 h-3.5 text-purple-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">2. Membership Pricing & Access Details</h4>
+                    <p className="text-[11px] text-muted-foreground">Adjust plan fees, currency, and duration granted upon manual approval.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Plan Title</label>
+                    <Input
+                      value={paymentConfig.planTitle}
+                      onChange={(e) => setPaymentConfig(p => ({ ...p, planTitle: e.target.value }))}
+                      className="text-xs rounded-xl bg-background/60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Price (₹)</label>
+                    <Input
+                      type="number"
+                      value={paymentConfig.price}
+                      onChange={(e) => setPaymentConfig(p => ({ ...p, price: Number(e.target.value) }))}
+                      className="text-xs rounded-xl bg-background/60 font-semibold text-teal-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">UPI VPA ID</label>
+                    <Input
+                      value={paymentConfig.upiId}
+                      onChange={(e) => setPaymentConfig(p => ({ ...p, upiId: e.target.value }))}
+                      placeholder="atlas@upi"
+                      className="text-xs rounded-xl font-mono bg-background/60"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Duration Text</label>
+                    <Input
+                      value={paymentConfig.durationText}
+                      onChange={(e) => setPaymentConfig(p => ({ ...p, durationText: e.target.value }))}
+                      placeholder="3 Months"
+                      className="text-xs rounded-xl bg-background/60"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: QR UPLOAD */}
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center">
+                    <QrCode className="w-3.5 h-3.5 text-sky-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">3. Custom UPI QR Code Image</h4>
+                    <p className="text-[11px] text-muted-foreground">Upload your account's UPI QR code image to display to students.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-border/60 rounded-xl bg-background/50 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                  <div className="flex items-center gap-4">
+                    {paymentConfig.upiQrUrl ? (
+                      <img src={paymentConfig.upiQrUrl} alt="UPI QR" className="w-20 h-20 object-contain rounded-lg border border-border/60 bg-black/40" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-muted-foreground text-xs">
+                        No QR Image
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Custom UPI Payment QR</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Supports PNG, JPG, or WebP. Auto-compressed.</p>
+                      {paymentConfig.upiQrUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPaymentConfig(p => ({ ...p, upiQrUrl: '' }))}
+                          className="text-[10px] text-rose-400 hover:underline mt-1 block"
+                        >
+                          Remove QR Image
+                        </button>
+                      )}
                     </div>
-                  )}
+                  </div>
+
                   <input
                     type="file"
                     ref={qrInputRef}
@@ -534,9 +749,9 @@ export function SystemControlView() {
                   <button
                     type="button"
                     onClick={() => qrInputRef.current?.click()}
-                    className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted flex items-center gap-2"
+                    className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted flex items-center gap-2 shrink-0 self-start sm:self-auto"
                   >
-                    <Upload className="w-4 h-4 text-purple-400" /> Upload QR Image
+                    <Upload className="w-4 h-4 text-teal-400" /> Upload QR Image
                   </button>
                 </div>
               </div>

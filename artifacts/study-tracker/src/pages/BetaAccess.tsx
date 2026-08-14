@@ -88,6 +88,10 @@ export default function BetaAccess() {
   const price = payConfig.price || 499;
   const currency = payConfig.currencySymbol || '₹';
   const duration = payConfig.durationText || '3 Months';
+  const totalSeats = payConfig.totalSeats ?? 200;
+  const claimedSeats = payConfig.claimedSeats ?? 38;
+  const cohortHeaderTitle = payConfig.cohortHeaderTitle || 'CLOSED BETA • 2026 MEDICAL COHORT';
+  const fillPercentage = Math.min(100, Math.max(0, Math.round((claimedSeats / (totalSeats || 1)) * 100)));
 
   // Construct UPI deep link string for GPay / PhonePe / Paytm on mobile
   const upiDeepLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent('Atlas Medical OS')}&am=${price}&cu=INR&tn=${encodeURIComponent('Atlas Closed Beta Access')}`;
@@ -420,7 +424,7 @@ export default function BetaAccess() {
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                  CLOSED BETA • 2026 MEDICAL COHORT
+                  {cohortHeaderTitle}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100">
                   Activate Your Medical OS
@@ -440,9 +444,17 @@ export default function BetaAccess() {
                     {duration} Cohort Pass
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium mt-1">
-                  <Users className="w-3.5 h-3.5 text-teal-400" />
-                  <span>38 / 50 Seats Claimed</span>
+                <div className="flex flex-col items-end gap-1 mt-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
+                    <Users className="w-3.5 h-3.5 text-teal-400" />
+                    <span>{claimedSeats} / {totalSeats} Seats Claimed</span>
+                  </div>
+                  <div className="w-28 sm:w-32 bg-white/10 h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-teal-400 h-full rounded-full transition-all duration-500" 
+                      style={{ width: `${fillPercentage}%` }} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>

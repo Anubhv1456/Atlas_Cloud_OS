@@ -359,6 +359,10 @@ export interface PaymentConfig {
   enableLinkTab: boolean;
   instructionsText: string;
   benefits: string[];
+  totalSeats: number;
+  claimedSeats: number;
+  cohortHeaderTitle: string;
+  cohortBadgeText: string;
 }
 
 export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -378,7 +382,11 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
     'Full Atlas access',
     'Continuous beta updates',
     'Direct influence on future development'
-  ]
+  ],
+  totalSeats: 200,
+  claimedSeats: 38,
+  cohortHeaderTitle: 'CLOSED BETA • 2026 MEDICAL COHORT',
+  cohortBadgeText: '200 Closed Beta Seats'
 };
 
 export async function getPaymentConfig(): Promise<PaymentConfig> {

@@ -1,13 +1,23 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { Check } from 'lucide-react';
+import { getPaymentConfig, PaymentConfig, DEFAULT_PAYMENT_CONFIG } from '@/lib/admin';
 
 export default function AcceptInvitation() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
+  const [payConfig, setPayConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
+
+  useEffect(() => {
+    let mounted = true;
+    getPaymentConfig().then(cfg => {
+      if (mounted && cfg) setPayConfig(cfg);
+    }).catch(console.error);
+    return () => { mounted = false; };
+  }, []);
 
   const handleAccept = () => {
     setLoading(true);
@@ -31,6 +41,8 @@ export default function AcceptInvitation() {
       duration: Math.random() * 3 + 4
     }));
   }, []);
+
+  const badgeText = payConfig.cohortBadgeText || `${payConfig.totalSeats || 200} Closed Beta Seats`;
 
   return (
     <div className="min-h-[100dvh] bg-[#030303] text-zinc-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden font-sans selection:bg-teal-500/30">
@@ -102,7 +114,7 @@ export default function AcceptInvitation() {
           
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            50 Closed Beta Seats
+            {badgeText}
           </div>
           
           <h1 className="text-2xl sm:text-[28px] font-medium tracking-tight text-zinc-100 mb-3">

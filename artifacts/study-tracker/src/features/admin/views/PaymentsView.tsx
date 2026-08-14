@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { 
   CreditCard, Check, X, Search, RefreshCw, Eye, Copy, 
   Clock, CheckCircle2, XCircle, AlertCircle, Sparkles, ExternalLink, ShieldCheck,
-  Settings, QrCode, Link as LinkIcon, Save, Plus, Trash2, Upload, FileText
+  Settings, QrCode, Link as LinkIcon, Save, Plus, Trash2, Upload, FileText, Users
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -563,6 +563,87 @@ export function PaymentsView() {
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Section 0: Cohort Capacity & Live Seat Tracker */}
+            <div className="space-y-4 p-5 rounded-2xl bg-teal-500/[0.04] border border-teal-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center">
+                    <Users className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider text-teal-400">
+                      Cohort Capacity & Live Seat Tracker
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground">Adjust cohort seat limit and displayed claimed count across Atlas checkout & invitation pages.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Total Cohort Capacity (Seats)</label>
+                  <Input 
+                    type="number"
+                    min="1"
+                    value={config.totalSeats ?? 200}
+                    onChange={(e) => setConfig({ ...config, totalSeats: Math.max(1, parseInt(e.target.value) || 0) })}
+                    placeholder="200"
+                    className="bg-muted/40 border-border/50 text-xs h-10 rounded-xl font-mono font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-muted-foreground">Claimed / Filled Seats</label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, claimedSeats: Math.max(0, (config.claimedSeats ?? 38) - 1) })}
+                        className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono text-muted-foreground"
+                      >
+                        -1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, claimedSeats: Math.min(config.totalSeats ?? 200, (config.claimedSeats ?? 38) + 1) })}
+                        className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono text-teal-400 font-bold"
+                      >
+                        +1
+                      </button>
+                    </div>
+                  </div>
+                  <Input 
+                    type="number"
+                    min="0"
+                    value={config.claimedSeats ?? 38}
+                    onChange={(e) => setConfig({ ...config, claimedSeats: Math.max(0, parseInt(e.target.value) || 0) })}
+                    placeholder="38"
+                    className="bg-muted/40 border-border/50 text-xs h-10 rounded-xl font-mono font-semibold text-teal-400"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Cohort Header Banner</label>
+                  <Input 
+                    value={config.cohortHeaderTitle ?? 'CLOSED BETA • 2026 MEDICAL COHORT'}
+                    onChange={(e) => setConfig({ ...config, cohortHeaderTitle: e.target.value })}
+                    placeholder="CLOSED BETA • 2026 MEDICAL COHORT"
+                    className="bg-muted/40 border-border/50 text-xs h-10 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invitation Badge Text</label>
+                  <Input 
+                    value={config.cohortBadgeText ?? `${config.totalSeats ?? 200} Closed Beta Seats`}
+                    onChange={(e) => setConfig({ ...config, cohortBadgeText: e.target.value })}
+                    placeholder="200 Closed Beta Seats"
+                    className="bg-muted/40 border-border/50 text-xs h-10 rounded-xl"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Section 1: Plan & Pricing Details */}
