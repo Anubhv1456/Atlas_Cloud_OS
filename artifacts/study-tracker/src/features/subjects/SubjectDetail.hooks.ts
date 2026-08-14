@@ -8,12 +8,22 @@ import {
   addPYQYear, addPYQYearBatch, updatePYQYear, deletePYQYear, togglePYQYear,
 } from '@/db';
 import { PYQYear, StudySystem } from '@/db';
-import { calculateSubjectProgress } from '@/lib/progress';
+import { calculateSubjectProgress, calculateSystemProgress } from '@/lib/progress';
+import { isRevisionDue, sortSystemsByRevisionPriority, daysOverdue, today } from '@/db/revisionEngine';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { calculateYearScoreMap, generateCustomYearRange } from '@/features/subjects/subjectUtils';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
+
+export interface SystemRecommendation {
+  system: StudySystem;
+  reason: 'overdue_decay' | 'weak_retention' | 'high_yield_incomplete' | 'next_syllabus_block';
+  reasonLabel: string;
+  actionLabel: string;
+  progress: number;
+  daysOverdueCount?: number;
+}
 
 
 
@@ -210,24 +220,110 @@ export function useSubjectDetailLogic(id: string | undefined) {
   const pyqCompletedCount = pyqYears.filter(y => y.completed).length;
   const pyqTotalCount = pyqYears.length;
 
-  const now = new Date();
-  const overdueSetSystemIds = new Set(
-    revisionSets
-      .filter(rs => rs.nextRevisionDate && new Date(rs.nextRevisionDate) <= now)
-      .map(rs => rs.systemId)
-  );
+  const now = today();
+  const overdueSystems = useMemo(() => {
+    return systems.filter(sys => isRevisionDue(sys, revisionSets, now) || sys.status === 'Weak');
+  }, [systems, revisionSets, now]);
 
-  const overdueSystems = systems.filter(sys => 
-    sys.id && (overdueSetSystemIds.has(sys.id) || sys.status === 'Weak')
-  );
+  const recommendedFocus = useMemo<SystemRecommendation | null>(() => {
+    if (!subject || systems.length === 0) return null;
+    const subjectName = subject.name;
 
-  const recommendedSystem = useMemo(() => {
-    if (systems.length === 0) return null;
-    if (overdueSystems.length > 0) return overdueSystems[0];
-    const highYieldUnfinished = systems.find(sys => sys.isHighYield);
-    if (highYieldUnfinished) return highYieldUnfinished;
-    return systems[0];
-  }, [systems, overdueSystems]);
+    // Precompute system progress map
+    const systemProgressMap = new Map<number | string, number>();
+    systems.forEach(sys => {
+      if (sys.id !== undefined) {
+        systemProgressMap.set(sys.id, calculateSystemProgress(sys, subjectName, revisionSets));
+      }
+    });
+
+    // 1. Priority 1: Active Memory Decay & Overdue Spaced Repetition
+    const dueSystems = systems.filter(sys => isRevisionDue(sys, revisionSets, now));
+    if (dueSystems.length > 0) {
+      const sortedDue = sortSystemsByRevisionPriority(dueSystems, revisionSets, now);
+      const topDue = sortedDue[0];
+      const overdueDays = daysOverdue(topDue, revisionSets, now);
+      const prog = systemProgressMap.get(topDue.id!) ?? 0;
+
+      return {
+        system: topDue,
+        reason: 'overdue_decay',
+        reasonLabel: overdueDays > 0 ? `${overdueDays}d Overdue Revision` : 'Revision Due Today',
+        actionLabel: 'Review System',
+        progress: prog,
+        daysOverdueCount: overdueDays,
+      };
+    }
+
+    // 2. Priority 2: Weak Retention Flags
+    const weakSystems = systems.filter(sys => sys.status === 'Weak');
+    if (weakSystems.length > 0) {
+      const sortedWeak = [...weakSystems].sort((a, b) => {
+        const progA = systemProgressMap.get(a.id!) ?? 0;
+        const progB = systemProgressMap.get(b.id!) ?? 0;
+        return progA - progB;
+      });
+      const topWeak = sortedWeak[0];
+      const prog = systemProgressMap.get(topWeak.id!) ?? 0;
+
+      return {
+        system: topWeak,
+        reason: 'weak_retention',
+        reasonLabel: 'Weak Retention Flag',
+        actionLabel: 'Reinforce Weak System',
+        progress: prog,
+      };
+    }
+
+    // 3. Priority 3: Incomplete High-Yield Systems
+    const highYieldIncomplete = systems.filter(sys => {
+      const prog = systemProgressMap.get(sys.id!) ?? 0;
+      return sys.isHighYield && prog < 100;
+    });
+    if (highYieldIncomplete.length > 0) {
+      const topHY = highYieldIncomplete[0];
+      const prog = systemProgressMap.get(topHY.id!) ?? 0;
+
+      return {
+        system: topHY,
+        reason: 'high_yield_incomplete',
+        reasonLabel: 'High-Yield Priority Block',
+        actionLabel: prog === 0 ? 'Start High-Yield' : 'Continue High-Yield',
+        progress: prog,
+      };
+    }
+
+    // 4. Priority 4: Next Incomplete Syllabus System in order
+    const nextIncomplete = systems.find(sys => {
+      const prog = systemProgressMap.get(sys.id!) ?? 0;
+      return prog < 100;
+    });
+    if (nextIncomplete) {
+      const prog = systemProgressMap.get(nextIncomplete.id!) ?? 0;
+
+      return {
+        system: nextIncomplete,
+        reason: 'next_syllabus_block',
+        reasonLabel: 'Next Syllabus Module',
+        actionLabel: prog === 0 ? 'Start System' : 'Continue System',
+        progress: prog,
+      };
+    }
+
+    // 5. All systems 100% complete and no revisions due
+    return null;
+  }, [subject, systems, revisionSets, now]);
+
+  const isSubjectMastered = useMemo(() => {
+    if (!subject || systems.length === 0) return false;
+    const hasDue = systems.some(sys => isRevisionDue(sys, revisionSets, now));
+    if (hasDue) return false;
+    const all100 = systems.every(sys => {
+      const prog = calculateSystemProgress(sys, subject.name, revisionSets);
+      return prog === 100;
+    });
+    return all100;
+  }, [subject, systems, revisionSets, now]);
 
   return {
     subjectId, subject, systems, pyqYears,
@@ -236,7 +332,9 @@ export function useSubjectDetailLogic(id: string | undefined) {
     totalTasks, completedTasks, progress,
     pyqCompletedCount, pyqTotalCount,
     overdueSystemsCount: overdueSystems.length,
-    recommendedSystem,
+    recommendedFocus,
+    recommendedSystem: recommendedFocus?.system || null,
+    isSubjectMastered,
     pyqUnlocked: true, 
   };
 }

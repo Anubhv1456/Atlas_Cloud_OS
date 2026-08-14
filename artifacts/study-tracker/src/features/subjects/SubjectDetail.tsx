@@ -15,7 +15,8 @@ import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Plus, Trash2, Edit2,
   LayoutList, Lock, Check, BookOpen, Award, LayoutGrid, Sparkles,
-  RefreshCw, Calendar, CheckCircle2, Circle, MoreVertical, Search
+  RefreshCw, Calendar, CheckCircle2, Circle, MoreVertical, Search,
+  Brain
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -614,7 +615,8 @@ export default function SubjectDetail() {
     highlightId, handleDragEnd,
     totalTasks, completedTasks, progress,
     pyqCompletedCount, pyqTotalCount,
-    overdueSystemsCount, recommendedSystem,
+    overdueSystemsCount, recommendedFocus,
+    isSubjectMastered,
   } = useSubjectDetailLogic(id);
 
   if (!subject && id) {
@@ -683,36 +685,95 @@ export default function SubjectDetail() {
           </div>
         </div>
 
-        {/* Recommended Next System Banner */}
-        {recommendedSystem && (
-          <div className="bg-primary/10 border border-primary/25 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary text-primary-foreground shrink-0">
-                <Sparkles className="w-4 h-4" />
+        {/* Recommended Focus Banner or Subject Mastered State */}
+        {recommendedFocus ? (
+          <div id="subject-recommended-focus-banner" className="bg-primary/10 border border-primary/25 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={cn(
+                "p-2.5 rounded-xl shrink-0 border",
+                recommendedFocus.reason === 'overdue_decay'
+                  ? "bg-rose-500/10 text-rose-500 border-rose-500/25"
+                  : recommendedFocus.reason === 'weak_retention'
+                  ? "bg-amber-500/10 text-amber-500 border-amber-500/25"
+                  : recommendedFocus.reason === 'high_yield_incomplete'
+                  ? "bg-primary text-primary-foreground border-primary/40 shadow-xs"
+                  : "bg-primary/20 text-primary border-primary/30"
+              )}>
+                {recommendedFocus.reason === 'overdue_decay' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin-slow" />
+                ) : recommendedFocus.reason === 'weak_retention' ? (
+                  <Brain className="w-4 h-4" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
               </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Recommended Focus</span>
-                <h4 className="font-bold text-foreground text-sm leading-tight">{recommendedSystem.name}</h4>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                    Recommended Focus
+                  </span>
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.2 rounded-full border",
+                    recommendedFocus.reason === 'overdue_decay'
+                      ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                      : recommendedFocus.reason === 'weak_retention'
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      : "bg-muted/60 text-muted-foreground border-border/40"
+                  )}>
+                    {recommendedFocus.reasonLabel}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-bold text-foreground text-sm sm:text-base leading-tight truncate">
+                    {recommendedFocus.system.name}
+                  </h4>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    ({recommendedFocus.progress}% coverage)
+                  </span>
+                </div>
               </div>
             </div>
+
             <Button
+              id="btn-initiate-recommended-focus"
               size="sm"
               onClick={() => {
                 setActiveTab('systems');
                 setTimeout(() => {
-                  const el = document.getElementById(`system-card-${recommendedSystem.id}`);
+                  const el = document.getElementById(`system-card-${recommendedFocus.system.id}`);
                   if (el) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }
                 }, 50);
               }}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl text-xs gap-1.5 cursor-pointer self-start sm:self-auto"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-xl text-xs gap-1.5 cursor-pointer self-start sm:self-auto px-4 shrink-0"
             >
-              <span>Initiate Revision</span>
+              <span>{recommendedFocus.actionLabel}</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-        )}
+        ) : isSubjectMastered ? (
+          <div id="subject-mastered-banner" className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                    Subject Mastered
+                  </span>
+                </div>
+                <h4 className="font-bold text-foreground text-sm leading-tight">
+                  All Systems 100% Completed & Revisions Current
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Great work! You have finished all curriculum topics and your spaced repetition schedule is up to date.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </header>
 
       {/* ── Workspace Tab Bar ───────────────────────────────────────────── */}
