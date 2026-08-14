@@ -679,8 +679,8 @@ export async function adaptTopicPacingFeedback(
 // ── Mistake Log Mutations ──────────────────────────────────────────────────────
 
 export async function logMistake(data: {
-  subjectId: number;
-  systemId: number;
+  subjectId: number | string;
+  systemId: number | string;
   curriculumSetId?: string;
   topicId?: string;
   errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
@@ -688,35 +688,48 @@ export async function logMistake(data: {
   source: 'GT' | 'QBank' | 'Custom';
 }) {
   const now = new Date();
-  const id = await db.mistakeLogs.add({
-    ...data,
+  const payload: Record<string, any> = {
+    subjectId: data.subjectId,
+    systemId: data.systemId !== undefined ? data.systemId : 0,
+    errorType: data.errorType,
+    keyTakeaway: data.keyTakeaway.trim(),
+    source: data.source,
     resolved: false,
     createdAt: now,
     updatedAt: now,
     hlc: generateHLC(),
-  });
-  toast.success('Mistake logged to notebook', {
-    description: 'Saved key takeaway for system review.',
+  };
+
+  if (data.curriculumSetId && data.curriculumSetId.trim()) {
+    payload.curriculumSetId = data.curriculumSetId.trim();
+  }
+  if (data.topicId && data.topicId.trim()) {
+    payload.topicId = data.topicId.trim();
+  }
+
+  const id = await db.mistakeLogs.add(payload);
+  toast.success('Mistake logged to vault', {
+    description: 'Saved key takeaway for active recall review.',
   });
   return id;
 }
 
-export async function resolveMistake(id: number, resolved = true) {
+export async function resolveMistake(id: number | string, resolved = true) {
   await db.mistakeLogs.update(id, {
     resolved,
     updatedAt: new Date(),
     hlc: generateHLC(),
   });
-  toast.success(resolved ? 'Marked as Mastered! 🎉' : 'Reopened mistake log');
+  toast.success(resolved ? 'Marked as Mastered! 🎉' : 'Reopened mistake takeaway');
 }
 
-export async function deleteMistakeLog(id: number) {
+export async function deleteMistakeLog(id: number | string) {
   await db.mistakeLogs.update(id, {
     deletedAt: new Date(),
     updatedAt: new Date(),
     hlc: generateHLC(),
   });
-  toast.info('Mistake entry removed');
+  toast.info('Mistake takeaway removed');
 }
 
 

@@ -191,11 +191,11 @@ export interface CurriculumSet {
 export type RevisionSet = CurriculumSet;
 
 export interface MistakeLog {
-  id?: number;
+  id?: number | string;
   subjectId?: number | string;
-  systemId: number;          // required
-  curriculumSetId?: string; // optional
-  topicId?: string;         // optional
+  systemId: number | string;
+  curriculumSetId?: string;
+  topicId?: string;
 
   errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
   keyTakeaway: string;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { logMistake } from '@/db/mutations';
@@ -18,17 +18,18 @@ import {
   Eye, 
   RotateCcw,
   Sparkles,
-  FileText,
   Zap,
   HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ALL_SUBJECTS } from '@/data/ontology';
+import { toast } from 'sonner';
 
 export interface QuickMistakeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultSubjectId?: number;
-  defaultSystemId?: number;
+  defaultSubjectId?: number | string;
+  defaultSystemId?: number | string;
   defaultCurriculumSetId?: string;
   defaultTopicId?: string;
 }
@@ -41,62 +42,94 @@ export function QuickMistakeModal({
   defaultCurriculumSetId,
   defaultTopicId
 }: QuickMistakeModalProps) {
-  const subjects = useLiveQuery(() => db.subjects.filter(s => !s.deletedAt).toArray()) || [];
-  const systems = useLiveQuery(() => db.systems.filter(s => !s.deletedAt).toArray()) || [];
+  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
+  const dbSystems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
 
-  const [subjectId, setSubjectId] = useState<number>(defaultSubjectId || (subjects[0]?.id || 1));
-  const [systemId, setSystemId] = useState<number>(defaultSystemId || 0);
-  const [curriculumSetId, setCurriculumSetId] = useState<string>(defaultCurriculumSetId || '');
-  const [topicId, setTopicId] = useState<string>(defaultTopicId || '');
+  // Combine db subjects with ontology subjects for comprehensive selection
+  const subjects = useMemo(() => {
+    if (dbSubjects.length > 0) return dbSubjects;
+    return ALL_SUBJECTS.map(s => ({ id: s.id, name: s.name }));
+  }, [dbSubjects]);
+
+  const [subjectId, setSubjectId] = useState<string | number>('');
+  const [systemId, setSystemId] = useState<string | number>('');
+  const [curriculumSetId, setCurriculumSetId] = useState<string>('');
+  const [topicId, setTopicId] = useState<string>('');
   const [errorType, setErrorType] = useState<'concept' | 'retrieval' | 'misread' | 'fomo'>('concept');
   const [source, setSource] = useState<'GT' | 'QBank' | 'Custom'>('QBank');
   const [keyTakeaway, setKeyTakeaway] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync defaults when modal opens
+  // Available systems filtered by selected subject
+  const availableSystems = useMemo(() => {
+    if (!subjectId) return [];
+    return dbSystems.filter(sys => String(sys.subjectId) === String(subjectId));
+  }, [dbSystems, subjectId]);
+
+  // Sync state whenever modal opens or defaults change
   useEffect(() => {
     if (open) {
-      if (defaultSubjectId) setSubjectId(defaultSubjectId);
-      if (defaultSystemId) setSystemId(defaultSystemId);
-      if (defaultCurriculumSetId) setCurriculumSetId(defaultCurriculumSetId);
-      if (defaultTopicId) setTopicId(defaultTopicId);
-    }
-  }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId]);
+      const initialSubjectId = defaultSubjectId !== undefined
+        ? defaultSubjectId 
+        : (subjects[0]?.id !== undefined ? subjects[0].id : 1);
+      
+      setSubjectId(initialSubjectId);
+      setCurriculumSetId(defaultCurriculumSetId || '');
+      setTopicId(defaultTopicId || '');
+      setKeyTakeaway('');
+      setErrorType('concept');
+      setSource('QBank');
 
-  // Filter systems by selected subject
-  const availableSystems = systems.filter(sys => String(sys.subjectId) === String(subjectId));
-
-  // Set default system when subject changes if current systemId is invalid
-  useEffect(() => {
-    if (availableSystems.length > 0) {
-      if (!systemId || !availableSystems.some(sys => sys.id === systemId)) {
-        setSystemId(availableSystems[0].id!);
+      // Find matching systems for initial subject
+      const matchingSystems = dbSystems.filter(sys => String(sys.subjectId) === String(initialSubjectId));
+      if (defaultSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(defaultSystemId))) {
+        setSystemId(defaultSystemId);
+      } else if (matchingSystems.length > 0) {
+        setSystemId(matchingSystems[0].id!);
+      } else {
+        setSystemId(defaultSystemId !== undefined ? defaultSystemId : 0);
       }
-    } else if (subjects.length > 0 && (!subjectId || !subjects.some(s => s.id === subjectId))) {
-      setSubjectId(subjects[0].id!);
     }
-  }, [subjectId, availableSystems, systems]);
+  }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, subjects, dbSystems]);
+
+  // When subject is changed manually by user, auto-select first available system
+  const handleSubjectChange = (newSubId: string | number) => {
+    setSubjectId(newSubId);
+    const matching = dbSystems.filter(sys => String(sys.subjectId) === String(newSubId));
+    if (matching.length > 0) {
+      setSystemId(matching[0].id!);
+    } else {
+      setSystemId(0);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!keyTakeaway.trim()) return;
-    if (!subjectId || !systemId) return;
+    if (!keyTakeaway.trim()) {
+      toast.error('Please enter a 1-line key takeaway rule.');
+      return;
+    }
+    if (!subjectId) {
+      toast.error('Please select a subject.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await logMistake({
         subjectId,
-        systemId,
-        curriculumSetId: curriculumSetId || undefined,
-        topicId: topicId.trim() || undefined,
+        systemId: systemId || 0,
+        curriculumSetId: curriculumSetId ? curriculumSetId.trim() : undefined,
+        topicId: topicId ? topicId.trim() : undefined,
         errorType,
         keyTakeaway: keyTakeaway.trim(),
         source
       });
       setKeyTakeaway('');
       onOpenChange(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to log mistake:', err);
+      toast.error(err?.message || 'Failed to save takeaway.');
     } finally {
       setIsSubmitting(false);
     }
@@ -104,9 +137,9 @@ export function QuickMistakeModal({
 
   const insertPromptShortcut = (prefix: string) => {
     setKeyTakeaway(prev => {
-      if (!prev) return prefix;
-      if (prev.endsWith(' ') || prev.endsWith('.')) return `${prev} ${prefix}`;
-      return `${prev}. ${prefix}`;
+      if (!prev) return prefix + ' ';
+      if (prev.endsWith(' ') || prev.endsWith('.')) return `${prev} ${prefix} `;
+      return `${prev}. ${prefix} `;
     });
   };
 
@@ -143,7 +176,7 @@ export function QuickMistakeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
+      <DialogContent id="quick-mistake-dialog" className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
@@ -164,16 +197,17 @@ export function QuickMistakeModal({
           {/* Subject & System Selection */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Subject
+              <Label htmlFor="mistake-subject-select" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Subject *
               </Label>
               <select
-                value={subjectId}
-                onChange={e => setSubjectId(Number(e.target.value))}
+                id="mistake-subject-select"
+                value={String(subjectId)}
+                onChange={e => handleSubjectChange(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {subjects.map(s => (
-                  <option key={s.id} value={s.id}>
+                  <option key={String(s.id)} value={String(s.id)}>
                     {s.name}
                   </option>
                 ))}
@@ -181,19 +215,20 @@ export function QuickMistakeModal({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="mistake-system-select" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 System
               </Label>
               <select
-                value={systemId}
-                onChange={e => setSystemId(Number(e.target.value))}
+                id="mistake-system-select"
+                value={String(systemId)}
+                onChange={e => setSystemId(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {availableSystems.length === 0 ? (
-                  <option value={0}>No systems defined</option>
+                  <option value="0">General / All Systems</option>
                 ) : (
                   availableSystems.map(sys => (
-                    <option key={sys.id} value={sys.id}>
+                    <option key={String(sys.id)} value={String(sys.id)}>
                       {sys.name}
                     </option>
                   ))
@@ -205,12 +240,13 @@ export function QuickMistakeModal({
           {/* Optional Topic Tag */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="mistake-topic-input" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Topic Tag (Optional)
               </Label>
               <span className="text-[10px] text-muted-foreground font-normal">e.g., Mitral Stenosis</span>
             </div>
             <Input
+              id="mistake-topic-input"
               value={topicId}
               onChange={e => setTopicId(e.target.value)}
               placeholder="e.g. Rheumatic Heart Disease or Wernicke Encephalopathy"
@@ -221,7 +257,7 @@ export function QuickMistakeModal({
           {/* Error Classification Pills */}
           <div className="space-y-1.5">
             <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Error Root Cause
+              Error Root Cause *
             </Label>
             <div className="grid grid-cols-2 gap-2">
               {errorTypePills.map(pill => {
@@ -230,6 +266,7 @@ export function QuickMistakeModal({
                 return (
                   <button
                     key={pill.id}
+                    id={`btn-error-type-${pill.id}`}
                     type="button"
                     onClick={() => setErrorType(pill.id)}
                     className={cn(
@@ -261,6 +298,7 @@ export function QuickMistakeModal({
               {(['QBank', 'GT', 'Custom'] as const).map(src => (
                 <button
                   key={src}
+                  id={`btn-source-${src.toLowerCase()}`}
                   type="button"
                   onClick={() => setSource(src)}
                   className={cn(
@@ -279,7 +317,7 @@ export function QuickMistakeModal({
           {/* Key Takeaway Text Input with Clinical Prompt Shortcuts */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between flex-wrap gap-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Label htmlFor="mistake-takeaway-input" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 1-Line High-Yield Rule *
               </Label>
               {/* Clinical Prompt Shortcuts */}
@@ -288,21 +326,21 @@ export function QuickMistakeModal({
                 <button
                   type="button"
                   onClick={() => insertPromptShortcut('DOC:')}
-                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
                 >
                   + DOC
                 </button>
                 <button
                   type="button"
                   onClick={() => insertPromptShortcut('IOC:')}
-                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
                 >
                   + IOC
                 </button>
                 <button
                   type="button"
                   onClick={() => insertPromptShortcut('Classic triad:')}
-                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors"
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
                 >
                   + Triad
                 </button>
@@ -310,6 +348,7 @@ export function QuickMistakeModal({
             </div>
 
             <textarea
+              id="mistake-takeaway-input"
               value={keyTakeaway}
               onChange={e => setKeyTakeaway(e.target.value)}
               placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine BEFORE Glucose."
@@ -321,16 +360,18 @@ export function QuickMistakeModal({
 
           <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-end gap-2">
             <Button
+              id="btn-cancel-mistake"
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground"
+              className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel
             </Button>
             <Button
+              id="btn-save-mistake"
               type="submit"
-              disabled={isSubmitting || !keyTakeaway.trim() || !systemId}
+              disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
               className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-5 gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />

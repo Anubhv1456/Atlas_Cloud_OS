@@ -7,7 +7,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { BottomNav } from '@/components/BottomNav';
-import { PullToRefresh } from '@/components/PullToRefresh';
 import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
@@ -110,16 +109,6 @@ function ProtectedApp() {
     }
   }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation]);
 
-  const handleRefresh = async () => {
-    try {
-      toast.info('Backing up data to Firebase...');
-      
-      toast.success('Firebase Cloud Sync successful.');
-    } catch (error) {
-      toast.error('Firebase Cloud Sync failed.');
-    }
-  };
-
   if (authLoading || accessLoading) {
     return (
       <div className="flex items-center justify-center w-full h-[100dvh]">
@@ -205,34 +194,32 @@ function ProtectedApp() {
       <AutoSyncEngine />
       <BottomNav />
       <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300">
-        <PullToRefresh onRefresh={handleRefresh}>
-          <motion.main
-            key={location}
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
-            className="w-full h-full"
-          >
-            <Suspense fallback={
-              <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            }>
-              <Switch>
-                <Route path="/" component={Home} />
-                <Route path="/subjects/:id" component={SubjectDetail} />
-                <Route path="/timeline" component={Timeline} />
-                <Route path="/mistakes" component={MistakeRecoveryQueue} />
-                <Route path="/analytics" component={Analytics} />
-                <Route path="/settings" component={Settings} />
-                <Route path="/privacy" component={PrivacyPolicy} />
-                <Route path="/terms" component={TermsOfService} />
-                <Route path="/contact" component={Contact} />
-                <Route component={NotFound} />
-              </Switch>
-            </Suspense>
-          </motion.main>
-        </PullToRefresh>
+        <motion.main
+          key={location}
+          initial={{ opacity: 0, y: 12, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
+          className="w-full h-full"
+        >
+          <Suspense fallback={
+            <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          }>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/subjects/:id" component={SubjectDetail} />
+              <Route path="/timeline" component={Timeline} />
+              <Route path="/mistakes" component={MistakeRecoveryQueue} />
+              <Route path="/analytics" component={Analytics} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/privacy" component={PrivacyPolicy} />
+              <Route path="/terms" component={TermsOfService} />
+              <Route path="/contact" component={Contact} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
+        </motion.main>
       </div>
     </div>
   );

@@ -23,6 +23,23 @@ import * as T from './types';
 export const dbEvents = new SimpleEventEmitter();
 dbEvents.setMaxListeners(100);
 
+function sanitizeForFirestore(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (obj instanceof Date) return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter(v => v !== undefined);
+  if (typeof obj === 'object') {
+    const res: Record<string, any> = {};
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (val !== undefined) {
+        res[key] = sanitizeForFirestore(val);
+      }
+    }
+    return res;
+  }
+  return obj;
+}
+
 class FirestoreTable<T> {
   private cache: Map<string, T> = new Map();
   private unsubscribe: (() => void) | null = null;
@@ -81,51 +98,109 @@ class FirestoreTable<T> {
   }
 
   async add(item: any): Promise<string | number> {
-    if (!auth.currentUser) throw new Error("Not authenticated");
     const id = (item as any).id || generateHLC();
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-    await setDoc(docRef, { ...item, hlc: generateHLC() });
+    const cleanPayload = sanitizeForFirestore({
+      ...item,
+      id: isNaN(Number(id)) ? id : Number(id),
+      hlc: (item as any).hlc || generateHLC(),
+    });
+
+    // Optimistic cache update
+    this.cache.set(String(id), cleanPayload as T);
+    dbEvents.emit('change', this.name);
+
+    if (auth.currentUser) {
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      await setDoc(docRef, cleanPayload);
+    }
     return id;
   }
 
   async put(item: T): Promise<string | number> {
-    if (!auth.currentUser) throw new Error("Not authenticated");
     const id = (item as any).id || generateHLC();
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-    await setDoc(docRef, { ...item, hlc: generateHLC() }, { merge: true });
+    const cleanPayload = sanitizeForFirestore({
+      ...item,
+      id: isNaN(Number(id)) ? id : Number(id),
+      hlc: (item as any).hlc || generateHLC(),
+    });
+
+    // Optimistic cache update
+    this.cache.set(String(id), cleanPayload as T);
+    dbEvents.emit('change', this.name);
+
+    if (auth.currentUser) {
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      await setDoc(docRef, cleanPayload, { merge: true });
+    }
     return id;
   }
 
   async bulkAdd(items: T[]) {
+    items.forEach(item => {
+      const id = (item as any).id || generateHLC();
+      const cleanPayload = sanitizeForFirestore({
+        ...item,
+        id: isNaN(Number(id)) ? id : Number(id),
+        hlc: (item as any).hlc || generateHLC(),
+      });
+      this.cache.set(String(id), cleanPayload as T);
+    });
+    dbEvents.emit('change', this.name);
+
     if (!auth.currentUser) return;
     const batch = writeBatch(firestoreDb);
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
       const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-      batch.set(docRef, { ...item, hlc: generateHLC() });
+      batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }));
     });
     await batch.commit();
   }
 
   async bulkPut(items: T[]) {
+    items.forEach(item => {
+      const id = (item as any).id || generateHLC();
+      const cleanPayload = sanitizeForFirestore({
+        ...item,
+        id: isNaN(Number(id)) ? id : Number(id),
+        hlc: (item as any).hlc || generateHLC(),
+      });
+      this.cache.set(String(id), cleanPayload as T);
+    });
+    dbEvents.emit('change', this.name);
+
     if (!auth.currentUser) return;
     const batch = writeBatch(firestoreDb);
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
       const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-      batch.set(docRef, { ...item, hlc: generateHLC() }, { merge: true });
+      batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }), { merge: true });
     });
     await batch.commit();
   }
 
   async update(id: string | number, changes: Partial<T>) {
-    if (!auth.currentUser) return 0;
+    const existing = this.cache.get(String(id));
+    const cleanChanges = sanitizeForFirestore({
+      ...changes,
+      hlc: (changes as any).hlc || generateHLC(),
+    });
+
+    if (existing) {
+      this.cache.set(String(id), { ...existing, ...cleanChanges } as T);
+      dbEvents.emit('change', this.name);
+    }
+
+    if (!auth.currentUser) return 1;
     const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-    await setDoc(docRef, { ...changes, hlc: generateHLC() }, { merge: true });
+    await setDoc(docRef, cleanChanges, { merge: true });
     return 1;
   }
 
   async delete(id: string | number) {
+    this.cache.delete(String(id));
+    dbEvents.emit('change', this.name);
+
     if (!auth.currentUser) return;
     const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
     await deleteDoc(docRef);

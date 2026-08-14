@@ -1,26 +1,28 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { MistakeLog } from '@/db/types';
 import { deleteMistakeLog, resolveMistake } from '@/db/mutations';
-import { recordRecallDrill } from '@/lib/telemetry';
+import { recordRecallDrill, flushTelemetryBatch } from '@/lib/telemetry';
 import { QuickMistakeModal } from './QuickMistakeModal';
 import { 
   CheckCircle2, 
-  Circle,
+  Circle, 
   Plus, 
   Trash2, 
-  BookOpen,
-  Brain,
-  Zap,
-  RotateCcw,
-  Sparkles,
-  ChevronRight,
-  Eye,
-  HelpCircle,
-  Flame,
-  X,
-  ArrowRight
+  BookOpen, 
+  Brain, 
+  RotateCcw, 
+  Sparkles, 
+  ChevronRight, 
+  Eye, 
+  HelpCircle, 
+  Flame, 
+  X, 
+  ArrowRight,
+  Filter,
+  Check,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,14 +44,39 @@ export default function MistakeRecoveryQueue() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [filterSubjectId, setFilterSubjectId] = useState<string>('all');
   
-  const mistakeLogs = useLiveQuery(() => db.mistakeLogs?.orderBy('createdAt').reverse().toArray()) || [];
-  const subjects = useLiveQuery(() => db.subjects?.toArray()) || [];
-  const systems = useLiveQuery(() => db.systems?.toArray()) || [];
-  
-  const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id!, s.name])), [subjects]);
-  const systemMap = useMemo(() => new Map(systems.map(sys => [sys.id!, sys.name])), [systems]);
+  const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray()) || [];
+  const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
+  const systems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
 
-  // Telemetry Calculations
+  // Exclude soft-deleted logs and sort newest first
+  const mistakeLogs = useMemo(() => {
+    return rawMistakes
+      .filter(m => !m.deletedAt)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rawMistakes]);
+
+  // Robust ID-to-Name Map for Subjects (combining DB subjects & Universal Ontology)
+  const subjectMap = useMemo(() => {
+    const map = new Map<string, string>();
+    subjects.forEach(s => {
+      if (s.id !== undefined) map.set(String(s.id), s.name);
+    });
+    ALL_SUBJECTS.forEach(s => {
+      if (!map.has(String(s.id))) map.set(String(s.id), s.name);
+    });
+    return map;
+  }, [subjects]);
+
+  // Robust ID-to-Name Map for Systems
+  const systemMap = useMemo(() => {
+    const map = new Map<string, string>();
+    systems.forEach(sys => {
+      if (sys.id !== undefined) map.set(String(sys.id), sys.name);
+    });
+    return map;
+  }, [systems]);
+
+  // Telemetry Metrics
   const totalLogs = mistakeLogs.length;
   const unresolvedLogs = useMemo(() => mistakeLogs.filter(l => !l.resolved), [mistakeLogs]);
   const masteredCount = totalLogs - unresolvedLogs.length;
@@ -60,8 +87,7 @@ export default function MistakeRecoveryQueue() {
     if (unresolvedLogs.length === 0) return null;
     const counts: Record<string, number> = {};
     for (const log of unresolvedLogs) {
-      const subName = subjectMap.get(Number(log.subjectId)) || 
-        ALL_SUBJECTS.find(s => String(s.id) === String(log.subjectId))?.name || 'Subject';
+      const subName = subjectMap.get(String(log.subjectId)) || 'Subject';
       counts[subName] = (counts[subName] || 0) + 1;
     }
     let topName = '';
@@ -86,20 +112,31 @@ export default function MistakeRecoveryQueue() {
     });
   }, [mistakeLogs, statusFilter, typeFilter, filterSubjectId]);
 
-  // Group filtered logs by System & Topic
+  // Group filtered logs by Subject + System + Topic
   const groupedMap = useMemo(() => {
-    const map = new Map<string, MistakeLog[]>();
+    const map = new Map<string, { subjectName: string; systemName: string; topicName?: string; logs: MistakeLog[] }>();
     for (const log of filteredLogs) {
-      const systemName = systemMap.get(log.systemId) || `System`;
-      const groupKey = log.topicId ? `${systemName} › ${log.topicId}` : systemName;
-      const existing = map.get(groupKey) || [];
-      existing.push(log);
-      map.set(groupKey, existing);
+      const subName = subjectMap.get(String(log.subjectId)) || 'Subject';
+      const sysName = systemMap.get(String(log.systemId)) || 'General';
+      const topName = log.topicId?.trim() || undefined;
+
+      const groupKey = `${log.subjectId || 0}::${log.systemId || 0}::${topName || ''}`;
+      const existing = map.get(groupKey);
+      if (existing) {
+        existing.logs.push(log);
+      } else {
+        map.set(groupKey, {
+          subjectName: subName,
+          systemName: sysName,
+          topicName: topName,
+          logs: [log]
+        });
+      }
     }
     return map;
-  }, [filteredLogs, systemMap]);
+  }, [filteredLogs, subjectMap, systemMap]);
 
-  // Drill Deck (Always unresolved logs matching active subject/type filters)
+  // Drill Deck (Unresolved logs matching active subject/type filters)
   const drillDeck = useMemo(() => {
     return mistakeLogs.filter(log => {
       if (log.resolved) return false;
@@ -110,7 +147,7 @@ export default function MistakeRecoveryQueue() {
   }, [mistakeLogs, typeFilter, filterSubjectId]);
 
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-10 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div id="mistake-recovery-page" className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-10 max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
       
       {/* 1. Header & Primary CTA Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
@@ -127,17 +164,19 @@ export default function MistakeRecoveryQueue() {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
-          {unresolvedLogs.length > 0 && (
+          {drillDeck.length > 0 && (
             <Button 
+              id="btn-start-active-drill"
               onClick={() => setDrillActive(true)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Start Active Drill</span>
+              <span>Start Active Drill ({drillDeck.length})</span>
             </Button>
           )}
 
           <Button 
+            id="btn-open-log-mistake-modal"
             onClick={() => setModalOpen(true)}
             variant="outline"
             className="rounded-xl text-xs font-semibold border-border/80 gap-1.5 cursor-pointer"
@@ -150,7 +189,7 @@ export default function MistakeRecoveryQueue() {
 
       {/* 2. Telemetry Stat Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
+        <div id="stat-unresolved-gaps" className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
           <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
             <Flame className="w-4 h-4" />
           </div>
@@ -164,7 +203,7 @@ export default function MistakeRecoveryQueue() {
           </div>
         </div>
 
-        <div className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
+        <div id="stat-top-weak-area" className="bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
           <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
             <Brain className="w-4 h-4" />
           </div>
@@ -178,7 +217,7 @@ export default function MistakeRecoveryQueue() {
           </div>
         </div>
 
-        <div className="col-span-2 sm:col-span-1 bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
+        <div id="stat-mastery-rate" className="col-span-2 sm:col-span-1 bg-card border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3">
           <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
             <CheckCircle2 className="w-4 h-4" />
           </div>
@@ -194,11 +233,12 @@ export default function MistakeRecoveryQueue() {
       </div>
 
       {/* 3. Sleek Streamlined Filter Pill Strip */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border/80 shadow-xs">
+      <div id="filter-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border/80 shadow-xs">
         
         {/* Status Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <button
+            id="filter-tab-unresolved"
             type="button"
             onClick={() => setStatusFilter('unresolved')}
             className={cn(
@@ -211,6 +251,7 @@ export default function MistakeRecoveryQueue() {
             Unresolved ({unresolvedLogs.length})
           </button>
           <button
+            id="filter-tab-mastered"
             type="button"
             onClick={() => setStatusFilter('mastered')}
             className={cn(
@@ -223,6 +264,7 @@ export default function MistakeRecoveryQueue() {
             Mastered ({masteredCount})
           </button>
           <button
+            id="filter-tab-all"
             type="button"
             onClick={() => setStatusFilter('all')}
             className={cn(
@@ -239,6 +281,7 @@ export default function MistakeRecoveryQueue() {
         {/* Classification & Subject Dropdowns */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <select
+            id="select-error-type-filter"
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}
             className="h-8 rounded-xl border border-border/80 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
@@ -251,13 +294,14 @@ export default function MistakeRecoveryQueue() {
           </select>
 
           <select
+            id="select-subject-filter"
             value={filterSubjectId}
             onChange={e => setFilterSubjectId(e.target.value)}
-            className="h-8 rounded-xl border border-border/80 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[150px] truncate"
+            className="h-8 rounded-xl border border-border/80 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[160px] truncate"
           >
             <option value="all">All Subjects</option>
             {subjects.map(s => (
-              <option key={s.id} value={String(s.id)}>{s.name}</option>
+              <option key={String(s.id)} value={String(s.id)}>{s.name}</option>
             ))}
           </select>
         </div>
@@ -265,52 +309,58 @@ export default function MistakeRecoveryQueue() {
 
       {/* 4. High-Density Micro-Cards List */}
       {Array.from(groupedMap.entries()).length > 0 ? (
-        <div className="space-y-4">
-          {Array.from(groupedMap.entries()).map(([groupKey, logs]) => {
-            const firstLog = logs[0];
-            const subjectName = subjectMap.get(Number(firstLog.subjectId)) || 
-              ALL_SUBJECTS.find(s => String(s.id) === String(firstLog.subjectId))?.name || 'Subject';
-
+        <div id="mistakes-grouped-list" className="space-y-4">
+          {Array.from(groupedMap.entries()).map(([groupKey, group]) => {
             return (
-              <div key={groupKey} className="space-y-2">
+              <div key={groupKey} id={`group-${groupKey.replace(/[^a-zA-Z0-9]/g, '-')}`} className="space-y-2">
                 {/* Clean Group Header */}
-                <div className="flex items-center gap-2 px-1 pt-1">
+                <div className="flex items-center gap-2 px-1 pt-1 flex-wrap">
                   <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
                   <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    {subjectName}
+                    {group.subjectName}
                   </span>
                   <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
                   <span className="text-xs font-bold text-foreground">
-                    {groupKey}
+                    {group.systemName}
                   </span>
+                  {group.topicName && (
+                    <>
+                      <ChevronRight className="w-3 h-3 text-muted-foreground/50 shrink-0" />
+                      <span className="text-xs font-medium text-primary">
+                        {group.topicName}
+                      </span>
+                    </>
+                  )}
                   <span className="text-[10px] text-muted-foreground font-mono">
-                    ({logs.length})
+                    ({group.logs.length})
                   </span>
                 </div>
 
                 {/* Micro Cards */}
                 <div className="space-y-2">
-                  {logs.map(log => {
+                  {group.logs.map(log => {
                     const isMastered = log.resolved;
 
                     return (
                       <div 
-                        key={log.id} 
+                        key={String(log.id)} 
+                        id={`mistake-card-${log.id}`}
                         className={cn(
                           "p-3.5 rounded-2xl border transition-all flex items-start justify-between gap-3 bg-card shadow-xs group",
                           isMastered 
-                            ? "border-border/40 opacity-70 bg-muted/10" 
+                            ? "border-border/40 opacity-75 bg-muted/10" 
                             : "border-border/80 hover:border-border"
                         )}
                       >
                         {/* 1-Tap Mastery Toggle Button */}
                         <button
+                          id={`btn-toggle-mastery-${log.id}`}
                           type="button"
                           onClick={() => {
-                            if (log.id) {
+                            if (log.id !== undefined) {
                               resolveMistake(log.id, !log.resolved);
-                              const subName = subjectMap.get(Number(log.subjectId)) || 'Clinical';
-                              const topTitle = log.topicId || systemMap.get(log.systemId) || 'Medical Topic';
+                              const subName = subjectMap.get(String(log.subjectId)) || 'Clinical';
+                              const topTitle = log.topicId || systemMap.get(String(log.systemId)) || 'Medical Topic';
                               recordRecallDrill(log.errorType, !log.resolved, topTitle, subName);
                             }
                           }}
@@ -370,8 +420,9 @@ export default function MistakeRecoveryQueue() {
 
                         {/* Delete Action */}
                         <button
+                          id={`btn-delete-mistake-${log.id}`}
                           type="button"
-                          onClick={() => log.id && deleteMistakeLog(log.id)}
+                          onClick={() => log.id !== undefined && deleteMistakeLog(log.id)}
                           className="p-1.5 rounded-xl text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer shrink-0"
                           title="Delete takeaway"
                         >
@@ -387,7 +438,7 @@ export default function MistakeRecoveryQueue() {
         </div>
       ) : (
         /* Empty State */
-        <div className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6">
+        <div id="mistakes-empty-state" className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6">
           <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 mb-1">
             <CheckCircle2 className="w-8 h-8" />
           </div>
@@ -401,9 +452,10 @@ export default function MistakeRecoveryQueue() {
           </p>
           <div className="pt-2">
             <Button 
+              id="btn-empty-log-mistake"
               onClick={() => setModalOpen(true)}
               variant="outline"
-              className="rounded-xl text-xs font-semibold gap-1.5"
+              className="rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Log New Takeaway</span>
@@ -432,8 +484,8 @@ export default function MistakeRecoveryQueue() {
 
 interface ActiveDrillModalProps {
   deck: MistakeLog[];
-  subjectMap: Map<number, string>;
-  systemMap: Map<number, string>;
+  subjectMap: Map<string, string>;
+  systemMap: Map<string, string>;
   onClose: () => void;
 }
 
@@ -445,23 +497,59 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
   const currentCard = deck[currentIndex];
   const isFinished = currentIndex >= deck.length;
 
-  const handleNext = (mastered = false) => {
+  const handleNext = useCallback((mastered = false) => {
     if (currentCard) {
-      if (mastered && currentCard.id) {
+      if (mastered && currentCard.id !== undefined) {
         resolveMistake(currentCard.id, true);
         setSessionMasteredCount(prev => prev + 1);
       }
-      const subName = subjectMap.get(Number(currentCard.subjectId)) || 'Clinical';
-      const topTitle = currentCard.topicId || systemMap.get(currentCard.systemId) || 'Medical Topic';
+      const subName = subjectMap.get(String(currentCard.subjectId)) || 'Clinical';
+      const topTitle = currentCard.topicId || systemMap.get(String(currentCard.systemId)) || 'Medical Topic';
       recordRecallDrill(currentCard.errorType, mastered, topTitle, subName);
     }
     setIsFlipped(false);
     setCurrentIndex(prev => prev + 1);
+  }, [currentCard, subjectMap, systemMap]);
+
+  // Keyboard Shortcuts for Active Recall Flow
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if target is an input or textarea
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === ' ' || e.key === 'ArrowDown') {
+        // Space or Down Arrow: Toggle card flip
+        e.preventDefault();
+        setIsFlipped(prev => !prev);
+      } else if (isFlipped) {
+        if (e.key === 'Enter' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'm') {
+          // Mastered
+          e.preventDefault();
+          handleNext(true);
+        } else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'k') {
+          // Keep in queue
+          e.preventDefault();
+          handleNext(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFlipped, handleNext, onClose]);
+
+  // Flush telemetry buffer on modal completion
+  const handleDone = () => {
+    flushTelemetryBatch().catch(() => {});
+    onClose();
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/20 shadow-2xl bg-card text-foreground">
+      <DialogContent id="active-recall-drill-modal" className="sm:max-w-md rounded-3xl p-6 border-primary/20 shadow-2xl bg-card text-foreground">
         {!isFinished && currentCard ? (
           <div className="space-y-5">
             {/* Header & Card Counter */}
@@ -481,9 +569,10 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
               </div>
 
               <button
+                id="btn-close-drill"
                 type="button"
                 onClick={onClose}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -499,6 +588,7 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
 
             {/* Flashcard Body */}
             <div 
+              id="active-drill-flashcard"
               onClick={() => setIsFlipped(!isFlipped)}
               className={cn(
                 "min-h-[200px] p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 relative overflow-hidden select-none",
@@ -509,11 +599,11 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
             >
               {/* Card Meta Top */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                  {subjectMap.get(Number(currentCard.subjectId)) || 'Subject'} › {systemMap.get(currentCard.systemId) || 'System'}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary truncate max-w-[240px]">
+                  {subjectMap.get(String(currentCard.subjectId)) || 'Subject'} › {systemMap.get(String(currentCard.systemId)) || 'System'}
                 </span>
-                <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md">
-                  {currentCard.source}
+                <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0">
+                  {currentCard.source === 'GT' ? 'Grand Test' : currentCard.source}
                 </Badge>
               </div>
 
@@ -528,7 +618,7 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
                       {currentCard.topicId ? `What is the high-yield takeaway for ${currentCard.topicId}?` : 'What is the high-yield rule for this error?'}
                     </p>
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary mt-3 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                      Tap card to reveal rule <ArrowRight className="w-3 h-3" />
+                      Tap card or press Space to reveal <ArrowRight className="w-3 h-3" />
                     </span>
                   </div>
                 ) : (
@@ -545,7 +635,7 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
 
               {/* Card Meta Bottom */}
               <div className="text-[10px] text-muted-foreground text-center font-mono">
-                {isFlipped ? 'Tap again to collapse' : 'Click anywhere to reveal answer'}
+                {isFlipped ? 'Tap card again to flip back' : 'Click anywhere or press Space'}
               </div>
             </div>
 
@@ -553,29 +643,32 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
             {isFlipped ? (
               <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in duration-150">
                 <Button
+                  id="btn-keep-in-queue"
                   type="button"
                   variant="outline"
                   onClick={() => handleNext(false)}
-                  className="rounded-xl text-xs font-semibold border-border/80"
+                  className="rounded-xl text-xs font-semibold border-border/80 cursor-pointer"
                 >
-                  Keep in Queue
+                  Keep in Queue (←)
                 </Button>
                 <Button
+                  id="btn-mark-drill-mastered"
                   type="button"
                   onClick={() => handleNext(true)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1.5 shadow-xs cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Mark Mastered</span>
+                  <span>Mark Mastered (→)</span>
                 </Button>
               </div>
             ) : (
               <Button
+                id="btn-reveal-drill-answer"
                 type="button"
                 onClick={() => setIsFlipped(true)}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer"
               >
-                Reveal Answer
+                Reveal Answer (Space)
               </Button>
             )}
           </div>
@@ -588,12 +681,13 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
             <div className="space-y-1">
               <h3 className="text-lg font-extrabold text-foreground">Drill Completed!</h3>
               <p className="text-xs text-muted-foreground">
-                You mastered <strong className="text-emerald-500 font-bold">{sessionMasteredCount}</strong> takeaway{sessionMasteredCount !== 1 && 's'} in this session.
+                You mastered <strong className="text-emerald-500 font-bold">{sessionMasteredCount}</strong> takeaway{sessionMasteredCount !== 1 ? 's' : ''} in this active recall session.
               </p>
             </div>
             <Button
+              id="btn-drill-finish-done"
               type="button"
-              onClick={onClose}
+              onClick={handleDone}
               className="bg-primary text-primary-foreground font-bold text-xs rounded-xl px-6 cursor-pointer"
             >
               Done
