@@ -33,7 +33,7 @@ export async function updateMarkerStatusAdmin(markerId: string, status: MarkerSt
   await updateDoc(markerRef, { status });
 }
 
-export async function updateUserBetaAccess(userId: string, betaAccess: boolean, durationDays?: number | null) {
+export async function updateUserBetaAccess(userId: string, betaAccess: boolean, durationDays?: number | null, isTrial?: boolean) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const userRef = doc(firestoreDb, 'users', userId);
   if (betaAccess) {
@@ -42,17 +42,19 @@ export async function updateUserBetaAccess(userId: string, betaAccess: boolean, 
     await setDoc(userRef, {
       betaAccess: true,
       betaAccessExpiresAt,
-      betaGrantedAt: new Date()
+      betaGrantedAt: new Date(),
+      isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15)
     }, { merge: true });
   } else {
     await setDoc(userRef, {
       betaAccess: false,
-      betaAccessExpiresAt: null
+      betaAccessExpiresAt: null,
+      isTrial: false
     }, { merge: true });
   }
 }
 
-export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null) {
+export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null, isTrial?: boolean) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const now = Date.now();
   const promises = userIds.map(userId => {
@@ -62,12 +64,14 @@ export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: bo
       return setDoc(userRef, {
         betaAccess: true,
         betaAccessExpiresAt,
-        betaGrantedAt: new Date()
+        betaGrantedAt: new Date(),
+        isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15)
       }, { merge: true });
     } else {
       return setDoc(userRef, {
         betaAccess: false,
-        betaAccessExpiresAt: null
+        betaAccessExpiresAt: null,
+        isTrial: false
       }, { merge: true });
     }
   });

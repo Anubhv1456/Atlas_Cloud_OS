@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, deleteUserAsAdmin } from '@/lib/admin';
-import { formatDistanceToNow, format, differenceInDays } from 'date-fns';
+import { formatDistanceToNow, format, differenceInDays, addDays } from 'date-fns';
 import { 
   Shield, User, Mail, Calendar, Search, Copy, Check, Clock, 
   UserCheck, UserX, TriangleAlert, Users, RefreshCw, ChevronDown, Sparkles, Trash2,
-  GraduationCap, Flame, Award, ArrowUpRight, Zap
+  GraduationCap, Flame, Award, ArrowUpRight, Zap, Sliders, ShieldCheck, Filter
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -12,15 +12,17 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type FilterTab = 'all' | 'active' | 'expired' | 'locked';
+type FilterTab = 'all' | 'active' | 'trial' | 'expiring_soon' | 'expired' | 'locked';
 type ExamFilter = 'all' | 'NEET PG' | 'INICET' | 'FMGE' | 'USMLE';
 
-const DURATION_OPTIONS = [
-  { label: '30 Days (1 Month)', value: 30 },
-  { label: '90 Days (3 Months - Default)', value: 90 },
-  { label: '180 Days (6 Months)', value: 180 },
-  { label: '365 Days (1 Year)', value: 365 },
-  { label: 'Lifetime / Permanent', value: null },
+export const DURATION_PRESETS = [
+  { label: '15 Days (Trial Access)', value: 15, tag: '15d Trial', isTrial: true, desc: 'Fast trial evaluation / 15-day testing pass' },
+  { label: '30 Days (1 Month)', value: 30, tag: '1 Month', desc: 'Standard single month' },
+  { label: '60 Days (2 Months)', value: 60, tag: '2 Months', desc: 'Mid-term accelerated block' },
+  { label: '90 Days (3 Months - Cohort Default)', value: 90, tag: '3 Months', desc: 'Official 2026 Cohort standard pass' },
+  { label: '180 Days (6 Months)', value: 180, tag: '6 Months', desc: 'Extended residency prep' },
+  { label: '365 Days (1 Year)', value: 365, tag: '1 Year', desc: 'Full academic year access' },
+  { label: 'Lifetime / Permanent Access', value: null, tag: 'Lifetime', desc: 'Permanent unrestricted access' },
 ];
 
 export function UsersView() {
@@ -38,7 +40,15 @@ export function UsersView() {
   // Modal / Popover state for Granting / Duration picker
   const [grantingUser, setGrantingUser] = useState<any | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number | null>(90);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customDays, setCustomDays] = useState<number>(15);
+  const [customDate, setCustomDate] = useState<string>(format(addDays(new Date(), 15), 'yyyy-MM-dd'));
+  
   const [isBulkGrantOpen, setIsBulkGrantOpen] = useState(false);
+  const [bulkCustomMode, setBulkCustomMode] = useState(false);
+  const [bulkCustomDays, setBulkCustomDays] = useState<number>(15);
+  const [selectedBulkDuration, setSelectedBulkDuration] = useState<number | null>(90);
+
   const [deletingUser, setDeletingUser] = useState<any | null>(null);
 
   const fetchUsers = async () => {
@@ -67,7 +77,7 @@ export function UsersView() {
   };
 
   // Status helper
-  const getUserBetaStatus = (user: any) => {
+  const getUserBetaStatus = (user: any): 'active' | 'active_lifetime' | 'trial' | 'expiring_soon' | 'expired' | 'locked' => {
     if (!user.betaAccess) return 'locked';
     
     const expiresAt = user.betaAccessExpiresAt?.toMillis 
@@ -82,7 +92,30 @@ export function UsersView() {
     if (now > expiresAt) {
       return 'expired';
     }
+
+    const daysRemaining = Math.max(0, Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000)));
+
+    if (daysRemaining <= 7) {
+      return 'expiring_soon';
+    }
+
+    if (user.isTrial || daysRemaining <= 15) {
+      return 'trial';
+    }
+
     return 'active';
+  };
+
+  const getDaysRemaining = (user: any): number | null => {
+    const expiresAt = user.betaAccessExpiresAt?.toMillis 
+      ? user.betaAccessExpiresAt.toMillis() 
+      : typeof user.betaAccessExpiresAt === 'number' 
+      ? user.betaAccessExpiresAt 
+      : null;
+
+    if (!expiresAt) return null;
+    const now = Date.now();
+    return Math.max(0, Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000)));
   };
 
   // Target Exam Date Calculator
@@ -109,21 +142,32 @@ export function UsersView() {
     };
   };
 
-  const handleGrantAccessWithDuration = async (user: any, days: number | null) => {
+  const openGrantModal = (user: any) => {
+    setGrantingUser(user);
+    setIsCustomMode(false);
+    setSelectedDuration(90);
+    setCustomDays(15);
+    setCustomDate(format(addDays(new Date(), 15), 'yyyy-MM-dd'));
+  };
+
+  const handleGrantAccessWithDuration = async (user: any, days: number | null, isTrialParam?: boolean) => {
     try {
-      await updateUserBetaAccess(user.id, true, days);
+      const isTrial = isTrialParam ?? (days !== null && days <= 15);
+      await updateUserBetaAccess(user.id, true, days, isTrial);
       setUsers(users.map(u => {
         if (u.id === user.id) {
           const now = Date.now();
           return {
             ...u,
             betaAccess: true,
+            isTrial,
             betaAccessExpiresAt: days ? now + days * 24 * 60 * 60 * 1000 : null
           };
         }
         return u;
       }));
-      toast.success(`Beta access granted to ${user.displayName || 'candidate'} (${days ? `${days} days` : 'Lifetime'})`);
+      const label = days === 15 ? '15-Day Trial Access' : days ? `${days} Days` : 'Lifetime Permanent';
+      toast.success(`Beta access (${label}) granted to ${user.displayName || 'candidate'}`);
       setGrantingUser(null);
     } catch (error) {
       toast.error('Failed to update beta access.');
@@ -133,29 +177,32 @@ export function UsersView() {
   const handleRevokeAccess = async (user: any) => {
     try {
       await updateUserBetaAccess(user.id, false);
-      setUsers(users.map(u => u.id === user.id ? { ...u, betaAccess: false, betaAccessExpiresAt: null } : u));
+      setUsers(users.map(u => u.id === user.id ? { ...u, betaAccess: false, betaAccessExpiresAt: null, isTrial: false } : u));
       toast.success(`Beta access revoked for ${user.displayName || 'candidate'}`);
     } catch (error) {
       toast.error('Failed to revoke beta access.');
     }
   };
 
-  const handleBulkGrant = async (days: number | null) => {
+  const handleBulkGrant = async (days: number | null, isTrialParam?: boolean) => {
     if (selectedUserIds.length === 0) return;
     try {
-      await bulkUpdateUserBetaAccess(selectedUserIds, true, days);
+      const isTrial = isTrialParam ?? (days !== null && days <= 15);
+      await bulkUpdateUserBetaAccess(selectedUserIds, true, days, isTrial);
       const now = Date.now();
       setUsers(users.map(u => {
         if (selectedUserIds.includes(u.id)) {
           return {
             ...u,
             betaAccess: true,
+            isTrial,
             betaAccessExpiresAt: days ? now + days * 24 * 60 * 60 * 1000 : null
           };
         }
         return u;
       }));
-      toast.success(`Beta access granted to ${selectedUserIds.length} candidates (${days ? `${days} days` : 'Lifetime'})`);
+      const label = days === 15 ? '15-Day Trial' : days ? `${days} Days` : 'Lifetime';
+      toast.success(`Beta access (${label}) granted to ${selectedUserIds.length} candidates`);
       setSelectedUserIds([]);
       setIsBulkGrantOpen(false);
     } catch (error) {
@@ -170,7 +217,7 @@ export function UsersView() {
       await bulkUpdateUserBetaAccess(selectedUserIds, false);
       setUsers(users.map(u => {
         if (selectedUserIds.includes(u.id)) {
-          return { ...u, betaAccess: false, betaAccessExpiresAt: null };
+          return { ...u, betaAccess: false, betaAccessExpiresAt: null, isTrial: false };
         }
         return u;
       }));
@@ -198,7 +245,9 @@ export function UsersView() {
     const status = getUserBetaStatus(user);
     const matchesTab = 
       activeTab === 'all' ? true :
-      activeTab === 'active' ? (status === 'active' || status === 'active_lifetime') :
+      activeTab === 'active' ? (status === 'active' || status === 'active_lifetime' || status === 'trial' || status === 'expiring_soon') :
+      activeTab === 'trial' ? status === 'trial' :
+      activeTab === 'expiring_soon' ? status === 'expiring_soon' :
       activeTab === 'expired' ? status === 'expired' :
       activeTab === 'locked' ? status === 'locked' : true;
 
@@ -217,9 +266,28 @@ export function UsersView() {
 
   const stats = {
     total: users.length,
-    active: users.filter(u => getUserBetaStatus(u) === 'active' || getUserBetaStatus(u) === 'active_lifetime').length,
+    active: users.filter(u => {
+      const s = getUserBetaStatus(u);
+      return s === 'active' || s === 'active_lifetime' || s === 'trial' || s === 'expiring_soon';
+    }).length,
+    trials: users.filter(u => getUserBetaStatus(u) === 'trial').length,
+    expiringSoon: users.filter(u => getUserBetaStatus(u) === 'expiring_soon').length,
     expired: users.filter(u => getUserBetaStatus(u) === 'expired').length,
     locked: users.filter(u => getUserBetaStatus(u) === 'locked').length,
+  };
+
+  // Helper to handle custom date selection in modal
+  const handleDateChange = (dateStr: string) => {
+    setCustomDate(dateStr);
+    const selected = new Date(dateStr);
+    const diff = differenceInDays(selected, new Date());
+    setCustomDays(Math.max(1, diff));
+  };
+
+  const handleCustomDaysChange = (daysVal: number) => {
+    const d = Math.max(1, daysVal);
+    setCustomDays(d);
+    setCustomDate(format(addDays(new Date(), d), 'yyyy-MM-dd'));
   };
 
   return (
@@ -236,7 +304,7 @@ export function UsersView() {
                 Student Cohort Directory
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground">
-                Medical candidates, exam countdowns, study engagement, and beta access lifecycles.
+                Medical candidates, custom duration lifecycle management, 15-day trial grants, and exam countdowns.
               </p>
             </div>
           </div>
@@ -247,10 +315,16 @@ export function UsersView() {
             <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 p-1 rounded-xl">
               <span className="text-xs font-bold text-teal-300 px-2">{selectedUserIds.length} Selected</span>
               <button
-                onClick={() => setIsBulkGrantOpen(true)}
-                className="px-3 py-1 bg-teal-500 text-black text-xs font-bold rounded-lg hover:bg-teal-400"
+                onClick={() => {
+                  setSelectedBulkDuration(90);
+                  setBulkCustomMode(false);
+                  setBulkCustomDays(15);
+                  setIsBulkGrantOpen(true);
+                }}
+                className="px-3 py-1 bg-teal-500 text-black text-xs font-bold rounded-lg hover:bg-teal-400 flex items-center gap-1"
               >
-                Grant Beta
+                <Zap className="w-3.5 h-3.5" />
+                Grant Access
               </button>
               <button
                 onClick={handleBulkRevoke}
@@ -273,89 +347,128 @@ export function UsersView() {
       </div>
 
       {/* Cohort Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <div 
           onClick={() => setActiveTab('all')}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
             activeTab === 'all' ? "bg-card border-teal-500/40 ring-1 ring-teal-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Total Registered Candidates</span>
-            <Users className="w-4 h-4 text-teal-400" />
+          <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <span>Total</span>
+            <Users className="w-3.5 h-3.5 text-teal-400" />
           </div>
-          <div className="text-2xl font-bold mt-2 text-foreground">{stats.total}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">Medical aspirants in registry</p>
+          <div className="text-xl font-bold mt-1 text-foreground">{stats.total}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">All candidates</p>
         </div>
 
         <div 
           onClick={() => setActiveTab('active')}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
             activeTab === 'active' ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-            <span>Active Beta Members</span>
-            <UserCheck className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+            <span>Active</span>
+            <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold mt-2 text-emerald-400">{stats.active}</div>
-          <p className="text-[11px] text-emerald-500/80 mt-1 font-medium">Unrestricted study OS access</p>
+          <div className="text-xl font-bold mt-1 text-emerald-400">{stats.active}</div>
+          <p className="text-[10px] text-emerald-500/80 mt-0.5 font-medium">Cohort active</p>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab('trial')}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
+            activeTab === 'trial' ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+          )}
+        >
+          <div className="flex items-center justify-between text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
+            <span>15d Trial</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-xl font-bold mt-1 text-amber-300">{stats.trials}</div>
+          <p className="text-[10px] text-amber-500/80 mt-0.5 font-medium">Trial evaluation</p>
+        </div>
+
+        <div 
+          onClick={() => setActiveTab('expiring_soon')}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
+            activeTab === 'expiring_soon' ? "bg-orange-500/10 border-orange-500/40 ring-1 ring-orange-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+          )}
+        >
+          <div className="flex items-center justify-between text-[11px] font-semibold text-orange-400 uppercase tracking-wider">
+            <span>Expiring ≤7d</span>
+            <Clock className="w-3.5 h-3.5 text-orange-400" />
+          </div>
+          <div className="text-xl font-bold mt-1 text-orange-300">{stats.expiringSoon}</div>
+          <p className="text-[10px] text-orange-500/80 mt-0.5">Need renewal</p>
         </div>
 
         <div 
           onClick={() => setActiveTab('expired')}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
-            activeTab === 'expired' ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
+            activeTab === 'expired' ? "bg-rose-500/10 border-rose-500/40 ring-1 ring-rose-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
-            <span>Expired Access</span>
-            <Clock className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center justify-between text-[11px] font-semibold text-rose-400 uppercase tracking-wider">
+            <span>Expired</span>
+            <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
           </div>
-          <div className="text-2xl font-bold mt-2 text-amber-300">{stats.expired}</div>
-          <p className="text-[11px] text-amber-500/80 mt-1">Renewal required</p>
+          <div className="text-xl font-bold mt-1 text-rose-300">{stats.expired}</div>
+          <p className="text-[10px] text-rose-500/80 mt-0.5">Pass ended</p>
         </div>
 
         <div 
           onClick={() => setActiveTab('locked')}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
-            activeTab === 'locked' ? "bg-rose-500/10 border-rose-500/40 ring-1 ring-rose-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
+            activeTab === 'locked' ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-xs font-semibold text-rose-400 uppercase tracking-wider">
-            <span>Locked / Pending Beta</span>
-            <UserX className="w-4 h-4 text-rose-400" />
+          <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+            <span>Locked</span>
+            <UserX className="w-3.5 h-3.5 text-zinc-400" />
           </div>
-          <div className="text-2xl font-bold mt-2 text-rose-300">{stats.locked}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">Awaiting approval or pass key</p>
+          <div className="text-xl font-bold mt-1 text-zinc-300">{stats.locked}</div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Awaiting access</p>
         </div>
       </div>
 
       {/* Filter Tabs & Exam Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
         <div className="flex items-center gap-2 overflow-x-auto">
-          <div className="p-1 bg-card border border-border/60 rounded-xl flex items-center gap-1">
-            {(['all', 'active', 'expired', 'locked'] as const).map(tab => (
+          {/* Status Filter Tabs */}
+          <div className="p-1 bg-card border border-border/60 rounded-xl flex items-center gap-1 shrink-0">
+            {([
+              { id: 'all', label: `All (${stats.total})` },
+              { id: 'active', label: `Active (${stats.active})` },
+              { id: 'trial', label: `15d Trial (${stats.trials})` },
+              { id: 'expiring_soon', label: `Expiring ≤7d (${stats.expiringSoon})` },
+              { id: 'expired', label: `Expired (${stats.expired})` },
+              { id: 'locked', label: `Locked (${stats.locked})` }
+            ] as const).map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as FilterTab)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all whitespace-nowrap",
-                  activeTab === tab
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  activeTab === tab.id
                     ? "bg-teal-500 text-black shadow-sm font-bold"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
 
-          <div className="p-1 bg-card border border-border/60 rounded-xl flex items-center gap-1">
+          {/* Exam Filter */}
+          <div className="p-1 bg-card border border-border/60 rounded-xl flex items-center gap-1 shrink-0">
             {(['all', 'NEET PG', 'INICET', 'FMGE', 'USMLE'] as const).map(exam => (
               <button
                 key={exam}
@@ -411,7 +524,7 @@ export function UsersView() {
                   <th className="p-4">Candidate Profile</th>
                   <th className="p-4">Target Exam Cohort</th>
                   <th className="p-4">Study Engagement</th>
-                  <th className="p-4">Beta Access Status</th>
+                  <th className="p-4">Beta Access & Expiry</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -419,6 +532,7 @@ export function UsersView() {
                 {filteredUsers.map(u => {
                   const status = getUserBetaStatus(u);
                   const examInfo = getExamCountdown(u);
+                  const daysRemaining = getDaysRemaining(u);
                   const isSelected = selectedUserIds.includes(u.id);
 
                   return (
@@ -476,54 +590,94 @@ export function UsersView() {
                       </td>
 
                       <td className="p-4">
-                        <Badge className={cn(
-                          "text-[10px] capitalize font-bold",
-                          status === 'active' && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-                          status === 'active_lifetime' && "bg-teal-500/10 text-teal-300 border-teal-500/20",
-                          status === 'expired' && "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                          status === 'locked' && "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                        )}>
-                          {status === 'active_lifetime' ? 'Active (Lifetime)' : status}
-                        </Badge>
-                        {u.betaAccessExpiresAt && status === 'active' && (
-                          <div className="text-[10px] text-muted-foreground mt-1">
-                            Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
-                          </div>
-                        )}
+                        <div className="space-y-1">
+                          {status === 'active_lifetime' && (
+                            <Badge className="text-[10px] font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
+                              <ShieldCheck className="w-3 h-3" /> Lifetime Access
+                            </Badge>
+                          )}
+                          {status === 'trial' && (
+                            <Badge className="text-[10px] font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
+                              <Sparkles className="w-3 h-3 text-amber-400" /> 15d Trial ({daysRemaining}d left)
+                            </Badge>
+                          )}
+                          {status === 'expiring_soon' && (
+                            <Badge className="text-[10px] font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
+                              <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
+                            </Badge>
+                          )}
+                          {status === 'active' && (
+                            <Badge className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
+                              <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
+                            </Badge>
+                          )}
+                          {status === 'expired' && (
+                            <Badge className="text-[10px] font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
+                              Expired Pass
+                            </Badge>
+                          )}
+                          {status === 'locked' && (
+                            <Badge className="text-[10px] font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
+                              Locked / Pending
+                            </Badge>
+                          )}
+
+                          {u.betaAccessExpiresAt && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
+                            <div className="text-[10px] text-muted-foreground">
+                              Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
-                      <td className="p-4 text-right space-x-2">
-                        <button
-                          onClick={() => setGrantingUser(u)}
-                          className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 font-semibold text-xs transition-all"
-                        >
-                          Grant / Extend
-                        </button>
-
-                        <button
-                          onClick={() => handleGrantAccessWithDuration(u, examInfo.daysLeft)}
-                          className="px-2.5 py-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted text-foreground font-medium text-xs transition-all"
-                          title={`Extend access through ${examInfo.examName} date (${examInfo.daysLeft}d)`}
-                        >
-                          To Exam Date
-                        </button>
-
-                        {u.betaAccess && (
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* 15-Day Trial Quick Button */}
                           <button
-                            onClick={() => handleRevokeAccess(u)}
-                            className="px-2 py-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 text-xs font-semibold"
+                            onClick={() => handleGrantAccessWithDuration(u, 15, true)}
+                            className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
+                            title="Grant 15-Day Trial Access immediately"
                           >
-                            Revoke
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            <span>15d Trial</span>
                           </button>
-                        )}
 
-                        <button
-                          onClick={() => setDeletingUser(u)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                          title="Delete Candidate"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          {/* Full Duration / Custom Picker Modal Trigger */}
+                          <button
+                            onClick={() => openGrantModal(u)}
+                            className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 font-semibold text-xs transition-all"
+                            title="Open custom duration and presets selector"
+                          >
+                            <Sliders className="w-3 h-3 inline mr-1" />
+                            Grant / Extend
+                          </button>
+
+                          {/* Contextual To Exam Date */}
+                          <button
+                            onClick={() => handleGrantAccessWithDuration(u, examInfo.daysLeft)}
+                            className="px-2.5 py-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted text-foreground font-medium text-xs transition-all hidden lg:inline-flex items-center"
+                            title={`Extend access through ${examInfo.examName} date (${examInfo.daysLeft}d)`}
+                          >
+                            To Exam ({examInfo.daysLeft}d)
+                          </button>
+
+                          {u.betaAccess && (
+                            <button
+                              onClick={() => handleRevokeAccess(u)}
+                              className="px-2 py-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 text-xs font-semibold"
+                            >
+                              Revoke
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => setDeletingUser(u)}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                            title="Delete Candidate"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -537,45 +691,217 @@ export function UsersView() {
       {/* GRANT / MODIFY DURATION MODAL */}
       {grantingUser && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-card border border-teal-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="font-bold text-lg text-foreground">Grant / Extend Beta Access</h3>
-            <p className="text-xs text-muted-foreground">
-              Candidate: <strong>{grantingUser.displayName || grantingUser.email}</strong>
-            </p>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Choose Duration</label>
-              <div className="grid grid-cols-1 gap-2">
-                {DURATION_OPTIONS.map(opt => (
-                  <button
-                    key={opt.label}
-                    onClick={() => setSelectedDuration(opt.value)}
-                    className={cn(
-                      "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all",
-                      selectedDuration === opt.value
-                        ? "border-teal-500 bg-teal-500/10 text-teal-300"
-                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    {selectedDuration === opt.value && <Check className="w-4 h-4 text-teal-400" />}
-                  </button>
-                ))}
+          <div className="bg-card border border-teal-500/40 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div>
+                <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                  <Sliders className="w-5 h-5 text-teal-400" />
+                  Grant & Customize Beta Access
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Candidate: <strong className="text-foreground">{grantingUser.displayName || grantingUser.email}</strong>
+                </p>
               </div>
+              <Badge variant="outline" className="text-[10px] font-mono border-teal-500/30 text-teal-400">
+                {grantingUser.targetExam || 'Medical Candidate'}
+              </Badge>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            {/* Mode Toggle: Preset vs Custom Duration */}
+            <div className="flex p-1 bg-muted/50 border border-border/60 rounded-xl">
               <button
+                type="button"
+                onClick={() => setIsCustomMode(false)}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center",
+                  !isCustomMode ? "bg-teal-500 text-black font-bold shadow-xs" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Duration Presets & 15-Day Trial
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCustomMode(true)}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1.5",
+                  isCustomMode ? "bg-teal-500 text-black font-bold shadow-xs" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                Custom Duration & Date
+              </button>
+            </div>
+
+            {!isCustomMode ? (
+              /* PRESETS LIST */
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {DURATION_PRESETS.map(opt => {
+                  const isSelected = selectedDuration === opt.value;
+                  return (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setSelectedDuration(opt.value)}
+                      className={cn(
+                        "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all group",
+                        isSelected
+                          ? "border-teal-500 bg-teal-500/10 text-teal-300 shadow-xs"
+                          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      )}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("font-bold", isSelected ? "text-teal-200" : "text-foreground")}>
+                            {opt.label}
+                          </span>
+                          {opt.isTrial && (
+                            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] font-bold">
+                              Trial
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={cn("text-[10px] font-mono", isSelected ? "border-teal-400 text-teal-300" : "border-border text-muted-foreground")}>
+                          {opt.tag}
+                        </Badge>
+                        {isSelected && <Check className="w-4 h-4 text-teal-400 shrink-0" />}
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {/* Exam Target Date Preset */}
+                {(() => {
+                  const exam = getExamCountdown(grantingUser);
+                  const isSelected = selectedDuration === exam.daysLeft;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDuration(exam.daysLeft)}
+                      className={cn(
+                        "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all",
+                        isSelected
+                          ? "border-teal-500 bg-teal-500/10 text-teal-300 shadow-xs"
+                          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      )}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className={cn("font-bold", isSelected ? "text-teal-200" : "text-foreground")}>
+                            Until {exam.examName} Target Date ({exam.daysLeft} Days)
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">Expires on exam day ({format(exam.examDate, 'MMM d, yyyy')})</p>
+                      </div>
+                      {isSelected && <Check className="w-4 h-4 text-teal-400 shrink-0" />}
+                    </button>
+                  );
+                })()}
+              </div>
+            ) : (
+              /* CUSTOM DURATION CONTROLS */
+              <div className="space-y-4 p-4 rounded-xl bg-background/60 border border-border/60">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-between">
+                    <span>Number of Days Access</span>
+                    <span className="text-teal-400 font-mono font-bold text-xs">{customDays} Days</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="number"
+                      min="1"
+                      value={customDays}
+                      onChange={(e) => handleCustomDaysChange(parseInt(e.target.value) || 1)}
+                      className="text-xs font-mono font-bold h-10 rounded-xl bg-background"
+                      placeholder="e.g. 15, 45, 60"
+                    />
+                    {/* Quick Step Buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {[7, 15, 30, 45, 60, 120].map(step => (
+                        <button
+                          key={step}
+                          type="button"
+                          onClick={() => handleCustomDaysChange(step)}
+                          className={cn(
+                            "px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold border transition-all",
+                            customDays === step 
+                              ? "bg-teal-500 text-black border-teal-500" 
+                              : "bg-muted/50 border-border/50 text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {step}d
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-border/40">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase block">
+                    Or Pick Expiration Date
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="date"
+                      min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
+                      value={customDate}
+                      onChange={(e) => handleDateChange(e.target.value)}
+                      className="text-xs h-10 rounded-xl bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Calculated Expiry Preview Box */}
+            <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-1">
+              <div className="text-[11px] font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                Live Expiry Simulation
+              </div>
+              <p className="text-xs text-foreground font-medium">
+                {!isCustomMode ? (
+                  selectedDuration === null ? (
+                    <span className="text-emerald-300 font-semibold">Permanent Lifetime Access (Never Expires)</span>
+                  ) : selectedDuration === 15 ? (
+                    <span>
+                      <strong className="text-amber-300">15-Day Trial Pass:</strong> Expires on {format(addDays(new Date(), 15), 'EEEE, MMM d, yyyy')}
+                    </span>
+                  ) : (
+                    <span>
+                      Expires on <strong>{format(addDays(new Date(), selectedDuration), 'EEEE, MMM d, yyyy')}</strong> ({selectedDuration} days from now)
+                    </span>
+                  )
+                ) : (
+                  <span>
+                    Expires on <strong>{format(addDays(new Date(), customDays), 'EEEE, MMM d, yyyy')}</strong> ({customDays} days duration • {customDays <= 15 ? 'Marked as Trial' : 'Cohort Membership'})
+                  </span>
+                )}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
+              <button
+                type="button"
                 onClick={() => setGrantingUser(null)}
                 className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleGrantAccessWithDuration(grantingUser, selectedDuration)}
-                className="px-4 py-2 bg-teal-500 text-black font-bold rounded-xl text-xs hover:bg-teal-400"
+                type="button"
+                onClick={() => {
+                  const daysToApply = isCustomMode ? customDays : selectedDuration;
+                  const isTrial = isCustomMode ? customDays <= 15 : selectedDuration === 15;
+                  handleGrantAccessWithDuration(grantingUser, daysToApply, isTrial);
+                }}
+                className="px-5 py-2 bg-teal-500 text-black font-bold rounded-xl text-xs hover:bg-teal-400 shadow-md shadow-teal-950/20 flex items-center gap-1.5"
               >
-                Apply Beta Access
+                <Check className="w-4 h-4" />
+                Confirm & Apply Access
               </button>
             </div>
           </div>
@@ -585,30 +911,118 @@ export function UsersView() {
       {/* BULK GRANT MODAL */}
       {isBulkGrantOpen && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-card border border-teal-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="font-bold text-lg">Bulk Grant Beta Access</h3>
-            <p className="text-xs text-muted-foreground">
-              Applying beta access to <strong>{selectedUserIds.length} candidates</strong>.
-            </p>
-
-            <div className="space-y-2">
-              {DURATION_OPTIONS.map(opt => (
-                <button
-                  key={opt.label}
-                  onClick={() => handleBulkGrant(opt.value)}
-                  className="w-full p-3 rounded-xl border border-border/60 bg-background hover:bg-teal-500/10 hover:border-teal-500 text-left text-xs font-semibold transition-all"
-                >
-                  {opt.label}
-                </button>
-              ))}
+          <div className="bg-card border border-teal-500/40 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div>
+                <h3 className="font-bold text-lg text-foreground">Bulk Grant Beta Access</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Applying access to <strong className="text-teal-400">{selectedUserIds.length} selected candidates</strong>.
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            {/* Mode Switch */}
+            <div className="flex p-1 bg-muted/50 border border-border/60 rounded-xl">
               <button
+                type="button"
+                onClick={() => setBulkCustomMode(false)}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center",
+                  !bulkCustomMode ? "bg-teal-500 text-black font-bold shadow-xs" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Presets & 15-Day Trial
+              </button>
+              <button
+                type="button"
+                onClick={() => setBulkCustomMode(true)}
+                className={cn(
+                  "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all text-center flex items-center justify-center gap-1.5",
+                  bulkCustomMode ? "bg-teal-500 text-black font-bold shadow-xs" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                Custom Days
+              </button>
+            </div>
+
+            {!bulkCustomMode ? (
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {DURATION_PRESETS.map(opt => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setSelectedBulkDuration(opt.value)}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all",
+                      selectedBulkDuration === opt.value
+                        ? "border-teal-500 bg-teal-500/10 text-teal-300"
+                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{opt.label}</span>
+                      {opt.isTrial && (
+                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px]">
+                          Trial
+                        </Badge>
+                      )}
+                    </div>
+                    {selectedBulkDuration === opt.value && <Check className="w-4 h-4 text-teal-400" />}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3 p-4 rounded-xl bg-background/60 border border-border/60">
+                <label className="text-xs font-semibold text-muted-foreground uppercase flex items-center justify-between">
+                  <span>Custom Duration for all selected candidates</span>
+                  <span className="text-teal-400 font-mono font-bold">{bulkCustomDays} Days</span>
+                </label>
+                <Input 
+                  type="number"
+                  min="1"
+                  value={bulkCustomDays}
+                  onChange={(e) => setBulkCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="text-xs font-mono font-bold h-10 rounded-xl"
+                  placeholder="e.g. 15, 45, 60"
+                />
+                <div className="flex items-center gap-1.5 pt-1">
+                  {[7, 15, 30, 45, 60, 90, 180].map(step => (
+                    <button
+                      key={step}
+                      type="button"
+                      onClick={() => setBulkCustomDays(step)}
+                      className={cn(
+                        "px-2 py-1 rounded-lg text-[10px] font-mono font-bold border",
+                        bulkCustomDays === step ? "bg-teal-500 text-black border-teal-500" : "bg-muted/50 text-muted-foreground border-border/40"
+                      )}
+                    >
+                      {step}d
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
+              <button
+                type="button"
                 onClick={() => setIsBulkGrantOpen(false)}
                 className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted"
               >
                 Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const days = bulkCustomMode ? bulkCustomDays : selectedBulkDuration;
+                  const isTrial = bulkCustomMode ? bulkCustomDays <= 15 : selectedBulkDuration === 15;
+                  handleBulkGrant(days, isTrial);
+                }}
+                className="px-5 py-2 bg-teal-500 text-black font-bold rounded-xl text-xs hover:bg-teal-400 flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                Apply to {selectedUserIds.length} Candidates
               </button>
             </div>
           </div>
