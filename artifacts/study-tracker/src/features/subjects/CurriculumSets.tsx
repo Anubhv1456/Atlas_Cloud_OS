@@ -215,6 +215,11 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                               <GripVertical className="w-4 h-4" />
                             </div>
                             <span className="font-semibold text-sm text-foreground">{rs.name}</span>
+                            {rs.isLengthy && (
+                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                Deep Work
+                              </span>
+                            )}
                           </div>
                           
                           <DropdownMenu>

@@ -85,7 +85,8 @@ export function CurriculumSetScoreModal({
         curriculumSet.id!,
         score,
         curriculumSet.topicIds,
-        subjectName
+        subjectName,
+        timeTaken
       );
 
       // Save weak topics

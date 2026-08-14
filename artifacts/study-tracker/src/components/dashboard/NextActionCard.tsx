@@ -31,10 +31,13 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { recordS10Decision, startS10Timer } from '@/lib/telemetry';
 import { db } from '@/db';
+import { adaptTopicPacingFeedback } from '@/db/mutations';
+import { toast } from 'sonner';
 
 import { StudySystem, Subject } from '@/db';
-import { Pencil, X } from 'lucide-react';
+import { Pencil, X, SlidersHorizontal, ChevronsUp, ChevronsDown } from 'lucide-react';
 
 interface NextActionCardProps {
   customPrimarySubject?: Subject;
@@ -79,14 +82,36 @@ export function NextActionCard({
   useEffect(() => {
     if (primary) {
       setRenderTimestamp(Date.now());
+      startS10Timer();
     }
   }, [primary?.id, sessionBudget]);
 
-  const handleSkip = async (reason: 'already_studied' | 'too_difficult' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default' = 'default') => {
+  const handleSkip = async (
+    reason: 'already_studied' | 'too_difficult' | 'needs_deep_work' | 'fast_recall' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default' = 'default'
+  ) => {
     if (primary) {
       setIsSwapping(true);
+      const elapsedSeconds = parseFloat(((Date.now() - renderTimestamp) / 1000).toFixed(1));
+      recordS10Decision(false, reason, elapsedSeconds, primary.title);
       setSkipIds(prev => [...prev, primary.id]);
       try {
+        if (reason === 'needs_deep_work') {
+          await adaptTopicPacingFeedback(primary.systemId, primary.curriculumSetId, 'needs_deep_work');
+          toast.success('Pacing Adapted 📚', {
+            description: `Atlas reclassified "${primary.title}" as Deep Work (~35-50 min). Future recommendations adapted.`
+          });
+        } else if (reason === 'fast_recall') {
+          await adaptTopicPacingFeedback(primary.systemId, primary.curriculumSetId, 'fast_recall');
+          toast.success('Pacing Adapted ⚡', {
+            description: `Marked "${primary.title}" for Quick Recall (≤ 20 min).`
+          });
+        } else if (reason === 'too_difficult') {
+          await adaptTopicPacingFeedback(primary.systemId, primary.curriculumSetId, 'too_difficult');
+          toast.info('Paced for Deep Work ⚠️', {
+            description: `Marked as high-friction. Atlas shifted this to Deep Work sessions.`
+          });
+        }
+
         await db.recommendationSkips.add({
           targetId: primary.id,
           skippedAt: new Date(),
@@ -107,6 +132,7 @@ export function NextActionCard({
   const handleStartRevision = (rec: NextActionRecommendation) => {
     const elapsedSeconds = parseFloat(((Date.now() - renderTimestamp) / 1000).toFixed(1));
     setS10Speed(elapsedSeconds);
+    recordS10Decision(true, null, elapsedSeconds, rec.title);
     try {
       const existing = JSON.parse(localStorage.getItem('atlas_s10_logs') || '[]');
       existing.push({
@@ -226,12 +252,12 @@ export function NextActionCard({
               className={cn(
                 "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
                 sessionBudget === 'quick'
-                  ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
+                  ? "bg-background text-primary shadow-xs border border-border/60 font-bold"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Quick (15m)</span>
+              <span>Quick (&le; 20m)</span>
             </button>
             <button
               type="button"
@@ -239,12 +265,12 @@ export function NextActionCard({
               className={cn(
                 "flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap",
                 sessionBudget === 'deep'
-                  ? "bg-background text-primary shadow-sm border border-border/60 font-bold"
+                  ? "bg-background text-primary shadow-xs border border-border/60 font-bold"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               <BookOpen className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>Deep (45m+)</span>
+              <span>Deep (30m+)</span>
             </button>
           </div>
         </div>
@@ -309,18 +335,71 @@ export function NextActionCard({
         <div className={cn("transition-opacity duration-200 min-w-0", isSwapping ? "opacity-30" : "opacity-100")}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 min-w-0">
             <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
-                <span className="flex items-center gap-1 text-foreground font-semibold truncate">
-                  <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
-                  {primary.subjectName}
-                </span>
-                {primary.systemName !== primary.title && (
-                  <>
-                    <span>•</span>
-                    <span className="truncate">{primary.systemName}</span>
-                  </>
-                )}
+              <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
+                  <span className="flex items-center gap-1 text-foreground font-semibold truncate">
+                    <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
+                    {primary.subjectName}
+                  </span>
+                  {primary.systemName !== primary.title && (
+                    <>
+                      <span>•</span>
+                      <span className="truncate">{primary.systemName}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Dynamic Estimated Duration Badge with 1-Tap Adaptive Recalibration */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-2xs transition-all cursor-pointer hover:opacity-90 active:scale-95",
+                          primary.estimatedMinutes <= 20
+                            ? "bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/20"
+                            : "bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20"
+                        )}
+                        title="Click to adapt estimated study duration for this topic"
+                      >
+                        <Clock className="w-3 h-3 shrink-0" />
+                        <span>~{primary.estimatedMinutes} min {primary.estimatedMinutes <= 20 ? 'Quick Recall' : 'Deep Work'}</span>
+                        <SlidersHorizontal className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64 rounded-xl">
+                      <div className="px-3 py-2 border-b border-border/50 text-[11px]">
+                        <p className="font-semibold text-foreground">Calibrate Duration Pacing</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                          Atlas adapts future recommendations to your personal study speed.
+                        </p>
+                      </div>
+                      <DropdownMenuItem 
+                        onClick={() => handleSkip('needs_deep_work')}
+                        className="cursor-pointer gap-2.5 py-2.5"
+                      >
+                        <ChevronsUp className="w-4 h-4 text-sky-400 shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-xs text-foreground">Needs Deep Work 📚</span>
+                          <span className="text-[10px] text-muted-foreground">Takes longer (~35–50 min)</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleSkip('fast_recall')}
+                        className="cursor-pointer gap-2.5 py-2.5"
+                      >
+                        <ChevronsDown className="w-4 h-4 text-teal-400 shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-xs text-foreground">Fast Recall Only ⚡</span>
+                          <span className="text-[10px] text-muted-foreground">Quick & compact (≤ 15 min)</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
+
               <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug break-words">
                 {primary.title}
               </h2>
@@ -406,32 +485,46 @@ export function NextActionCard({
                         <span className="hidden sm:inline">Skip</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56 rounded-xl">
+                    <DropdownMenuContent align="start" className="w-60 rounded-xl">
                       <DropdownMenuItem onClick={() => handleSkip('already_studied')} className="cursor-pointer gap-2 py-2">
-                        <Check className="w-4 h-4 text-emerald-500" />
+                        <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                         <div className="flex flex-col">
-                          <span className="font-semibold">Already studied</span>
+                          <span className="font-semibold text-xs">Already studied</span>
                           <span className="text-[10px] text-muted-foreground">Hide for 12 hours</span>
                         </div>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSkip('not_today')} className="cursor-pointer gap-2 py-2">
-                        <CalendarX className="w-4 h-4 text-amber-500" />
+                      <DropdownMenuItem onClick={() => handleSkip('needs_deep_work')} className="cursor-pointer gap-2 py-2">
+                        <BookOpen className="w-4 h-4 text-sky-400 shrink-0" />
                         <div className="flex flex-col">
-                          <span className="font-semibold">Not today</span>
-                          <span className="text-[10px] text-muted-foreground">Show something else</span>
+                          <span className="font-semibold text-xs">Takes more time (Deep Work)</span>
+                          <span className="text-[10px] text-muted-foreground">Adapt & move to Deep Work 📚</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSkip('fast_recall')} className="cursor-pointer gap-2 py-2">
+                        <Zap className="w-4 h-4 text-teal-400 shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-xs">Quick Review Only</span>
+                          <span className="text-[10px] text-muted-foreground">Mark as fast recall (≤ 15m) ⚡</span>
                         </div>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSkip('too_difficult')} className="cursor-pointer gap-2 py-2">
-                        <AlertTriangle className="w-4 h-4 text-destructive" />
+                        <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
                         <div className="flex flex-col">
-                          <span className="font-semibold">Too difficult right now</span>
-                          <span className="text-[10px] text-muted-foreground">Needs more time</span>
+                          <span className="font-semibold text-xs">Too difficult right now</span>
+                          <span className="text-[10px] text-muted-foreground">High friction • Schedule deep</span>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSkip('not_today')} className="cursor-pointer gap-2 py-2">
+                        <CalendarX className="w-4 h-4 text-amber-500 shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-xs">Not today</span>
+                          <span className="text-[10px] text-muted-foreground">Show something else</span>
                         </div>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSkip('not_relevant')} className="cursor-pointer gap-2 py-2">
-                        <ThumbsDown className="w-4 h-4 text-muted-foreground" />
+                        <ThumbsDown className="w-4 h-4 text-muted-foreground shrink-0" />
                         <div className="flex flex-col">
-                          <span className="font-semibold">Not relevant</span>
+                          <span className="font-semibold text-xs">Not relevant</span>
                           <span className="text-[10px] text-muted-foreground">Low yield for me</span>
                         </div>
                       </DropdownMenuItem>

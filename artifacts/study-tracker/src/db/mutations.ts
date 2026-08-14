@@ -6,6 +6,7 @@ import { scheduleFirstRevision, scheduleNextRevision, isRevisionDue, today, sort
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generateHLC } from '../lib/hlc';
+import { recordSessionCompletion } from '../lib/telemetry';
 async function updateUIPref(type: 'subject' | 'system', entityId: number, updates: Partial<UIPreference>) {
   if ('focus' in updates) {
     updates.focusUpdatedAt = new Date();
@@ -479,6 +480,8 @@ export async function completeRevision(
     completedAt: new Date(),
   });
 
+  recordSessionCompletion('revision', Math.max(15, daysTaken * 30), true);
+
   const delta = currentRevisionInterval - previousInterval;
   const deltaStr = delta >= 0 ? `+${delta}d stability` : `${delta}d adjusted`;
   const formattedDate = format(nextRevisionDate, 'MMM d, yyyy');
@@ -545,7 +548,8 @@ export async function logCurriculumSetScore(
   curriculumSetId: string,
   score: number,
   reviewedTopicIds: string[],
-  subjectName: string = 'General'
+  subjectName: string = 'General',
+  timeTakenMinutes?: number
 ) {
   const table = db.curriculumSets || db.revisionSets;
   const set = await table.get(curriculumSetId);
@@ -559,10 +563,20 @@ export async function logCurriculumSetScore(
     subjectName
   );
 
+  // Auto-calibrate pacing from actual time taken
+  if (timeTakenMinutes && timeTakenMinutes > 0) {
+    if (timeTakenMinutes >= 35) {
+      updatedSet.isLengthy = true;
+      updatedSet.paceMultiplier = Math.min(2.2, Math.max(1.3, Number((timeTakenMinutes / 20).toFixed(2))));
+    } else if (timeTakenMinutes <= 15 && normalizedScore >= 0.8) {
+      updatedSet.isLengthy = false;
+      updatedSet.paceMultiplier = 0.75;
+    }
+  }
+
   await table.update(curriculumSetId, updatedSet);
 
   const now = new Date();
-  // Topic progress loop removed since we no longer track completion at topic level.
   
   const scorePercent = Math.round(normalizedScore * 100);
   await db.scoreLogs.add({ title: 'Revision', total: 100, percentage: score, 
@@ -584,9 +598,78 @@ export async function logCurriculumSetScore(
     completedAt: now,
   });
 
+  recordSessionCompletion('curriculum_set', timeTakenMinutes || 25, true);
+
   toast.success('Score saved', {
-    description: 'Atlas updated the next review timing for ' + set.name + '.',
+    description: 'Atlas updated next review interval & pacing calibration for ' + set.name + '.',
   });
+}
+
+// ── Adaptive Pacing Feedback Loop ──────────────────────────────────────────
+
+/**
+ * Directly adapts recommendation engine duration parameters based on user pacing feedback.
+ */
+export async function adaptTopicPacingFeedback(
+  systemId: number,
+  curriculumSetId?: string,
+  feedbackType: 'needs_deep_work' | 'fast_recall' | 'too_difficult' = 'needs_deep_work'
+) {
+  const now = new Date();
+  const table = db.curriculumSets || db.revisionSets;
+
+  if (feedbackType === 'needs_deep_work') {
+    if (curriculumSetId) {
+      await table.update(curriculumSetId, {
+        isLengthy: true,
+        paceMultiplier: 1.5,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+    if (systemId) {
+      await db.systems.update(systemId, {
+        isLengthy: true,
+        paceMultiplier: 1.4,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+  } else if (feedbackType === 'fast_recall') {
+    if (curriculumSetId) {
+      await table.update(curriculumSetId, {
+        isLengthy: false,
+        paceMultiplier: 0.75,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+    if (systemId) {
+      await db.systems.update(systemId, {
+        isLengthy: false,
+        paceMultiplier: 0.8,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+  } else if (feedbackType === 'too_difficult') {
+    if (curriculumSetId) {
+      await table.update(curriculumSetId, {
+        paceMultiplier: 1.35,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+    if (systemId) {
+      const sys = await db.systems.get(systemId);
+      await db.systems.update(systemId, {
+        decayFactor: Math.min(1.8, (sys?.decayFactor || 1.0) * 1.15),
+        paceMultiplier: 1.3,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+  }
 }
 
 // ── Mistake Log Mutations ──────────────────────────────────────────────────────
@@ -635,7 +718,7 @@ export async function deleteMistakeLog(id: number) {
 
 export async function addRecommendationSkip(
   targetId: string,
-  reason: 'already_studied' | 'too_difficult' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default' = 'default',
+  reason: 'already_studied' | 'too_difficult' | 'needs_deep_work' | 'fast_recall' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default' = 'default',
   hours: number = 12
 ) {
   const now = new Date();

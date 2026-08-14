@@ -16,8 +16,9 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { OpsQueueView } from './views/OpsQueueView';
 import { UsersView } from './views/UsersView';
 import { SystemControlView } from './views/SystemControlView';
+import { CohortTelemetryView } from './views/CohortTelemetryView';
 
-type ViewType = 'ops' | 'users' | 'system';
+type ViewType = 'ops' | 'users' | 'telemetry' | 'system';
 
 const navItems = [
   { 
@@ -25,6 +26,12 @@ const navItems = [
     label: 'Live Ops Triage', 
     subtitle: 'Payments, Support & Markers', 
     icon: Activity 
+  },
+  { 
+    id: 'telemetry' as const, 
+    label: 'Cohort Telemetry', 
+    subtitle: 'Engine Accuracy & Velocity', 
+    icon: Sparkles 
   },
   { 
     id: 'users' as const, 
@@ -68,6 +75,7 @@ export default function AdminDashboard() {
   const renderView = () => {
     switch (activeView) {
       case 'ops': return <OpsQueueView />;
+      case 'telemetry': return <CohortTelemetryView />;
       case 'users': return <UsersView />;
       case 'system': return <SystemControlView />;
       default: return <OpsQueueView />;

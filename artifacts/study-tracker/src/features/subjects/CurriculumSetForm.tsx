@@ -25,6 +25,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
   const [name, setName] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [color, setColor] = useState<'teal' | 'amber' | 'purple' | 'blue' | 'gray'>('teal');
+  const [isLengthy, setIsLengthy] = useState(false);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -33,10 +34,12 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
         setName(initialData.name);
         setSelectedTopicIds(new Set(initialData.topicIds));
         setColor(initialData.color || 'teal');
+        setIsLengthy(Boolean(initialData.isLengthy));
       } else {
         setName('');
         setSelectedTopicIds(new Set());
         setColor('teal');
+        setIsLengthy(false);
       }
       setSearch('');
     }
@@ -63,6 +66,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           name: name.trim(),
           topicIds: Array.from(selectedTopicIds),
           color,
+          isLengthy,
         });
         toast.success('Study block updated');
       } else {
@@ -72,6 +76,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           name: name.trim(),
           topicIds: Array.from(selectedTopicIds),
           color,
+          isLengthy,
         });
         toast.success('Study block created');
       }
@@ -125,6 +130,23 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-xl border border-border/70 p-3 bg-muted/20">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                  checked={isLengthy}
+                  onChange={e => setIsLengthy(e.target.checked)}
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-foreground">Deep Work Block 📚</span>
+                  <span className="text-[11px] text-muted-foreground leading-tight">
+                    Topics require in-depth retention / high friction (~35–50 min). Atlas will prioritize this in Deep Work sessions.
+                  </span>
+                </div>
+              </label>
             </div>
 
             <div className="space-y-1.5 flex-1 flex flex-col min-h-0">

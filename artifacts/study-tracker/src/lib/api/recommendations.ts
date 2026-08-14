@@ -38,6 +38,7 @@ export async function getNextActionWithFallback(
           ? await setTable.filter((s) => !s.deletedAt).toArray().catch(() => [])
           : [];
         const rawTopicProgresses = await db.topicProgress.toArray().catch(() => []);
+        const rawMistakes = await db.mistakeLogs.filter((m) => !m.deletedAt && !m.resolved).toArray().catch(() => []);
         const daysSinceLastStudy = await getDaysSinceLastStudy().catch(() => 0);
 
         // Map to lightweight payloads to optimize request body size
@@ -46,6 +47,8 @@ export async function getNextActionWithFallback(
           id: sys.id,
           name: sys.name,
           decayFactor: sys.decayFactor,
+          isLengthy: sys.isLengthy,
+          paceMultiplier: sys.paceMultiplier,
           contentCompleted: sys.contentCompleted
         }));
         const curriculumSets = rawCurriculumSets.map(set => ({
@@ -54,6 +57,9 @@ export async function getNextActionWithFallback(
           subjectId: set.subjectId,
           systemId: set.systemId,
           topicIds: set.topicIds,
+          isLengthy: set.isLengthy,
+          paceMultiplier: set.paceMultiplier,
+          customDurationMinutes: set.customDurationMinutes,
           focus: set.focus,
           focusUpdatedAt: set.focusUpdatedAt,
           nextRevisionDate: set.nextRevisionDate,
@@ -65,6 +71,13 @@ export async function getNextActionWithFallback(
         const topicProgresses = rawTopicProgresses.map(tp => ({
           topicId: tp.topicId,
           isWeak: tp.isWeak
+        }));
+        const mistakeLogs = rawMistakes.map(m => ({
+          id: m.id,
+          systemId: m.systemId,
+          curriculumSetId: m.curriculumSetId,
+          topicId: m.topicId,
+          resolved: m.resolved
         }));
 
         const controller = new AbortController();
@@ -82,6 +95,7 @@ export async function getNextActionWithFallback(
             systems,
             subjects,
             topicProgresses,
+            mistakeLogs,
             daysSinceLastStudy,
             skipIds: options.skipIds || [],
             sessionBudget: options.sessionBudget || 'quick',

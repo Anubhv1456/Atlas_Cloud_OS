@@ -69,6 +69,8 @@ export interface StudySystem {
   // ── Multi-Day / Lengthy Active Revision fields (v11) ──────────────────────
   /** Flag indicating whether this topic/system is a lengthy, multi-day revision system. */
   isLengthy?: boolean;
+  /** Pacing multiplier dynamically calibrated from student study history (default: 1.0). */
+  paceMultiplier?: number;
   /** Current active revision status: 'idle' | 'in_progress' | 'completed'. Defaults to 'idle'. */
   revisionState?: 'idle' | 'in_progress' | 'completed';
   /** Timestamp when active revision was started. */
@@ -171,6 +173,11 @@ export interface CurriculumSet {
   contentCompleted?: boolean;
   qbankCompleted?: boolean;
 
+  // Duration & Pacing Calibration
+  isLengthy?: boolean;
+  paceMultiplier?: number;
+  customDurationMinutes?: number;
+
   // SDSR Engine Data
   nextRevisionDate?: string;
   lastRevisionDate?: string;
@@ -205,6 +212,6 @@ export interface RecommendationSkip {
   id?: number;
   targetId: string;
   skippedAt: Date;
-  reason: 'already_studied' | 'too_difficult' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default';
+  reason: 'already_studied' | 'too_difficult' | 'needs_deep_work' | 'fast_recall' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default';
   expiresAt: Date;
 }

@@ -3,6 +3,7 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { MistakeLog } from '@/db/types';
 import { deleteMistakeLog, resolveMistake } from '@/db/mutations';
+import { recordRecallDrill } from '@/lib/telemetry';
 import { QuickMistakeModal } from './QuickMistakeModal';
 import { 
   CheckCircle2, 
@@ -305,7 +306,14 @@ export default function MistakeRecoveryQueue() {
                         {/* 1-Tap Mastery Toggle Button */}
                         <button
                           type="button"
-                          onClick={() => log.id && resolveMistake(log.id, !log.resolved)}
+                          onClick={() => {
+                            if (log.id) {
+                              resolveMistake(log.id, !log.resolved);
+                              const subName = subjectMap.get(Number(log.subjectId)) || 'Clinical';
+                              const topTitle = log.topicId || systemMap.get(log.systemId) || 'Medical Topic';
+                              recordRecallDrill(log.errorType, !log.resolved, topTitle, subName);
+                            }
+                          }}
                           title={isMastered ? "Reopen mistake" : "Mark as mastered"}
                           className={cn(
                             "mt-0.5 p-1 rounded-lg transition-colors cursor-pointer shrink-0",
@@ -438,9 +446,14 @@ function ActiveDrillModal({ deck, subjectMap, systemMap, onClose }: ActiveDrillM
   const isFinished = currentIndex >= deck.length;
 
   const handleNext = (mastered = false) => {
-    if (currentCard && mastered) {
-      if (currentCard.id) resolveMistake(currentCard.id, true);
-      setSessionMasteredCount(prev => prev + 1);
+    if (currentCard) {
+      if (mastered && currentCard.id) {
+        resolveMistake(currentCard.id, true);
+        setSessionMasteredCount(prev => prev + 1);
+      }
+      const subName = subjectMap.get(Number(currentCard.subjectId)) || 'Clinical';
+      const topTitle = currentCard.topicId || systemMap.get(currentCard.systemId) || 'Medical Topic';
+      recordRecallDrill(currentCard.errorType, mastered, topTitle, subName);
     }
     setIsFlipped(false);
     setCurrentIndex(prev => prev + 1);

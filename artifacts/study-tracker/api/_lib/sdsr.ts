@@ -8,7 +8,7 @@ export interface RationaleBadge {
 
 export interface NextActionRecommendation {
   id: string;
-  type: 'curriculumSet' | 'system';
+  type: 'curriculumSet' | 'system' | 'spotDrill';
   title: string;
   subjectName: string;
   systemName: string;
@@ -16,16 +16,20 @@ export interface NextActionRecommendation {
   systemId: number;
   curriculumSetId?: string;
   isLengthy: boolean;
+  isQuickEligible: boolean;
   estimatedMinutes: number;
   priorityScore: number;
   rationaleBadges: RationaleBadge[];
   topicCount?: number;
+  weakCount?: number;
+  mistakeCount?: number;
   inferredScore?: number;
   daysOverdue?: number;
   isAgingPin?: boolean;
   wasPinned?: boolean;
   revisionCount?: number;
   statusText: string;
+  isMicroSliced?: boolean;
 }
 
 export interface NextActionEngineResult {
@@ -37,6 +41,51 @@ export interface NextActionEngineResult {
   isTriageMode: boolean;
   hasAnyCurriculumSets: boolean;
   hasPendingSyllabus: boolean;
+}
+
+export interface DurationCalculationParams {
+  topicCount: number;
+  weakCount: number;
+  mistakeCount: number;
+  revisionPassCount: number;
+  isSystemLengthy: boolean;
+  isBlockLengthy?: boolean;
+  paceMultiplier?: number;
+  adaptiveSkipMultiplier?: number;
+}
+
+export function calculateEstimatedDurationMinutes(params: DurationCalculationParams): number {
+  const {
+    topicCount,
+    weakCount,
+    mistakeCount,
+    revisionPassCount,
+    isSystemLengthy,
+    isBlockLengthy = false,
+    paceMultiplier = 1.0,
+    adaptiveSkipMultiplier = 1.0
+  } = params;
+
+  const baseTime = 3;
+  const effectiveTopics = Math.max(1, topicCount || 1);
+  const topicTime = effectiveTopics * 4;
+
+  const weakPenalty = (weakCount || 0) * 3;
+  const mistakePenalty = (mistakeCount || 0) * 1.5;
+
+  let passMultiplier = 1.0;
+  if (revisionPassCount === 0) passMultiplier = 1.5;
+  else if (revisionPassCount === 1) passMultiplier = 1.0;
+  else if (revisionPassCount === 2) passMultiplier = 0.7;
+  else passMultiplier = 0.45;
+
+  const isLengthyOverall = Boolean(isSystemLengthy || isBlockLengthy);
+  const lengthyMultiplier = isLengthyOverall ? 1.6 : 1.0;
+  const effectivePace = Math.max(0.5, Math.min(2.5, (paceMultiplier || 1.0) * (adaptiveSkipMultiplier || 1.0)));
+
+  const rawMinutes = (baseTime + topicTime + weakPenalty + mistakePenalty) * passMultiplier * lengthyMultiplier * effectivePace;
+
+  return Math.max(8, Math.min(120, Math.round(rawMinutes)));
 }
 
 // Subject Volatility Indices
@@ -211,6 +260,7 @@ export interface ServerComputeNextActionParams {
   systems: any[];
   subjects: any[];
   topicProgresses?: any[];
+  mistakeLogs?: any[];
   daysSinceLastStudy?: number;
   skipIds?: string[];
   sessionBudget?: 'quick' | 'deep';
@@ -224,6 +274,7 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
     systems = [],
     subjects = [],
     topicProgresses = [],
+    mistakeLogs = [],
     daysSinceLastStudy = 0,
     skipIds = [],
     sessionBudget = 'quick',
@@ -238,6 +289,13 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
   const weakTopicMap = new Set(
     topicProgresses.filter((tp: any) => tp.isWeak).map((tp: any) => tp.topicId)
   );
+
+  const mistakesBySetId = new Map<string, number>();
+  for (const m of mistakeLogs) {
+    if (m && !m.resolved && !m.deletedAt && m.curriculumSetId) {
+      mistakesBySetId.set(m.curriculumSetId, (mistakesBySetId.get(m.curriculumSetId) || 0) + 1);
+    }
+  }
 
   const subjectMap = new Map<number, string>(subjects.map((s: any) => [s.id, s.name]));
   const systemMap = new Map<number, any>(systems.map((sys: any) => [sys.id, sys]));
@@ -256,9 +314,28 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
     const systemName = parentSystem?.name || 'System';
 
     const topicCount = Array.isArray(set.topicIds) ? set.topicIds.length : 0;
+    const weakTopicsInSet = (Array.isArray(set.topicIds) ? set.topicIds : []).filter((tid: string) => weakTopicMap.has(tid)).length;
+    const activeMistakesInSet = (set.id ? mistakesBySetId.get(set.id) : 0) || 0;
+
     const yieldInfo = getSubjectWeightageInfo(subjectName, targetExam);
     const yieldWeight = yieldInfo.weight || 70;
-    const isLengthy = yieldWeight >= 85;
+    const isSystemLengthy = Boolean(parentSystem?.isLengthy);
+    const isBlockLengthy = Boolean(set.isLengthy);
+    const revisionCount = set.revisionCount || 0;
+    const combinedPace = (set.paceMultiplier || 1.0) * (parentSystem?.paceMultiplier || 1.0);
+
+    const estimatedMinutes = set.customDurationMinutes || calculateEstimatedDurationMinutes({
+      topicCount,
+      weakCount: weakTopicsInSet,
+      mistakeCount: activeMistakesInSet,
+      revisionPassCount: revisionCount,
+      isSystemLengthy,
+      isBlockLengthy,
+      paceMultiplier: combinedPace,
+    });
+
+    const isLengthy = estimatedMinutes > 25;
+    const isQuickEligible = estimatedMinutes <= 25;
 
     let daysOverdue = 0;
     let isOverdue = false;
@@ -304,6 +381,10 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
 
     let actionIndex = Math.min(100, Math.round(baseMemoryLoss * yieldModifier));
 
+    if (activeMistakesInSet > 0) {
+      actionIndex += Math.min(25, activeMistakesInSet * 5);
+    }
+
     // Recent exposure suppression (< 18 hrs)
     if (daysSinceLastRev < 0.75) {
       actionIndex = 0;
@@ -339,7 +420,7 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
     if (isTriageMode && actionIndex > 80 && !isPinned) {
       badges.push({ label: '🚨 Triage Priority', variant: 'destructive', iconType: 'alert' });
     } else if (isOverdue) {
-      badges.push({ label: '⚡ Overdue', variant: 'amber', iconType: 'clock' });
+      badges.push({ label: `⚡ Overdue (${daysOverdue}d)`, variant: 'amber', iconType: 'clock' });
     } else if (isDueToday) {
       badges.push({ label: '🕒 Due Today', variant: 'amber', iconType: 'clock' });
     }
@@ -348,13 +429,22 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
       badges.push({ label: '🎯 High Yield', variant: 'primary', iconType: 'target' });
     }
 
-    const isBlockWeak = topicMemoryLosses.length > 0 && topicMemoryLosses.some(loss => loss > 80);
+    const isBlockWeak = weakTopicsInSet > 0 || (topicMemoryLosses.length > 0 && topicMemoryLosses.some(loss => loss > 80));
     if (isBlockWeak) {
-      badges.push({ label: '⚠️ Weak Area', variant: 'destructive', iconType: 'alert' });
+      badges.push({
+        label: weakTopicsInSet > 1 ? `⚠️ ${weakTopicsInSet} Weak Topics` : '⚠️ Weak Area',
+        variant: 'destructive',
+        iconType: 'alert'
+      });
     }
 
-    const estimatedMinutes = isLengthy ? 45 : 15;
-    const revisionCount = set.revisionCount || 0;
+    if (activeMistakesInSet > 0) {
+      badges.push({
+        label: `⚠️ ${activeMistakesInSet} Mistake${activeMistakesInSet > 1 ? 's' : ''}`,
+        variant: 'destructive',
+        iconType: 'alert'
+      });
+    }
 
     let statusText = '';
     if (isOverdue) statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
@@ -367,14 +457,17 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
       title: set.name,
       subjectName,
       systemName,
-      subjectId: set.subjectId,
+      subjectId: Number(set.subjectId),
       systemId: set.systemId,
       curriculumSetId: set.id,
       isLengthy,
+      isQuickEligible,
       estimatedMinutes,
       priorityScore: actionIndex,
       rationaleBadges: badges,
       topicCount,
+      weakCount: weakTopicsInSet,
+      mistakeCount: activeMistakesInSet,
       inferredScore: 100 - baseMemoryLoss,
       daysOverdue: isOverdue ? daysOverdue : 0,
       revisionCount,
@@ -386,13 +479,64 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
 
   const totalCandidatesEvaluated = rawCandidates.length;
 
-  let filteredCandidates = rawCandidates;
-  if (sessionBudget === 'quick') {
-    filteredCandidates = rawCandidates.filter(c => !c.isLengthy);
-  }
-  const quickEligibleCount = rawCandidates.filter(c => !c.isLengthy).length;
+  rawCandidates.sort((a, b) => b.priorityScore - a.priorityScore);
 
-  filteredCandidates.sort((a, b) => b.priorityScore - a.priorityScore);
+  let filteredCandidates: NextActionRecommendation[] = [];
+
+  if (sessionBudget === 'quick') {
+    const naturalQuick = rawCandidates.filter(c => c.estimatedMinutes <= 25);
+
+    if (naturalQuick.length > 0) {
+      filteredCandidates = naturalQuick;
+    } else if (rawCandidates.length > 0) {
+      const topDeep = rawCandidates[0];
+      const microSlicedPrimary: NextActionRecommendation = {
+        ...topDeep,
+        id: `${topDeep.id}:spot_drill`,
+        type: 'spotDrill',
+        title: `${topDeep.title} • Spot Drill`,
+        estimatedMinutes: 15,
+        isLengthy: false,
+        isQuickEligible: true,
+        isMicroSliced: true,
+        statusText: `15m Focused Recall Drill • ${topDeep.statusText}`,
+        rationaleBadges: [
+          { label: '⚡ Spot Drill (15m)', variant: 'primary', iconType: 'zap' },
+          ...topDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
+        ]
+      };
+
+      filteredCandidates = [microSlicedPrimary];
+
+      if (rawCandidates.length > 1) {
+        const secondDeep = rawCandidates[1];
+        filteredCandidates.push({
+          ...secondDeep,
+          id: `${secondDeep.id}:spot_drill`,
+          type: 'spotDrill',
+          title: `${secondDeep.title} • Spot Drill`,
+          estimatedMinutes: 15,
+          isLengthy: false,
+          isQuickEligible: true,
+          isMicroSliced: true,
+          statusText: `15m Focused Recall Drill • ${secondDeep.statusText}`,
+          rationaleBadges: [
+            { label: '⚡ Spot Drill (15m)', variant: 'primary', iconType: 'zap' },
+            ...secondDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
+          ]
+        });
+      }
+    }
+  } else {
+    filteredCandidates = [...rawCandidates].sort((a, b) => {
+      const aDeep = a.estimatedMinutes >= 25 ? 1 : 0;
+      const bDeep = b.estimatedMinutes >= 25 ? 1 : 0;
+      if (aDeep !== bDeep) return bDeep - aDeep;
+      return b.priorityScore - a.priorityScore;
+    });
+  }
+
+  const quickEligibleCount = rawCandidates.filter(c => c.estimatedMinutes <= 25).length;
 
   const primary = filteredCandidates[0] || null;
   const fallback =
