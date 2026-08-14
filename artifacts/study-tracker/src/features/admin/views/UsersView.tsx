@@ -4,7 +4,7 @@ import { formatDistanceToNow, format, differenceInDays, addDays } from 'date-fns
 import { 
   Shield, User, Mail, Calendar, Search, Copy, Check, Clock, 
   UserCheck, UserX, TriangleAlert, Users, RefreshCw, ChevronDown, Sparkles, Trash2,
-  GraduationCap, Flame, Award, ArrowUpRight, Zap, Sliders, ShieldCheck, Filter
+  GraduationCap, Flame, Award, ArrowUpRight, Zap, Sliders, ShieldCheck, Filter, AlertCircle
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
