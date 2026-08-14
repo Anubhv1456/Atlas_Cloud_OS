@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { logMistake } from '@/db/mutations';
@@ -19,7 +19,9 @@ import {
   RotateCcw,
   Sparkles,
   Zap,
-  HelpCircle
+  HelpCircle,
+  CheckCircle2,
+  CornerDownLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
@@ -33,6 +35,12 @@ export interface QuickMistakeModalProps {
   defaultCurriculumSetId?: string;
   defaultTopicId?: string;
 }
+
+// Retain session memory across closes so reopening retains active context
+let sessionSubjectId: string | number | undefined;
+let sessionSystemId: string | number | undefined;
+let sessionTopicId: string | undefined;
+let sessionSource: 'GT' | 'QBank' | 'Custom' = 'QBank';
 
 export function QuickMistakeModal({
   open,
@@ -59,6 +67,9 @@ export function QuickMistakeModal({
   const [source, setSource] = useState<'GT' | 'QBank' | 'Custom'>('QBank');
   const [keyTakeaway, setKeyTakeaway] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedBatchCount, setSavedBatchCount] = useState(0);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Available systems filtered by selected subject
   const availableSystems = useMemo(() => {
@@ -66,47 +77,77 @@ export function QuickMistakeModal({
     return dbSystems.filter(sys => String(sys.subjectId) === String(subjectId));
   }, [dbSystems, subjectId]);
 
-  // Sync state whenever modal opens or defaults change
+  // Sync state whenever modal opens
   useEffect(() => {
     if (open) {
+      setSavedBatchCount(0);
+
+      // Determine initial subject
       const initialSubjectId = defaultSubjectId !== undefined
         ? defaultSubjectId 
-        : (subjects[0]?.id !== undefined ? subjects[0].id : 1);
+        : sessionSubjectId !== undefined 
+          ? sessionSubjectId 
+          : (subjects[0]?.id !== undefined ? subjects[0].id : 1);
       
       setSubjectId(initialSubjectId);
       setCurriculumSetId(defaultCurriculumSetId || '');
-      setTopicId(defaultTopicId || '');
+      setTopicId(defaultTopicId !== undefined ? defaultTopicId : (sessionTopicId || ''));
       setKeyTakeaway('');
       setErrorType('concept');
-      setSource('QBank');
+      setSource(sessionSource || 'QBank');
 
       // Find matching systems for initial subject
       const matchingSystems = dbSystems.filter(sys => String(sys.subjectId) === String(initialSubjectId));
       if (defaultSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(defaultSystemId))) {
         setSystemId(defaultSystemId);
+      } else if (sessionSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(sessionSystemId))) {
+        setSystemId(sessionSystemId);
       } else if (matchingSystems.length > 0) {
         setSystemId(matchingSystems[0].id!);
       } else {
-        setSystemId(defaultSystemId !== undefined ? defaultSystemId : 0);
+        setSystemId(0);
       }
+
+      // Auto-focus textarea on open
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
     }
   }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, subjects, dbSystems]);
 
   // When subject is changed manually by user, auto-select first available system
   const handleSubjectChange = (newSubId: string | number) => {
     setSubjectId(newSubId);
+    sessionSubjectId = newSubId;
     const matching = dbSystems.filter(sys => String(sys.subjectId) === String(newSubId));
     if (matching.length > 0) {
       setSystemId(matching[0].id!);
+      sessionSystemId = matching[0].id!;
     } else {
       setSystemId(0);
+      sessionSystemId = 0;
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSystemChange = (newSysId: string | number) => {
+    setSystemId(newSysId);
+    sessionSystemId = newSysId;
+  };
+
+  const handleTopicChange = (newTopic: string) => {
+    setTopicId(newTopic);
+    sessionTopicId = newTopic;
+  };
+
+  const handleSourceChange = (newSource: 'GT' | 'QBank' | 'Custom') => {
+    setSource(newSource);
+    sessionSource = newSource;
+  };
+
+  const executeSave = async (closeAfterSave = false) => {
     if (!keyTakeaway.trim()) {
       toast.error('Please enter a 1-line key takeaway rule.');
+      textareaRef.current?.focus();
       return;
     }
     if (!subjectId) {
@@ -125,8 +166,25 @@ export function QuickMistakeModal({
         keyTakeaway: keyTakeaway.trim(),
         source
       });
+
+      // Update session cache
+      sessionSubjectId = subjectId;
+      sessionSystemId = systemId;
+      sessionTopicId = topicId;
+      sessionSource = source;
+
+      const newBatchCount = savedBatchCount + 1;
+      setSavedBatchCount(newBatchCount);
       setKeyTakeaway('');
-      onOpenChange(false);
+
+      if (closeAfterSave) {
+        onOpenChange(false);
+      } else {
+        // Keep modal open, preserve path, re-focus input immediately
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 50);
+      }
     } catch (err: any) {
       console.error('Failed to log mistake:', err);
       toast.error(err?.message || 'Failed to save takeaway.');
@@ -135,12 +193,29 @@ export function QuickMistakeModal({
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeSave(false); // Default submit keeps the modal open for batch logging
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Cmd+Enter or Ctrl+Enter saves & keeps open for the next takeaway
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      executeSave(false);
+    }
+  };
+
   const insertPromptShortcut = (prefix: string) => {
     setKeyTakeaway(prev => {
-      if (!prev) return prefix + ' ';
-      if (prev.endsWith(' ') || prev.endsWith('.')) return `${prev} ${prefix} `;
-      return `${prev}. ${prefix} `;
+      const next = !prev 
+        ? `${prefix} ` 
+        : prev.endsWith(' ') || prev.endsWith('.') 
+          ? `${prev} ${prefix} ` 
+          : `${prev}. ${prefix} `;
+      return next;
     });
+    textareaRef.current?.focus();
   };
 
   const errorTypePills = [
@@ -178,23 +253,33 @@ export function QuickMistakeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent id="quick-mistake-dialog" className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-              <Zap className="w-4 h-4" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-extrabold text-foreground tracking-tight">
+                  Log Journal Takeaway
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Distill a one-line clinical rule into your 20th Notebook.
+                </DialogDescription>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="text-base font-extrabold text-foreground tracking-tight">
-                Express Mistake Capture
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Convert QBank & GT errors into high-yield active recall takeaways.
-              </DialogDescription>
-            </div>
+
+            {/* Saved in batch pill */}
+            {savedBatchCount > 0 && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-bold animate-in fade-in zoom-in-95 duration-150">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{savedBatchCount} saved</span>
+              </div>
+            )}
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          {/* Subject & System Selection */}
+          {/* Subject & System Selection (Persistent across batch saves) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="mistake-subject-select" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -221,7 +306,7 @@ export function QuickMistakeModal({
               <select
                 id="mistake-system-select"
                 value={String(systemId)}
-                onChange={e => setSystemId(e.target.value)}
+                onChange={e => handleSystemChange(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border/80 bg-muted/20 px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {availableSystems.length === 0 ? (
@@ -237,18 +322,18 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Optional Topic Tag */}
+          {/* Optional Topic Tag (Persistent across batch saves) */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label htmlFor="mistake-topic-input" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Topic Tag (Optional)
+                Topic Tag (Persistent)
               </Label>
-              <span className="text-[10px] text-muted-foreground font-normal">e.g., Mitral Stenosis</span>
+              <span className="text-[10px] text-muted-foreground font-normal">e.g. Rheumatic Heart Disease</span>
             </div>
             <Input
               id="mistake-topic-input"
               value={topicId}
-              onChange={e => setTopicId(e.target.value)}
+              onChange={e => handleTopicChange(e.target.value)}
               placeholder="e.g. Rheumatic Heart Disease or Wernicke Encephalopathy"
               className="h-9 text-xs rounded-xl border-border/80 bg-muted/20 text-foreground"
             />
@@ -300,7 +385,7 @@ export function QuickMistakeModal({
                   key={src}
                   id={`btn-source-${src.toLowerCase()}`}
                   type="button"
-                  onClick={() => setSource(src)}
+                  onClick={() => handleSourceChange(src)}
                   className={cn(
                     "flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer",
                     source === src
@@ -321,7 +406,7 @@ export function QuickMistakeModal({
                 1-Line High-Yield Rule *
               </Label>
               {/* Clinical Prompt Shortcuts */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <span className="text-[10px] text-muted-foreground/70 font-medium mr-0.5">Insert:</span>
                 <button
                   type="button"
@@ -344,39 +429,67 @@ export function QuickMistakeModal({
                 >
                   + Triad
                 </button>
+                <button
+                  type="button"
+                  onClick={() => insertPromptShortcut('Gold standard:')}
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                >
+                  + Gold Standard
+                </button>
               </div>
             </div>
 
             <textarea
+              ref={textareaRef}
               id="mistake-takeaway-input"
               value={keyTakeaway}
               onChange={e => setKeyTakeaway(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine BEFORE Glucose."
               rows={3}
               required
               className="w-full rounded-xl border border-border/80 bg-muted/20 p-3 text-xs font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             />
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 px-0.5">
+              <span>Path will stay pinned after saving</span>
+              <span className="flex items-center gap-1 font-mono">
+                <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save
+              </span>
+            </div>
           </div>
 
-          <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-end gap-2">
+          <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-between gap-2">
             <Button
-              id="btn-cancel-mistake"
+              id="btn-done-mistake"
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
               className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
             >
-              Cancel
+              {savedBatchCount > 0 ? 'Done' : 'Cancel'}
             </Button>
-            <Button
-              id="btn-save-mistake"
-              type="submit"
-              disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
-              className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-5 gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Saving...' : 'Save to Vault'}</span>
-            </Button>
+
+            <div className="flex items-center gap-2">
+              <Button
+                id="btn-save-close-mistake"
+                type="button"
+                variant="outline"
+                disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
+                onClick={() => executeSave(true)}
+                className="rounded-xl text-xs font-semibold border-border/80 cursor-pointer hidden sm:inline-flex"
+              >
+                Save & Close
+              </Button>
+              <Button
+                id="btn-save-mistake"
+                type="submit"
+                disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
+                className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-4 gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{isSubmitting ? 'Saving...' : 'Save & Add Next'}</span>
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
