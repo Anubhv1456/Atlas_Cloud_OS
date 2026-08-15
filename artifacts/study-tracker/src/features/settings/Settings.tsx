@@ -7,6 +7,7 @@ import {
   PWASection,
   FaqSection,
   FeedbackSection,
+  ContactSection,
   AboutSection,
   DangerZoneSection,
 } from '.';
@@ -52,6 +53,7 @@ export default function Settings() {
           <PWASection />
           <FaqSection />
           <FeedbackSection />
+          <ContactSection />
           <AboutSection />
         </SettingsBlock>
 
