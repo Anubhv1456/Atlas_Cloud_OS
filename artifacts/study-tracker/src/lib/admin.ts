@@ -89,28 +89,42 @@ export async function deleteUserAsAdmin(userId: string) {
 export async function getAllUsersForAdmin() {
   if (!firestoreDb) return [];
   const usersCol = collection(firestoreDb, 'users');
-  const q = query(usersCol, limit(100));
+  const q = query(usersCol, limit(200));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+
+  let adminUids = new Set<string>();
+  try {
+    const adminCol = collection(firestoreDb, 'admins');
+    const adminSnap = await getDocs(adminCol);
+    adminUids = new Set(adminSnap.docs.map(d => d.id));
+  } catch (e) {
+    // Graceful fallback if admins collection cannot be read
+  }
+
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    const isAdmin = adminUids.has(doc.id) || Boolean((data as any).isAdmin) || (data as any).role === 'admin';
+    return {
+      id: doc.id,
+      isAdmin,
+      ...data
+    };
+  });
 }
 
 export async function getDashboardStats() {
   if (!firestoreDb) return { users: 0, signups: 0, pendingMarkers: 0, reportedMarkers: 0 };
   
-  // Real implementation would use aggregation queries, but for now we'll do client-side filtering on small sets
-  // or just return placeholders/estimates based on full fetches if small.
-  // We'll fetch markers and users.
-  
-  const users = await getAllUsersForAdmin();
+  const allUsers = await getAllUsersForAdmin();
   const markers = await getAllMarkersForAdmin();
+  
+  // Filter out admin accounts so metrics reflect true medical candidates
+  const studentCandidates = allUsers.filter(u => !(u as any).isAdmin);
   
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  const signups = users.filter(u => {
+  const signups = studentCandidates.filter(u => {
     const createdAt = (u as any).createdAt?.toDate?.() || new Date(0);
     return createdAt >= today;
   }).length;
@@ -119,7 +133,7 @@ export async function getDashboardStats() {
   const reportedMarkers = markers.filter(m => (m.reportedBy || []).length > 0).length;
   
   return {
-    users: users.length,
+    users: studentCandidates.length,
     signups,
     pendingMarkers,
     reportedMarkers

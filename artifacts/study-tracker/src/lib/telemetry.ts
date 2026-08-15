@@ -197,7 +197,7 @@ export async function flushTelemetryBatch(): Promise<boolean> {
     timestamp: new Date().toISOString(),
     hlc: generateHLC(),
     events_count: eventsToFlush.length,
-    s10_avg_decision_time_ms: s10Count > 0 ? Math.round(totalS10Ms / s10Count) : 5200,
+    s10_avg_decision_time_ms: s10Count > 0 ? Math.round(totalS10Ms / s10Count) : 0,
     accepted_recommendations_count: acceptedCount,
     skipped_recommendations_count: skippedCount,
     skip_reasons: skipReasons,
@@ -224,22 +224,103 @@ export async function flushTelemetryBatch(): Promise<boolean> {
   }
 }
 
-/** Fetch Cohort Telemetry logs for Admin Panel */
+/** Summarize in-memory buffer into a doc shape for real-time live preview before flush */
+function createLocalBufferDoc() {
+  let totalS10Ms = 0;
+  let s10Count = 0;
+  let acceptedCount = 0;
+  let skippedCount = 0;
+  const skipReasons: Record<string, number> = {};
+  let drillsCleared = 0;
+  let totalDrills = 0;
+  const errorCategories: Record<string, number> = {};
+  let sessionsCompleted = 0;
+  const knowledgeGapsMap: Record<string, { subject: string; topic: string; fails: number; total: number }> = {};
+
+  for (const evt of eventBuffer) {
+    if (evt.type === 's10_decision') {
+      if (evt.s10_decision_time_ms && evt.s10_decision_time_ms <= MAX_S10_VALID_MS) {
+        totalS10Ms += evt.s10_decision_time_ms;
+        s10Count++;
+      }
+      if (evt.accepted_recommendation) {
+        acceptedCount++;
+      } else {
+        skippedCount++;
+        const reason = evt.skip_reason || 'default';
+        skipReasons[reason] = (skipReasons[reason] || 0) + 1;
+      }
+    } else if (evt.type === 'recall_drill') {
+      totalDrills++;
+      if (evt.resolved) drillsCleared++;
+      if (evt.error_category) {
+        errorCategories[evt.error_category] = (errorCategories[evt.error_category] || 0) + 1;
+      }
+      if (evt.topic_title) {
+        const key = `${evt.subject_name || 'General'}::${evt.topic_title}`;
+        if (!knowledgeGapsMap[key]) {
+          knowledgeGapsMap[key] = {
+            subject: evt.subject_name || 'General',
+            topic: evt.topic_title,
+            fails: 0,
+            total: 0
+          };
+        }
+        knowledgeGapsMap[key].total++;
+        if (!evt.resolved) {
+          knowledgeGapsMap[key].fails++;
+        }
+      }
+    } else if (evt.type === 'session_completion') {
+      if (evt.completed) sessionsCompleted++;
+    }
+  }
+
+  return {
+    id: 'local_buffer_live',
+    timestamp: new Date().toISOString(),
+    events_count: eventBuffer.length,
+    s10_avg_decision_time_ms: s10Count > 0 ? Math.round(totalS10Ms / s10Count) : 0,
+    accepted_recommendations_count: acceptedCount,
+    skipped_recommendations_count: skippedCount,
+    skip_reasons: skipReasons,
+    drills_cleared_count: drillsCleared,
+    drills_total_count: totalDrills,
+    error_categories: errorCategories,
+    knowledge_gaps: Object.values(knowledgeGapsMap),
+    sessions_completed_count: sessionsCompleted,
+    cohort_id: 'beta_cohort_v1',
+    is_local_unflushed: true
+  };
+}
+
+/** Fetch Cohort Telemetry logs for Admin Panel - Ground Truth Only */
 export async function fetchCohortTelemetryLogs() {
   try {
     const colRef = collection(firestoreDb, 'telemetry_logs');
-    const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
+    const q = query(colRef, orderBy('timestamp', 'desc'), limit(100));
     const snap = await getDocs(q);
     
+    const localDoc = eventBuffer.length > 0 ? [createLocalBufferDoc()] : [];
+
     if (snap.empty) {
-      return getFallbackTelemetryData();
+      if (localDoc.length > 0) {
+        return processTelemetryDocs(localDoc);
+      }
+      return getEmptyTelemetryData();
     }
 
     const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (localDoc.length > 0) {
+      docs.unshift(...localDoc);
+    }
     return processTelemetryDocs(docs);
   } catch (e) {
-    console.warn('Failed to fetch telemetry from Firestore, using fallback metrics', e);
-    return getFallbackTelemetryData();
+    console.warn('Failed to fetch telemetry from Firestore, checking local buffer or returning fresh state', e);
+    if (eventBuffer.length > 0) {
+      return processTelemetryDocs([createLocalBufferDoc()]);
+    }
+    return getEmptyTelemetryData();
   }
 }
 
@@ -303,12 +384,12 @@ function processTelemetryDocs(docs: any[]) {
     totalSessionsCompleted += d.sessions_completed_count || 0;
   }
 
-  const avgS10Sec = s10Docs > 0 ? (totalS10 / s10Docs / 1000).toFixed(1) : '5.8';
+  const avgS10Sec = s10Docs > 0 ? (totalS10 / s10Docs / 1000).toFixed(1) : '0.0';
   const totalRecs = totalAccepted + totalSkipped;
   // Raw un-clamped rate to show ground truth
   const acceptanceRate = totalRecs > 0 ? Math.round((totalAccepted / totalRecs) * 100) : 0;
 
-  // Process dynamic knowledge gaps
+  // Process dynamic knowledge gaps from real user data only
   const dynamicGaps: KnowledgeGapItem[] = Object.values(gapAggregate)
     .filter(g => g.fails > 0 || g.total > 0)
     .map(g => ({
@@ -318,15 +399,7 @@ function processTelemetryDocs(docs: any[]) {
       count: g.fails
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  const fallbackGaps: KnowledgeGapItem[] = [
-    { subject: 'Pathology', topic: 'Renal & Glomerular Diseases', errorPct: 38, count: 42 },
-    { subject: 'Pharmacology', topic: 'Autonomic & Antiarrhythmics', errorPct: 29, count: 35 },
-    { subject: 'Medicine', topic: 'Electrolyte Disorders & ABG', errorPct: 24, count: 28 },
-    { subject: 'Microbiology', topic: 'Systemic Mycology & Virology', errorPct: 19, count: 21 },
-    { subject: 'Surgery', topic: 'Arterial Occlusive Diseases', errorPct: 15, count: 18 }
-  ];
+    .slice(0, 10);
 
   return {
     s10AvgSeconds: parseFloat(avgS10Sec),
@@ -338,41 +411,35 @@ function processTelemetryDocs(docs: any[]) {
     drillsCleared: totalDrillsCleared,
     drillsTotal: totalDrills,
     sessionsCompleted: totalSessionsCompleted,
-    topKnowledgeGaps: dynamicGaps.length > 0 ? dynamicGaps : fallbackGaps,
+    topKnowledgeGaps: dynamicGaps,
     isDynamicGaps: dynamicGaps.length > 0,
     rawLogs: docs
   };
 }
 
-/** Initial fallback for brand new installs before any sessions are completed */
-function getFallbackTelemetryData() {
+/** Fresh empty ground-truth baseline when no logs exist yet */
+function getEmptyTelemetryData() {
   return {
-    s10AvgSeconds: 6.4,
-    acceptanceRate: 79,
-    totalAccepted: 184,
-    totalSkipped: 49,
+    s10AvgSeconds: 0,
+    acceptanceRate: 0,
+    totalAccepted: 0,
+    totalSkipped: 0,
     skipReasons: {
-      already_studied: 22,
-      not_today: 14,
-      too_difficult: 9,
-      not_relevant: 4
+      already_studied: 0,
+      not_today: 0,
+      too_difficult: 0,
+      not_relevant: 0
     },
     errorCategories: {
-      concept: 42,
-      misread: 21,
-      retrieval: 38,
-      fomo: 12
+      concept: 0,
+      misread: 0,
+      retrieval: 0,
+      fomo: 0
     },
-    drillsCleared: 84,
-    drillsTotal: 106,
-    sessionsCompleted: 210,
-    topKnowledgeGaps: [
-      { subject: 'Pathology', topic: 'Renal & Glomerular Diseases', errorPct: 38, count: 42 },
-      { subject: 'Pharmacology', topic: 'Autonomic & Antiarrhythmics', errorPct: 29, count: 35 },
-      { subject: 'Medicine', topic: 'Electrolyte Disorders & ABG', errorPct: 24, count: 28 },
-      { subject: 'Microbiology', topic: 'Systemic Mycology & Virology', errorPct: 19, count: 21 },
-      { subject: 'Surgery', topic: 'Arterial Occlusive Diseases', errorPct: 15, count: 18 }
-    ],
+    drillsCleared: 0,
+    drillsTotal: 0,
+    sessionsCompleted: 0,
+    topKnowledgeGaps: [],
     isDynamicGaps: false,
     rawLogs: []
   };

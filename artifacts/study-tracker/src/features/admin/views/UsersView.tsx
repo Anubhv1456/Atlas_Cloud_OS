@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, deleteUserAsAdmin } from '@/lib/admin';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow, format, differenceInDays, addDays } from 'date-fns';
 import { 
   Shield, User, Mail, Calendar, Search, Copy, Check, Clock, 
@@ -26,6 +27,7 @@ export const DURATION_PRESETS = [
 ];
 
 export function UsersView() {
+  const { user: currentAuthUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -185,13 +187,18 @@ export function UsersView() {
   };
 
   const handleBulkGrant = async (days: number | null, isTrialParam?: boolean) => {
-    if (selectedUserIds.length === 0) return;
+    // Only target true student candidates for safety
+    const targetIds = selectedUserIds.filter(id => {
+      const u = users.find(user => user.id === id);
+      return u && !u.isAdmin && id !== currentAuthUser?.uid;
+    });
+    if (targetIds.length === 0) return;
     try {
       const isTrial = isTrialParam ?? (days !== null && days <= 15);
-      await bulkUpdateUserBetaAccess(selectedUserIds, true, days, isTrial);
+      await bulkUpdateUserBetaAccess(targetIds, true, days, isTrial);
       const now = Date.now();
       setUsers(users.map(u => {
-        if (selectedUserIds.includes(u.id)) {
+        if (targetIds.includes(u.id)) {
           return {
             ...u,
             betaAccess: true,
@@ -202,7 +209,7 @@ export function UsersView() {
         return u;
       }));
       const label = days === 15 ? '15-Day Trial' : days ? `${days} Days` : 'Lifetime';
-      toast.success(`Beta access (${label}) granted to ${selectedUserIds.length} candidates`);
+      toast.success(`Beta access (${label}) granted to ${targetIds.length} candidates`);
       setSelectedUserIds([]);
       setIsBulkGrantOpen(false);
     } catch (error) {
@@ -211,17 +218,22 @@ export function UsersView() {
   };
 
   const handleBulkRevoke = async () => {
-    if (selectedUserIds.length === 0) return;
-    if (!confirm(`Are you sure you want to revoke access for ${selectedUserIds.length} candidates?`)) return;
+    // Only target true student candidates for safety
+    const targetIds = selectedUserIds.filter(id => {
+      const u = users.find(user => user.id === id);
+      return u && !u.isAdmin && id !== currentAuthUser?.uid;
+    });
+    if (targetIds.length === 0) return;
+    if (!confirm(`Are you sure you want to revoke access for ${targetIds.length} candidates?`)) return;
     try {
-      await bulkUpdateUserBetaAccess(selectedUserIds, false);
+      await bulkUpdateUserBetaAccess(targetIds, false);
       setUsers(users.map(u => {
-        if (selectedUserIds.includes(u.id)) {
+        if (targetIds.includes(u.id)) {
           return { ...u, betaAccess: false, betaAccessExpiresAt: null, isTrial: false };
         }
         return u;
       }));
-      toast.success(`Beta access revoked for ${selectedUserIds.length} candidates`);
+      toast.success(`Beta access revoked for ${targetIds.length} candidates`);
       setSelectedUserIds([]);
     } catch (error) {
       toast.error('Failed to revoke bulk access.');
@@ -230,6 +242,11 @@ export function UsersView() {
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return;
+    if (deletingUser.isAdmin || deletingUser.id === currentAuthUser?.uid) {
+      toast.error('Cannot delete administrative operator profile.');
+      setDeletingUser(null);
+      return;
+    }
     try {
       await deleteUserAsAdmin(deletingUser.id);
       setUsers(users.filter(u => u.id !== deletingUser.id));
@@ -240,8 +257,17 @@ export function UsersView() {
     }
   };
 
-  // Filtered Users
-  const filteredUsers = users.filter(user => {
+  // Strictly isolate student candidates: filter out admin/operator accounts from directory & stats
+  const studentCandidates = users.filter(user => {
+    const isUserAdmin = Boolean(user.isAdmin) || user.role === 'admin';
+    const isCurrentOperator = Boolean(currentAuthUser && (user.id === currentAuthUser.uid || user.email === currentAuthUser.email));
+    return !isUserAdmin && !isCurrentOperator;
+  });
+
+  const hiddenAdminCount = users.length - studentCandidates.length;
+
+  // Filtered Candidate Roster
+  const filteredUsers = studentCandidates.filter(user => {
     const status = getUserBetaStatus(user);
     const matchesTab = 
       activeTab === 'all' ? true :
@@ -265,15 +291,15 @@ export function UsersView() {
   });
 
   const stats = {
-    total: users.length,
-    active: users.filter(u => {
+    total: studentCandidates.length,
+    active: studentCandidates.filter(u => {
       const s = getUserBetaStatus(u);
       return s === 'active' || s === 'active_lifetime' || s === 'trial' || s === 'expiring_soon';
     }).length,
-    trials: users.filter(u => getUserBetaStatus(u) === 'trial').length,
-    expiringSoon: users.filter(u => getUserBetaStatus(u) === 'expiring_soon').length,
-    expired: users.filter(u => getUserBetaStatus(u) === 'expired').length,
-    locked: users.filter(u => getUserBetaStatus(u) === 'locked').length,
+    trials: studentCandidates.filter(u => getUserBetaStatus(u) === 'trial').length,
+    expiringSoon: studentCandidates.filter(u => getUserBetaStatus(u) === 'expiring_soon').length,
+    expired: studentCandidates.filter(u => getUserBetaStatus(u) === 'expired').length,
+    locked: studentCandidates.filter(u => getUserBetaStatus(u) === 'locked').length,
   };
 
   // Helper to handle custom date selection in modal
@@ -343,6 +369,13 @@ export function UsersView() {
             <RefreshCw className={cn("w-3.5 h-3.5 text-teal-400", refreshing && "animate-spin")} />
             <span>Sync Candidates</span>
           </button>
+
+          {hiddenAdminCount > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[11px] font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
+              <Shield className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span>{hiddenAdminCount} Admin profile{hiddenAdminCount > 1 ? 's' : ''} hidden</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -529,159 +562,172 @@ export function UsersView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {filteredUsers.map(u => {
-                  const status = getUserBetaStatus(u);
-                  const examInfo = getExamCountdown(u);
-                  const daysRemaining = getDaysRemaining(u);
-                  const isSelected = selectedUserIds.includes(u.id);
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-16 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <GraduationCap className="w-8 h-8 text-muted-foreground/30" />
+                        <p className="font-semibold text-sm text-foreground">No candidate accounts found</p>
+                        <p className="text-xs text-muted-foreground max-w-sm">
+                          {searchTerm || activeTab !== 'all' || examFilter !== 'all' 
+                            ? "No medical candidates match the active search query or filter." 
+                            : "No student candidates registered yet. Operator and team profiles are filtered out from this directory."}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map(u => {
+                    const status = getUserBetaStatus(u);
+                    const examInfo = getExamCountdown(u);
+                    const daysRemaining = getDaysRemaining(u);
+                    const isSelected = selectedUserIds.includes(u.id);
 
-                  return (
-                    <tr key={u.id} className={cn("hover:bg-muted/30 transition-colors", isSelected && "bg-teal-500/5")}>
-                      <td className="p-4">
-                        <input 
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedUserIds([...selectedUserIds, u.id]);
-                            else setSelectedUserIds(selectedUserIds.filter(id => id !== u.id));
-                          }}
-                          className="rounded border-border/60 bg-background text-teal-500 focus:ring-teal-500"
-                        />
-                      </td>
+                    return (
+                      <tr key={u.id} className={cn("hover:bg-muted/30 transition-colors", isSelected && "bg-teal-500/5")}>
+                        <td className="p-4">
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedUserIds([...selectedUserIds, u.id]);
+                              else setSelectedUserIds(selectedUserIds.filter(id => id !== u.id));
+                            }}
+                            className="rounded border-border/60 bg-background text-teal-500 focus:ring-teal-500"
+                          />
+                        </td>
 
-                      <td className="p-4 space-y-0.5">
-                        <div className="font-bold text-foreground text-sm flex items-center gap-2">
-                          {u.displayName || 'Medical Aspirant'}
-                          {u.isAdmin && (
-                            <Badge className="bg-purple-500/10 text-purple-300 border-purple-500/20 text-[9px]">Admin</Badge>
-                          )}
-                        </div>
-                        <div className="text-muted-foreground font-mono flex items-center gap-1.5">
-                          <span>{u.email}</span>
-                          <button
-                            onClick={() => copyToClipboard(u.email, u.id)}
-                            className="text-muted-foreground hover:text-teal-400"
-                            title="Copy Email"
-                          >
-                            {copiedId === u.id ? <Check className="w-3 h-3 text-teal-400" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          <Badge variant="outline" className="text-[10px] font-bold border-teal-500/30 text-teal-300 bg-teal-500/5">
-                            {examInfo.examName}
-                          </Badge>
-                          <div className="text-[11px] text-muted-foreground font-medium">
-                            ⏱️ {examInfo.daysLeft} days to exam
+                        <td className="p-4 space-y-0.5">
+                          <div className="font-bold text-foreground text-sm flex items-center gap-2">
+                            {u.displayName || 'Medical Aspirant'}
                           </div>
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
-                          <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          <span>{u.studyStreak || u.streak || 0}-day streak</span>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          Registered {u.createdAt?.toDate ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : 'Recently'}
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="space-y-1">
-                          {status === 'active_lifetime' && (
-                            <Badge className="text-[10px] font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
-                              <ShieldCheck className="w-3 h-3" /> Lifetime Access
-                            </Badge>
-                          )}
-                          {status === 'trial' && (
-                            <Badge className="text-[10px] font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
-                              <Sparkles className="w-3 h-3 text-amber-400" /> 15d Trial ({daysRemaining}d left)
-                            </Badge>
-                          )}
-                          {status === 'expiring_soon' && (
-                            <Badge className="text-[10px] font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
-                              <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
-                            </Badge>
-                          )}
-                          {status === 'active' && (
-                            <Badge className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
-                              <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
-                            </Badge>
-                          )}
-                          {status === 'expired' && (
-                            <Badge className="text-[10px] font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
-                              Expired Pass
-                            </Badge>
-                          )}
-                          {status === 'locked' && (
-                            <Badge className="text-[10px] font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
-                              Locked / Pending
-                            </Badge>
-                          )}
-
-                          {u.betaAccessExpiresAt && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
-                            <div className="text-[10px] text-muted-foreground">
-                              Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* 15-Day Trial Quick Button */}
-                          <button
-                            onClick={() => handleGrantAccessWithDuration(u, 15, true)}
-                            className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
-                            title="Grant 15-Day Trial Access immediately"
-                          >
-                            <Sparkles className="w-3 h-3 text-amber-400" />
-                            <span>15d Trial</span>
-                          </button>
-
-                          {/* Full Duration / Custom Picker Modal Trigger */}
-                          <button
-                            onClick={() => openGrantModal(u)}
-                            className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 font-semibold text-xs transition-all"
-                            title="Open custom duration and presets selector"
-                          >
-                            <Sliders className="w-3 h-3 inline mr-1" />
-                            Grant / Extend
-                          </button>
-
-                          {/* Contextual To Exam Date */}
-                          <button
-                            onClick={() => handleGrantAccessWithDuration(u, examInfo.daysLeft)}
-                            className="px-2.5 py-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted text-foreground font-medium text-xs transition-all hidden lg:inline-flex items-center"
-                            title={`Extend access through ${examInfo.examName} date (${examInfo.daysLeft}d)`}
-                          >
-                            To Exam ({examInfo.daysLeft}d)
-                          </button>
-
-                          {u.betaAccess && (
+                          <div className="text-muted-foreground font-mono flex items-center gap-1.5">
+                            <span>{u.email}</span>
                             <button
-                              onClick={() => handleRevokeAccess(u)}
-                              className="px-2 py-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 text-xs font-semibold"
+                              onClick={() => copyToClipboard(u.email, u.id)}
+                              className="text-muted-foreground hover:text-teal-400"
+                              title="Copy Email"
                             >
-                              Revoke
+                              {copiedId === u.id ? <Check className="w-3 h-3 text-teal-400" /> : <Copy className="w-3 h-3" />}
                             </button>
-                          )}
+                          </div>
+                        </td>
 
-                          <button
-                            onClick={() => setDeletingUser(u)}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
-                            title="Delete Candidate"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            <Badge variant="outline" className="text-[10px] font-bold border-teal-500/30 text-teal-300 bg-teal-500/5">
+                              {examInfo.examName}
+                            </Badge>
+                            <div className="text-[11px] text-muted-foreground font-medium">
+                              ⏱️ {examInfo.daysLeft} days to exam
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
+                            <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span>{u.studyStreak || u.streak || 0}-day streak</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            Registered {u.createdAt?.toDate ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : 'Recently'}
+                          </div>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            {status === 'active_lifetime' && (
+                              <Badge className="text-[10px] font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
+                                <ShieldCheck className="w-3 h-3" /> Lifetime Access
+                              </Badge>
+                            )}
+                            {status === 'trial' && (
+                              <Badge className="text-[10px] font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
+                                <Sparkles className="w-3 h-3 text-amber-400" /> 15d Trial ({daysRemaining}d left)
+                              </Badge>
+                            )}
+                            {status === 'expiring_soon' && (
+                              <Badge className="text-[10px] font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
+                                <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
+                              </Badge>
+                            )}
+                            {status === 'active' && (
+                              <Badge className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
+                                <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
+                              </Badge>
+                            )}
+                            {status === 'expired' && (
+                              <Badge className="text-[10px] font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
+                                Expired Pass
+                              </Badge>
+                            )}
+                            {status === 'locked' && (
+                              <Badge className="text-[10px] font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
+                                Locked / Pending
+                              </Badge>
+                            )}
+
+                            {u.betaAccessExpiresAt && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
+                              <div className="text-[10px] text-muted-foreground">
+                                Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* 15-Day Trial Quick Button */}
+                            <button
+                              onClick={() => handleGrantAccessWithDuration(u, 15, true)}
+                              className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
+                              title="Grant 15-Day Trial Access immediately"
+                            >
+                              <Sparkles className="w-3 h-3 text-amber-400" />
+                              <span>15d Trial</span>
+                            </button>
+
+                            {/* Full Duration / Custom Picker Modal Trigger */}
+                            <button
+                              onClick={() => openGrantModal(u)}
+                              className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 font-semibold text-xs transition-all"
+                              title="Open custom duration and presets selector"
+                            >
+                              <Sliders className="w-3 h-3 inline mr-1" />
+                              Grant / Extend
+                            </button>
+
+                            {/* Contextual To Exam Date */}
+                            <button
+                              onClick={() => handleGrantAccessWithDuration(u, examInfo.daysLeft)}
+                              className="px-2.5 py-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted text-foreground font-medium text-xs transition-all hidden lg:inline-flex items-center"
+                              title={`Extend access through ${examInfo.examName} date (${examInfo.daysLeft}d)`}
+                            >
+                              To Exam ({examInfo.daysLeft}d)
+                            </button>
+
+                            {u.betaAccess && (
+                              <button
+                                onClick={() => handleRevokeAccess(u)}
+                                className="px-2 py-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 text-xs font-semibold"
+                              >
+                                Revoke
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => setDeletingUser(u)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                              title="Delete Candidate"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
