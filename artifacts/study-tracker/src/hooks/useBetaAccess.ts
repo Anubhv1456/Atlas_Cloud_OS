@@ -9,6 +9,8 @@ export function useBetaAccess() {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
   const [paymentRejectionNote, setPaymentRejectionNote] = useState<string | null>(null);
+  const [vaultActivationRequired, setVaultActivationRequired] = useState(false);
+  const [vaultProvenance, setVaultProvenance] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +19,8 @@ export function useBetaAccess() {
       setExpiresAt(null);
       setPaymentStatus(null);
       setPaymentRejectionNote(null);
+      setVaultActivationRequired(false);
+      setVaultProvenance(null);
       setLoading(false);
       return;
     }
@@ -53,6 +57,8 @@ export function useBetaAccess() {
           const data = snap.data();
           setPaymentStatus(data.paymentStatus || null);
           setPaymentRejectionNote(data.paymentRejectionNote || null);
+          setVaultActivationRequired(Boolean(data.vaultActivationRequired));
+          setVaultProvenance(data.vaultImportProvenance || null);
 
           if (data.betaAccess === true) {
             const expTime = data.betaAccessExpiresAt?.toMillis
@@ -91,6 +97,8 @@ export function useBetaAccess() {
           setExpiresAt(null);
           setPaymentStatus(null);
           setPaymentRejectionNote(null);
+          setVaultActivationRequired(false);
+          setVaultProvenance(null);
         }
         setLoading(false);
       },
@@ -118,6 +126,7 @@ export function useBetaAccess() {
         await setDoc(userRef, {
           betaAccess: true,
           betaAccessExpiresAt: expTime,
+          vaultActivationRequired: false,
           updatedAt: new Date()
         }, { merge: true });
       } catch (e) {
@@ -130,5 +139,29 @@ export function useBetaAccess() {
     setExpiresAt(expTime);
   };
 
-  return { hasAccess, expiresAt, paymentStatus, paymentRejectionNote, loading, grantAccess };
+  const clearVaultActivationFlag = async () => {
+    if (!user || !firestoreDb) return;
+    try {
+      const userRef = doc(firestoreDb, 'users', user.uid);
+      await setDoc(userRef, {
+        vaultActivationRequired: false,
+        updatedAt: new Date()
+      }, { merge: true });
+      setVaultActivationRequired(false);
+    } catch (e) {
+      console.error("Error clearing vault activation flag", e);
+    }
+  };
+
+  return { 
+    hasAccess, 
+    expiresAt, 
+    paymentStatus, 
+    paymentRejectionNote, 
+    vaultActivationRequired,
+    vaultProvenance,
+    loading, 
+    grantAccess,
+    clearVaultActivationFlag
+  };
 }

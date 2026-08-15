@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, deleteUserAsAdmin } from '@/lib/admin';
 import { useAuth } from '@/hooks/useAuth';
+import { firestoreDb } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { formatDistanceToNow, format, differenceInDays, addDays } from 'date-fns';
 import { 
   Shield, User, Mail, Calendar, Search, Copy, Check, Clock, 
   UserCheck, UserX, TriangleAlert, Users, RefreshCw, ChevronDown, Sparkles, Trash2,
-  GraduationCap, Flame, Award, ArrowUpRight, Zap, Sliders, ShieldCheck, Filter, AlertCircle
+  GraduationCap, Flame, Award, ArrowUpRight, Zap, Sliders, ShieldCheck, Filter, AlertCircle, Eye, Database
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -13,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type FilterTab = 'all' | 'active' | 'trial' | 'expiring_soon' | 'expired' | 'locked';
+type FilterTab = 'all' | 'active' | 'trial' | 'expiring_soon' | 'expired' | 'locked' | 'flagged';
 type ExamFilter = 'all' | 'NEET PG' | 'INICET' | 'FMGE' | 'USMLE';
 
 export const DURATION_PRESETS = [
@@ -52,6 +54,7 @@ export function UsersView() {
   const [selectedBulkDuration, setSelectedBulkDuration] = useState<number | null>(90);
 
   const [deletingUser, setDeletingUser] = useState<any | null>(null);
+  const [inspectingUser, setInspectingUser] = useState<any | null>(null);
 
   const fetchUsers = async () => {
     setRefreshing(true);
@@ -257,6 +260,81 @@ export function UsersView() {
     }
   };
 
+  // Anti-Sybil / Provenance Admin Handlers
+  const handleApproveAmbassador = async (targetUser: any, days = 90) => {
+    try {
+      await updateUserBetaAccess(targetUser.id, true, days, false);
+      if (firestoreDb) {
+        const userRef = doc(firestoreDb, 'users', targetUser.id);
+        await setDoc(userRef, {
+          vaultActivationRequired: false,
+          vaultApprovedByAdmin: true,
+          vaultApprovedAt: new Date(),
+          updatedAt: new Date()
+        }, { merge: true });
+      }
+      const now = Date.now();
+      setUsers(users.map(u => u.id === targetUser.id ? {
+        ...u,
+        betaAccess: true,
+        isTrial: false,
+        vaultActivationRequired: false,
+        vaultApprovedByAdmin: true,
+        betaAccessExpiresAt: now + days * 24 * 60 * 60 * 1000
+      } : u));
+      toast.success(`Approved Ambassador Pass (${days}d) & cleared vault flag for ${targetUser.displayName || targetUser.email}`);
+      if (inspectingUser?.id === targetUser.id) setInspectingUser(null);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to approve ambassador access');
+    }
+  };
+
+  const handleClearVaultFlag = async (targetUser: any) => {
+    try {
+      if (firestoreDb) {
+        const userRef = doc(firestoreDb, 'users', targetUser.id);
+        await setDoc(userRef, {
+          vaultActivationRequired: false,
+          updatedAt: new Date()
+        }, { merge: true });
+      }
+      setUsers(users.map(u => u.id === targetUser.id ? { ...u, vaultActivationRequired: false } : u));
+      toast.success(`Cleared vault activation requirement for ${targetUser.displayName || targetUser.email}`);
+      if (inspectingUser?.id === targetUser.id) setInspectingUser(null);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to clear vault flag');
+    }
+  };
+
+  const handleRevokeFraudulentBonus = async (targetUser: any) => {
+    try {
+      if (firestoreDb) {
+        const userRef = doc(firestoreDb, 'users', targetUser.id);
+        await setDoc(userRef, {
+          betaAccess: false,
+          betaAccessExpiresAt: null,
+          isTrial: false,
+          referralBonusRevoked: true,
+          updatedAt: new Date()
+        }, { merge: true });
+      }
+      setUsers(users.map(u => u.id === targetUser.id ? {
+        ...u,
+        betaAccess: false,
+        betaAccessExpiresAt: null,
+        isTrial: false,
+        referralBonusRevoked: true
+      } : u));
+      toast.success(`Revoked bonus access & locked trial hopping for ${targetUser.displayName || targetUser.email}`);
+      if (inspectingUser?.id === targetUser.id) setInspectingUser(null);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to revoke bonus access');
+    }
+  };
+
   // Strictly isolate student candidates: filter out admin/operator accounts from directory & stats
   const studentCandidates = users.filter(user => {
     const isUserAdmin = Boolean(user.isAdmin) || user.role === 'admin';
@@ -275,7 +353,8 @@ export function UsersView() {
       activeTab === 'trial' ? status === 'trial' :
       activeTab === 'expiring_soon' ? status === 'expiring_soon' :
       activeTab === 'expired' ? status === 'expired' :
-      activeTab === 'locked' ? status === 'locked' : true;
+      activeTab === 'locked' ? status === 'locked' :
+      activeTab === 'flagged' ? (Boolean(user.vaultActivationRequired) || Boolean(user.vaultImportProvenance)) : true;
 
     const targetExam = (user.targetExam || user.examTarget || 'NEET PG').toUpperCase();
     const matchesExam = 
@@ -300,6 +379,7 @@ export function UsersView() {
     expiringSoon: studentCandidates.filter(u => getUserBetaStatus(u) === 'expiring_soon').length,
     expired: studentCandidates.filter(u => getUserBetaStatus(u) === 'expired').length,
     locked: studentCandidates.filter(u => getUserBetaStatus(u) === 'locked').length,
+    flagged: studentCandidates.filter(u => Boolean(u.vaultActivationRequired) || Boolean(u.vaultImportProvenance)).length,
   };
 
   // Helper to handle custom date selection in modal
@@ -380,7 +460,7 @@ export function UsersView() {
       </div>
 
       {/* Cohort Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3">
         <div 
           onClick={() => setActiveTab('all')}
           className={cn(
@@ -470,6 +550,21 @@ export function UsersView() {
           <div className="text-xl font-bold mt-1 text-zinc-300">{stats.locked}</div>
           <p className="text-[10px] text-muted-foreground mt-0.5">Awaiting access</p>
         </div>
+
+        <div 
+          onClick={() => setActiveTab('flagged')}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer",
+            activeTab === 'flagged' ? "bg-amber-500/15 border-amber-500/50 ring-1 ring-amber-500/30" : "bg-card/50 border-border/50 hover:bg-card"
+          )}
+        >
+          <div className="flex items-center justify-between text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
+            <span>Flagged / Vault</span>
+            <TriangleAlert className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-xl font-bold mt-1 text-amber-300">{stats.flagged}</div>
+          <p className="text-[10px] text-amber-500/90 mt-0.5 font-medium">Provenance / Sybil</p>
+        </div>
       </div>
 
       {/* Filter Tabs & Exam Filter */}
@@ -483,7 +578,8 @@ export function UsersView() {
               { id: 'trial', label: `15d Trial (${stats.trials})` },
               { id: 'expiring_soon', label: `Expiring ≤7d (${stats.expiringSoon})` },
               { id: 'expired', label: `Expired (${stats.expired})` },
-              { id: 'locked', label: `Locked (${stats.locked})` }
+              { id: 'locked', label: `Locked (${stats.locked})` },
+              { id: 'flagged', label: `Flagged (${stats.flagged})` }
             ] as const).map(tab => (
               <button
                 key={tab.id}
@@ -611,6 +707,29 @@ export function UsersView() {
                               {copiedId === u.id ? <Check className="w-3 h-3 text-teal-400" /> : <Copy className="w-3 h-3" />}
                             </button>
                           </div>
+
+                          {(u.vaultActivationRequired || u.vaultImportProvenance) && (
+                            <div className="flex items-center gap-1.5 pt-0.5">
+                              <button
+                                onClick={() => setInspectingUser(u)}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-[10px] hover:bg-amber-500/25 transition-all cursor-pointer"
+                                title="Foreign High-Volume Vault Restored — Click to inspect provenance"
+                              >
+                                <TriangleAlert className="w-3 h-3 text-amber-400" />
+                                <span>Imported Vault</span>
+                              </button>
+                              {u.vaultApprovedByAdmin && (
+                                <Badge className="text-[9px] bg-teal-500/10 text-teal-300 border-teal-500/30 font-semibold">
+                                  Ambassador
+                                </Badge>
+                              )}
+                              {u.referralBonusRevoked && (
+                                <Badge className="text-[9px] bg-rose-500/10 text-rose-300 border-rose-500/30 font-semibold">
+                                  Bonus Revoked
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </td>
 
                         <td className="p-4">
@@ -632,42 +751,46 @@ export function UsersView() {
                           <div className="text-[10px] text-muted-foreground mt-0.5">
                             Registered {u.createdAt?.toDate ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : 'Recently'}
                           </div>
+                          {u.referredBy && (
+                            <div className="text-[10px] text-teal-400/80 font-mono mt-0.5 truncate max-w-[140px]" title={`Referred by ${u.referredBy}`}>
+                              Ref: {u.referredBy}
+                            </div>
+                          )}
                         </td>
 
                         <td className="p-4">
                           <div className="space-y-1">
-                            {status === 'active_lifetime' && (
+                            {u.vaultActivationRequired ? (
+                              <Badge className="text-[10px] font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 flex items-center gap-1 w-fit">
+                                <Database className="w-3 h-3 text-amber-400" /> Pass Req. (Vault)
+                              </Badge>
+                            ) : status === 'active_lifetime' ? (
                               <Badge className="text-[10px] font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
                                 <ShieldCheck className="w-3 h-3" /> Lifetime Access
                               </Badge>
-                            )}
-                            {status === 'trial' && (
+                            ) : status === 'trial' ? (
                               <Badge className="text-[10px] font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
                                 <Sparkles className="w-3 h-3 text-amber-400" /> 15d Trial ({daysRemaining}d left)
                               </Badge>
-                            )}
-                            {status === 'expiring_soon' && (
+                            ) : status === 'expiring_soon' ? (
                               <Badge className="text-[10px] font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
                                 <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
                               </Badge>
-                            )}
-                            {status === 'active' && (
+                            ) : status === 'active' ? (
                               <Badge className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
                                 <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
                               </Badge>
-                            )}
-                            {status === 'expired' && (
+                            ) : status === 'expired' ? (
                               <Badge className="text-[10px] font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
                                 Expired Pass
                               </Badge>
-                            )}
-                            {status === 'locked' && (
+                            ) : (
                               <Badge className="text-[10px] font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
                                 Locked / Pending
                               </Badge>
                             )}
 
-                            {u.betaAccessExpiresAt && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
+                            {u.betaAccessExpiresAt && !u.vaultActivationRequired && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
                               <div className="text-[10px] text-muted-foreground">
                                 Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
                               </div>
@@ -677,15 +800,27 @@ export function UsersView() {
 
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* 15-Day Trial Quick Button */}
-                            <button
-                              onClick={() => handleGrantAccessWithDuration(u, 15, true)}
-                              className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
-                              title="Grant 15-Day Trial Access immediately"
-                            >
-                              <Sparkles className="w-3 h-3 text-amber-400" />
-                              <span>15d Trial</span>
-                            </button>
+                            {/* If Vault flag present, show Approve Vault button */}
+                            {u.vaultActivationRequired ? (
+                              <button
+                                onClick={() => handleApproveAmbassador(u, 90)}
+                                className="px-2.5 py-1.5 rounded-lg border border-teal-500/40 bg-teal-500/15 text-teal-300 hover:bg-teal-500/25 font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                                title="Approve Ambassador Access (90d) & Clear Vault Flag"
+                              >
+                                <ShieldCheck className="w-3 h-3 text-teal-400" />
+                                <span>Approve (90d)</span>
+                              </button>
+                            ) : (
+                              /* 15-Day Trial Quick Button */
+                              <button
+                                onClick={() => handleGrantAccessWithDuration(u, 15, true)}
+                                className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
+                                title="Grant 15-Day Trial Access immediately"
+                              >
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>15d Trial</span>
+                              </button>
+                            )}
 
                             {/* Full Duration / Custom Picker Modal Trigger */}
                             <button
@@ -696,6 +831,17 @@ export function UsersView() {
                               <Sliders className="w-3 h-3 inline mr-1" />
                               Grant / Extend
                             </button>
+
+                            {/* Inspect Vault Anomaly Details */}
+                            {(u.vaultActivationRequired || u.vaultImportProvenance) && (
+                              <button
+                                onClick={() => setInspectingUser(u)}
+                                className="p-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted text-amber-400 hover:text-amber-300 transition-all"
+                                title="Inspect Vault Provenance & Anti-Sybil Details"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                            )}
 
                             {/* Contextual To Exam Date */}
                             <button
@@ -1095,6 +1241,167 @@ export function UsersView() {
                 className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold"
               >
                 Permanently Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROVENANCE & ANTI-SYBIL INSPECTION MODAL */}
+      {inspectingUser && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-card border border-amber-500/40 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-foreground">Vault Provenance & Sybil Inspection</h3>
+                  <p className="text-[11px] text-muted-foreground">Cryptographic provenance envelope and account hopping verification</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Candidate Overview */}
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Candidate Account</span>
+                <span className="font-bold text-foreground">{inspectingUser.displayName || 'Medical Aspirant'}</span>
+              </div>
+              <div className="flex items-center justify-between font-mono text-[11px]">
+                <span className="text-muted-foreground">Candidate Email</span>
+                <span className="text-teal-300">{inspectingUser.email}</span>
+              </div>
+              <div className="flex items-center justify-between font-mono text-[10px]">
+                <span className="text-muted-foreground">Account UID</span>
+                <span className="text-muted-foreground truncate max-w-[220px]">{inspectingUser.id}</span>
+              </div>
+              {inspectingUser.referredBy && (
+                <div className="flex items-center justify-between text-[11px] border-t border-border/40 pt-1.5 mt-1.5">
+                  <span className="text-muted-foreground">Referred By Code</span>
+                  <span className="font-mono text-teal-400 font-bold">{inspectingUser.referredBy}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Provenance Origin Analysis */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5" />
+                <span>Restored Cryptographic Envelope Metadata</span>
+              </h4>
+
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Original Origin UID</span>
+                  <span className="font-mono text-[11px] text-amber-300 font-bold truncate max-w-[220px]">
+                    {inspectingUser.vaultImportProvenance?.foreignOriginUid || 'Self / Unknown UID'}
+                  </span>
+                </div>
+
+                {inspectingUser.vaultImportProvenance?.foreignOriginEmail && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Original Origin Email</span>
+                    <span className="font-mono text-[11px] text-amber-200">
+                      {inspectingUser.vaultImportProvenance.foreignOriginEmail}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">Export Timestamp</span>
+                  <span className="text-foreground">
+                    {inspectingUser.vaultImportProvenance?.exportTimestamp 
+                      ? format(new Date(inspectingUser.vaultImportProvenance.exportTimestamp), 'MMM d, yyyy • p')
+                      : 'N/A'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">Import Timestamp</span>
+                  <span className="text-foreground">
+                    {inspectingUser.vaultImportProvenance?.importedAt 
+                      ? format(new Date(inspectingUser.vaultImportProvenance.importedAt), 'MMM d, yyyy • p')
+                      : 'Recently'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Historical Telemetry Signature Snapshot */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Telemetry Signature Metrics (At Export Time)
+              </h4>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-xl bg-background border border-border/60">
+                  <div className="text-[10px] text-muted-foreground uppercase">Historical Study Time</div>
+                  <div className="text-base font-bold text-teal-400 font-mono mt-0.5">
+                    {inspectingUser.vaultImportProvenance?.metrics?.totalStudyMinutes || 0} min
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-background border border-border/60">
+                  <div className="text-[10px] text-muted-foreground uppercase">Completed Topics</div>
+                  <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
+                    {inspectingUser.vaultImportProvenance?.metrics?.completedTopics || 0}
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-background border border-border/60">
+                  <div className="text-[10px] text-muted-foreground uppercase">Mistake Log Entries</div>
+                  <div className="text-base font-bold text-amber-400 font-mono mt-0.5">
+                    {inspectingUser.vaultImportProvenance?.metrics?.mistakeLogsCount || 0}
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-background border border-border/60">
+                  <div className="text-[10px] text-muted-foreground uppercase">Subjects in Vault</div>
+                  <div className="text-base font-bold text-purple-400 font-mono mt-0.5">
+                    {inspectingUser.vaultImportProvenance?.metrics?.subjectCount || 19}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-3 border-t border-border/50">
+              <button
+                type="button"
+                onClick={() => setInspectingUser(null)}
+                className="w-full sm:w-auto px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRevokeFraudulentBonus(inspectingUser)}
+                className="w-full sm:w-auto px-3 py-2 border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 rounded-xl text-xs font-semibold transition-all"
+                title="Revoke bonus access and lock trial hopping"
+              >
+                Revoke Bonus / Lock
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleClearVaultFlag(inspectingUser)}
+                className="w-full sm:w-auto px-3 py-2 border border-border/60 bg-muted/60 hover:bg-muted text-foreground rounded-xl text-xs font-semibold transition-all"
+                title="Clear flag without changing pass duration"
+              >
+                Clear Flag Only
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleApproveAmbassador(inspectingUser, 90)}
+                className="w-full sm:w-auto px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black rounded-xl text-xs font-bold shadow-md shadow-teal-950/20 flex items-center justify-center gap-1.5"
+                title="Grant 90-Day Ambassador Cohort Pass & clear vault flag"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Approve Ambassador (90d)</span>
               </button>
             </div>
           </div>

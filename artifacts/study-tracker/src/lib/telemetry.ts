@@ -1,6 +1,7 @@
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { firestoreDb } from './firebase';
+import { firestoreDb, auth } from './firebase';
 import { generateHLC } from './hlc';
+import { qualifyReferral } from './referral';
 
 export interface TelemetryEvent {
   type: 's10_decision' | 'recall_drill' | 'session_completion';
@@ -129,6 +130,13 @@ export function recordSessionCompletion(sessionType: string, durationMins: numbe
 
   eventBuffer.push(evt);
   persistBuffer();
+
+  // Trigger qualification check if user was referred and session >= 10m
+  if (completed && durationMins >= 10 && auth.currentUser) {
+    qualifyReferral(auth.currentUser.uid, durationMins).catch((err) => {
+      console.warn('[Referral Engine] Non-fatal qualification check error:', err);
+    });
+  }
 
   // Flush buffer on session end
   flushTelemetryBatch();

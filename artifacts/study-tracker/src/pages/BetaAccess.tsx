@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function BetaAccess() {
-  const { hasAccess, paymentStatus, paymentRejectionNote, loading: accessLoading } = useBetaAccess();
+  const { hasAccess, paymentStatus, paymentRejectionNote, vaultActivationRequired, vaultProvenance, loading: accessLoading } = useBetaAccess();
   const { user, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -419,6 +419,19 @@ export default function BetaAccess() {
           /* ==================== UNIFIED SINGLE-VIEW ENROLLMENT CANVAS ==================== */
           <div className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-[28px] p-6 sm:p-8 shadow-[0_32px_96px_-16px_rgba(0,0,0,0.85)] space-y-6 relative overflow-hidden">
             
+            {/* Vault Provenance Anti-Hopping Notice */}
+            {vaultActivationRequired && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left space-y-2">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>High-Volume Study Vault Restored</span>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Your curriculum, custom notes, and 20th Notebook mistakes ({vaultProvenance?.metrics?.subjectCount || 19} subjects, {vaultProvenance?.metrics?.totalStudyMinutes || 180}+ study minutes) are safely restored in your browser. To generate active recall recommendations and continuous SDSR scheduling, please activate your Atlas Pass.
+                </p>
+              </div>
+            )}
+
             {/* Top Cohort Header Banner */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-white/[0.06]">
               <div>
@@ -427,10 +440,12 @@ export default function BetaAccess() {
                   {cohortHeaderTitle}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100">
-                  Activate Your Medical OS
+                  {vaultActivationRequired ? 'Activate Pass to Continue Study Streak' : 'Activate Your Medical OS'}
                 </h1>
                 <p className="text-xs text-zinc-400 mt-1 max-w-lg leading-relaxed">
-                  Join medical candidates using Atlas for automated spaced repetition, QBank analytics, and NEET PG / INICET preparation.
+                  {vaultActivationRequired
+                    ? 'Resume continuous automated spaced repetition, personalized weakness tracking, and NEET PG / INICET QBank analytics.'
+                    : 'Join medical candidates using Atlas for automated spaced repetition, QBank analytics, and NEET PG / INICET preparation.'}
                 </p>
               </div>
 

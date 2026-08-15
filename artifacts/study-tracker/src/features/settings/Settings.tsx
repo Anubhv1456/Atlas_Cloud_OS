@@ -8,6 +8,7 @@ import {
   FaqSection,
   FeedbackSection,
   ContactSection,
+  ReferralSection,
   AboutSection,
   DangerZoneSection,
 } from '.';
@@ -48,8 +49,9 @@ export default function Settings() {
           <DataVaultSection />
         </section>
 
-        {/* 5. Support & Legal */}
-        <SettingsBlock title="Support & Legal">
+        {/* 5. Study Circle, Support & Legal */}
+        <SettingsBlock title="Study Circle & Support">
+          <ReferralSection />
           <PWASection />
           <FaqSection />
           <FeedbackSection />

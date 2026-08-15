@@ -84,9 +84,20 @@ function ProtectedApp() {
   const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
   const [location, setLocation] = useLocation();
 
+  // Intercept incoming ?ref=... parameter and save to session
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const refCode = params.get('ref');
+      if (refCode) {
+        sessionStorage.setItem('atlas_pending_ref_code', refCode.trim().toUpperCase());
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !accessLoading) {
-      const isPublic = ['/privacy', '/terms', '/contact', '/accept-invitation'].includes(location);
+      const isPublic = ['/privacy', '/terms', '/contact', '/accept-invitation', '/join'].includes(location);
       const isAdminRoute = location.startsWith('/admin');
 
       if (!user && !isPublic) {
@@ -99,10 +110,10 @@ function ProtectedApp() {
           return;
         }
         if (!hasAccess) {
-          if (location !== '/beta-access' && location !== '/accept-invitation') {
+          if (location !== '/beta-access' && location !== '/accept-invitation' && location !== '/join') {
             setLocation('/beta-access');
           }
-        } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation')) {
+        } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation' || location === '/join')) {
           setLocation('/');
         }
       }
@@ -149,11 +160,7 @@ function ProtectedApp() {
     );
   }
 
-  if (location === '/accept-invitation') {
-    if (!user) {
-      setLocation('/');
-      return null;
-    }
+  if (location === '/accept-invitation' || location === '/join') {
     return (
       <Suspense fallback={
         <div className="flex items-center justify-center w-full h-[100dvh]">

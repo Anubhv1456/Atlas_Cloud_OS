@@ -1,10 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Database, Download, Upload, FileSpreadsheet, CloudCheck, HardDrive, Sparkles } from 'lucide-react';
+import { Database, Download, Upload, FileSpreadsheet, HardDrive, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react';
 import { db } from '@/db/schema';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useAuth } from '@/hooks/useAuth';
+import { createSignedVaultBackup, verifyVaultBackupProvenance } from '@/lib/vaultSignature';
+import { firestoreDb } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export function DataVaultSection() {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loadingAction, setLoadingAction] = useState<'export-json' | 'import-json' | 'export-csv' | null>(null);
 
@@ -19,11 +24,11 @@ export function DataVaultSection() {
   const scoreCount = scoreLogs?.length ?? 0;
   const historyCount = history?.length ?? 0;
 
-  // JSON Export Handler
+  // JSON Export Handler with Cryptographic Provenance Stamping
   const handleExportJSON = async () => {
     try {
       setLoadingAction('export-json');
-      const data = {
+      const rawData = {
         subjects: await db.subjects.toArray(),
         systems: await db.systems.toArray(),
         history: await db.history.toArray(),
@@ -33,7 +38,10 @@ export function DataVaultSection() {
         topicProgress: await db.topicProgress.toArray()
       };
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      // Wrap in Cryptographic Atlas Vault Envelope
+      const signedEnvelope = await createSignedVaultBackup(rawData, user);
+
+      const blob = new Blob([JSON.stringify(signedEnvelope, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -43,7 +51,9 @@ export function DataVaultSection() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success('Data Vault backup created successfully.');
+      toast.success('Signed Data Vault backup created successfully.', {
+        description: 'Stamped with origin cryptographic provenance.'
+      });
     } catch (e) {
       console.error(e);
       toast.error('Failed to create backup file.');
@@ -52,7 +62,7 @@ export function DataVaultSection() {
     }
   };
 
-  // JSON Import Handler
+  // JSON Import Handler with Anti-Sybil & Account-Hopping Interceptor
   const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -60,9 +70,14 @@ export function DataVaultSection() {
     try {
       setLoadingAction('import-json');
       const text = await file.text();
-      const data = JSON.parse(text);
+      const parsed = JSON.parse(text);
 
-      if (data.subjects || data.systems) {
+      // Verify Provenance & Historical Volume
+      const result = await verifyVaultBackupProvenance(parsed, user?.uid || null);
+      const data = result.payload;
+
+      if (data.subjects || data.systems || data.history) {
+        // 1. Restore all local Dexie data safely (Zero Data Loss)
         await db.transaction('rw', [db.subjects, db.systems, db.history, db.pyqYears, db.scoreLogs, db.uiPreferences, db.topicProgress], async () => {
           if (data.subjects) await db.subjects.bulkPut(data.subjects);
           if (data.systems) await db.systems.bulkPut(data.systems);
@@ -73,7 +88,36 @@ export function DataVaultSection() {
           if (data.topicProgress) await db.topicProgress.bulkPut(data.topicProgress);
         });
 
-        toast.success('Data Vault restored successfully.', { description: 'Local curriculum and progress updated.' });
+        // 2. Intercept Account-Hopping Trial Reset
+        if (result.isForeignUid && result.isHighHistoricalVolume) {
+          if (user && firestoreDb) {
+            const userRef = doc(firestoreDb, 'users', user.uid);
+            await setDoc(userRef, {
+              vaultActivationRequired: true,
+              vaultImportProvenance: {
+                foreignOriginUid: result.originUid,
+                foreignOriginEmail: result.originEmail || 'unlisted',
+                exportTimestamp: result.exportTimestamp,
+                metrics: result.metrics,
+                importedAt: new Date()
+              },
+              betaAccess: false,
+              updatedAt: new Date()
+            }, { merge: true });
+
+            localStorage.removeItem(`beta_access_${user.uid}`);
+            localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+          }
+
+          toast.warning('Study Vault Restored · Pass Activation Required', {
+            description: `Imported ${result.metrics.totalStudyMinutes}m of previous study history. Please activate your Atlas Pass to continue your revision streak with this high-volume vault.`,
+            duration: 8000
+          });
+        } else {
+          toast.success('Data Vault restored successfully.', { 
+            description: `Restored ${result.metrics.subjectCount || data.subjects?.length || 0} subjects and study logs.` 
+          });
+        }
       } else {
         toast.error('Invalid backup file structure.');
       }

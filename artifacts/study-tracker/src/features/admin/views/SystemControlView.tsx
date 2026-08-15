@@ -5,6 +5,9 @@ import {
   getPaymentConfig, savePaymentConfig, PaymentConfig, DEFAULT_PAYMENT_CONFIG,
   getSocialLinks, setSocialLinks, SocialLinks
 } from '@/lib/admin';
+import {
+  getReferralConfig, saveReferralConfig, ReferralConfig, DEFAULT_REFERRAL_CONFIG
+} from '@/lib/referral';
 import { 
   ToggleLeft, Megaphone, CreditCard, Share2, Save, Plus, Trash2, 
   RefreshCw, CheckCircle2, AlertCircle, Info, TriangleAlert, QrCode, Upload,
@@ -20,7 +23,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-type SystemTab = 'flags' | 'announcements' | 'payments' | 'socials';
+type SystemTab = 'flags' | 'announcements' | 'payments' | 'referrals' | 'socials';
 
 export function SystemControlView() {
   const [activeTab, setActiveTab] = useState<SystemTab>('flags');
@@ -54,19 +57,25 @@ export function SystemControlView() {
   const [socials, setSocials] = useState<SocialLinks>({});
   const [savingSocials, setSavingSocials] = useState(false);
 
+  // 5. Referral Engine State
+  const [referralConfig, setReferralConfig] = useState<ReferralConfig>(DEFAULT_REFERRAL_CONFIG);
+  const [savingReferralConfig, setSavingReferralConfig] = useState(false);
+
   const loadAllConfig = async () => {
     setLoading(true);
     try {
-      const [f, a, p, s] = await Promise.all([
+      const [f, a, p, s, r] = await Promise.all([
         getFeatureFlags(),
         getAnnouncements(),
         getPaymentConfig(),
-        getSocialLinks()
+        getSocialLinks(),
+        getReferralConfig()
       ]);
       setFlags(f);
       setAnnouncements(a);
       setPaymentConfig(p);
       setSocials(s);
+      setReferralConfig(r);
     } catch (e) {
       console.error(e);
       toast.error('Failed to load system control config.');
@@ -166,6 +175,19 @@ export function SystemControlView() {
     }
   };
 
+  const handleSaveReferralConfig = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSavingReferralConfig(true);
+    try {
+      await saveReferralConfig(referralConfig);
+      toast.success('Batchmate referral parameters updated successfully!');
+    } catch (e) {
+      toast.error('Failed to save referral configuration.');
+    } finally {
+      setSavingReferralConfig(false);
+    }
+  };
+
   const platforms = [
     { key: 'telegram' as const, label: 'Telegram Channel', icon: Send, placeholder: 'https://t.me/your_channel' },
     { key: 'reddit' as const, label: 'Subreddit / Reddit Community', icon: RedditIcon, placeholder: 'https://reddit.com/r/your_subreddit' },
@@ -243,6 +265,22 @@ export function SystemControlView() {
           )}
         >
           <CreditCard className="w-4 h-4" /> Cohort Capacity & Pricing
+        </button>
+
+        <button
+          onClick={() => setActiveTab('referrals')}
+          className={cn(
+            "px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all whitespace-nowrap",
+            activeTab === 'referrals'
+              ? "bg-purple-500 text-white shadow-sm font-bold"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Users className="w-4 h-4" /> Batchmate Referral Engine {referralConfig.enabled ? (
+            <span className="px-1.5 py-0.2 rounded-full bg-teal-400 text-black text-[10px] font-bold">Active</span>
+          ) : (
+            <span className="px-1.5 py-0.2 rounded-full bg-zinc-700 text-zinc-300 text-[10px]">Paused</span>
+          )}
         </button>
 
         <button
@@ -761,7 +799,175 @@ export function SystemControlView() {
             </form>
           )}
 
-          {/* TAB 4: SOCIAL HANDLES */}
+          {/* TAB 4: BATCHMATE REFERRAL ENGINE */}
+          {activeTab === 'referrals' && (
+            <form onSubmit={handleSaveReferralConfig} className="bg-card border border-border/60 rounded-2xl p-6 space-y-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border/50 gap-3">
+                <div>
+                  <h3 className="font-bold text-base flex items-center gap-2">
+                    <Users className="w-5 h-5 text-teal-400" />
+                    Peer Referral & Batchmate Pass Engine
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure pass durations, study qualification gates, and colleague pass allocations.
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={savingReferralConfig}
+                  className="px-5 py-2 bg-teal-500 hover:bg-teal-600 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all self-start sm:self-auto"
+                >
+                  {savingReferralConfig ? (
+                    <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save Referral Rules
+                </button>
+              </div>
+
+              {/* Master Global Program Switch */}
+              <div className="p-4 rounded-xl border border-border/60 bg-background/50 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-semibold text-sm flex items-center gap-2">
+                    <span>Master Referral Program Switch</span>
+                    {referralConfig.enabled ? (
+                      <Badge className="bg-teal-500/20 text-teal-400 border-teal-500/30 text-[10px]">Active</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-zinc-500 text-[10px]">Disabled</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    When enabled, eligible candidates can invite study partners and generate personal invite links.
+                  </p>
+                </div>
+                <Switch
+                  checked={referralConfig.enabled}
+                  onCheckedChange={(checked) => setReferralConfig(prev => ({ ...prev, enabled: checked }))}
+                />
+              </div>
+
+              {/* Parameter Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. Referee Trial Days */}
+                <div className="p-4 rounded-xl border border-border/60 bg-background/50 space-y-3">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-xs text-foreground block">
+                      Referee Pass Duration (Days)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Free trial days provisioned to an invited medical peer upon claiming the pass.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={90}
+                      value={referralConfig.refereeTrialDays}
+                      onChange={(e) => setReferralConfig(prev => ({ ...prev, refereeTrialDays: parseInt(e.target.value, 10) || 15 }))}
+                      className="text-xs rounded-xl w-32 font-mono font-bold"
+                    />
+                    <span className="text-xs text-muted-foreground font-medium">Days of Candidate Access</span>
+                  </div>
+                </div>
+
+                {/* 2. Referrer Extension Days */}
+                <div className="p-4 rounded-xl border border-border/60 bg-background/50 space-y-3">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-xs text-foreground block">
+                      Referrer Extension Reward (Days)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Days added to the inviter's pass when their referee completes their first study milestone.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={referralConfig.referrerBonusDays}
+                      onChange={(e) => setReferralConfig(prev => ({ ...prev, referrerBonusDays: parseInt(e.target.value, 10) || 14 }))}
+                      className="text-xs rounded-xl w-32 font-mono font-bold text-teal-400"
+                    />
+                    <span className="text-xs text-muted-foreground font-medium">Days added per qualified colleague</span>
+                  </div>
+                </div>
+
+                {/* 3. Max Passes Quota */}
+                <div className="p-4 rounded-xl border border-border/60 bg-background/50 space-y-3">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-xs text-foreground block">
+                      Pass Quota Limit Per Student
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Maximum number of colleague passes allocated to each candidate account.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={referralConfig.maxPassesPerUser}
+                      onChange={(e) => setReferralConfig(prev => ({ ...prev, maxPassesPerUser: parseInt(e.target.value, 10) || 3 }))}
+                      className="text-xs rounded-xl w-32 font-mono font-bold"
+                    />
+                    <span className="text-xs text-muted-foreground font-medium">Colleague Passes max</span>
+                  </div>
+                </div>
+
+                {/* 4. Qualification Threshold (Minutes) */}
+                <div className="p-4 rounded-xl border border-border/60 bg-background/50 space-y-3">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-xs text-foreground block">
+                      Qualification Study Gate (Minutes)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Minimum active revision duration required by referee to prevent Sybil bot abuse.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={3}
+                      max={60}
+                      value={referralConfig.minStudyMinutesToQualify}
+                      onChange={(e) => setReferralConfig(prev => ({ ...prev, minStudyMinutesToQualify: parseInt(e.target.value, 10) || 10 }))}
+                      className="text-xs rounded-xl w-32 font-mono font-bold"
+                    />
+                    <span className="text-xs text-muted-foreground font-medium">Minutes minimum in 1 session</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Downstream Invites */}
+              <div className="p-4 rounded-xl border border-border/60 bg-background/50 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <span className="font-semibold text-xs block">Allow Downstream Invites</span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Allow newly referred trial students to also invite their own batchmates.
+                  </p>
+                </div>
+                <Switch
+                  checked={referralConfig.allowDownstreamInvites}
+                  onCheckedChange={(checked) => setReferralConfig(prev => ({ ...prev, allowDownstreamInvites: checked }))}
+                />
+              </div>
+
+              {/* Policy Explanation */}
+              <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/15 text-xs text-muted-foreground leading-relaxed flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-foreground block mb-0.5 font-semibold">Anti-Abuse Engagement Loop</strong>
+                  Invited colleagues receive instant candidate access. Referral rewards (+14 days) are only disbursed to the referrer once the colleague logs at least {referralConfig.minStudyMinutesToQualify} minutes of genuine curriculum revision or flashcard recall.
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 5: SOCIAL HANDLES */}
           {activeTab === 'socials' && (
             <form onSubmit={handleSaveSocials} className="bg-card border border-border/60 rounded-2xl p-6 space-y-6 shadow-xs">
               <div className="flex items-center justify-between pb-4 border-b border-border/50">

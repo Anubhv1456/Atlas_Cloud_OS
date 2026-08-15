@@ -10,6 +10,8 @@ export * from './FirebaseSyncSection';
 export * from './FaqSection';
 export * from './FeedbackSection';
 export * from './ContactSection';
+export * from './ReferralSection';
+export * from './ReferralModal';
 export * from './AboutSection';
 export * from './DataExportSection';
 export * from './SystemPreferencesCard';
