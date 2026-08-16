@@ -683,9 +683,14 @@ export async function logMistake(data: {
   systemId: number | string;
   curriculumSetId?: string;
   topicId?: string;
+  title?: string;
+  clinicalTrigger?: string;
+  tags?: string[];
+  isVolatile?: boolean;
   errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
   keyTakeaway: string;
   source: 'GT' | 'QBank' | 'Custom';
+  sourceExam?: string;
 }) {
   const now = new Date();
   const payload: Record<string, any> = {
@@ -700,6 +705,21 @@ export async function logMistake(data: {
     hlc: generateHLC(),
   };
 
+  if (data.title && data.title.trim()) {
+    payload.title = data.title.trim();
+  }
+  if (data.clinicalTrigger && data.clinicalTrigger.trim()) {
+    payload.clinicalTrigger = data.clinicalTrigger.trim();
+  }
+  if (data.tags && data.tags.length > 0) {
+    payload.tags = data.tags.map(t => t.trim()).filter(Boolean);
+  }
+  if (data.isVolatile !== undefined) {
+    payload.isVolatile = data.isVolatile;
+  }
+  if (data.sourceExam && data.sourceExam.trim()) {
+    payload.sourceExam = data.sourceExam.trim();
+  }
   if (data.curriculumSetId && data.curriculumSetId.trim()) {
     payload.curriculumSetId = data.curriculumSetId.trim();
   }
@@ -708,10 +728,27 @@ export async function logMistake(data: {
   }
 
   const id = await db.mistakeLogs.add(payload);
-  toast.success('Mistake logged to vault', {
-    description: 'Saved key takeaway for active recall review.',
+  toast.success('Mistake logged to 20th Notebook', {
+    description: 'Saved golden takeaway for high-yield review.',
   });
   return id;
+}
+
+export async function updateMistakeLog(id: number | string, changes: Partial<T.MistakeLog>) {
+  await db.mistakeLogs.update(id, {
+    ...changes,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
+}
+
+export async function toggleMistakeVolatile(id: number | string, isVolatile: boolean) {
+  await db.mistakeLogs.update(id, {
+    isVolatile,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
+  toast.success(isVolatile ? 'Marked as Volatile Trap ⚡' : 'Removed volatile flag');
 }
 
 export async function resolveMistake(id: number | string, resolved = true) {
@@ -720,7 +757,7 @@ export async function resolveMistake(id: number | string, resolved = true) {
     updatedAt: new Date(),
     hlc: generateHLC(),
   });
-  toast.success(resolved ? 'Marked as Mastered! 🎉' : 'Reopened mistake takeaway');
+  toast.success(resolved ? 'Rule Mastered! 🎉' : 'Reopened for review');
 }
 
 export async function deleteMistakeLog(id: number | string) {

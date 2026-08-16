@@ -197,9 +197,15 @@ export interface MistakeLog {
   curriculumSetId?: string;
   topicId?: string;
 
+  title?: string;
+  clinicalTrigger?: string;
+  tags?: string[];
+  isVolatile?: boolean;
+
   errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
   keyTakeaway: string;
   source: 'GT' | 'QBank' | 'Custom';
+  sourceExam?: string;
 
   resolved: boolean;
   createdAt: Date;

@@ -634,13 +634,24 @@ export default function SubjectDetail() {
               <ChevronLeft className="w-6 h-6" />
             </button>
           </Link>
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors ml-auto cursor-pointer"
-            title="Search topics"
-          >
-            <Search className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <Link href="/mistakes">
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/40"
+                title="View 20th Notebook rules"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">20th Notebook</span>
+              </button>
+            </Link>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
+              title="Search topics"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div>

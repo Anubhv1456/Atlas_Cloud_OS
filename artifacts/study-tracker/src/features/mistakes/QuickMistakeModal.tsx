@@ -24,7 +24,10 @@ import {
   ChevronDown,
   ChevronUp,
   SlidersHorizontal,
-  Plus
+  Plus,
+  Tag,
+  Flame,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
@@ -37,6 +40,7 @@ export interface QuickMistakeModalProps {
   defaultSystemId?: number | string;
   defaultCurriculumSetId?: string;
   defaultTopicId?: string;
+  defaultTags?: string[];
 }
 
 // Retain session memory across closes so reopening retains active context
@@ -44,7 +48,13 @@ let sessionSubjectId: string | number | undefined;
 let sessionSystemId: string | number | undefined;
 let sessionTopicId: string | undefined;
 let sessionSource: 'GT' | 'QBank' | 'Custom' = 'QBank';
+let sessionSourceExam: string = '';
 let sessionErrorType: 'concept' | 'retrieval' | 'misread' | 'fomo' = 'concept';
+
+const COMMON_CROSS_TAGS = [
+  'Medicine', 'Surgery', 'Pathology', 'Pharmacology', 'Pediatrics', 
+  'OBGYN', 'Endocrine', 'CVS', 'CNS', 'Renal', 'Infection', 'Toxicology', 'Emergency'
+];
 
 export function QuickMistakeModal({
   open,
@@ -52,7 +62,8 @@ export function QuickMistakeModal({
   defaultSubjectId,
   defaultSystemId,
   defaultCurriculumSetId,
-  defaultTopicId
+  defaultTopicId,
+  defaultTags = []
 }: QuickMistakeModalProps) {
   const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
   const dbSystems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
@@ -67,8 +78,14 @@ export function QuickMistakeModal({
   const [systemId, setSystemId] = useState<string | number>('');
   const [curriculumSetId, setCurriculumSetId] = useState<string>('');
   const [topicId, setTopicId] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [clinicalTrigger, setClinicalTrigger] = useState<string>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState<string>('');
+  const [isVolatile, setIsVolatile] = useState<boolean>(false);
   const [errorType, setErrorType] = useState<'concept' | 'retrieval' | 'misread' | 'fomo'>('concept');
   const [source, setSource] = useState<'GT' | 'QBank' | 'Custom'>('QBank');
+  const [sourceExam, setSourceExam] = useState<string>('');
   const [keyTakeaway, setKeyTakeaway] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedBatchCount, setSavedBatchCount] = useState(0);
@@ -97,9 +114,15 @@ export function QuickMistakeModal({
       setSubjectId(initialSubjectId);
       setCurriculumSetId(defaultCurriculumSetId || '');
       setTopicId(defaultTopicId !== undefined ? defaultTopicId : (sessionTopicId || ''));
+      setTitle('');
+      setClinicalTrigger('');
+      setSelectedTags(defaultTags || []);
+      setTagInput('');
+      setIsVolatile(false);
       setKeyTakeaway('');
       setErrorType(sessionErrorType || 'concept');
       setSource(sessionSource || 'QBank');
+      setSourceExam(sessionSourceExam || '');
 
       // Find matching systems for initial subject
       const matchingSystems = dbSystems.filter(sys => String(sys.subjectId) === String(initialSubjectId));
@@ -118,7 +141,7 @@ export function QuickMistakeModal({
         textareaRef.current?.focus();
       }, 100);
     }
-  }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, subjects, dbSystems]);
+  }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, defaultTags, subjects, dbSystems]);
 
   // When subject is changed manually by user, auto-select first available system
   const handleSubjectChange = (newSubId: string | number) => {
@@ -154,6 +177,23 @@ export function QuickMistakeModal({
     sessionErrorType = newType;
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleAddCustomTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = tagInput.trim().replace(/^#/, '');
+      if (val && !selectedTags.includes(val)) {
+        setSelectedTags(prev => [...prev, val]);
+      }
+      setTagInput('');
+    }
+  };
+
   const executeSave = async (closeAfterSave = false) => {
     if (!keyTakeaway.trim()) {
       toast.error('Please enter a clinical takeaway rule.');
@@ -172,9 +212,14 @@ export function QuickMistakeModal({
         systemId: systemId || 0,
         curriculumSetId: curriculumSetId ? curriculumSetId.trim() : undefined,
         topicId: topicId ? topicId.trim() : undefined,
+        title: title ? title.trim() : undefined,
+        clinicalTrigger: clinicalTrigger ? clinicalTrigger.trim() : undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        isVolatile,
         errorType,
         keyTakeaway: keyTakeaway.trim(),
-        source
+        source,
+        sourceExam: sourceExam.trim() || undefined
       });
 
       // Update session cache
@@ -182,16 +227,20 @@ export function QuickMistakeModal({
       sessionSystemId = systemId;
       sessionTopicId = topicId;
       sessionSource = source;
+      sessionSourceExam = sourceExam;
       sessionErrorType = errorType;
 
       const newBatchCount = savedBatchCount + 1;
       setSavedBatchCount(newBatchCount);
       setKeyTakeaway('');
+      setTitle('');
+      setClinicalTrigger('');
+      setIsVolatile(false);
 
       if (closeAfterSave) {
         onOpenChange(false);
       } else {
-        // Keep modal open, preserve path, re-focus input immediately
+        // Keep modal open, preserve path & tags, re-focus input immediately
         setTimeout(() => {
           textareaRef.current?.focus();
         }, 50);
@@ -258,7 +307,7 @@ export function QuickMistakeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent id="quick-mistake-dialog" className="sm:max-w-lg rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground">
+      <DialogContent id="quick-mistake-dialog" className="sm:max-w-xl rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground max-h-[90vh] overflow-y-auto">
         
         {/* Modal Header */}
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
@@ -268,11 +317,14 @@ export function QuickMistakeModal({
                 <Zap className="w-4 h-4" />
               </div>
               <div>
-                <DialogTitle className="text-base font-extrabold text-foreground tracking-tight">
-                  Log Journal Takeaway
+                <DialogTitle className="text-base font-extrabold text-foreground tracking-tight flex items-center gap-2">
+                  <span>Log 20th Notebook Rule</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    High Yield
+                  </span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Distill a high-yield clinical rule into your 20th Notebook.
+                  Distill your clinical mistake into a memorable golden takeaway.
                 </DialogDescription>
               </div>
             </div>
@@ -293,30 +345,27 @@ export function QuickMistakeModal({
           <div className="p-3 rounded-2xl bg-muted/20 border border-border/60 space-y-2.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Target Curriculum Path
+                Subject Notebook & System
               </span>
               
-              {/* Source Switcher */}
-              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-muted/50 border border-border/40">
-                {(['QBank', 'GT', 'Custom'] as const).map(src => (
-                  <button
-                    key={src}
-                    type="button"
-                    onClick={() => handleSourceChange(src)}
-                    className={cn(
-                      "px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
-                      source === src
-                        ? "bg-background text-foreground shadow-xs border border-border/60"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {src === 'GT' ? 'Grand Test' : src === 'QBank' ? 'QBank' : 'Custom'}
-                  </button>
-                ))}
-              </div>
+              {/* Volatile Fact Quick Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsVolatile(prev => !prev)}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                  isVolatile
+                    ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs"
+                    : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
+                )}
+                title="Mark volatile facts, tricky numbers, or high-confusion traps"
+              >
+                <Flame className="w-3 h-3" />
+                <span>{isVolatile ? '⚡ Volatile Fact' : 'Mark Volatile'}</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <select
                 id="mistake-subject-select"
                 value={String(subjectId)}
@@ -337,7 +386,7 @@ export function QuickMistakeModal({
                 className="w-full h-8.5 rounded-xl border border-border/70 bg-background px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer truncate"
               >
                 {availableSystems.length === 0 ? (
-                  <option value="0">General System</option>
+                  <option value="0">General Chapter / System</option>
                 ) : (
                   availableSystems.map(sys => (
                     <option key={String(sys.id)} value={String(sys.id)}>
@@ -353,7 +402,7 @@ export function QuickMistakeModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-1.5">
               <span className="text-[11px] font-bold text-foreground tracking-tight">
-                High-Yield Rule / Pearl *
+                Golden Takeaway / Clinical Rule *
               </span>
               
               {/* Rapid Clinical Prefixes */}
@@ -381,6 +430,13 @@ export function QuickMistakeModal({
                 </button>
                 <button
                   type="button"
+                  onClick={() => insertPromptShortcut('Contraindicated:')}
+                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                >
+                  + Contraindicated
+                </button>
+                <button
+                  type="button"
                   onClick={() => insertPromptShortcut('Gold standard:')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
                 >
@@ -395,21 +451,50 @@ export function QuickMistakeModal({
               value={keyTakeaway}
               onChange={e => setKeyTakeaway(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="e.g. DOC for acute Wernicke Encephalopathy is IV Thiamine before Glucose to prevent precipitation of acute crisis."
+              placeholder="e.g. In Pheochromocytoma, ALWAYS start Alpha-blockers (Phenoxybenzamine) BEFORE Beta-blockers to prevent unopposed alpha-mediated hypertensive crisis."
               rows={3}
               required
               className="w-full rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all leading-relaxed"
             />
             
             <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 px-1">
-              <span>Path stays pinned for quick batch entry</span>
+              <span>Pinned subject stays active for high-speed continuous logging</span>
               <span className="flex items-center gap-1 font-mono">
-                <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save & next
+                <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save & add next
               </span>
             </div>
           </div>
 
-          {/* Progressive Disclosure: Optional Details & Root Cause */}
+          {/* Root Cause Chips */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Error Root Cause
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {errorTypePills.map(pill => {
+                const Icon = pill.icon;
+                const isSelected = errorType === pill.id;
+                return (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    onClick={() => handleErrorTypeChange(pill.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer text-[11px]",
+                      isSelected
+                        ? `${pill.color} font-bold shadow-xs`
+                        : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{pill.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Progressive Disclosure: Cross-Discipline Tags & Trigger Context */}
           <div className="border-t border-border/40 pt-2">
             <button
               type="button"
@@ -419,7 +504,7 @@ export function QuickMistakeModal({
               <span className="flex items-center gap-1.5 text-[11px]">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {showAdvancedDetails ? 'Hide additional classification' : '+ Add topic tag or root cause (optional)'}
+                  {showAdvancedDetails ? 'Hide cross-tags & clinical context' : '+ Add cross-discipline tags, exam source, or trigger (optional)'}
                 </span>
               </span>
               {showAdvancedDetails ? (
@@ -430,8 +515,78 @@ export function QuickMistakeModal({
             </button>
 
             {showAdvancedDetails && (
-              <div className="space-y-3 pt-2.5 pb-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                {/* Topic Tag */}
+              <div className="space-y-3.5 pt-2.5 pb-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                {/* Cross-Discipline Tags */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Tag className="w-3 h-3 text-primary" /> Cross-Discipline Tags
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Select multiple</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {COMMON_CROSS_TAGS.map(t => {
+                      const active = selectedTags.includes(t);
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => toggleTag(t)}
+                          className={cn(
+                            "px-2 py-0.5 text-[10px] font-semibold rounded-lg border transition-all cursor-pointer",
+                            active
+                              ? "bg-primary/20 text-primary border-primary/40 font-bold"
+                              : "bg-muted/30 text-muted-foreground border-border/40 hover:border-border hover:text-foreground"
+                          )}
+                        >
+                          {active ? `✓ ${t}` : `+ ${t}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Custom tag input */}
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={handleAddCustomTag}
+                      placeholder="Add custom tag (e.g. Triad, Electrolytes, Imaging) and press Enter"
+                      className="h-7.5 text-[11px] rounded-lg border-border/60 bg-muted/20 text-foreground"
+                    />
+                  </div>
+
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1 pt-1">
+                      <span className="text-[10px] text-muted-foreground mr-1">Active Tags:</span>
+                      {selectedTags.map(tag => (
+                        <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
+                          #{tag}
+                          <button type="button" onClick={() => toggleTag(tag)} className="hover:text-destructive cursor-pointer">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Clinical Vignette Trigger / Scenario */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Clinical Scenario / Question Trigger (Optional)
+                  </span>
+                  <Input
+                    id="mistake-trigger-input"
+                    value={clinicalTrigger}
+                    onChange={e => setClinicalTrigger(e.target.value)}
+                    placeholder="e.g. 35yo with refractory hypokalemia, hypertension, low renin"
+                    className="h-8.5 text-xs rounded-xl border-border/70 bg-muted/20 text-foreground"
+                  />
+                </div>
+
+                {/* Specific Topic */}
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                     Specific Topic / Disease (Optional)
@@ -440,37 +595,46 @@ export function QuickMistakeModal({
                     id="mistake-topic-input"
                     value={topicId}
                     onChange={e => handleTopicChange(e.target.value)}
-                    placeholder="e.g. Rheumatic Fever or Status Epilepticus"
+                    placeholder="e.g. Primary Hyperaldosteronism (Conn Syndrome)"
                     className="h-8.5 text-xs rounded-xl border-border/70 bg-muted/20 text-foreground"
                   />
                 </div>
 
-                {/* Root Cause Chips */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                    Error Root Cause
-                  </span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {errorTypePills.map(pill => {
-                      const Icon = pill.icon;
-                      const isSelected = errorType === pill.id;
-                      return (
+                {/* Source & Source Exam Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                      Test Source Type
+                    </span>
+                    <div className="flex items-center gap-1 p-0.5 rounded-xl bg-muted/30 border border-border/60">
+                      {(['QBank', 'GT', 'Custom'] as const).map(src => (
                         <button
-                          key={pill.id}
+                          key={src}
                           type="button"
-                          onClick={() => handleErrorTypeChange(pill.id)}
+                          onClick={() => handleSourceChange(src)}
                           className={cn(
-                            "flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer text-xs",
-                            isSelected
-                              ? `${pill.color} font-bold shadow-xs`
-                              : "border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                            "flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer text-center",
+                            source === src
+                              ? "bg-background text-foreground shadow-xs border border-border/60"
+                              : "text-muted-foreground hover:text-foreground"
                           )}
                         >
-                          <Icon className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{pill.label}</span>
+                          {src === 'GT' ? 'Grand Test' : src === 'QBank' ? 'QBank' : 'Custom'}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                      Exam Name / Test ID (Optional)
+                    </span>
+                    <Input
+                      value={sourceExam}
+                      onChange={e => setSourceExam(e.target.value)}
+                      placeholder="e.g. Marrow GT-04, Pre-PG 2025"
+                      className="h-8.5 text-xs rounded-xl border-border/70 bg-muted/20 text-foreground"
+                    />
                   </div>
                 </div>
               </div>
