@@ -500,78 +500,86 @@ export default function MistakeRecoveryQueue() {
   };
 
   return (
-    <div id="mistake-journal-page" className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div id="mistake-journal-page" className="min-h-full bg-background px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 md:pb-12 max-w-5xl mx-auto space-y-4 sm:space-y-6 w-full overflow-hidden animate-in fade-in duration-200">
       
       {/* 1. Header & Global Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/40">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary font-bold tracking-wider uppercase text-[10px]">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>20th Notebook Architecture</span>
+      <div className="space-y-2 pb-3 border-b border-border/40 w-full">
+        {/* Top bar: Category badge + Action buttons */}
+        <div className="flex items-center justify-between gap-2 w-full">
+          <div className="flex items-center gap-1.5 text-primary font-bold tracking-wider uppercase text-[10px]">
+            <BookOpen className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">20th Notebook Architecture</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
-            <span>Mistake Recovery Vault</span>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {totalLogs > 0 && (
+              <Button
+                id="btn-export-mistakes"
+                variant="outline"
+                size="sm"
+                onClick={exportNotebook}
+                className="h-8 rounded-xl border-border/80 text-xs font-semibold gap-1 cursor-pointer text-muted-foreground hover:text-foreground px-2.5"
+                title="Export rules to Markdown"
+              >
+                <Download className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+            )}
+
+            <Button 
+              id="btn-open-log-mistake-modal"
+              onClick={() => openModalWithContext()}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer px-3 h-8 shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span>Log Takeaway</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Title and Badges */}
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground">
+              Mistake Recovery Vault
+            </h1>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono font-bold text-muted-foreground bg-muted/40 px-2.5 py-0.5 rounded-full border border-border/40">
+              <span className="text-[11px] font-mono font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40 shrink-0">
                 {activeCount} active
               </span>
               {volatileCount > 0 && (
-                <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
-                  <Flame className="w-3 h-3" /> {volatileCount} volatile
+                <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1 shrink-0">
+                  <Flame className="w-3 h-3 shrink-0" /> {volatileCount} volatile
                 </span>
               )}
             </div>
-          </h1>
+          </div>
           <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-            Distilled high-yield rules from your QBank & Grand Test errors. Press <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-[10px] text-foreground font-semibold">N</kbd> to quick log.
+            Distilled high-yield rules from your QBank & Grand Test errors.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap">
-          {/* Export button */}
-          {totalLogs > 0 && (
-            <Button
-              id="btn-export-mistakes"
-              variant="outline"
-              size="sm"
-              onClick={exportNotebook}
-              className="h-8.5 rounded-xl border-border/80 text-xs font-semibold gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
-              title="Export high-yield rules to Markdown"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
-          )}
-
-          {/* Log Primary Action */}
-          <Button 
-            id="btn-open-log-mistake-modal"
-            onClick={() => openModalWithContext()}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer px-4 h-8.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Log Takeaway</span>
-          </Button>
         </div>
       </div>
 
-      {/* 2. Intelligent High-Error Bridge (If High Concentration Exists) */}
+      {/* 2. Intelligent High-Error Concentration Alert (If Exists) */}
       {topErrorSubject && !selectedSubjectId && (
-        <div id="high-error-density-card" className="p-3.5 rounded-2xl bg-card border border-primary/20 shadow-xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+        <div 
+          id="high-error-density-card" 
+          className="p-3 sm:p-3.5 rounded-2xl bg-card border border-primary/20 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full animate-in fade-in slide-in-from-top-1 duration-200"
+        >
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 mt-0.5 sm:mt-0">
               <Brain className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs font-bold text-foreground">
                   High Mistake Concentration in {topErrorSubject.name}
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
                   {topErrorSubject.count} active mistakes
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground truncate">
+              <p className="text-[11px] text-muted-foreground line-clamp-1 sm:line-clamp-none">
                 Consider prioritizing this subject during your next scheduled revision session.
               </p>
             </div>
@@ -586,7 +594,7 @@ export default function MistakeRecoveryQueue() {
                 setActiveView('notebooks');
               }
             }}
-            className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0 px-2 py-1 cursor-pointer"
+            className="self-end sm:self-center text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0 px-2 py-1 cursor-pointer bg-primary/5 sm:bg-transparent rounded-lg border sm:border-transparent border-primary/20"
           >
             <span>Review</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -596,20 +604,20 @@ export default function MistakeRecoveryQueue() {
 
       {/* 3. View Switcher & Control Panel */}
       {!selectedSubjectId && (
-        <div className="flex items-center justify-between gap-2 flex-wrap pb-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full pb-0.5">
           {/* Segmented Mode Control */}
-          <div className="flex items-center p-1 rounded-2xl bg-muted/30 border border-border/70">
+          <div className="flex items-center p-1 rounded-2xl bg-muted/30 border border-border/70 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setActiveView('notebooks')}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                 activeView === 'notebooks'
                   ? "bg-card text-foreground shadow-xs border border-border/60"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <BookOpen className="w-3.5 h-3.5 text-primary" />
+              <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>Subject Notebooks</span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted/60 text-muted-foreground">
                 {subjectNotebooks.length}
@@ -620,13 +628,13 @@ export default function MistakeRecoveryQueue() {
               type="button"
               onClick={() => setActiveView('stream')}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                 activeView === 'stream'
                   ? "bg-card text-foreground shadow-xs border border-border/60"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Unified Stream</span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted/60 text-muted-foreground">
                 {totalLogs}
@@ -639,23 +647,23 @@ export default function MistakeRecoveryQueue() {
             type="button"
             onClick={() => setVolatileOnly(prev => !prev)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer w-full sm:w-auto",
               volatileOnly
                 ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs"
                 : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
             )}
           >
-            <Flame className="w-3.5 h-3.5" />
+            <Flame className="w-3.5 h-3.5 shrink-0" />
             <span>Volatile Traps ({volatileCount})</span>
           </button>
         </div>
       )}
 
-      {/* 4. MODE A: SUBJECT NOTEBOOKS GALLERY (When not deep in a subject) */}
+      {/* 4. MODE A: SUBJECT NOTEBOOKS GALLERY */}
       {activeView === 'notebooks' && !selectedSubjectId && (
-        <div className="space-y-4">
+        <div className="space-y-3 w-full">
           {subjectNotebooks.length > 0 ? (
-            <div id="subject-notebooks-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div id="subject-notebooks-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
               {subjectNotebooks.map(notebook => {
                 return (
                   <div
@@ -666,17 +674,17 @@ export default function MistakeRecoveryQueue() {
                       setSystemFilter('all');
                       setTagFilter('all');
                     }}
-                    className="group relative flex flex-col justify-between p-4.5 rounded-2xl bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
+                    className="group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden gap-3"
                   >
                     {/* Top Subject Title & Badges */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-transform">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 group-hover:scale-105 transition-transform">
                             <BookOpen className="w-4 h-4" />
                           </div>
-                          <div>
-                            <h3 className="font-extrabold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1">
+                          <div className="min-w-0">
+                            <h3 className="font-extrabold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors tracking-tight truncate">
                               {notebook.subjectName}
                             </h3>
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
@@ -685,9 +693,8 @@ export default function MistakeRecoveryQueue() {
                           </div>
                         </div>
 
-                        {/* Volatile badge if any */}
                         {notebook.volatileCount > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 shrink-0">
                             <Flame className="w-2.5 h-2.5" />
                             {notebook.volatileCount}
                           </span>
@@ -695,15 +702,15 @@ export default function MistakeRecoveryQueue() {
                       </div>
 
                       {/* Systems Pill Preview */}
-                      <div className="flex flex-wrap gap-1 pt-1">
+                      <div className="flex flex-wrap gap-1 pt-0.5">
                         {notebook.systems.slice(0, 3).map(sys => (
-                          <span key={sys.id} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground border border-border/40 truncate max-w-[140px]">
+                          <span key={sys.id} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground border border-border/40 truncate max-w-[120px] sm:max-w-[140px]">
                             {sys.name} ({sys.count})
                           </span>
                         ))}
                         {notebook.systems.length > 3 && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-muted/20 text-muted-foreground">
-                            +{notebook.systems.length - 3} more
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-muted/20 text-muted-foreground shrink-0">
+                            +{notebook.systems.length - 3}
                           </span>
                         )}
                       </div>
@@ -711,14 +718,14 @@ export default function MistakeRecoveryQueue() {
                       {/* Cross Tags Preview */}
                       {notebook.crossTags.length > 0 && (
                         <div className="flex flex-wrap gap-1 items-center pt-0.5">
-                          <Tag className="w-2.5 h-2.5 text-primary/70 mr-0.5" />
+                          <Tag className="w-2.5 h-2.5 text-primary/70 mr-0.5 shrink-0" />
                           {notebook.crossTags.slice(0, 2).map(tag => (
-                            <span key={tag} className="text-[9px] font-bold text-primary/80 bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20">
+                            <span key={tag} className="text-[9px] font-bold text-primary/80 bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20 truncate max-w-[90px]">
                               #{tag}
                             </span>
                           ))}
                           {notebook.crossTags.length > 2 && (
-                            <span className="text-[9px] text-muted-foreground">
+                            <span className="text-[9px] text-muted-foreground shrink-0">
                               +{notebook.crossTags.length - 2}
                             </span>
                           )}
@@ -727,22 +734,22 @@ export default function MistakeRecoveryQueue() {
                     </div>
 
                     {/* Bottom Meta & Action */}
-                    <div className="pt-4 mt-3 border-t border-border/40 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
+                    <div className="pt-2.5 border-t border-border/40 flex items-center justify-between text-xs w-full">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-bold text-foreground font-mono">
                           {notebook.activeCount}
                         </span>
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground truncate">
                           {notebook.activeCount === 1 ? 'active rule' : 'active rules'}
                         </span>
                         {notebook.masteredCount > 0 && (
-                          <span className="text-[10px] text-emerald-500 font-semibold ml-1">
+                          <span className="text-[10px] text-emerald-500 font-semibold shrink-0">
                             ({notebook.masteredCount} mastered)
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1 font-bold text-primary text-xs group-hover:translate-x-0.5 transition-transform">
+                      <div className="flex items-center gap-1 font-bold text-primary text-xs shrink-0 group-hover:translate-x-0.5 transition-transform ml-2">
                         <span>Open</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </div>
@@ -753,11 +760,11 @@ export default function MistakeRecoveryQueue() {
             </div>
           ) : (
             /* Empty State for Notebooks */
-            <div id="mistakes-empty-state" className="py-14 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6">
+            <div id="mistakes-empty-state" className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6 w-full">
               <div className="inline-flex p-3 rounded-2xl bg-primary/10 text-primary border border-primary/20 mb-1">
-                <BookOpen className="w-8 h-8" />
+                <BookOpen className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-sm sm:text-base font-bold text-foreground">
                 Your 20th Notebook is Pristine
               </h3>
               <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
@@ -767,7 +774,7 @@ export default function MistakeRecoveryQueue() {
                 <Button 
                   id="btn-empty-log-mistake"
                   onClick={() => openModalWithContext()}
-                  className="bg-primary text-primary-foreground font-bold text-xs rounded-xl gap-1.5 cursor-pointer px-4"
+                  className="bg-primary text-primary-foreground font-bold text-xs rounded-xl gap-1.5 cursor-pointer px-4 h-8.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Log First Takeaway</span>
@@ -780,48 +787,46 @@ export default function MistakeRecoveryQueue() {
 
       {/* 5. MODE A (DEEP DIVE): SELECTED SUBJECT NOTEBOOK LEDGER */}
       {selectedSubjectId && currentSubjectNotebook && (
-        <div id="subject-notebook-ledger" className="space-y-4 animate-in fade-in duration-200">
+        <div id="subject-notebook-ledger" className="space-y-3.5 w-full animate-in fade-in duration-200">
           
           {/* Breadcrumb & Navigation Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-card border border-border/80 shadow-xs">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:p-4 rounded-2xl bg-card border border-border/80 shadow-xs w-full">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedSubjectId(null)}
-                className="h-8.5 px-2.5 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer gap-1"
+                className="h-8 px-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer gap-1 shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>All Notebooks</span>
               </Button>
 
-              <div className="h-4 w-px bg-border/60" />
+              <div className="h-4 w-px bg-border/60 shrink-0" />
 
-              <div>
-                <h2 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                  <span>{currentSubjectNotebook.subjectName} Notebook</span>
-                  <span className="text-xs font-mono font-medium text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40">
-                    {filteredLogs.length} {filteredLogs.length === 1 ? 'rule' : 'rules'}
+              <div className="min-w-0">
+                <h2 className="text-sm sm:text-base font-extrabold text-foreground tracking-tight flex items-center gap-1.5 truncate">
+                  <span className="truncate">{currentSubjectNotebook.subjectName}</span>
+                  <span className="text-[10px] font-mono font-medium text-muted-foreground bg-muted/40 px-1.5 py-0.2 rounded-full border border-border/40 shrink-0">
+                    {filteredLogs.length}
                   </span>
                 </h2>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-center">
-              <Button
-                size="sm"
-                onClick={() => openModalWithContext(currentSubjectNotebook.subjectId)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1.5 cursor-pointer h-8"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add to {currentSubjectNotebook.subjectName}</span>
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => openModalWithContext(currentSubjectNotebook.subjectId)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer h-8 shrink-0 self-start sm:self-center"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Takeaway</span>
+            </Button>
           </div>
 
           {/* System Chapters Filter Bar */}
           {currentSubjectNotebook.systems.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
               <button
                 type="button"
                 onClick={() => setSystemFilter('all')}
@@ -853,11 +858,11 @@ export default function MistakeRecoveryQueue() {
             </div>
           )}
 
-          {/* Cross-Discipline Tags Filter Bar (if any tags present in this subject) */}
+          {/* Cross-Discipline Tags Filter Bar */}
           {currentSubjectNotebook.crossTags.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 mr-1 shrink-0">
-                <Tag className="w-3 h-3 text-primary" /> Cross-Tags:
+                <Tag className="w-3 h-3 text-primary" /> Tags:
               </span>
               <button
                 type="button"
@@ -890,7 +895,7 @@ export default function MistakeRecoveryQueue() {
           )}
 
           {/* Search & Status Filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-card p-2.5 rounded-2xl border border-border/80 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-2xl border border-border/80 shadow-xs w-full">
             {/* Search Input */}
             <div className="relative flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -898,8 +903,8 @@ export default function MistakeRecoveryQueue() {
                 ref={searchInputRef}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder={`Search inside ${currentSubjectNotebook.subjectName} rules, drugs, triads...`}
-                className="pl-8.5 pr-8 h-8.5 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
+                placeholder={`Search inside ${currentSubjectNotebook.subjectName} rules...`}
+                className="pl-8.5 pr-8 h-8 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
               />
               {searchQuery && (
                 <button
@@ -913,8 +918,7 @@ export default function MistakeRecoveryQueue() {
             </div>
 
             {/* Filter Controls */}
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Status Segmented */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <div className="flex items-center p-0.5 rounded-xl bg-muted/40 border border-border/60">
                 {(['active', 'mastered', 'all'] as const).map(st => (
                   <button
@@ -933,12 +937,11 @@ export default function MistakeRecoveryQueue() {
                 ))}
               </div>
 
-              {/* Volatile Toggle */}
               <button
                 type="button"
                 onClick={() => setVolatileOnly(prev => !prev)}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer",
+                  "flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer h-7.5",
                   volatileOnly
                     ? "bg-amber-500/20 text-amber-500 border-amber-500/40"
                     : "bg-muted/20 border-border/70 text-muted-foreground hover:text-foreground"
@@ -963,7 +966,7 @@ export default function MistakeRecoveryQueue() {
 
           {/* List of Clinical Takeaway Cards */}
           {filteredLogs.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5 w-full">
               {filteredLogs.map(log => {
                 const sysName = systemMap.get(String(log.systemId)) || 'General Chapter';
 
@@ -972,36 +975,35 @@ export default function MistakeRecoveryQueue() {
                     key={String(log.id)}
                     id={`mistake-card-${log.id}`}
                     className={cn(
-                      "group relative p-4 rounded-2xl bg-card border transition-all duration-150 space-y-2.5",
+                      "group relative p-3 sm:p-4 rounded-2xl bg-card border transition-all duration-150 space-y-2 w-full",
                       log.resolved
                         ? "border-border/40 opacity-70 bg-muted/10"
                         : "border-border/80 hover:border-border shadow-xs"
                     )}
                   >
                     {/* Top Row: System Chapter, Topic & Actions */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          {sysName}
+                    <div className="flex items-center justify-between gap-2 flex-wrap w-full">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1 truncate max-w-[160px]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                          <span className="truncate">{sysName}</span>
                         </span>
 
                         {log.topicId && (
-                          <span className="text-[10px] font-bold text-primary/90 bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                          <span className="text-[10px] font-bold text-primary/90 bg-primary/10 px-1.5 py-0.2 rounded-md border border-primary/20 truncate max-w-[120px]">
                             {log.topicId}
                           </span>
                         )}
 
                         {log.isVolatile && (
-                          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">
-                            <Flame className="w-2.5 h-2.5" /> Volatile Fact
+                          <span className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30 shrink-0">
+                            <Flame className="w-2.5 h-2.5" /> Volatile
                           </span>
                         )}
                       </div>
 
                       {/* Right Action Icons */}
-                      <div className="flex items-center gap-1">
-                        {/* Mastered Toggle */}
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleToggleMastered(log)}
@@ -1021,12 +1023,11 @@ export default function MistakeRecoveryQueue() {
                           ) : (
                             <>
                               <Circle className="w-3 h-3" />
-                              <span>Mark Mastered</span>
+                              <span>Mastered</span>
                             </>
                           )}
                         </button>
 
-                        {/* Volatile Toggle */}
                         <button
                           type="button"
                           onClick={() => handleToggleVolatile(log)}
@@ -1041,7 +1042,6 @@ export default function MistakeRecoveryQueue() {
                           <Flame className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Safe Delete */}
                         <button
                           type="button"
                           onClick={() => handleDelete(log)}
@@ -1055,14 +1055,14 @@ export default function MistakeRecoveryQueue() {
 
                     {/* Optional Clinical Trigger / Scenario */}
                     {log.clinicalTrigger && (
-                      <div className="p-2.5 rounded-xl bg-muted/20 border border-border/40 text-xs text-muted-foreground italic leading-relaxed">
+                      <div className="p-2 sm:p-2.5 rounded-xl bg-muted/20 border border-border/40 text-xs text-muted-foreground italic leading-relaxed">
                         <span className="font-bold not-italic text-foreground/80 mr-1">Vignette Trigger:</span>
                         {log.clinicalTrigger}
                       </div>
                     )}
 
                     {/* Hero Golden Rule Text */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       {log.title && (
                         <h4 className="text-xs font-bold text-foreground">
                           {log.title}
@@ -1074,27 +1074,24 @@ export default function MistakeRecoveryQueue() {
                     </div>
 
                     {/* Bottom Metadata Line */}
-                    <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground pt-1">
-                      {/* Cross-Discipline Tags */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-border/30">
                       {log.tags && log.tags.length > 0 && (
                         <div className="flex items-center gap-1 flex-wrap">
                           {log.tags.map(tag => (
-                            <span key={tag} className="font-semibold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/20">
+                            <span key={tag} className="font-semibold text-primary bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20">
                               #{tag}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      {/* Source Pill */}
-                      <span className="font-mono bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
+                      <span className="font-mono bg-muted/40 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[120px]">
                         {log.source === 'GT' ? 'Grand Test' : log.source}
                         {log.sourceExam ? ` • ${log.sourceExam}` : ''}
                       </span>
 
-                      {/* Error Cause */}
                       <span className={cn(
-                        "font-semibold px-1.5 py-0.5 rounded border",
+                        "font-semibold px-1.5 py-0.2 rounded border",
                         log.errorType === 'concept' && "border-rose-500/20 text-rose-400 bg-rose-500/10",
                         log.errorType === 'misread' && "border-amber-500/20 text-amber-400 bg-amber-500/10",
                         log.errorType === 'retrieval' && "border-sky-500/20 text-sky-400 bg-sky-500/10",
@@ -1105,9 +1102,8 @@ export default function MistakeRecoveryQueue() {
                          log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
                       </span>
 
-                      {/* Date */}
                       <span className="text-muted-foreground/60 ml-auto">
-                        {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
                   </div>
@@ -1115,7 +1111,7 @@ export default function MistakeRecoveryQueue() {
               })}
             </div>
           ) : (
-            <div className="py-10 text-center space-y-2 rounded-2xl border border-dashed border-border/80 bg-card p-6">
+            <div className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 bg-card p-4 w-full">
               <p className="text-xs font-semibold text-muted-foreground">
                 No takeaways matched your current filters in {currentSubjectNotebook.subjectName}.
               </p>
@@ -1123,7 +1119,7 @@ export default function MistakeRecoveryQueue() {
                 variant="outline"
                 size="sm"
                 onClick={resetFilters}
-                className="rounded-xl text-xs font-semibold"
+                className="rounded-xl text-xs font-semibold h-8"
               >
                 Clear Filters
               </Button>
@@ -1132,14 +1128,14 @@ export default function MistakeRecoveryQueue() {
         </div>
       )}
 
-      {/* 6. MODE B: UNIFIED RAPID STREAM (Chronological across all subjects) */}
+      {/* 6. MODE B: UNIFIED RAPID STREAM */}
       {activeView === 'stream' && !selectedSubjectId && (
-        <div className="space-y-4">
+        <div className="space-y-3 w-full">
           
           {/* Universal Search & Multi-Filters */}
-          <div id="journal-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-card p-2.5 rounded-2xl border border-border/80 shadow-xs">
+          <div id="journal-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-2xl border border-border/80 shadow-xs w-full">
             
-            {/* Search Input with Keyboard Shortcut Indicator */}
+            {/* Search Input */}
             <div className="relative flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
@@ -1147,8 +1143,8 @@ export default function MistakeRecoveryQueue() {
                 id="input-search-mistakes"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search across all 19 subjects, rules, tags, drugs (e.g. DOC, Phenoxybenzamine)..."
-                className="pl-8.5 pr-14 h-8.5 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
+                placeholder="Search across all 19 subjects, rules, tags, drugs..."
+                className="pl-8.5 pr-14 h-8 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
               />
               {searchQuery ? (
                 <button
@@ -1165,13 +1161,13 @@ export default function MistakeRecoveryQueue() {
               )}
             </div>
 
-            {/* Clean Dropdown Filters */}
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Dropdown Filters */}
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
               <select
                 id="select-error-type-filter"
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value)}
-                className="h-8.5 rounded-xl border border-border/70 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                className="h-8 rounded-xl border border-border/70 bg-muted/20 px-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer flex-1 sm:flex-initial"
               >
                 <option value="all">All Root Causes</option>
                 <option value="concept">Knowledge Gaps</option>
@@ -1184,7 +1180,7 @@ export default function MistakeRecoveryQueue() {
                 id="select-subject-filter"
                 value={filterSubjectId}
                 onChange={e => setFilterSubjectId(e.target.value)}
-                className="h-8.5 rounded-xl border border-border/70 bg-muted/20 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[150px] truncate"
+                className="h-8 rounded-xl border border-border/70 bg-muted/20 px-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[140px] truncate flex-1 sm:flex-initial"
               >
                 <option value="all">All Subjects</option>
                 {subjects.map(s => (
@@ -1206,7 +1202,7 @@ export default function MistakeRecoveryQueue() {
 
           {/* Grouped Subject Stream */}
           {hierarchicalGroups.length > 0 ? (
-            <div id="mistakes-notebook-container" className="space-y-4">
+            <div id="mistakes-notebook-container" className="space-y-3 w-full">
               {hierarchicalGroups.map(subjectGroup => {
                 const isCollapsed = !!collapsedSubjects[subjectGroup.subjectId];
 
@@ -1214,24 +1210,24 @@ export default function MistakeRecoveryQueue() {
                   <div 
                     key={subjectGroup.subjectId} 
                     id={`subject-section-${subjectGroup.subjectId}`}
-                    className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden transition-all"
+                    className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden transition-all w-full"
                   >
                     {/* Collapsible Subject Section Header */}
-                    <div className="w-full px-4 py-3 bg-muted/30 border-b border-border/60 flex items-center justify-between gap-3 text-left">
+                    <div className="w-full px-3.5 py-2.5 bg-muted/30 border-b border-border/60 flex items-center justify-between gap-2 text-left">
                       <button
                         type="button"
                         onClick={() => toggleSubjectCollapse(subjectGroup.subjectId)}
                         className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
                       >
-                        <span className="font-extrabold text-xs sm:text-sm text-foreground tracking-tight uppercase">
+                        <span className="font-extrabold text-xs sm:text-sm text-foreground tracking-tight uppercase truncate">
                           {subjectGroup.subjectName}
                         </span>
-                        <span className="text-[11px] font-mono font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/40 shrink-0">
-                          {subjectGroup.totalCount} {subjectGroup.totalCount === 1 ? 'rule' : 'rules'}
+                        <span className="text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded-full border border-border/40 shrink-0">
+                          {subjectGroup.totalCount}
                         </span>
                       </button>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -1257,76 +1253,69 @@ export default function MistakeRecoveryQueue() {
                     {!isCollapsed && (
                       <div className="divide-y divide-border/40">
                         {subjectGroup.systems.map(systemGroup => (
-                          <div key={systemGroup.systemId} className="p-4 space-y-3">
+                          <div key={systemGroup.systemId} className="p-3 sm:p-4 space-y-2.5">
                             
                             {/* System Header */}
                             <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                              <span>{systemGroup.systemName}</span>
-                              <span className="text-[10px] text-muted-foreground/60 font-mono">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                              <span className="truncate">{systemGroup.systemName}</span>
+                              <span className="text-[10px] text-muted-foreground/60 font-mono shrink-0">
                                 ({systemGroup.logs.length})
                               </span>
                             </div>
 
                             {/* List of Distilled Rules */}
-                            <div className="space-y-2.5 pl-1 sm:pl-3">
+                            <div className="space-y-2 pl-1 sm:pl-2">
                               {systemGroup.logs.map(log => {
                                 return (
                                   <div 
                                     key={String(log.id)} 
                                     id={`mistake-row-${log.id}`}
-                                    className="group flex items-start justify-between gap-3 p-2.5 sm:p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
+                                    className="group flex items-start justify-between gap-2 p-2 sm:p-2.5 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
                                   >
                                     {/* Left Content */}
-                                    <div className="flex-1 space-y-1.5 min-w-0">
-                                      {/* Trigger if present */}
+                                    <div className="flex-1 space-y-1 min-w-0">
                                       {log.clinicalTrigger && (
-                                        <p className="text-[11px] text-muted-foreground italic line-clamp-1">
+                                        <p className="text-[11px] text-muted-foreground italic truncate">
                                           Trigger: {log.clinicalTrigger}
                                         </p>
                                       )}
 
-                                      {/* Clinical Rule Text */}
                                       <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed select-text">
                                         {log.keyTakeaway}
                                       </p>
 
                                       {/* Metadata Line */}
-                                      <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
-                                        {/* Volatile badge */}
+                                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground">
                                         {log.isVolatile && (
-                                          <span className="flex items-center gap-0.5 text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                                          <span className="flex items-center gap-0.5 text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30 shrink-0">
                                             <Flame className="w-2.5 h-2.5" /> Volatile
                                           </span>
                                         )}
 
-                                        {/* Cross-Discipline Tags */}
                                         {log.tags && log.tags.length > 0 && (
                                           <div className="flex items-center gap-1 flex-wrap">
                                             {log.tags.map(tag => (
-                                              <span key={tag} className="font-semibold text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                                              <span key={tag} className="font-semibold text-primary/90 bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                                                 #{tag}
                                               </span>
                                             ))}
                                           </div>
                                         )}
 
-                                        {/* Topic Tag if present */}
                                         {log.topicId && (
-                                          <span className="font-semibold text-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded border border-border/40">
+                                          <span className="font-semibold text-foreground/80 bg-muted/50 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[100px]">
                                             {log.topicId}
                                           </span>
                                         )}
 
-                                        {/* Source Pill */}
-                                        <span className="font-mono bg-muted/40 px-1.5 py-0.5 rounded border border-border/40">
+                                        <span className="font-mono bg-muted/40 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[110px]">
                                           {log.source === 'GT' ? 'Grand Test' : log.source}
                                           {log.sourceExam ? ` • ${log.sourceExam}` : ''}
                                         </span>
 
-                                        {/* Error Cause */}
                                         <span className={cn(
-                                          "font-semibold px-1.5 py-0.5 rounded border",
+                                          "font-semibold px-1.5 py-0.2 rounded border",
                                           log.errorType === 'concept' && "border-rose-500/20 text-rose-400 bg-rose-500/10",
                                           log.errorType === 'misread' && "border-amber-500/20 text-amber-400 bg-amber-500/10",
                                           log.errorType === 'retrieval' && "border-sky-500/20 text-sky-400 bg-sky-500/10",
@@ -1337,8 +1326,7 @@ export default function MistakeRecoveryQueue() {
                                            log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
                                         </span>
 
-                                        {/* Date */}
-                                        <span className="text-muted-foreground/60">
+                                        <span className="text-muted-foreground/60 ml-auto">
                                           {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </span>
                                       </div>
@@ -1383,7 +1371,7 @@ export default function MistakeRecoveryQueue() {
               })}
             </div>
           ) : (
-            <div id="mistakes-stream-empty-state" className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6">
+            <div id="mistakes-stream-empty-state" className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 bg-card p-4 w-full">
               <p className="text-xs text-muted-foreground">
                 No takeaways matched your search filters.
               </p>
@@ -1391,7 +1379,7 @@ export default function MistakeRecoveryQueue() {
                 onClick={resetFilters}
                 variant="outline"
                 size="sm"
-                className="rounded-xl text-xs font-semibold"
+                className="rounded-xl text-xs font-semibold h-8"
               >
                 Clear Filters
               </Button>

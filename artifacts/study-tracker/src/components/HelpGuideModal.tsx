@@ -211,9 +211,15 @@ const CHAPTERS = [
     id: 'faq',
     title: 'Frequently Asked Questions',
     icon: HelpCircle,
-    searchTerms: 'faq question answer help backup firebase recommendations decay retrievability focus mode triage beta access',
+    searchTerms: 'faq question answer help backup firebase recommendations decay retrievability focus mode triage zoom text size font scaling display shortcuts',
     content: (
       <div className="space-y-6">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">How do I adjust text size or UI scaling?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas fully supports native browser and OS scaling. Press <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ -</kbd> (or <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl -</kbd> on Windows) to adjust UI scale, or pinch-to-zoom on tablets and mobile devices. All medical charts, flashcards, and layouts adapt smoothly.
+          </p>
+        </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">How do recommendations work?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">

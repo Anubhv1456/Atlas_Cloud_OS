@@ -307,7 +307,7 @@ export function QuickMistakeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent id="quick-mistake-dialog" className="sm:max-w-xl rounded-3xl p-6 border-border/80 shadow-2xl bg-card text-foreground max-h-[90vh] overflow-y-auto">
+      <DialogContent id="quick-mistake-dialog" className="w-[calc(100%-2rem)] sm:max-w-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border-border/80 shadow-2xl bg-card text-foreground max-h-[90vh] overflow-y-auto mx-auto">
         
         {/* Modal Header */}
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
