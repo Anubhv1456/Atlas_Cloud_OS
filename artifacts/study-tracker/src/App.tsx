@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
+import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
@@ -201,6 +202,7 @@ function ProtectedApp() {
       <AutoSyncEngine />
       <BottomNav />
       <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300">
+        <OfflineLeaseBanner />
         <motion.main
           key={location}
           initial={{ opacity: 0, y: 12, scale: 0.98 }}

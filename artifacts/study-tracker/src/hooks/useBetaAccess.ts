@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { firestoreDb } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease } from '@/lib/offlineLease';
 
 export function useBetaAccess() {
   const { user } = useAuth();
@@ -11,7 +12,10 @@ export function useBetaAccess() {
   const [paymentRejectionNote, setPaymentRejectionNote] = useState<string | null>(null);
   const [vaultActivationRequired, setVaultActivationRequired] = useState(false);
   const [vaultProvenance, setVaultProvenance] = useState<any | null>(null);
+  const [offlineLeaseValid, setOfflineLeaseValid] = useState(true);
+  const [offlineHoursRemaining, setOfflineHoursRemaining] = useState(72);
   const [loading, setLoading] = useState(true);
+  const snapshotHandledRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -21,38 +25,68 @@ export function useBetaAccess() {
       setPaymentRejectionNote(null);
       setVaultActivationRequired(false);
       setVaultProvenance(null);
+      setOfflineLeaseValid(true);
       setLoading(false);
       return;
     }
 
-    // Check local storage initial state
+    snapshotHandledRef.current = false;
+
+    // 1. Immediate local hydration (0ms offline latency)
     const localAccess = localStorage.getItem(`beta_access_${user.uid}`);
     const localExpiry = localStorage.getItem(`beta_access_expiry_${user.uid}`);
-    let isLocallyValid = false;
+    const leaseCheck = verifyOfflineLease(user.uid);
+    setOfflineLeaseValid(leaseCheck.isValid);
+    setOfflineHoursRemaining(leaseCheck.hoursRemaining);
 
-    if (localAccess === 'true' && localExpiry) {
-      const expTime = parseInt(localExpiry, 10);
-      if (new Date().getTime() < expTime) {
-        isLocallyValid = true;
-        setExpiresAt(expTime);
+    let isLocallyValid = false;
+    if (localAccess === 'true') {
+      if (localExpiry) {
+        const expTime = parseInt(localExpiry, 10);
+        if (new Date().getTime() < expTime) {
+          isLocallyValid = true;
+          setExpiresAt(expTime);
+        } else {
+          localStorage.removeItem(`beta_access_${user.uid}`);
+          localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+          revokeOfflineLease(user.uid);
+        }
       } else {
-        localStorage.removeItem(`beta_access_${user.uid}`);
-        localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+        // Lifetime access or active lease
+        isLocallyValid = true;
       }
     }
 
+    // Set optimistic access state immediately
+    if (isLocallyValid) {
+      setHasAccess(true);
+    }
+
+    // If no Firestore available, resolve immediately
     if (!firestoreDb) {
       setHasAccess(isLocallyValid);
       setLoading(false);
       return;
     }
 
+    // 2. 300ms Race-Timeout Fallback
+    // If onSnapshot hangs (e.g. offline / poor signal), unblock App.tsx root mount
+    const offlineFallbackTimer = setTimeout(() => {
+      if (!snapshotHandledRef.current) {
+        setHasAccess(isLocallyValid);
+        setLoading(false);
+      }
+    }, 300);
+
     const userRef = doc(firestoreDb, 'users', user.uid);
 
-    // Subscribe to real-time changes so revocation/approval from admin console takes immediate effect
+    // 3. Real-time Cloud Synchronization
     const unsubscribe = onSnapshot(
       userRef,
       async (snap) => {
+        snapshotHandledRef.current = true;
+        clearTimeout(offlineFallbackTimer);
+
         if (snap.exists()) {
           const data = snap.data();
           setPaymentStatus(data.paymentStatus || null);
@@ -69,12 +103,17 @@ export function useBetaAccess() {
               // Expired access
               localStorage.removeItem(`beta_access_${user.uid}`);
               localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+              revokeOfflineLease(user.uid);
               setHasAccess(false);
               setExpiresAt(null);
-              await setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
+              setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
             } else {
-              // Valid access
+              // Valid active access -> Issue / refresh 72h offline lease
               localStorage.setItem(`beta_access_${user.uid}`, 'true');
+              issueOfflineLease(user.uid);
+              setOfflineLeaseValid(true);
+              setOfflineHoursRemaining(72);
+
               if (expTime) {
                 localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
                 setExpiresAt(expTime);
@@ -87,12 +126,14 @@ export function useBetaAccess() {
             // Access revoked or absent
             localStorage.removeItem(`beta_access_${user.uid}`);
             localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+            revokeOfflineLease(user.uid);
             setHasAccess(false);
             setExpiresAt(null);
           }
         } else {
           localStorage.removeItem(`beta_access_${user.uid}`);
           localStorage.removeItem(`beta_access_expiry_${user.uid}`);
+          revokeOfflineLease(user.uid);
           setHasAccess(false);
           setExpiresAt(null);
           setPaymentStatus(null);
@@ -103,13 +144,18 @@ export function useBetaAccess() {
         setLoading(false);
       },
       (error) => {
-        console.error("Error listening to beta access state:", error);
+        console.warn("Firestore access snapshot skipped (offline):", error);
+        snapshotHandledRef.current = true;
+        clearTimeout(offlineFallbackTimer);
         setHasAccess(isLocallyValid);
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(offlineFallbackTimer);
+      unsubscribe();
+    };
   }, [user]);
 
   const grantAccess = async () => {
@@ -135,6 +181,7 @@ export function useBetaAccess() {
     }
     localStorage.setItem(`beta_access_${user.uid}`, 'true');
     localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
+    issueOfflineLease(user.uid);
     setHasAccess(true);
     setExpiresAt(expTime);
   };
@@ -160,6 +207,8 @@ export function useBetaAccess() {
     paymentRejectionNote, 
     vaultActivationRequired,
     vaultProvenance,
+    offlineLeaseValid,
+    offlineHoursRemaining,
     loading, 
     grantAccess,
     clearVaultActivationFlag

@@ -23,8 +23,14 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
       return;
     }
 
+    // Fallback timer for offline mounting (unblocks UI in 250ms)
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+    }, 250);
+
     const docRef = doc(firestoreDb, 'config', 'featureFlags');
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      clearTimeout(fallbackTimer);
       if (snapshot.exists()) {
         setFlags({ ...defaultFlags, ...(snapshot.data() as FeatureFlags) });
       } else {
@@ -32,11 +38,15 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
       }
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching feature flags:", error);
+      clearTimeout(fallbackTimer);
+      console.warn("Feature flags snapshot deferred (offline):", error);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
   }, []);
 
   return (

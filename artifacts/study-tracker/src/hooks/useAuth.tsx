@@ -22,24 +22,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      // Immediately resolve loading state so cached session mounts with 0ms delay offline
+      setLoading(false);
       
       if (currentUser && firestoreDb) {
-        // Save user metadata to firestore for admin visibility
-        try {
-          await setDoc(doc(firestoreDb, 'users', currentUser.uid), {
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            lastLoginAt: serverTimestamp(),
-            createdAt: currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime) : serverTimestamp()
-          }, { merge: true });
-        } catch (e) {
-          console.error("Failed to update user metadata", e);
-        }
+        // Non-blocking fire-and-forget background sync for user metadata
+        setDoc(doc(firestoreDb, 'users', currentUser.uid), {
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          lastLoginAt: serverTimestamp(),
+          createdAt: currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime) : serverTimestamp()
+        }, { merge: true }).catch((e) => {
+          console.warn("User metadata background sync deferred (offline):", e);
+        });
       }
-      
-      setLoading(false);
     });
 
     return unsubscribe;

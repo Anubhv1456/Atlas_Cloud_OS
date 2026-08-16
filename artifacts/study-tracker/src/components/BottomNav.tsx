@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Home, CalendarDays, BarChart3, Settings, Sparkles, Target, ShieldCheck, User, ShieldAlert } from 'lucide-react';
+import { Home, CalendarDays, BarChart3, Settings, Sparkles, Target, ShieldCheck, User, ShieldAlert, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
@@ -12,6 +12,20 @@ export function BottomNav() {
   const { profile, isConfigured } = useExamProfile();
   const { user } = useAuth();
   const [examModalOpen, setExamModalOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const links = [
     { href: '/',          icon: Home,          label: 'Home',      shortcut: '1' },
@@ -169,10 +183,17 @@ export function BottomNav() {
               </div>
               <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-              <ShieldCheck className="w-3 h-3" />
-              <span>Synced</span>
-            </div>
+            {isOnline ? (
+              <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <ShieldCheck className="w-3 h-3" />
+                <span>Synced</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20">
+                <Database className="w-3 h-3" />
+                <span>Vault</span>
+              </div>
+            )}
           </div>
         </div>
       </aside>
