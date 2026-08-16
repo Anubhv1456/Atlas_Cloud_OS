@@ -190,14 +190,14 @@ function ProtectedApp() {
       <GlobalAnnouncements />
       <AutoSyncEngine />
       <BottomNav />
-      <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300">
+      <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-[100dvh]">
         <OfflineLeaseBanner />
         <motion.main
           key={location}
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
-          className="w-full h-full"
+          className="w-full flex-1 flex flex-col"
         >
           <Suspense fallback={<AtlasLoadingScreen />}>
             <Switch>
