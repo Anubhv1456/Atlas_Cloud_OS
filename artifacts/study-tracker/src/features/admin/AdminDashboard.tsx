@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { OpsQueueView } from './views/OpsQueueView';
 import { UsersView } from './views/UsersView';
 import { SystemControlView } from './views/SystemControlView';
@@ -65,11 +66,7 @@ export default function AdminDashboard() {
   }, [user, isAdmin, loading, flagsLoading, setLocation]);
 
   if (loading || flagsLoading || !user || !isAdmin) {
-    return (
-      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <AtlasLoadingScreen fullScreen message="Authenticating system console..." />;
   }
 
   const renderView = () => {

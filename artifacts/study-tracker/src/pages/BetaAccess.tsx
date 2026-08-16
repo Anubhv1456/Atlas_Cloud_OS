@@ -9,6 +9,7 @@ import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { AtlasEmblem } from '@/components/AtlasEmblem';
+import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { submitPaymentProof, getPaymentConfig, PaymentConfig, DEFAULT_PAYMENT_CONFIG } from '@/lib/admin';
 import { toast } from 'sonner';
 import {
@@ -208,11 +209,7 @@ export default function BetaAccess() {
   };
 
   if (accessLoading || authLoading || configLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[100dvh] bg-[#030303]">
-        <Loader2 className="w-5 h-5 text-teal-500 animate-spin" />
-      </div>
-    );
+    return <AtlasLoadingScreen fullScreen />;
   }
 
   // Approved Access Transition View

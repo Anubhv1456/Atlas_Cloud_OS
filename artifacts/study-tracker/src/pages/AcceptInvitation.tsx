@@ -51,22 +51,27 @@ export default function AcceptInvitation() {
       if (activeCode) {
         const res = await claimReferralCode(activeCode, user);
         if (res.success) {
-          toast.success('Clinical Trial Activated 🎉', {
-            description: `${res.trialDaysAwarded || 15}-Day candidate access granted.`
+          toast.success('15-Day Study Pass Activated 🎉', {
+            description: `${res.trialDaysAwarded || 15}-Day full access granted for your exam preparation.`
           });
+          localStorage.setItem(`invitation_accepted_${user.uid}`, 'true');
+          setTimeout(() => {
+            setLocation('/');
+          }, 500);
         } else {
-          toast.info(res.message);
+          toast.error(res.message || 'Invalid or expired invite pass');
+          setLoading(false);
+          return;
         }
+      } else {
+        localStorage.setItem(`invitation_accepted_${user.uid}`, 'true');
+        setTimeout(() => {
+          setLocation('/');
+        }, 500);
       }
-
-      localStorage.setItem(`invitation_accepted_${user.uid}`, 'true');
-
-      setTimeout(() => {
-        setLocation('/');
-      }, 500);
     } catch (e: any) {
       console.error(e);
-      toast.error('Failed to complete enrollment: ' + (e.message || 'Unknown error'));
+      toast.error('Failed to activate study pass: ' + (e.message || 'Unknown error'));
       setLoading(false);
     }
   };
@@ -84,10 +89,10 @@ export default function AcceptInvitation() {
     }));
   }, []);
 
-  const inviterName = referralDoc?.ownerDisplayName || 'A Medical Colleague';
+  const inviterName = referralDoc?.ownerDisplayName || 'A Medical Batchmate';
   const badgeText = referralDoc 
-    ? `Invited by ${inviterName}` 
-    : (payConfig.cohortBadgeText || `${payConfig.totalSeats || 200} Closed Beta Seats`);
+    ? `Pass from ${inviterName}` 
+    : (payConfig.cohortBadgeText || `${payConfig.totalSeats || 200} Study Passes Available`);
 
   return (
     <div className="min-h-[100dvh] bg-[#030303] text-zinc-100 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden font-sans selection:bg-teal-500/30">
@@ -150,7 +155,7 @@ export default function AcceptInvitation() {
                 <path d="M256,112.5 L76,390 L256,315 Z" fill="#20b59b" />
                 <path d="M256,112.5 L436,390 L256,315 Z" fill="#64748b" />
               </g>
-            </svg>
+             </svg>
           </motion.div>
         </div>
 
@@ -163,21 +168,21 @@ export default function AcceptInvitation() {
           </div>
           
           <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-zinc-100 mb-2.5">
-            {referralDoc ? '15-Day Candidate Pass' : 'Invitation Verified'}
+            {referralDoc ? '15-Day Study Pass' : 'Batchmate Pass Verified'}
           </h1>
           
           <p className="text-[14px] text-zinc-400 leading-relaxed mb-8 max-w-[340px]">
             {referralDoc ? (
               <>
-                You have been invited by <strong className="text-zinc-100 font-semibold">{inviterName}</strong> to join Atlas. Full SDSR algorithm access is unlocked for your target residency exam.
+                You've been invited by <strong className="text-zinc-100 font-semibold">{inviterName}</strong> to join Atlas. Your 15-day study pass unlocks the SDSR recommendation engine and custom revision schedules for your medical exam.
               </>
             ) : user ? (
               <>
-                Welcome, <strong className="text-zinc-200 font-medium">{user.email}</strong>. Your access to the Atlas closed beta has been confirmed.
+                Welcome, <strong className="text-zinc-200 font-medium">{user.email}</strong>. Your study pass has been activated.
               </>
             ) : (
               <>
-                Sign in with your medical Google account to claim your candidate pass and activate your revision schedule.
+                Sign in with your Google account to claim your 15-day pass and activate your personalized medical revision schedule.
               </>
             )}
           </p>
@@ -187,7 +192,7 @@ export default function AcceptInvitation() {
             <div className="w-full mb-8 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-left space-y-2 text-xs text-zinc-300">
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                <span>15 Days Full Access to SDSR Recommendations Engine</span>
+                <span>15 Days Full Access to SDSR Spaced Recommendations</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
@@ -195,7 +200,7 @@ export default function AcceptInvitation() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                <span>Custom Calibrated for NEET PG, INICET & USMLE</span>
+                <span>Calibrated for NEET PG, INICET, NEXT & USMLE</span>
               </div>
             </div>
           )}
@@ -214,7 +219,7 @@ export default function AcceptInvitation() {
                   <>
                     <Check className="w-[18px] h-[18px] relative z-10 text-teal-700" />
                     <span className="relative z-10 tracking-wide">
-                      {referralDoc ? 'Activate 15-Day Pass' : 'Complete Enrollment'}
+                      {referralDoc ? 'Activate 15-Day Study Pass' : 'Enter Atlas'}
                     </span>
                   </>
                 ) : (
@@ -233,7 +238,7 @@ export default function AcceptInvitation() {
           </button>
           
           <p className="text-[11.5px] text-zinc-500 mt-5 max-w-[280px]">
-            Zero credit card required. Free 15-day pass for verified medical students.
+            No credit card required. Free 15-day pass for medical students & doctors.
           </p>
         </div>
       </motion.div>

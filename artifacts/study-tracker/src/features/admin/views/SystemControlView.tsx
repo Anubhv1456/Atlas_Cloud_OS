@@ -809,7 +809,7 @@ export function SystemControlView() {
                     Peer Referral & Batchmate Pass Engine
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Configure pass durations, study qualification gates, and colleague pass allocations.
+                    Configure pass durations, study qualification gates, and batchmate pass allocations.
                   </p>
                 </div>
                 <button
@@ -891,7 +891,7 @@ export function SystemControlView() {
                       onChange={(e) => setReferralConfig(prev => ({ ...prev, referrerBonusDays: parseInt(e.target.value, 10) || 14 }))}
                       className="text-xs rounded-xl w-32 font-mono font-bold text-teal-400"
                     />
-                    <span className="text-xs text-muted-foreground font-medium">Days added per qualified colleague</span>
+                    <span className="text-xs text-muted-foreground font-medium">Days added per qualified batchmate</span>
                   </div>
                 </div>
 
@@ -902,7 +902,7 @@ export function SystemControlView() {
                       Pass Quota Limit Per Student
                     </label>
                     <p className="text-[11px] text-muted-foreground">
-                      Maximum number of colleague passes allocated to each candidate account.
+                      Maximum number of batchmate passes allocated to each candidate account.
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -914,7 +914,7 @@ export function SystemControlView() {
                       onChange={(e) => setReferralConfig(prev => ({ ...prev, maxPassesPerUser: parseInt(e.target.value, 10) || 3 }))}
                       className="text-xs rounded-xl w-32 font-mono font-bold"
                     />
-                    <span className="text-xs text-muted-foreground font-medium">Colleague Passes max</span>
+                    <span className="text-xs text-muted-foreground font-medium">Batchmate Passes max</span>
                   </div>
                 </div>
 
@@ -961,7 +961,7 @@ export function SystemControlView() {
                 <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-foreground block mb-0.5 font-semibold">Anti-Abuse Engagement Loop</strong>
-                  Invited colleagues receive instant candidate access. Referral rewards (+14 days) are only disbursed to the referrer once the colleague logs at least {referralConfig.minStudyMinutesToQualify} minutes of genuine curriculum revision or flashcard recall.
+                  Invited batchmates receive instant candidate access. Referral rewards (+14 days) are only disbursed to the referrer once the batchmate logs at least {referralConfig.minStudyMinutesToQualify} minutes of genuine curriculum revision or flashcard recall.
                 </div>
               </div>
             </form>

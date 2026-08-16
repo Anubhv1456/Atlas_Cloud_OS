@@ -65,7 +65,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
-      toast.success('Invite link copied to clipboard');
+      toast.success('Study pass link copied');
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       toast.error('Failed to copy link');
@@ -73,7 +73,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
   };
 
   const handleShareWhatsApp = () => {
-    const text = `Hey, I've been using Atlas to organize my NEET PG revision schedule and weak spots. Here's a 15-day candidate pass: ${inviteUrl}`;
+    const text = `Hey, I've been using Atlas to organize my NEET PG / INICET revision schedule and high-yield weak spots. Here's a 15-day study pass: ${inviteUrl}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -89,7 +89,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Academic Circle</span>
+              <span>Study Circle</span>
             </div>
             <Badge variant="outline" className="text-xs px-2.5 py-0.5 border-teal-500/30 text-teal-400 font-mono">
               {passesRemaining} of {maxPasses} Passes Left
@@ -97,17 +97,17 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
           </div>
 
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Batchmate Candidate Passes
+            Batchmate Study Passes
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            Invite colleagues in your reading room or study circle. When an invited peer joins and finishes their first study block, both of your passes extend by <strong className="text-foreground">14 days</strong> automatically.
+            Invite batchmates from your library, reading room, or study circle. When an invited peer joins and completes their first study block (≥10 mins), both of your accounts receive <strong className="text-foreground">+14 days</strong> automatically.
           </DialogDescription>
         </DialogHeader>
 
         {/* Invite Code & Link Box */}
         <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-medium">Your Colleague Pass Link</span>
+            <span className="font-medium">Your Batchmate Invite Link</span>
             {inviteCode && <span className="font-mono text-teal-400 font-bold">{inviteCode}</span>}
           </div>
 
@@ -143,12 +143,12 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
           </div>
         </div>
 
-        {/* Peer Ledger */}
+        {/* Batchmate List */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between text-xs px-1">
             <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5" />
-              Invited Colleagues ({history.length})
+              Invited Batchmates ({history.length})
             </span>
             <button 
               onClick={fetchStatus} 
@@ -163,7 +163,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
           {history.length === 0 ? (
             <div className="p-4 rounded-xl border border-dashed border-border/60 text-center bg-muted/20">
               <p className="text-xs text-muted-foreground">
-                No colleagues invited yet. Share your pass link with batchmates to unlock mutual access extensions.
+                No batchmates invited yet. Share your pass link with peers in your reading room to unlock mutual study extensions.
               </p>
             </div>
           ) : (
@@ -181,7 +181,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-foreground truncate">
-                        {record.refereeEmail || record.refereeName || 'Candidate Doctor'}
+                        {record.refereeEmail || record.refereeName || 'Doctor'}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
                         Joined {dateStr}
@@ -192,12 +192,12 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
                       {isQualified ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[11px] font-semibold border border-teal-500/20">
                           <CheckCircle2 className="w-3 h-3" />
-                          +14d Qualified
+                          +14d Active
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[11px] font-medium border border-amber-500/20">
                           <Clock className="w-3 h-3" />
-                          Session Pending
+                          First Session Pending
                         </span>
                       )}
                     </div>
@@ -212,7 +212,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
         <div className="p-3 rounded-xl bg-teal-500/5 border border-teal-500/10 text-[11.5px] text-muted-foreground leading-relaxed flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
           <span>
-            Passes are intended for medical peers preparing for NEET PG, INICET, or USMLE. Rewards trigger automatically upon completed revision.
+            Passes are designed for medical peers preparing for NEET PG, INICET, NEXT, FMGE, or USMLE. Bonus days apply automatically upon completed study sessions.
           </span>
         </div>
       </DialogContent>

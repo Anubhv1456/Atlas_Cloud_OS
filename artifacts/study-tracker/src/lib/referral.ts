@@ -220,7 +220,7 @@ export async function claimReferralCode(
 
     // Check quota on referrer
     if (codeDetails.totalClaimed >= config.maxPassesPerUser) {
-      return { success: false, message: 'This candidate has reached their colleague pass limit' };
+      return { success: false, message: 'This batchmate has reached their study pass limit' };
     }
 
     // Provision referee trial access
@@ -236,7 +236,7 @@ export async function claimReferralCode(
       referrerUid: codeDetails.ownerUid,
       refereeUid: user.uid,
       refereeEmail: user.email || '',
-      refereeName: user.displayName || 'Candidate Doctor',
+      refereeName: user.displayName || 'Doctor',
       code: cleanCode,
       status: 'claimed',
       bonusDaysAwarded: config.referrerBonusDays,
@@ -269,7 +269,7 @@ export async function claimReferralCode(
 
     return { 
       success: true, 
-      message: `Activated ${trialDays}-day Clinical Trial Pass!`,
+      message: `Activated ${trialDays}-Day Study Pass!`,
       trialDaysAwarded: trialDays
     };
   } catch (e) {

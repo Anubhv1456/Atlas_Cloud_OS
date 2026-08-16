@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
+import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
@@ -122,16 +123,12 @@ function ProtectedApp() {
   }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation]);
 
   if (authLoading || accessLoading) {
-    return (
-      <div className="flex items-center justify-center w-full h-[100dvh]">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <AtlasLoadingScreen fullScreen message="Calibrating study schedule..." />;
   }
 
   if (location === '/privacy') {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <PrivacyPolicy />
       </Suspense>
     );
@@ -139,7 +136,7 @@ function ProtectedApp() {
 
   if (location === '/terms') {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <TermsOfService />
       </Suspense>
     );
@@ -147,7 +144,7 @@ function ProtectedApp() {
 
   if (location === '/contact') {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <Contact />
       </Suspense>
     );
@@ -155,7 +152,7 @@ function ProtectedApp() {
 
   if (location.startsWith('/admin')) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <AdminDashboard />
       </Suspense>
     );
@@ -163,11 +160,7 @@ function ProtectedApp() {
 
   if (location === '/accept-invitation' || location === '/join') {
     return (
-      <Suspense fallback={
-        <div className="flex items-center justify-center w-full h-[100dvh]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen message="Verifying study pass..." />}>
         <AcceptInvitation />
       </Suspense>
     );
@@ -175,11 +168,7 @@ function ProtectedApp() {
 
   if (!user) {
     return (
-      <Suspense fallback={
-        <div className="flex items-center justify-center w-full h-[100dvh]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <Landing />
       </Suspense>
     );
@@ -187,7 +176,7 @@ function ProtectedApp() {
 
   if (location === '/beta-access' || !hasAccess) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <BetaAccess />
       </Suspense>
     );
@@ -210,11 +199,7 @@ function ProtectedApp() {
           transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
           className="w-full h-full"
         >
-          <Suspense fallback={
-            <div className="flex items-center justify-center w-full h-full min-h-[50vh]">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          }>
+          <Suspense fallback={<AtlasLoadingScreen />}>
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/subjects/:id" component={SubjectDetail} />
