@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
-import { logMistake } from '@/db/mutations';
+import { logMistake, updateMistakeLog } from '@/db/mutations';
+import type { MistakeLog } from '@/db/types';
 import { 
   Dialog, 
   DialogContent, 
@@ -27,7 +28,13 @@ import {
   Plus,
   Tag,
   Flame,
-  X
+  X,
+  Compass,
+  Layers,
+  Search,
+  Hash,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
@@ -41,7 +48,60 @@ export interface QuickMistakeModalProps {
   defaultCurriculumSetId?: string;
   defaultTopicId?: string;
   defaultTags?: string[];
+  editingMistake?: MistakeLog | null;
+  onDeleteMistake?: (mistake: MistakeLog) => void;
+  onSaved?: () => void;
 }
+
+// 19 Medical Subjects for Cross-Discipline Bridges
+export const ALL_DISCIPLINE_NAMES = [
+  'Anatomy',
+  'Physiology',
+  'Biochemistry',
+  'Pharmacology',
+  'Pathology',
+  'Microbiology',
+  'Forensic Medicine',
+  'Community Medicine (PSM)',
+  'General Medicine',
+  'General Surgery',
+  'OBGYN',
+  'Pediatrics',
+  'Ophthalmology',
+  'ENT',
+  'Orthopedics',
+  'Dermatology',
+  'Psychiatry',
+  'Radiology',
+  'Anesthesia'
+];
+
+// High-Yield Clinical Lenses
+export interface ClinicalLens {
+  id: string;
+  label: string;
+  tag: string;
+  icon: string;
+  prefix?: string;
+}
+
+export const HIGH_YIELD_CLINICAL_LENSES: ClinicalLens[] = [
+  { id: 'lens_doc', label: 'Drug Choice (DOC)', tag: 'DOC', icon: '💊', prefix: 'DOC:' },
+  { id: 'lens_ioc', label: 'Investigation (IOC)', tag: 'IOC', icon: '🔍', prefix: 'IOC:' },
+  { id: 'lens_biopsy', label: 'Histopath / Biopsy', tag: 'Histopath', icon: '🔬', prefix: 'Biopsy:' },
+  { id: 'lens_imaging', label: 'Imaging / Sign', tag: 'Imaging', icon: '🩻', prefix: 'Imaging:' },
+  { id: 'lens_triad', label: 'Classic Triad', tag: 'Triad', icon: '⚠️', prefix: 'Classic triad:' },
+  { id: 'lens_criteria', label: 'Criteria / Staging', tag: 'Criteria', icon: '📊', prefix: 'Criteria:' },
+  { id: 'lens_contra', label: 'Contraindicated', tag: 'Contraindicated', icon: '🚫', prefix: 'Contraindicated:' },
+  { id: 'lens_peds_preg', label: 'Peds / Pregnancy', tag: 'Pregnancy-Peds', icon: '👶', prefix: 'Pregnancy/Peds:' }
+];
+
+// Inline hashtag suggestions
+const POPULAR_HASHTAGS = [
+  'DOC', 'IOC', 'Pharma', 'Pathology', 'Anatomy', 'Surgery', 'Triad', 
+  'Histopath', 'Imaging', 'Criteria', 'Emergency', 'Pediatrics', 'OBGYN', 
+  'Contraindicated', 'GoldStandard', 'Volatile'
+];
 
 // Retain session memory across closes so reopening retains active context
 let sessionSubjectId: string | number | undefined;
@@ -51,11 +111,6 @@ let sessionSource: 'GT' | 'QBank' | 'Custom' = 'QBank';
 let sessionSourceExam: string = '';
 let sessionErrorType: 'concept' | 'retrieval' | 'misread' | 'fomo' = 'concept';
 
-const COMMON_CROSS_TAGS = [
-  'Medicine', 'Surgery', 'Pathology', 'Pharmacology', 'Pediatrics', 
-  'OBGYN', 'Endocrine', 'CVS', 'CNS', 'Renal', 'Infection', 'Toxicology', 'Emergency'
-];
-
 export function QuickMistakeModal({
   open,
   onOpenChange,
@@ -63,7 +118,10 @@ export function QuickMistakeModal({
   defaultSystemId,
   defaultCurriculumSetId,
   defaultTopicId,
-  defaultTags = []
+  defaultTags = [],
+  editingMistake,
+  onDeleteMistake,
+  onSaved
 }: QuickMistakeModalProps) {
   const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
   const dbSystems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
@@ -73,6 +131,8 @@ export function QuickMistakeModal({
     if (dbSubjects.length > 0) return dbSubjects;
     return ALL_SUBJECTS.map(s => ({ id: s.id, name: s.name }));
   }, [dbSubjects]);
+
+  const isEditing = Boolean(editingMistake && editingMistake.id !== undefined);
 
   const [subjectId, setSubjectId] = useState<string | number>('');
   const [systemId, setSystemId] = useState<string | number>('');
@@ -90,8 +150,24 @@ export function QuickMistakeModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [savedBatchCount, setSavedBatchCount] = useState(0);
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
+  const [showHashSuggestions, setShowHashSuggestions] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Name of currently selected subject
+  const currentSubjectName = useMemo(() => {
+    const match = subjects.find(s => String(s.id) === String(subjectId));
+    return match ? match.name : '';
+  }, [subjects, subjectId]);
+
+  // Dynamic Cross-Discipline subjects (Excludes currently selected subject!)
+  const complementaryDisciplines = useMemo(() => {
+    const currNormalized = currentSubjectName.toLowerCase().replace(/[^a-z]/g, '');
+    return ALL_DISCIPLINE_NAMES.filter(name => {
+      const norm = name.toLowerCase().replace(/[^a-z]/g, '');
+      return !norm.includes(currNormalized) && !currNormalized.includes(norm);
+    });
+  }, [currentSubjectName]);
 
   // Available systems filtered by selected subject
   const availableSystems = useMemo(() => {
@@ -104,36 +180,63 @@ export function QuickMistakeModal({
     if (open) {
       setSavedBatchCount(0);
 
-      // Determine initial subject
-      const initialSubjectId = defaultSubjectId !== undefined
-        ? defaultSubjectId 
-        : sessionSubjectId !== undefined 
-          ? sessionSubjectId 
-          : (subjects[0]?.id !== undefined ? subjects[0].id : 1);
-      
-      setSubjectId(initialSubjectId);
-      setCurriculumSetId(defaultCurriculumSetId || '');
-      setTopicId(defaultTopicId !== undefined ? defaultTopicId : (sessionTopicId || ''));
-      setTitle('');
-      setClinicalTrigger('');
-      setSelectedTags(defaultTags || []);
-      setTagInput('');
-      setIsVolatile(false);
-      setKeyTakeaway('');
-      setErrorType(sessionErrorType || 'concept');
-      setSource(sessionSource || 'QBank');
-      setSourceExam(sessionSourceExam || '');
-
-      // Find matching systems for initial subject
-      const matchingSystems = dbSystems.filter(sys => String(sys.subjectId) === String(initialSubjectId));
-      if (defaultSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(defaultSystemId))) {
-        setSystemId(defaultSystemId);
-      } else if (sessionSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(sessionSystemId))) {
-        setSystemId(sessionSystemId);
-      } else if (matchingSystems.length > 0) {
-        setSystemId(matchingSystems[0].id!);
+      if (editingMistake) {
+        setSubjectId(editingMistake.subjectId);
+        setSystemId(editingMistake.systemId !== undefined ? editingMistake.systemId : 0);
+        setCurriculumSetId(editingMistake.curriculumSetId || '');
+        setTopicId(editingMistake.topicId || '');
+        setTitle(editingMistake.title || '');
+        setClinicalTrigger(editingMistake.clinicalTrigger || '');
+        setSelectedTags(editingMistake.tags || []);
+        setTagInput('');
+        setIsVolatile(Boolean(editingMistake.isVolatile));
+        setErrorType(editingMistake.errorType || 'concept');
+        setSource(editingMistake.source || 'QBank');
+        setSourceExam(editingMistake.sourceExam || '');
+        setKeyTakeaway(editingMistake.keyTakeaway || '');
+        setShowHashSuggestions(false);
+        setShowAdvancedDetails(
+          Boolean(
+            editingMistake.clinicalTrigger ||
+            editingMistake.topicId ||
+            editingMistake.sourceExam ||
+            (editingMistake.tags && editingMistake.tags.length > 0)
+          )
+        );
       } else {
-        setSystemId(0);
+        // Determine initial subject
+        const initialSubjectId = defaultSubjectId !== undefined
+          ? defaultSubjectId 
+          : sessionSubjectId !== undefined 
+            ? sessionSubjectId 
+            : (subjects[0]?.id !== undefined ? subjects[0].id : 1);
+        
+        setSubjectId(initialSubjectId);
+        setCurriculumSetId(defaultCurriculumSetId || '');
+        setTopicId(defaultTopicId !== undefined ? defaultTopicId : (sessionTopicId || ''));
+        setTitle('');
+        setClinicalTrigger('');
+        setSelectedTags(defaultTags || []);
+        setTagInput('');
+        setIsVolatile(false);
+        setKeyTakeaway('');
+        setErrorType(sessionErrorType || 'concept');
+        setSource(sessionSource || 'QBank');
+        setSourceExam(sessionSourceExam || '');
+        setShowHashSuggestions(false);
+        setShowAdvancedDetails(false);
+
+        // Find matching systems for initial subject
+        const matchingSystems = dbSystems.filter(sys => String(sys.subjectId) === String(initialSubjectId));
+        if (defaultSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(defaultSystemId))) {
+          setSystemId(defaultSystemId);
+        } else if (sessionSystemId !== undefined && matchingSystems.some(sys => String(sys.id) === String(sessionSystemId))) {
+          setSystemId(sessionSystemId);
+        } else if (matchingSystems.length > 0) {
+          setSystemId(matchingSystems[0].id!);
+        } else {
+          setSystemId(0);
+        }
       }
 
       // Auto-focus textarea on open
@@ -141,7 +244,64 @@ export function QuickMistakeModal({
         textareaRef.current?.focus();
       }, 100);
     }
-  }, [open, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, defaultTags, subjects, dbSystems]);
+  }, [open, editingMistake, defaultSubjectId, defaultSystemId, defaultCurriculumSetId, defaultTopicId, defaultTags, subjects, dbSystems]);
+
+  // Real-time inline hashtag extraction from Takeaway
+  const handleTakeawayChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setKeyTakeaway(val);
+
+    // Check if cursor just typed '#' or is typing a tag
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const hashMatch = textBeforeCursor.match(/#(\w*)$/);
+    if (hashMatch) {
+      setShowHashSuggestions(true);
+    } else {
+      setShowHashSuggestions(false);
+    }
+
+    // Auto-extract any hashtags in the text and sync into selectedTags
+    const foundTags: string[] = [];
+    const regex = /#([a-zA-Z0-9_-]+)/g;
+    let match;
+    while ((match = regex.exec(val)) !== null) {
+      if (match[1] && !foundTags.includes(match[1])) {
+        foundTags.push(match[1]);
+      }
+    }
+
+    if (foundTags.length > 0) {
+      setSelectedTags(prev => {
+        const combined = new Set([...prev]);
+        foundTags.forEach(t => combined.add(t));
+        return Array.from(combined);
+      });
+    }
+  };
+
+  // Insert a hashtag from suggestion pill
+  const insertHashtag = (tag: string) => {
+    const cursorPos = textareaRef.current?.selectionStart || keyTakeaway.length;
+    const textBeforeCursor = keyTakeaway.slice(0, cursorPos);
+    const textAfterCursor = keyTakeaway.slice(cursorPos);
+    
+    // Replace the trailing '#' or '#prefix'
+    const newBefore = textBeforeCursor.replace(/#\w*$/, `#${tag} `);
+    const updatedText = newBefore + textAfterCursor;
+    
+    setKeyTakeaway(updatedText);
+    setShowHashSuggestions(false);
+    
+    // Add to selected tags
+    if (!selectedTags.includes(tag)) {
+      setSelectedTags(prev => [...prev, tag]);
+    }
+
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 20);
+  };
 
   // When subject is changed manually by user, auto-select first available system
   const handleSubjectChange = (newSubId: string | number) => {
@@ -207,6 +367,32 @@ export function QuickMistakeModal({
 
     setIsSubmitting(true);
     try {
+      if (isEditing && editingMistake?.id !== undefined) {
+        await updateMistakeLog(editingMistake.id, {
+          subjectId,
+          systemId: systemId !== undefined ? systemId : 0,
+          curriculumSetId: curriculumSetId ? curriculumSetId.trim() : undefined,
+          topicId: topicId ? topicId.trim() : undefined,
+          title: title ? title.trim() : undefined,
+          clinicalTrigger: clinicalTrigger ? clinicalTrigger.trim() : undefined,
+          tags: selectedTags.length > 0 ? selectedTags : [],
+          isVolatile,
+          errorType,
+          keyTakeaway: keyTakeaway.trim(),
+          source,
+          sourceExam: sourceExam ? sourceExam.trim() : undefined
+        });
+
+        toast.success('Mistake rule updated', {
+          description: 'Saved changes to 20th Notebook.'
+        });
+
+        if (onSaved) onSaved();
+        onOpenChange(false);
+        return;
+      }
+
+      // Create new mistake
       await logMistake({
         subjectId,
         systemId: systemId || 0,
@@ -236,6 +422,7 @@ export function QuickMistakeModal({
       setTitle('');
       setClinicalTrigger('');
       setIsVolatile(false);
+      setShowHashSuggestions(false);
 
       if (closeAfterSave) {
         onOpenChange(false);
@@ -246,7 +433,7 @@ export function QuickMistakeModal({
         }, 50);
       }
     } catch (err: any) {
-      console.error('Failed to log mistake:', err);
+      console.error('Failed to save mistake:', err);
       toast.error(err?.message || 'Failed to save takeaway.');
     } finally {
       setIsSubmitting(false);
@@ -255,18 +442,18 @@ export function QuickMistakeModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeSave(false);
+    executeSave(isEditing);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Cmd+Enter or Ctrl+Enter saves & keeps open for the next takeaway
+    // Cmd+Enter or Ctrl+Enter saves
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      executeSave(false);
+      executeSave(isEditing);
     }
   };
 
-  const insertPromptShortcut = (prefix: string) => {
+  const insertPromptShortcut = (prefix: string, tagToAttach?: string) => {
     setKeyTakeaway(prev => {
       const next = !prev 
         ? `${prefix} ` 
@@ -275,6 +462,11 @@ export function QuickMistakeModal({
           : `${prev}. ${prefix} `;
       return next;
     });
+
+    if (tagToAttach && !selectedTags.includes(tagToAttach)) {
+      setSelectedTags(prev => [...prev, tagToAttach]);
+    }
+
     textareaRef.current?.focus();
   };
 
@@ -313,24 +505,36 @@ export function QuickMistakeModal({
         <DialogHeader className="space-y-1 pb-3 border-b border-border/40">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-                <Zap className="w-4 h-4" />
+              <div className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-xl border shrink-0",
+                isEditing
+                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  : "bg-primary/10 text-primary border-primary/20"
+              )}>
+                {isEditing ? <Pencil className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
               </div>
               <div>
                 <DialogTitle className="text-base font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                  <span>Log 20th Notebook Rule</span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                    High Yield
+                  <span>{isEditing ? 'Edit 20th Notebook Rule' : 'Log 20th Notebook Rule'}</span>
+                  <span className={cn(
+                    "text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border",
+                    isEditing
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                      : "bg-primary/10 text-primary border-primary/20"
+                  )}>
+                    {isEditing ? 'Edit Mode' : 'High Yield'}
                   </span>
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Distill your clinical mistake into a memorable golden takeaway.
+                  {isEditing
+                    ? 'Refine your high-yield clinical takeaway, tags, or root cause.'
+                    : 'Distill your clinical mistake into a memorable golden takeaway.'}
                 </DialogDescription>
               </div>
             </div>
 
-            {/* Batch Counter Pill */}
-            {savedBatchCount > 0 && (
+            {/* Batch Counter Pill (Only in Create Mode) */}
+            {!isEditing && savedBatchCount > 0 && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[11px] font-bold animate-in fade-in zoom-in-95 duration-150 shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>{savedBatchCount} logged</span>
@@ -341,28 +545,15 @@ export function QuickMistakeModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           
-          {/* Path Navigation Bar (Subject › System & Source) */}
-          <div className="p-3 rounded-2xl bg-muted/20 border border-border/60 space-y-2.5">
+          {/* Path Navigation Bar (Subject › System) */}
+          <div className="p-3 rounded-2xl bg-muted/20 border border-border/60 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Subject Notebook & System
               </span>
-              
-              {/* Volatile Fact Quick Toggle */}
-              <button
-                type="button"
-                onClick={() => setIsVolatile(prev => !prev)}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
-                  isVolatile
-                    ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs"
-                    : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                )}
-                title="Mark volatile facts, tricky numbers, or high-confusion traps"
-              >
-                <Flame className="w-3 h-3" />
-                <span>{isVolatile ? '⚡ Volatile Fact' : 'Mark Volatile'}</span>
-              </button>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {currentSubjectName || 'Select Subject'}
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -398,67 +589,120 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Hero Clinical Rule Input */}
+          {/* Hero Clinical Rule Input + Semantically Placed Volatile Button */}
           <div className="space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-1.5">
-              <span className="text-[11px] font-bold text-foreground tracking-tight">
-                Golden Takeaway / Clinical Rule *
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-foreground tracking-tight">
+                  Golden Takeaway / Clinical Rule *
+                </span>
+                
+                {/* Volatile Fact Toggle - Semantically attached to rule */}
+                <button
+                  type="button"
+                  onClick={() => setIsVolatile(prev => !prev)}
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
+                    isVolatile
+                      ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs"
+                      : "bg-muted/30 text-muted-foreground border-border/40 hover:text-amber-500 hover:bg-amber-500/10"
+                  )}
+                  title="Mark volatile facts, numbers, or high-confusion traps"
+                >
+                  <Flame className="w-3 h-3" />
+                  <span>{isVolatile ? '⚡ Volatile Fact' : 'Mark Volatile'}</span>
+                </button>
+              </div>
               
               {/* Rapid Clinical Prefixes */}
               <div className="flex items-center gap-1 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => insertPromptShortcut('DOC:')}
+                  onClick={() => insertPromptShortcut('DOC:', 'DOC')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                  title="Drug of Choice"
                 >
                   + DOC
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertPromptShortcut('IOC:')}
+                  onClick={() => insertPromptShortcut('IOC:', 'IOC')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                  title="Investigation of Choice"
                 >
                   + IOC
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertPromptShortcut('Classic triad:')}
+                  onClick={() => insertPromptShortcut('Classic triad:', 'Triad')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                  title="Classic Triad"
                 >
                   + Triad
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertPromptShortcut('Contraindicated:')}
+                  onClick={() => insertPromptShortcut('Contraindicated:', 'Contraindicated')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                  title="Contraindicated"
                 >
                   + Contraindicated
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertPromptShortcut('Gold standard:')}
+                  onClick={() => insertPromptShortcut('Gold standard:', 'GoldStandard')}
                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-muted/40 hover:bg-primary/20 hover:text-primary text-muted-foreground border border-border/40 transition-colors cursor-pointer"
+                  title="Gold Standard"
                 >
                   + Gold Std
                 </button>
               </div>
             </div>
 
-            <textarea
-              ref={textareaRef}
-              id="mistake-takeaway-input"
-              value={keyTakeaway}
-              onChange={e => setKeyTakeaway(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="e.g. In Pheochromocytoma, ALWAYS start Alpha-blockers (Phenoxybenzamine) BEFORE Beta-blockers to prevent unopposed alpha-mediated hypertensive crisis."
-              rows={3}
-              required
-              className="w-full rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all leading-relaxed"
-            />
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                id="mistake-takeaway-input"
+                value={keyTakeaway}
+                onChange={handleTakeawayChange}
+                onKeyDown={handleKeyDown}
+                placeholder="e.g. In Pheochromocytoma, ALWAYS start #Pharma Alpha-blockers (Phenoxybenzamine) BEFORE Beta-blockers to prevent #Emergency hypertensive crisis."
+                rows={3}
+                required
+                className="w-full rounded-2xl border border-border/80 bg-muted/20 p-3.5 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all leading-relaxed"
+              />
+
+              {/* Inline Hashtag Auto-Suggestions Bar */}
+              {showHashSuggestions && (
+                <div className="absolute left-2 bottom-3 right-2 bg-card/95 backdrop-blur-md border border-primary/30 p-1.5 rounded-xl shadow-lg flex items-center gap-1.5 overflow-x-auto scrollbar-none z-10 animate-in fade-in zoom-in-95 duration-100">
+                  <span className="text-[10px] font-bold text-primary flex items-center gap-0.5 px-1 shrink-0">
+                    <Hash className="w-3 h-3" /> Quick Tag:
+                  </span>
+                  {POPULAR_HASHTAGS.map(h => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => insertHashtag(h)}
+                      className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-colors shrink-0 cursor-pointer"
+                    >
+                      #{h}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowHashSuggestions(false)}
+                    className="p-1 rounded text-muted-foreground hover:text-foreground shrink-0 ml-auto cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
             
             <div className="flex items-center justify-between text-[10px] text-muted-foreground/70 px-1">
-              <span>Pinned subject stays active for high-speed continuous logging</span>
+              <span className="flex items-center gap-1">
+                <span>Type <kbd className="font-mono text-[9px] bg-muted/60 px-1 py-0.2 rounded border border-border/40">#</kbd> inline to auto-tag</span>
+              </span>
               <span className="flex items-center gap-1 font-mono">
                 <CornerDownLeft className="w-2.5 h-2.5" /> ⌘+Enter to save & add next
               </span>
@@ -494,7 +738,24 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Progressive Disclosure: Cross-Discipline Tags & Trigger Context */}
+          {/* Active Tags Overview Pill Strip (Always Visible If Tags Exist) */}
+          {selectedTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 px-1 py-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 flex items-center gap-1">
+                <Tag className="w-2.5 h-2.5 text-primary" /> Active Tags:
+              </span>
+              {selectedTags.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
+                  #{tag}
+                  <button type="button" onClick={() => toggleTag(tag)} className="hover:text-destructive cursor-pointer">
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Progressive Disclosure: Cross-Discipline Bridges & Clinical Lenses */}
           <div className="border-t border-border/40 pt-2">
             <button
               type="button"
@@ -502,9 +763,11 @@ export function QuickMistakeModal({
               className="flex items-center justify-between w-full py-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 text-[11px]">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
+                <Layers className="w-3.5 h-3.5 text-primary" />
                 <span>
-                  {showAdvancedDetails ? 'Hide cross-tags & clinical context' : '+ Add cross-discipline tags, exam source, or trigger (optional)'}
+                  {showAdvancedDetails 
+                    ? 'Hide Cross-Discipline Bridges & Lenses' 
+                    : '+ Cross-Discipline Bridges, Clinical Lenses & Vignette Context'}
                 </span>
               </span>
               {showAdvancedDetails ? (
@@ -516,63 +779,92 @@ export function QuickMistakeModal({
 
             {showAdvancedDetails && (
               <div className="space-y-3.5 pt-2.5 pb-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                {/* Cross-Discipline Tags */}
-                <div className="space-y-2">
+                
+                {/* 1. Dynamic Cross-Discipline Bridges (Other Subjects) */}
+                <div className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/60">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <Tag className="w-3 h-3 text-primary" /> Cross-Discipline Tags
+                      <Compass className="w-3 h-3 text-primary" /> Cross-Discipline Bridges
                     </span>
-                    <span className="text-[10px] text-muted-foreground">Select multiple</span>
+                    <span className="text-[10px] text-muted-foreground">Excludes {currentSubjectName || 'current subject'}</span>
                   </div>
 
-                  <div className="flex flex-wrap gap-1">
-                    {COMMON_CROSS_TAGS.map(t => {
-                      const active = selectedTags.includes(t);
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {complementaryDisciplines.map(d => {
+                      const active = selectedTags.includes(d);
                       return (
                         <button
-                          key={t}
+                          key={d}
                           type="button"
-                          onClick={() => toggleTag(t)}
+                          onClick={() => toggleTag(d)}
                           className={cn(
                             "px-2 py-0.5 text-[10px] font-semibold rounded-lg border transition-all cursor-pointer",
                             active
-                              ? "bg-primary/20 text-primary border-primary/40 font-bold"
-                              : "bg-muted/30 text-muted-foreground border-border/40 hover:border-border hover:text-foreground"
+                              ? "bg-primary/20 text-primary border-primary/40 font-bold shadow-xs"
+                              : "bg-background/60 text-muted-foreground border-border/50 hover:border-border hover:text-foreground"
                           )}
                         >
-                          {active ? `✓ ${t}` : `+ ${t}`}
+                          {active ? `✓ ${d}` : `+ ${d}`}
                         </button>
                       );
                     })}
                   </div>
+                </div>
 
-                  {/* Custom tag input */}
+                {/* 2. High-Yield Clinical Lenses */}
+                <div className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" /> High-Yield Clinical Lenses
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Tap to tag</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {HIGH_YIELD_CLINICAL_LENSES.map(lens => {
+                      const active = selectedTags.includes(lens.tag);
+                      return (
+                        <button
+                          key={lens.id}
+                          type="button"
+                          onClick={() => {
+                            toggleTag(lens.tag);
+                            if (!keyTakeaway.includes(lens.tag) && lens.prefix && !active) {
+                              insertPromptShortcut(lens.prefix, lens.tag);
+                            }
+                          }}
+                          className={cn(
+                            "flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded-lg border transition-all cursor-pointer",
+                            active
+                              ? "bg-amber-500/20 text-amber-500 border-amber-500/40 font-bold shadow-xs"
+                              : "bg-background/60 text-muted-foreground border-border/50 hover:border-border hover:text-foreground"
+                          )}
+                        >
+                          <span>{lens.icon}</span>
+                          <span>{lens.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Custom Tag Input */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Custom Tag
+                  </span>
                   <div className="flex items-center gap-1.5">
                     <Input
                       value={tagInput}
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={handleAddCustomTag}
-                      placeholder="Add custom tag (e.g. Triad, Electrolytes, Imaging) and press Enter"
-                      className="h-7.5 text-[11px] rounded-lg border-border/60 bg-muted/20 text-foreground"
+                      placeholder="Add custom tag (e.g. Electrolytes, Criteria, Sign) and press Enter"
+                      className="h-8 text-xs rounded-xl border-border/60 bg-muted/20 text-foreground"
                     />
                   </div>
-
-                  {selectedTags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1 pt-1">
-                      <span className="text-[10px] text-muted-foreground mr-1">Active Tags:</span>
-                      {selectedTags.map(tag => (
-                        <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
-                          #{tag}
-                          <button type="button" onClick={() => toggleTag(tag)} className="hover:text-destructive cursor-pointer">
-                            <X className="w-2.5 h-2.5" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                {/* Clinical Vignette Trigger / Scenario */}
+                {/* 4. Clinical Vignette Trigger / Scenario */}
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                     Clinical Scenario / Question Trigger (Optional)
@@ -586,7 +878,7 @@ export function QuickMistakeModal({
                   />
                 </div>
 
-                {/* Specific Topic */}
+                {/* 5. Specific Topic */}
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                     Specific Topic / Disease (Optional)
@@ -600,7 +892,7 @@ export function QuickMistakeModal({
                   />
                 </div>
 
-                {/* Source & Source Exam Name */}
+                {/* 6. Source & Source Exam Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
@@ -643,37 +935,82 @@ export function QuickMistakeModal({
 
           {/* Dialog Footer Actions */}
           <DialogFooter className="pt-2 border-t border-border/40 flex flex-row items-center justify-between gap-2">
-            <Button
-              id="btn-done-mistake"
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              {savedBatchCount > 0 ? 'Done' : 'Cancel'}
-            </Button>
+            {isEditing ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  {onDeleteMistake && editingMistake && (
+                    <Button
+                      id="btn-modal-delete-mistake"
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        onDeleteMistake(editingMistake);
+                        onOpenChange(false);
+                      }}
+                      className="rounded-xl text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer gap-1.5 px-2.5 h-8.5"
+                      title="Delete this rule (with 5s undo)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Delete Rule</span>
+                      <span className="sm:hidden">Delete</span>
+                    </Button>
+                  )}
+                  <Button
+                    id="btn-done-mistake"
+                    type="button"
+                    variant="ghost"
+                    onClick={() => onOpenChange(false)}
+                    className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer h-8.5"
+                  >
+                    Cancel
+                  </Button>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                id="btn-save-close-mistake"
-                type="button"
-                variant="outline"
-                disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
-                onClick={() => executeSave(true)}
-                className="rounded-xl text-xs font-semibold border-border/80 cursor-pointer hidden sm:inline-flex"
-              >
-                Save & Close
-              </Button>
-              <Button
-                id="btn-save-mistake"
-                type="submit"
-                disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
-                className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-4 gap-1.5"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{isSubmitting ? 'Saving...' : 'Save & Add Next'}</span>
-              </Button>
-            </div>
+                <Button
+                  id="btn-save-mistake-edit"
+                  type="submit"
+                  disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
+                  className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-4 gap-1.5 h-8.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  id="btn-done-mistake"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  {savedBatchCount > 0 ? 'Done' : 'Cancel'}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    id="btn-save-close-mistake"
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
+                    onClick={() => executeSave(true)}
+                    className="rounded-xl text-xs font-semibold border-border/80 cursor-pointer hidden sm:inline-flex"
+                  >
+                    Save & Close
+                  </Button>
+                  <Button
+                    id="btn-save-mistake"
+                    type="submit"
+                    disabled={isSubmitting || !keyTakeaway.trim() || !subjectId}
+                    className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shadow-xs cursor-pointer px-4 gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isSubmitting ? 'Saving...' : 'Save & Add Next'}</span>
+                  </Button>
+                </div>
+              </>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

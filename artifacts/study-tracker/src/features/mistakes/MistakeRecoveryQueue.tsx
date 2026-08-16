@@ -8,7 +8,7 @@ import {
   resolveMistake, 
   toggleMistakeVolatile 
 } from '@/db/mutations';
-import { QuickMistakeModal } from './QuickMistakeModal';
+import { QuickMistakeModal, HIGH_YIELD_CLINICAL_LENSES } from './QuickMistakeModal';
 import { 
   Plus, 
   Trash2, 
@@ -33,7 +33,8 @@ import {
   SlidersHorizontal,
   FolderOpen,
   Eye,
-  HelpCircle
+  HelpCircle,
+  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,8 +43,41 @@ import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS, UNIVERSAL_ONTOLOGY } from '@/data/ontology';
 import { toast } from 'sonner';
 
+export function getTagMeta(tag: string) {
+  const norm = tag.toLowerCase();
+  if (norm === 'doc' || norm.includes('pharma') || norm.includes('drug')) {
+    return { icon: '💊', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' };
+  }
+  if (norm === 'ioc' || norm.includes('investigation')) {
+    return { icon: '🔍', color: 'bg-sky-500/10 text-sky-500 border-sky-500/30' };
+  }
+  if (norm === 'histopath' || norm === 'biopsy' || norm.includes('pathology')) {
+    return { icon: '🔬', color: 'bg-purple-500/10 text-purple-500 border-purple-500/30' };
+  }
+  if (norm === 'imaging' || norm.includes('radiology') || norm === 'x-ray' || norm === 'ct') {
+    return { icon: '🩻', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' };
+  }
+  if (norm === 'triad' || norm.includes('sign')) {
+    return { icon: '⚠️', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' };
+  }
+  if (norm === 'criteria' || norm === 'staging' || norm === 'score') {
+    return { icon: '📊', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30' };
+  }
+  if (norm === 'contraindicated' || norm === 'contra') {
+    return { icon: '🚫', color: 'bg-rose-500/10 text-rose-500 border-rose-500/30' };
+  }
+  if (norm.includes('peds') || norm.includes('preg')) {
+    return { icon: '👶', color: 'bg-pink-500/10 text-pink-500 border-pink-500/30' };
+  }
+  if (norm === 'volatile') {
+    return { icon: '⚡', color: 'bg-amber-500/15 text-amber-500 border-amber-500/40 font-bold' };
+  }
+  return { icon: null, color: 'bg-primary/10 text-primary border-primary/20 font-semibold' };
+}
+
 export default function MistakeRecoveryQueue() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingMistake, setEditingMistake] = useState<MistakeLog | null>(null);
   const [modalDefaultSubjectId, setModalDefaultSubjectId] = useState<string | number | undefined>(undefined);
   const [modalDefaultSystemId, setModalDefaultSystemId] = useState<string | number | undefined>(undefined);
   const [modalDefaultTags, setModalDefaultTags] = useState<string[]>([]);
@@ -274,9 +308,26 @@ export default function MistakeRecoveryQueue() {
         return false;
       }
 
-      // Tag filter
+      // Tag & Clinical Lens filter
       if (tagFilter !== 'all') {
-        if (!log.tags || !log.tags.includes(tagFilter)) return false;
+        const qTag = tagFilter.toLowerCase();
+        const hasDirectTag = log.tags?.some(t => {
+          const tNorm = t.toLowerCase();
+          return tNorm === qTag || tNorm.includes(qTag) || qTag.includes(tNorm);
+        });
+
+        const takeawayLower = (log.keyTakeaway || '').toLowerCase();
+        const hasInlineOrPrefix = 
+          takeawayLower.includes(`#${qTag}`) ||
+          (qTag === 'doc' && (takeawayLower.includes('doc:') || takeawayLower.includes('drug of choice'))) ||
+          (qTag === 'ioc' && (takeawayLower.includes('ioc:') || takeawayLower.includes('investigation of choice'))) ||
+          (qTag === 'triad' && (takeawayLower.includes('triad:') || takeawayLower.includes('classic triad'))) ||
+          (qTag === 'histopath' && (takeawayLower.includes('biopsy:') || takeawayLower.includes('histopath') || takeawayLower.includes('stain'))) ||
+          (qTag === 'imaging' && (takeawayLower.includes('imaging:') || takeawayLower.includes('x-ray') || takeawayLower.includes('ct sign'))) ||
+          (qTag === 'contraindicated' && takeawayLower.includes('contraindicated:')) ||
+          (qTag === 'criteria' && (takeawayLower.includes('criteria:') || takeawayLower.includes('staging:')));
+
+        if (!hasDirectTag && !hasInlineOrPrefix) return false;
       }
 
       // Volatile filter
@@ -453,7 +504,14 @@ export default function MistakeRecoveryQueue() {
     toggleMistakeVolatile(log.id, !log.isVolatile);
   };
 
+  // Open Edit Modal for a Specific Mistake
+  const handleEdit = (log: MistakeLog) => {
+    setEditingMistake(log);
+    setModalOpen(true);
+  };
+
   const openModalWithContext = (subId?: string | number, sysId?: string | number, tags?: string[]) => {
+    setEditingMistake(null);
     setModalDefaultSubjectId(subId || selectedSubjectId || undefined);
     setModalDefaultSystemId(sysId || (systemFilter !== 'all' ? systemFilter : undefined));
     setModalDefaultTags(tags || (tagFilter !== 'all' ? [tagFilter] : []));
@@ -656,6 +714,52 @@ export default function MistakeRecoveryQueue() {
             <Flame className="w-3.5 h-3.5 shrink-0" />
             <span>Volatile Traps ({volatileCount})</span>
           </button>
+        </div>
+      )}
+
+      {/* Universal High-Yield Clinical Lens Strip (Available across all subjects) */}
+      {!selectedSubjectId && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 mr-1 shrink-0">
+            <Sparkles className="w-3 h-3 text-amber-500" /> Lenses:
+          </span>
+          <button
+            type="button"
+            onClick={() => setTagFilter('all')}
+            className={cn(
+              "px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0",
+              tagFilter === 'all'
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-card border border-border/70 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All Takeaways
+          </button>
+          {HIGH_YIELD_CLINICAL_LENSES.map(lens => {
+            const active = tagFilter === lens.tag;
+            return (
+              <button
+                key={lens.id}
+                type="button"
+                onClick={() => {
+                  const nextVal = active ? 'all' : lens.tag;
+                  setTagFilter(nextVal);
+                  if (nextVal !== 'all' && activeView === 'notebooks') {
+                    setActiveView('stream');
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0",
+                  active
+                    ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs font-bold"
+                    : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span>{lens.icon}</span>
+                <span>{lens.label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -1043,10 +1147,21 @@ export default function MistakeRecoveryQueue() {
                         </button>
 
                         <button
+                          id={`btn-edit-mistake-${log.id}`}
+                          type="button"
+                          onClick={() => handleEdit(log)}
+                          className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all cursor-pointer"
+                          title="Edit takeaway rule"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          id={`btn-delete-mistake-${log.id}`}
                           type="button"
                           onClick={() => handleDelete(log)}
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
-                          title="Delete takeaway (with undo)"
+                          className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
+                          title="Delete takeaway (with 5s undo)"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1073,17 +1188,32 @@ export default function MistakeRecoveryQueue() {
                       </p>
                     </div>
 
-                    {/* Bottom Metadata Line */}
-                    <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-border/30">
-                      {log.tags && log.tags.length > 0 && (
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {log.tags.map(tag => (
-                            <span key={tag} className="font-semibold text-primary bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {/* Bottom Metadata Line */}
+                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-border/30">
+                        {log.tags && log.tags.length > 0 && (
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {log.tags.map(tag => {
+                              const meta = getTagMeta(tag);
+                              return (
+                                <span 
+                                  key={tag} 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTagFilter(tagFilter === tag ? 'all' : tag);
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-0.5 px-1.5 py-0.2 rounded border transition-colors cursor-pointer hover:opacity-80",
+                                    meta.color
+                                  )}
+                                  title={`Filter by #${tag}`}
+                                >
+                                  {meta.icon && <span className="text-[9px]">{meta.icon}</span>}
+                                  <span>#{tag}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
 
                       <span className="font-mono bg-muted/40 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[120px]">
                         {log.source === 'GT' ? 'Grand Test' : log.source}
@@ -1295,11 +1425,26 @@ export default function MistakeRecoveryQueue() {
 
                                         {log.tags && log.tags.length > 0 && (
                                           <div className="flex items-center gap-1 flex-wrap">
-                                            {log.tags.map(tag => (
-                                              <span key={tag} className="font-semibold text-primary/90 bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
-                                                #{tag}
-                                              </span>
-                                            ))}
+                                            {log.tags.map(tag => {
+                                              const meta = getTagMeta(tag);
+                                              return (
+                                                <span 
+                                                  key={tag} 
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setTagFilter(tagFilter === tag ? 'all' : tag);
+                                                  }}
+                                                  className={cn(
+                                                    "flex items-center gap-0.5 px-1.5 py-0.2 rounded border transition-colors cursor-pointer hover:opacity-80",
+                                                    meta.color
+                                                  )}
+                                                  title={`Filter by #${tag}`}
+                                                >
+                                                  {meta.icon && <span className="text-[9px]">{meta.icon}</span>}
+                                                  <span>#{tag}</span>
+                                                </span>
+                                              );
+                                            })}
                                           </div>
                                         )}
 
@@ -1349,11 +1494,21 @@ export default function MistakeRecoveryQueue() {
                                       </button>
 
                                       <button
+                                        id={`btn-edit-mistake-stream-${log.id}`}
+                                        type="button"
+                                        onClick={() => handleEdit(log)}
+                                        className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all cursor-pointer"
+                                        title="Edit takeaway rule"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      <button
                                         id={`btn-delete-mistake-${log.id}`}
                                         type="button"
                                         onClick={() => handleDelete(log)}
-                                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1.5 rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
-                                        title="Delete takeaway (with undo)"
+                                        className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
+                                        title="Delete takeaway (with 5s undo)"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -1388,13 +1543,19 @@ export default function MistakeRecoveryQueue() {
         </div>
       )}
 
-      {/* Express Takeaway Capture Modal */}
+      {/* Express Takeaway Capture / Edit Modal */}
       <QuickMistakeModal 
         open={modalOpen} 
-        onOpenChange={setModalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setEditingMistake(null);
+        }}
         defaultSubjectId={modalDefaultSubjectId}
         defaultSystemId={modalDefaultSystemId}
         defaultTags={modalDefaultTags}
+        editingMistake={editingMistake}
+        onDeleteMistake={handleDelete}
+        onSaved={() => setEditingMistake(null)}
       />
     </div>
   );
