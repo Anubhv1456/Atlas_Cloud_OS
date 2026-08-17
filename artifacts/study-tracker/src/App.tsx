@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster, toast } from 'sonner';
@@ -21,44 +21,19 @@ import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 
 import NotFound from '@/pages/not-found';
 
-function lazyWithRetry<T extends React.ComponentType<any>>(
-  componentImport: () => Promise<{ default: T }>
-) {
-  return lazy(async () => {
-    try {
-      return await componentImport();
-    } catch (error) {
-      console.warn('Dynamic import failed, retrying module fetch:', error);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return await componentImport();
-      } catch (retryError) {
-        const hasRefreshed = sessionStorage.getItem('atlas_chunk_retry_refreshed');
-        if (!hasRefreshed) {
-          sessionStorage.setItem('atlas_chunk_retry_refreshed', 'true');
-          window.location.reload();
-          return new Promise<{ default: T }>(() => {});
-        }
-        sessionStorage.removeItem('atlas_chunk_retry_refreshed');
-        throw retryError;
-      }
-    }
-  });
-}
-
-const Home = lazyWithRetry(() => import('@/features/dashboard/Home'));
-const Landing = lazyWithRetry(() => import('@/pages/Landing'));
-const AcceptInvitation = lazyWithRetry(() => import('@/pages/AcceptInvitation'));
-const PrivacyPolicy = lazyWithRetry(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'));
-const Contact = lazyWithRetry(() => import('@/pages/Contact'));
-const BetaAccess = lazyWithRetry(() => import('@/pages/BetaAccess'));
-const AdminDashboard = lazyWithRetry(() => import('@/features/admin/AdminDashboard'));
-const Analytics = lazyWithRetry(() => import('@/features/analytics/Analytics'));
-const Settings = lazyWithRetry(() => import('@/features/settings/Settings'));
-const Timeline = lazyWithRetry(() => import('@/features/timeline/Timeline'));
-const SubjectDetail = lazyWithRetry(() => import('@/features/subjects/SubjectDetail'));
-const MistakeRecoveryQueue = lazyWithRetry(() => import('@/features/mistakes/MistakeRecoveryQueue'));
+import Home from '@/features/dashboard/Home';
+import Landing from '@/pages/Landing';
+import AcceptInvitation from '@/pages/AcceptInvitation';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
+import Contact from '@/pages/Contact';
+import BetaAccess from '@/pages/BetaAccess';
+import AdminDashboard from '@/features/admin/AdminDashboard';
+import Analytics from '@/features/analytics/Analytics';
+import Settings from '@/features/settings/Settings';
+import Timeline from '@/features/timeline/Timeline';
+import SubjectDetail from '@/features/subjects/SubjectDetail';
+import MistakeRecoveryQueue from '@/features/mistakes/MistakeRecoveryQueue';
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';

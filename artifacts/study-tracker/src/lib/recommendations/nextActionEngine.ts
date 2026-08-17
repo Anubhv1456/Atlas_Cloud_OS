@@ -219,7 +219,11 @@ export async function getNextActionRecommendation(
   const recalibrationStatus = isSoftRecalibrating(operationalMode, now);
 
   // 3. Fetch persistent skips & parse adaptive pacing feedback
-  const persistentSkips = await db.recommendationSkips.filter(s => s.expiresAt > now).toArray();
+  const persistentSkips = await db.recommendationSkips.filter(s => {
+    if (!s.expiresAt) return false;
+    const expTime = new Date(s.expiresAt).getTime();
+    return !isNaN(expTime) && expTime > now.getTime();
+  }).toArray();
   const adaptiveFeedbackMultipliers = new Map<string, number>();
 
   for (const s of persistentSkips) {
@@ -343,28 +347,68 @@ export async function getNextActionRecommendation(
       }
     }
     
-    const lastDate = set.lastRevisionDate ? new Date(set.lastRevisionDate) : (set.updatedAt ? new Date(set.updatedAt) : now);
-    const stability = set.currentRevisionInterval && set.currentRevisionInterval > 0 ? set.currentRevisionInterval : getInitialInterval('Average');
-    const baseDecayFactor = parentSystem && typeof parentSystem.decayFactor === 'number' && parentSystem.decayFactor > 0 ? parentSystem.decayFactor : 1.0;
+    // Only use true revision date for recency calculation (never set.updatedAt, which changes on edits)
+    const hasStudiedBefore = Boolean(set.lastRevisionDate);
+    const lastDate = set.lastRevisionDate ? new Date(set.lastRevisionDate) : null;
+    const stability = set.currentRevisionInterval && set.currentRevisionInterval > 0 
+      ? set.currentRevisionInterval 
+      : getInitialInterval('Average');
+    const baseDecayFactor = parentSystem && typeof parentSystem.decayFactor === 'number' && parentSystem.decayFactor > 0 
+      ? parentSystem.decayFactor 
+      : 1.0;
     
-    let daysSinceLastRev = Math.max(0, (now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+    const daysSinceLastRev = lastDate ? Math.max(0, (now.getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : Infinity;
     
-    const topicMemoryLosses = (set.topicIds || []).map(tid => {
-      const isWeak = weakTopicMap.has(tid);
-      return getTopicMemoryLoss(lastDate, stability, isWeak, baseDecayFactor, now);
-    });
+    let topicMemoryLosses: number[] = [];
+    if (lastDate && Array.isArray(set.topicIds) && set.topicIds.length > 0) {
+      topicMemoryLosses = set.topicIds.map(tid => {
+        const isWeak = weakTopicMap.has(tid);
+        return getTopicMemoryLoss(lastDate, stability, isWeak, baseDecayFactor, now);
+      });
+    }
     
-    const baseMemoryLoss = calculateBlockMemoryLoss(topicMemoryLosses);
+    let baseMemoryLoss = topicMemoryLosses.length > 0 ? calculateBlockMemoryLoss(topicMemoryLosses) : 0;
+    
+    // If block is overdue, ensure memory loss accurately reflects elapsed revision debt
+    if (isOverdue && baseMemoryLoss < 40) {
+      baseMemoryLoss = Math.min(100, Math.round(50 + daysOverdue * 3.5));
+    } else if (isDueToday && baseMemoryLoss < 25) {
+      baseMemoryLoss = 30;
+    }
+    
     const yieldModifier = yieldWeight >= 85 ? 1.2 : (yieldWeight <= 40 ? 0.8 : 1.0);
     
-    let actionIndex = Math.min(100, Math.round(baseMemoryLoss * yieldModifier));
+    let actionIndex = 0;
+
+    if (hasStudiedBefore) {
+      actionIndex = Math.min(100, Math.round(baseMemoryLoss * yieldModifier));
+      if (isOverdue) {
+        actionIndex += Math.min(30, daysOverdue * 2.5);
+      } else if (isDueToday) {
+        actionIndex += 15;
+      }
+    } else {
+      // First-Pass Acquisition: Unstudied block prioritised by high-yield subject weightage
+      const baseAcquisitionScore = Math.round(yieldWeight * 0.85); // 60-85 for high-yield NEET PG / MBBS
+      actionIndex = baseAcquisitionScore;
+      if (isOverdue) {
+        actionIndex += Math.min(30, daysOverdue * 2.5);
+      } else if (isDueToday) {
+        actionIndex += 15;
+      }
+    }
+
+    // Weak topics boost
+    if (weakTopicsInSet > 0) {
+      actionIndex += Math.min(20, weakTopicsInSet * 5);
+    }
 
     // ── Soft Recalibration Knapsack Scoring ─────────────────────────────────
     if (recalibrationStatus.active) {
       const knapsackScore = calculateKnapsackPriority({
         subjectWeight: 100,
         yieldWeight,
-        memoryLoss: baseMemoryLoss,
+        memoryLoss: Math.max(baseMemoryLoss, !hasStudiedBefore ? 60 : 0),
         estimatedMinutes: setDepth === 'rapid' ? 15 : setDepth === 'deep' ? 45 : 30,
         mistakeBonus: activeMistakesInSet * 8
       });
@@ -375,8 +419,8 @@ export async function getNextActionRecommendation(
       }
     }
     
-    // Recent exposure suppression (last 18 hours)
-    if (daysSinceLastRev < 0.75) {
+    // Recent exposure suppression (last 18 hours) - only if actually studied in the last 18 hours
+    if (hasStudiedBefore && daysSinceLastRev < 0.75) {
       actionIndex = 0;
     }
     
@@ -399,10 +443,18 @@ export async function getNextActionRecommendation(
       }
     }
     
-    // Triage Mode Filter (only in standard triage)
-    if (isTriageMode && !isPinned && actionIndex <= 80) {
-      continue;
+    // Triage Mode Filter:
+    // When student returns after >3 days, prioritize urgent/overdue items and mistakes
+    if (isTriageMode && !isPinned) {
+      if (isOverdue || isDueToday || activeMistakesInSet > 0) {
+        actionIndex = Math.max(actionIndex, 82); // Elevate to triage priority
+      } else if (actionIndex < 60) {
+        // Filter out non-urgent, non-overdue future items
+        continue;
+      }
     }
+
+    const revisionCount = set.revisionCount || 0;
 
     // Determine Archetype
     let archetype: RecommendationArchetype = 'tactical_strike';
@@ -435,12 +487,14 @@ export async function getNextActionRecommendation(
 
     if (recalibrationStatus.active && isOverdue) {
       badges.push({ label: '⚡ Recalibration Step', variant: 'primary', iconType: 'zap' });
-    } else if (isTriageMode && actionIndex > 80 && !isPinned) {
+    } else if (isTriageMode && (isOverdue || isDueToday || activeMistakesInSet > 0) && !isPinned) {
       badges.push({ label: '🚨 Triage Priority', variant: 'destructive', iconType: 'alert' });
     } else if (isOverdue) {
       badges.push({ label: `⚡ Overdue (${daysOverdue}d)`, variant: 'amber', iconType: 'clock' });
     } else if (isDueToday) {
       badges.push({ label: '🕒 Due Today', variant: 'amber', iconType: 'clock' });
+    } else if (!hasStudiedBefore) {
+      badges.push({ label: '📖 First-Pass Intake', variant: 'primary', iconType: 'target' });
     }
     
     if (yieldWeight >= 85 && !isTacticalSprint) {
@@ -479,17 +533,23 @@ export async function getNextActionRecommendation(
       statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
     } else if (isDueToday) {
       statusText = `Due today (Pass #${revisionCount + 1})`;
+    } else if (!hasStudiedBefore) {
+      statusText = `First-Pass Intake • High-Yield ${subjectName}`;
     } else {
       statusText = `Pass #${revisionCount + 1} scheduled • Retention ~${Math.round(100 - baseMemoryLoss)}%`;
     }
 
     // Build Transparent Algorithmic "Why" Breakdown
-    const retrievabilityPercent = Math.max(10, Math.min(100, Math.round(100 - baseMemoryLoss)));
-    const memoryDecayPercent = Math.round(baseMemoryLoss);
+    const retrievabilityPercent = hasStudiedBefore 
+      ? Math.max(10, Math.min(100, Math.round(100 - baseMemoryLoss))) 
+      : 100;
+    const memoryDecayPercent = hasStudiedBefore ? Math.round(baseMemoryLoss) : 0;
 
     const formulaString = recalibrationStatus.active
       ? `Priority (${actionIndex}) = [Yield (${yieldWeight}%) × Decay (${memoryDecayPercent}%)] + [Mistakes (${activeMistakesInSet}) × 5] [Knapsack Pacing]`
-      : `Priority (${actionIndex}) = [Yield (${yieldWeight}%) × Decay (${memoryDecayPercent}%)] + [Mistakes (${activeMistakesInSet}) × 5]`;
+      : !hasStudiedBefore
+      ? `Priority (${actionIndex}) = [First-Pass Intake] × High-Yield (${yieldWeight}%)`
+      : `Priority (${actionIndex}) = [Yield (${yieldWeight}%) × Decay (${memoryDecayPercent}%)] + [Mistakes (${activeMistakesInSet}) × 5]${isOverdue ? ` + Overdue (${daysOverdue}d)` : ''}`;
 
     const depthLabel = setDepth === 'rapid' ? 'Rapid Recall' : setDepth === 'deep' ? 'Deep Focus' : 'Standard Review';
 
@@ -499,6 +559,10 @@ export async function getNextActionRecommendation(
       ? `Calibrated for hospital ward duty: rapid recall action targeting volatile high-yield concepts.`
       : archetype === 'soft_recalibration'
       ? `Paced via Knapsack decay redistribution to clear accumulated memory decay smoothly without debt anxiety.`
+      : !hasStudiedBefore
+      ? `Targeted for First-Pass foundational intake. High exam weightage (${yieldWeight}%) in ${subjectName}. Completing this initializes spaced repetition scheduling.`
+      : isOverdue
+      ? `Critical spaced repetition step overdue by ${daysOverdue} day${daysOverdue > 1 ? 's' : ''}. Memory decay is calculated at ${memoryDecayPercent}% based on Ebbinghaus forgetting curves. Immediate active recall required to stabilize memory retention.`
       : `Targeted for Pass #${revisionCount + 1}. Retention is calculated at ${retrievabilityPercent}% based on Ebbinghaus decay curves and high exam weightage (${yieldWeight}%).`;
 
     const whyBreakdown: AlgorithmWhyBreakdown = {
