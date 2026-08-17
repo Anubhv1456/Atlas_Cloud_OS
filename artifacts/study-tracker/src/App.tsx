@@ -18,6 +18,7 @@ import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
+import { db, dbEvents } from '@/db';
 
 import NotFound from '@/pages/not-found';
 
@@ -197,21 +198,33 @@ function ProtectedApp() {
 
 function App() {
   useEffect(() => {
-    // Non-blocking, idempotent check for initial database bootstrap and schedule health
-    const checkOntology = async () => {
+    let hasRun = false;
+    const checkOntologyAndRehydrate = async () => {
       try {
         const count = await db.subjects.count();
         if (count === 0) {
           await loadUniversalOntology();
-        } else {
-          // Verify and auto-rehydrate revision dates if prior JSON import lacked curriculumSets
+        } else if (!hasRun) {
+          hasRun = true;
           await repairAndRehydrateRevisionDates();
         }
       } catch (err) {
         console.warn('Initial ontology verification or schedule rehydration deferred:', err);
       }
     };
-    checkOntology();
+
+    checkOntologyAndRehydrate();
+
+    const handleInitialSync = (table?: string) => {
+      if (!hasRun && (table === 'subjects' || table === 'curriculumSets')) {
+        checkOntologyAndRehydrate();
+      }
+    };
+    dbEvents.on('change', handleInitialSync);
+
+    return () => {
+      dbEvents.off('change', handleInitialSync);
+    };
   }, []);
 
   useEffect(() => {

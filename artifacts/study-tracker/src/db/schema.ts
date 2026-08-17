@@ -53,16 +53,18 @@ import * as T from './types';
 export const dbEvents = new SimpleEventEmitter();
 dbEvents.setMaxListeners(100);
 
-function sanitizeForFirestore(obj: any): any {
+function sanitizeForFirestore(obj: any, preserveNullOrUndefinedKeys: boolean = false): any {
   if (obj === null || obj === undefined) return null;
   if (obj instanceof Date) return obj;
-  if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter(v => v !== undefined);
+  if (Array.isArray(obj)) return obj.map(o => sanitizeForFirestore(o, preserveNullOrUndefinedKeys)).filter(v => v !== undefined);
   if (typeof obj === 'object') {
     const res: Record<string, any> = {};
     for (const key of Object.keys(obj)) {
       const val = obj[key];
       if (val !== undefined) {
-        res[key] = sanitizeForFirestore(val);
+        res[key] = sanitizeForFirestore(val, preserveNullOrUndefinedKeys);
+      } else if (preserveNullOrUndefinedKeys) {
+        res[key] = null;
       }
     }
     return res;
@@ -226,10 +228,14 @@ class FirestoreTable<T> {
     const cleanChanges = sanitizeForFirestore({
       ...changes,
       hlc: (changes as any).hlc || generateHLC(),
-    });
+    }, true);
 
     if (existing) {
-      this.cache.set(String(id), { ...existing, ...cleanChanges } as T);
+      const merged = { ...existing };
+      for (const k of Object.keys(cleanChanges)) {
+        (merged as any)[k] = cleanChanges[k];
+      }
+      this.cache.set(String(id), merged as T);
       dbEvents.emit('change', this.name);
     }
 

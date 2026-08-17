@@ -226,10 +226,20 @@ export async function restoreCompleteVault(
     if (!sys.id) continue;
     const existingSets = setsBySystemId.get(sys.id) || [];
 
-    // Find all history logs belonging to this system
-    const systemHistory = cleanHistory.filter(h => 
-      (h.systemId === sys.id || (h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase())) && !h.deletedAt
-    ).sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+    const sysSubject = cleanSubjects.find(s => s.id === sys.subjectId);
+    const sysSubName = sysSubject?.name || '';
+    // Find all history logs belonging strictly to this system within its parent subject
+    const systemHistory = cleanHistory.filter(h => {
+      if (h.deletedAt) return false;
+      if (h.subjectId && sys.subjectId && String(h.subjectId) !== String(sys.subjectId)) return false;
+      if (h.subjectName && sysSubName && h.subjectName.toLowerCase() !== sysSubName.toLowerCase()) return false;
+      if (h.systemId === sys.id) return true;
+      if (h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase()) {
+        return (h.subjectId && String(h.subjectId) === String(sys.subjectId)) ||
+               (h.subjectName && h.subjectName.toLowerCase() === sysSubName.toLowerCase());
+      }
+      return false;
+    }).sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
 
     const latestCompletion = systemHistory[0]?.completedAt || sys.completionDate || sys.lastRevisionDate;
     const hasHistory = systemHistory.length > 0;
@@ -422,18 +432,51 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
 
     const subjectName = subjectMap.get(set.subjectId) || 'General';
 
-    // Find all score logs associated with this study block
-    const matchingScoreLogs = scoreLogs.filter(sl =>
-      !sl.deletedAt &&
-      (sl.curriculumSetId === set.id || (sl.systemId === set.systemId && sl.type === 'set'))
-    );
+    // Find all score logs associated with this study block (scoped strictly to matching subject & system)
+    const matchingScoreLogs = scoreLogs.filter(sl => {
+      if (sl.deletedAt) return false;
+      if (sl.curriculumSetId && sl.curriculumSetId === set.id) return true;
+      if (sl.systemId === set.systemId && sl.type === 'set') {
+        if (sl.subjectId && set.subjectId && String(sl.subjectId) !== String(set.subjectId)) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    });
 
-    // Find all revision history entries for this study block
-    const matchingHistory = history.filter(h =>
-      !h.deletedAt &&
-      h.taskKey === 'curriculum_set_revision' &&
-      (h.systemId === set.systemId || (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()) || (h.taskLabel && h.taskLabel.includes(set.name)))
-    );
+    // Find all revision history entries strictly scoped to this study block and its parent subject
+    const matchingHistory = history.filter(h => {
+      if (h.deletedAt) return false;
+      if (h.taskKey !== 'curriculum_set_revision') return false;
+
+      // Subject scoping check: if history contains subject info, must match
+      if (h.subjectId && set.subjectId && String(h.subjectId) !== String(set.subjectId)) {
+        return false;
+      }
+      if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) {
+        return false;
+      }
+
+      // Match by exact curriculumSetId
+      if (h.curriculumSetId && h.curriculumSetId === set.id) return true;
+
+      // Match by systemId within same subject
+      if (h.systemId && set.systemId && Number(h.systemId) === Number(set.systemId)) {
+        return true;
+      }
+
+      // If matching by name or taskLabel, subject MUST match
+      const nameMatches = (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()) ||
+                          (h.taskLabel && h.taskLabel.toLowerCase().includes(set.name.toLowerCase()));
+      if (nameMatches) {
+        const matchesSubject = (h.subjectId && String(h.subjectId) === String(set.subjectId)) ||
+                               (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
+        return matchesSubject;
+      }
+
+      return false;
+    });
 
     // Merge logs into chronological revision events
     interface RevisionEvent {
@@ -515,32 +558,61 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
       });
       repairedSetsCount++;
     } else {
-      // No revision events recorded yet; check for initial completion history
-      const setCompletions = history.filter(h =>
-        !h.deletedAt &&
-        (h.systemId === set.systemId || (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()))
-      ).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+      // No revision events recorded yet; check for initial completion history strictly within same subject
+      const setCompletions = history.filter(h => {
+        if (h.deletedAt) return false;
+        if (h.subjectId && set.subjectId && String(h.subjectId) !== String(set.subjectId)) return false;
+        if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) return false;
+        if (h.curriculumSetId && h.curriculumSetId === set.id) return true;
+        if (h.systemId && set.systemId && Number(h.systemId) === Number(set.systemId)) return true;
+        const nameMatches = (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()) ||
+                            (h.taskLabel && h.taskLabel.toLowerCase().includes(set.name.toLowerCase()));
+        if (nameMatches) {
+          return (h.subjectId && String(h.subjectId) === String(set.subjectId)) ||
+                 (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
+        }
+        return false;
+      }).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
       const earliestCompletion = setCompletions[0]?.completedAt
         ? new Date(setCompletions[0].completedAt)
         : set.completionDate
         ? new Date(set.completionDate)
-        : set.createdAt
-        ? new Date(set.createdAt)
         : null;
 
-      if (earliestCompletion && (set.contentCompleted || set.qbankCompleted)) {
+      if (setCompletions.length > 0) {
+        const earliestCompletion = new Date(setCompletions[0].completedAt);
         const initialInterval = 3;
         const nextRev = new Date(earliestCompletion.getTime() + initialInterval * 24 * 60 * 60 * 1000);
         await db.curriculumSets.update(set.id, {
+          contentCompleted: set.contentCompleted ?? true,
           currentRevisionInterval: initialInterval,
           nextRevisionDate: nextRev.toISOString(),
           lastRevisionDate: earliestCompletion.toISOString(),
+          completionDate: earliestCompletion.toISOString(),
           revisionCount: 0,
           updatedAt: new Date(),
           hlc: generateHLC()
         });
         repairedSetsCount++;
+      } else {
+        // No completion or revision history exists for this set in its subject.
+        // Cleanse any contaminated dates and completion flags from cross-subject collisions.
+        if (set.nextRevisionDate || set.lastRevisionDate || set.currentRevisionInterval || set.completionDate || set.contentCompleted || set.qbankCompleted) {
+          await db.curriculumSets.update(set.id, {
+            contentCompleted: false,
+            qbankCompleted: false,
+            completionDate: null as any,
+            currentRevisionInterval: null as any,
+            nextRevisionDate: null as any,
+            lastRevisionDate: null as any,
+            revisionCount: 0,
+            averageScore: null as any,
+            updatedAt: new Date(),
+            hlc: generateHLC()
+          });
+          repairedSetsCount++;
+        }
       }
     }
   }
@@ -559,17 +631,29 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
   for (const sys of systems) {
     if (!sys.id || sys.deletedAt) continue;
 
-    const existingSets = setsBySystem.get(sys.id) || [];
-    const systemHistory = history.filter(h =>
-      (h.systemId === sys.id || (h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase())) && !h.deletedAt
-    ).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
-
     const subjectName = subjectMap.get(sys.subjectId) || 'General';
+    const existingSets = setsBySystem.get(sys.id) || [];
+    const systemHistory = history.filter(h => {
+      if (h.deletedAt) return false;
+      if (h.subjectId && sys.subjectId && String(h.subjectId) !== String(sys.subjectId)) return false;
+      if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) return false;
+      if (h.systemId && Number(h.systemId) === Number(sys.id)) return true;
+      const nameMatches = h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase();
+      if (nameMatches) {
+        return (h.subjectId && String(h.subjectId) === String(sys.subjectId)) ||
+               (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
+      }
+      return false;
+    }).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
     if (existingSets.length === 0) {
-      // Check if this system has completion status or score logs
-      const sysScoreLogs = scoreLogs.filter(sl => !sl.deletedAt && sl.systemId === sys.id);
-      const isSystemCompleted = sys.contentCompleted || sys.qbankDone || sys.status === 'Strong' || sys.status === 'Weak' || systemHistory.length > 0 || sysScoreLogs.length > 0;
+      // Check if this system has completion status or score logs strictly within this subject
+      const sysScoreLogs = scoreLogs.filter(sl => {
+        if (sl.deletedAt) return false;
+        if (sl.subjectId && sys.subjectId && String(sl.subjectId) !== String(sys.subjectId)) return false;
+        return sl.systemId === sys.id;
+      });
+      const isSystemCompleted = systemHistory.length > 0 || sysScoreLogs.length > 0;
 
       if (isSystemCompleted) {
         // Recover missing CurriculumSet
@@ -632,6 +716,19 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
 
         newSetsToAdd.push(newSet);
         repairedSetsCount++;
+      } else {
+        if (sys.nextRevisionDate || sys.lastRevisionDate || sys.completionDate || sys.contentCompleted || sys.qbankDone) {
+          await db.systems.update(sys.id, {
+            contentCompleted: false,
+            qbankDone: false,
+            completionDate: null,
+            lastRevisionDate: null,
+            nextRevisionDate: null,
+            revisionCount: 0,
+            updatedAt: new Date()
+          });
+          repairedCount++;
+        }
       }
     } else {
       // Synchronize System dates from its Study Blocks
@@ -644,19 +741,17 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
 
       const latestLast = validLastDates.length > 0
         ? new Date(Math.max(...validLastDates.map(d => d.getTime())))
-        : sys.lastRevisionDate
-        ? new Date(sys.lastRevisionDate)
         : null;
 
       const earliestNext = validNextDates.length > 0
         ? new Date(Math.min(...validNextDates.map(d => d.getTime())))
-        : sys.nextRevisionDate
-        ? new Date(sys.nextRevisionDate)
         : null;
 
       const totalRevs = existingSets.reduce((sum, s) => sum + (s.revisionCount || 0), 0);
+      const isAnySetCompleted = existingSets.some(s => s.contentCompleted || s.qbankCompleted);
 
       await db.systems.update(sys.id, {
+        contentCompleted: isAnySetCompleted,
         lastRevisionDate: latestLast,
         nextRevisionDate: earliestNext,
         revisionCount: totalRevs,
