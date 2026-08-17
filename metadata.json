@@ -1,6 +1,6 @@
 {
   "name": "Atlas Cloud",
-  "description": "Imported from GitHub: Anubhv1456/Atlas-V1",
+  "description": "Intelligent Medical Study Operating System for MBBS, NEET PG, and INICET entrance preparation featuring Adaptive Operational Modes, Active Recall, and Memory Decay Calibration",
   "requestFramePermissions": [
     "web-share"
   ],

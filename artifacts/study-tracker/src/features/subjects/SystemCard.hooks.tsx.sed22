@@ -1,3 +1,0 @@
-s/!system.completionDate &&//g
-s/, system.completionDate//g
-s/system.qbankDone/false/g

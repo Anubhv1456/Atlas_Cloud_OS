@@ -91,15 +91,15 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="min-h-full bg-background px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-32 md:pb-12 max-w-6xl mx-auto w-full flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="relative z-10 flex-1 flex flex-col w-full min-w-0">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <header className="mb-8 flex items-start justify-between gap-3 sm:gap-4">
-          <div className="flex items-start gap-3 sm:gap-3.5 min-w-0">
+        <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+          <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
             <img src="/emblem.svg" alt="Atlas Logo" className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap min-w-0">
+                <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider shrink-0">
                   <Sparkles className="w-3.5 h-3.5 shrink-0" /> NEET PG 2026 • Cohort Active
                 </span>
                 {streak > 0 && (
@@ -113,11 +113,11 @@ export default function Home() {
           </div>
 
           {/* Action controls - Top Right Corner */}
-          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
             <AtlasSkyPreview />
           </div>
         </header>
-            
+
         {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
         <div className="mb-10">
           <NextActionCard

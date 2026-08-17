@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target } from 'lucide-react';
+import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target, RefreshCw } from 'lucide-react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { logCompletion } from '@/db/mutations';
@@ -15,6 +15,7 @@ import { CurriculumSetScoreModal } from './CurriculumSetScoreModal';
 import { ALL_SUBJECTS } from '@/data/ontology';
 import { CurriculumSetForm } from './CurriculumSetForm';
 import { deleteCurriculumSet } from '@/db/mutations';
+import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -35,10 +36,28 @@ const colorMap = {
 };
 
 export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: CurriculumSetsProps) {
-    const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
   const [scoreModalOpen, setScoreModalOpen] = useState(false);
   const [scoreModalSet, setScoreModalSet] = useState<CurriculumSet | undefined>();
+  const [isRehydrating, setIsRehydrating] = useState(false);
+
+  const handleRehydrateDates = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsRehydrating(true);
+    try {
+      const res = await repairAndRehydrateRevisionDates();
+      toast.success('SDSR Schedules Rehydrated', {
+        description: res.message,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to rehydrate SDSR dates');
+    } finally {
+      setIsRehydrating(false);
+    }
+  };
   
   const curriculumSets = useLiveQuery(
     () => {
@@ -126,12 +145,23 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Folder className="w-3.5 h-3.5" /> Study Blocks
           </h4>
-          <button
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
-            className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors"
-          >
-            + New Set
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRehydrateDates}
+              disabled={isRehydrating}
+              title="Recalculate SDSR dates from study logs"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 px-2 py-1 rounded-md transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-3 h-3", isRehydrating && "animate-spin text-primary")} />
+              <span>Rehydrate Dates</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
+              className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+            >
+              + New Set
+            </button>
+          </div>
         </div>
         <div className="p-4 rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
           <p className="text-sm text-muted-foreground">
@@ -156,12 +186,23 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Folder className="w-3.5 h-3.5" /> Study Blocks
         </h4>
-        <button
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
-          className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors"
-        >
-          + New Set
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRehydrateDates}
+            disabled={isRehydrating}
+            title="Recalculate and rehydrate SDSR revision schedules from past study & revision logs"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 px-2 py-1 rounded-md transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3 h-3", isRehydrating && "animate-spin text-primary")} />
+            <span>Rehydrate Dates</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
+            className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+          >
+            + New Set
+          </button>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -215,9 +256,19 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                               <GripVertical className="w-4 h-4" />
                             </div>
                             <span className="font-semibold text-sm text-foreground">{rs.name}</span>
-                            {rs.isLengthy && (
+                            {(rs.depth === 'rapid' || (rs.customDurationMinutes && rs.customDurationMinutes <= 15)) && (
+                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                ⚡ Rapid Recall
+                              </span>
+                            )}
+                            {(rs.depth === 'deep' || rs.isLengthy) && (
                               <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                                Deep Work
+                                🔬 Deep Focus
+                              </span>
+                            )}
+                            {rs.depth === 'standard' && (
+                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                📖 Standard
                               </span>
                             )}
                           </div>

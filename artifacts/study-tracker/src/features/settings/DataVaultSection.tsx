@@ -1,58 +1,51 @@
-import React, { useState, useRef } from 'react';
-import { Database, Download, Upload, FileSpreadsheet, HardDrive, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Database, Download, Upload, FileSpreadsheet, HardDrive, Sparkles, RefreshCw, Layers, CheckCircle2, AlertCircle } from 'lucide-react';
 import { db } from '@/db/schema';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useAuth } from '@/hooks/useAuth';
-import { createSignedVaultBackup, verifyVaultBackupProvenance } from '@/lib/vaultSignature';
-import { firestoreDb } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { exportCompleteVault, restoreCompleteVault, repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { toast } from 'sonner';
 
 export function DataVaultSection() {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loadingAction, setLoadingAction] = useState<'export-json' | 'import-json' | 'export-csv' | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'export-json' | 'import-json' | 'export-csv' | 'repair-schedules' | null>(null);
 
   // Live Storage Telemetry Query
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const systems = useLiveQuery(() => db.systems.toArray(), []);
+  const curriculumSets = useLiveQuery(() => db.curriculumSets.toArray(), []);
   const scoreLogs = useLiveQuery(() => db.scoreLogs.toArray(), []);
   const history = useLiveQuery(() => db.history.toArray(), []);
 
   const subjectCount = subjects?.length ?? 0;
   const systemCount = systems?.length ?? 0;
+  const setsCount = curriculumSets?.filter(s => !s.deletedAt).length ?? 0;
   const scoreCount = scoreLogs?.length ?? 0;
   const historyCount = history?.length ?? 0;
+
+  // Detect if revision schedules might be out-of-sync or missing
+  const completedSystemsCount = systems?.filter(s => !s.deletedAt && (s.contentCompleted || s.qbankDone || s.status === 'Strong' || s.status === 'Weak')).length ?? 0;
+  const activeSchedulesCount = (curriculumSets?.filter(s => !s.deletedAt && s.nextRevisionDate).length ?? 0) + (systems?.filter(s => !s.deletedAt && s.nextRevisionDate).length ?? 0);
+  const hasPotentialScheduleGap = completedSystemsCount > 0 && activeSchedulesCount === 0;
 
   // JSON Export Handler with Cryptographic Provenance Stamping
   const handleExportJSON = async () => {
     try {
       setLoadingAction('export-json');
-      const rawData = {
-        subjects: await db.subjects.toArray(),
-        systems: await db.systems.toArray(),
-        history: await db.history.toArray(),
-        pyqYears: await db.pyqYears.toArray(),
-        scoreLogs: await db.scoreLogs.toArray(),
-        uiPreferences: await db.uiPreferences.toArray(),
-        topicProgress: await db.topicProgress.toArray()
-      };
+      const { blob, filename } = await exportCompleteVault(user);
 
-      // Wrap in Cryptographic Atlas Vault Envelope
-      const signedEnvelope = await createSignedVaultBackup(rawData, user);
-
-      const blob = new Blob([JSON.stringify(signedEnvelope, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `atlas-data-vault-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success('Signed Data Vault backup created successfully.', {
-        description: 'Stamped with origin cryptographic provenance.'
+      toast.success('Complete Data Vault backup created successfully.', {
+        description: 'Includes all study blocks, revision intervals, schedules, and mistake logs.'
       });
     } catch (e) {
       console.error(e);
@@ -62,7 +55,7 @@ export function DataVaultSection() {
     }
   };
 
-  // JSON Import Handler with Anti-Sybil & Account-Hopping Interceptor
+  // JSON Import Handler with Complete Schema Rehydration
   const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -70,65 +63,45 @@ export function DataVaultSection() {
     try {
       setLoadingAction('import-json');
       const text = await file.text();
-      const parsed = JSON.parse(text);
+      const result = await restoreCompleteVault(text, user);
 
-      // Verify Provenance & Historical Volume
-      const result = await verifyVaultBackupProvenance(parsed, user?.uid || null);
-      const data = result.payload;
-
-      if (data.subjects || data.systems || data.history) {
-        // 1. Restore all local Dexie data safely (Zero Data Loss)
-        await db.transaction('rw', [db.subjects, db.systems, db.history, db.pyqYears, db.scoreLogs, db.uiPreferences, db.topicProgress], async () => {
-          if (data.subjects) await db.subjects.bulkPut(data.subjects);
-          if (data.systems) await db.systems.bulkPut(data.systems);
-          if (data.history) await db.history.bulkPut(data.history);
-          if (data.pyqYears) await db.pyqYears.bulkPut(data.pyqYears);
-          if (data.scoreLogs) await db.scoreLogs.bulkPut(data.scoreLogs);
-          if (data.uiPreferences) await db.uiPreferences.bulkPut(data.uiPreferences);
-          if (data.topicProgress) await db.topicProgress.bulkPut(data.topicProgress);
+      if (result.success) {
+        toast.success('Data Vault restored successfully.', { 
+          description: result.message 
         });
-
-        // 2. Intercept Account-Hopping Trial Reset
-        if (result.isForeignUid && result.isHighHistoricalVolume) {
-          if (user && firestoreDb) {
-            const userRef = doc(firestoreDb, 'users', user.uid);
-            await setDoc(userRef, {
-              vaultActivationRequired: true,
-              vaultImportProvenance: {
-                foreignOriginUid: result.originUid,
-                foreignOriginEmail: result.originEmail || 'unlisted',
-                exportTimestamp: result.exportTimestamp,
-                metrics: result.metrics,
-                importedAt: new Date()
-              },
-              betaAccess: false,
-              updatedAt: new Date()
-            }, { merge: true });
-
-            localStorage.removeItem(`beta_access_${user.uid}`);
-            localStorage.removeItem(`beta_access_expiry_${user.uid}`);
-          }
-
-          toast.warning('Study Vault Restored · Pass Activation Required', {
-            description: `Imported ${result.metrics.totalStudyMinutes}m of previous study history. Please activate your Atlas Pass to continue your revision streak with this high-volume vault.`,
-            duration: 8000
-          });
-        } else {
-          toast.success('Data Vault restored successfully.', { 
-            description: `Restored ${result.metrics.subjectCount || data.subjects?.length || 0} subjects and study logs.` 
-          });
-        }
-      } else {
-        toast.error('Invalid backup file structure.');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error('Failed to import backup file.');
+      toast.error('Failed to import backup file.', {
+        description: e?.message || 'Invalid or unreadable backup structure.'
+      });
     } finally {
       setLoadingAction(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  // Revision Schedule Repair & Rehydration Tool
+  const handleRepairSchedules = async () => {
+    try {
+      setLoadingAction('repair-schedules');
+      const res = await repairAndRehydrateRevisionDates();
+      if (res.repairedCount > 0 || res.repairedSetsCount > 0) {
+        toast.success('Revision Schedules Rehydrated!', {
+          description: res.message
+        });
+      } else {
+        toast.info('Schedules Already Synchronized', {
+          description: res.message
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to repair revision schedules.');
+    } finally {
+      setLoadingAction(null);
     }
   };
 
@@ -138,12 +111,23 @@ export function DataVaultSection() {
       setLoadingAction('export-csv');
       const subs = await db.subjects.toArray();
       const syss = await db.systems.toArray();
+      const sets = await db.curriculumSets.toArray();
 
-      let csvContent = "Subject,System,Status,Order\n";
+      let csvContent = "Subject,System,Study Block,Status,Next Revision Date,Revision Count\n";
       syss.forEach(sys => {
         const sub = subs.find(s => s.id === sys.subjectId);
-        const subName = sub ? sub.name : 'Unknown';
-        csvContent += `"${subName}","${sys.name}","${sys.status || 'Not Started'}","${sys.order || 0}"\n`;
+        const subName = sub ? sub.name : 'General';
+        const matchingSets = sets.filter(s => s.systemId === sys.id && !s.deletedAt);
+
+        if (matchingSets.length > 0) {
+          matchingSets.forEach(set => {
+            const nextDateStr = set.nextRevisionDate ? new Date(set.nextRevisionDate).toISOString().slice(0, 10) : 'None';
+            csvContent += `"${subName}","${sys.name}","${set.name}","${sys.status || 'Average'}","${nextDateStr}","${set.revisionCount || 0}"\n`;
+          });
+        } else {
+          const nextDateStr = sys.nextRevisionDate ? new Date(sys.nextRevisionDate).toISOString().slice(0, 10) : 'None';
+          csvContent += `"${subName}","${sys.name}","Core","${sys.status || 'Average'}","${nextDateStr}","${sys.revisionCount || 0}"\n`;
+        }
       });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -183,11 +167,11 @@ export function DataVaultSection() {
           </div>
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Data Vault & Local Telemetry
+              Data Vault & Spaced Recall Telemetry
             </h3>
             <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
               <HardDrive className="w-3 h-3 text-emerald-500" />
-              <span>IndexedDB Persistence Active</span>
+              <span>Full IndexedDB & Revision Persistence Active</span>
             </p>
           </div>
         </div>
@@ -208,6 +192,11 @@ export function DataVaultSection() {
             <strong className="text-foreground font-bold">{systemCount}</strong> Systems
           </span>
           <span>•</span>
+          <span className="font-medium flex items-center gap-1 text-teal-600 dark:text-teal-400">
+            <Layers className="w-3 h-3" />
+            <strong className="font-bold">{setsCount}</strong> Study Blocks
+          </span>
+          <span>•</span>
           <span className="font-medium">
             <strong className="text-foreground font-bold">{scoreCount}</strong> Scores
           </span>
@@ -218,8 +207,31 @@ export function DataVaultSection() {
         </div>
       </div>
 
+      {/* Revision Schedule Recovery Advisory Banner */}
+      {hasPotentialScheduleGap && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Missing Scheduled Revision Dates Detected</p>
+              <p className="text-muted-foreground text-[11px] mt-0.5">
+                You have completed curriculum systems whose spaced-recall schedules need rehydration from past logs.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleRepairSchedules}
+            disabled={loadingAction !== null}
+            className="px-2.5 py-1 rounded-lg bg-amber-500 text-amber-950 font-bold text-[11px] hover:bg-amber-400 transition-colors shrink-0 cursor-pointer"
+          >
+            Rehydrate Now
+          </button>
+        </div>
+      )}
+
       {/* Action Buttons Matrix */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
         <button
           type="button"
           onClick={handleExportJSON}
@@ -250,6 +262,20 @@ export function DataVaultSection() {
 
         <button
           type="button"
+          onClick={handleRepairSchedules}
+          disabled={loadingAction !== null}
+          className="p-3 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 transition-all cursor-pointer flex items-center justify-center gap-2 text-xs font-semibold text-foreground shadow-xs disabled:opacity-50"
+        >
+          {loadingAction === 'repair-schedules' ? (
+            <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+          )}
+          <span>Rehydrate Dates</span>
+        </button>
+
+        <button
+          type="button"
           onClick={handleExportCSV}
           disabled={loadingAction !== null}
           className="p-3 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 transition-all cursor-pointer flex items-center justify-center gap-2 text-xs font-semibold text-foreground shadow-xs disabled:opacity-50"
@@ -257,7 +283,7 @@ export function DataVaultSection() {
           {loadingAction === 'export-csv' ? (
             <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           ) : (
-            <FileSpreadsheet className="w-3.5 h-3.5 text-amber-500" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-500" />
           )}
           <span>Export CSV</span>
         </button>

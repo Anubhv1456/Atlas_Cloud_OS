@@ -173,7 +173,8 @@ export interface CurriculumSet {
   contentCompleted?: boolean;
   qbankCompleted?: boolean;
 
-  // Duration & Pacing Calibration
+  // Duration, Depth & Pacing Calibration
+  depth?: 'rapid' | 'standard' | 'deep';
   isLengthy?: boolean;
   paceMultiplier?: number;
   customDurationMinutes?: number;
@@ -221,3 +222,44 @@ export interface RecommendationSkip {
   reason: 'already_studied' | 'too_difficult' | 'needs_deep_work' | 'fast_recall' | 'not_today' | 'not_relevant' | 'dismissed_gap' | 'default';
   expiresAt: Date;
 }
+
+// ── Operational Mode (Adaptive Focus & Soft Recalibration Engine) ───────────
+export type OperationalModeType = 'standard' | 'tactical_sprint' | 'clinical_duty' | 'final_lap' | 'holiday';
+
+export interface OperationalModeConfig {
+  mode: OperationalModeType;
+  targetSubjectIds?: (number | string)[];
+  targetDate?: string | null;
+  dailyCapacityMinutes?: number;
+  activatedAt?: string;
+  recalibrationWindowDays?: number;
+  previousMode?: OperationalModeType;
+  lastRecalibratedAt?: string;
+  notes?: string;
+}
+
+export interface OperationalModeRecord {
+  id: string; // 'current' singleton record
+  mode: OperationalModeType;
+  targetSubjectIds: (number | string)[];
+  targetDate: string | null;
+  dailyCapacityMinutes: number;
+  activatedAt: string;
+  recalibrationWindowDays: number;
+  previousMode?: OperationalModeType;
+  lastRecalibratedAt?: string;
+  notes?: string;
+  updatedAt: Date;
+  hlc?: string;
+}
+
+export const DEFAULT_OPERATIONAL_MODE: OperationalModeRecord = {
+  id: 'current',
+  mode: 'standard',
+  targetSubjectIds: [],
+  targetDate: null,
+  dailyCapacityMinutes: 180,
+  activatedAt: new Date().toISOString(),
+  recalibrationWindowDays: 10,
+  updatedAt: new Date(),
+};

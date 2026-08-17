@@ -204,10 +204,11 @@ export function calibrateCurriculumSetSDSR(
   curriculumSet: any,
   score: number,
   subjectName: string = 'General',
-  globalRetentionScore: number = 0.70
+  globalRetentionScore: number = 0.70,
+  referenceDate?: Date | string
 ) {
   const normalizedScore = score > 1 ? score / 100 : score;
-  const now = new Date();
+  const refDate = referenceDate ? new Date(referenceDate) : new Date();
   let baseInterval = curriculumSet.currentRevisionInterval;
 
   if (!baseInterval) {
@@ -217,8 +218,9 @@ export function calibrateCurriculumSetSDSR(
     else baseInterval = 21;
   } else {
     if (curriculumSet.lastRevisionDate) {
-      const actualIntervalDays = (now.getTime() - new Date(curriculumSet.lastRevisionDate).getTime()) / (1000 * 60 * 60 * 24);
-      if (normalizedScore >= 0.70 && actualIntervalDays > baseInterval) {
+      const prevDate = new Date(curriculumSet.lastRevisionDate);
+      const actualIntervalDays = (refDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (normalizedScore >= 0.70 && actualIntervalDays > baseInterval && actualIntervalDays > 0) {
         baseInterval = actualIntervalDays;
       }
     }
@@ -236,7 +238,7 @@ export function calibrateCurriculumSetSDSR(
   let newInterval = baseInterval * Pm * Dm * alpha;
   newInterval = Math.max(3, Math.min(150, newInterval));
 
-  const nextRevisionDate = new Date(now.getTime() + (newInterval * 24 * 60 * 60 * 1000));
+  const nextRevisionDate = new Date(refDate.getTime() + (newInterval * 24 * 60 * 60 * 1000));
   const count = curriculumSet.revisionCount || 0;
   const oldAvg = curriculumSet.averageScore ?? normalizedScore;
   const newAverageScore = (oldAvg * count + normalizedScore) / (count + 1);
@@ -247,10 +249,10 @@ export function calibrateCurriculumSetSDSR(
     updatedSet: {
       currentRevisionInterval: Math.round(newInterval),
       nextRevisionDate,
-      lastRevisionDate: now,
+      lastRevisionDate: refDate,
       revisionCount: count + 1,
       averageScore: newAverageScore,
-      updatedAt: now,
+      updatedAt: new Date(),
     },
   };
 }

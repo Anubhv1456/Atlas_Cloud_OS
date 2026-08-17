@@ -45,7 +45,7 @@ export function SystemCard(props: SystemCardProps) {
     cardRef, progress, completedCount, contentPct, revisionDue, revisionOverdue, overdueDays, 
     weakTopicsCount, totalTopicsCount, blocksCompleted, blocksTotal,
     toggleQBank, localNotes, handleStatusChange, handleNotesChange, handleDelete, handleRevisionComplete, 
-    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, finalTopics, 
+    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, handleResetTopics, hasCustomTopicEdits, finalTopics, 
     showLogSession, setShowLogSession, handleSetLogScore, showDecayCalibration, setShowDecayCalibration, toggleHighYield 
   } = useSystemCardLogic(props);
 
@@ -232,12 +232,7 @@ export function SystemCard(props: SystemCardProps) {
               </div>
 
               {/* Topics List */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Topics ({finalTopics.length})
-                  </h4>
-                </div>
+              <div>
                 <TopicList
                   topics={finalTopics}
                   subjectId={system.subjectId}
@@ -258,6 +253,8 @@ export function SystemCard(props: SystemCardProps) {
                   onRenameTopic={handleRenameTopic}
                   onDeleteTopic={handleDeleteTopic}
                   onAddTopic={handleAddCustomTopic}
+                  onResetTopics={handleResetTopics}
+                  hasCustomEdits={hasCustomTopicEdits}
                 />
               </div>
 

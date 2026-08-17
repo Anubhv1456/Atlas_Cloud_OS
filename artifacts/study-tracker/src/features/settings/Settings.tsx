@@ -17,7 +17,7 @@ import { ShieldCheck, Sparkles } from 'lucide-react';
 
 export default function Settings() {
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-10 max-w-3xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="w-full flex-1 bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-32 md:pb-16 max-w-3xl mx-auto flex flex-col relative animate-in fade-in duration-200">
       <header className="mb-6 border-b border-border/40 pb-4">
         <div className="flex items-center gap-1.5 text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">
           <Sparkles className="w-3.5 h-3.5" /> OS Control Center

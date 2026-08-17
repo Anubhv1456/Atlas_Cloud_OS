@@ -1,1 +1,0 @@
-s/const dash = Math.max(0, Math.min(1, pct \/ 100)) \* circ;/const dash = Math.max(0, Math.min(1, pct \/ 100)) \* circ;\n  return (/g

@@ -1,6 +1,6 @@
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from './schema';
-import { Subject, StudySystem, UIPreference, HistoryEntry, PYQYear, ScoreLog } from './types';
+import { Subject, StudySystem, UIPreference, HistoryEntry, PYQYear, ScoreLog, OperationalModeConfig, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE } from './types';
 import { SystemStatus } from './types';
 import { scheduleFirstRevision, scheduleNextRevision, isRevisionDue, today, sortSystemsByRevisionPriority, calculateDurationMultiplier, getActiveRevisionSystems } from './revisionEngine';
 import { toast } from 'sonner';
@@ -49,12 +49,21 @@ export async function updateSubject(id: number, name: string) {
   return await db.subjects.update(id, { name, updatedAt: new Date(), hlc: generateHLC() });
 }
 
-export async function deleteSubject(id: number) {
-  await db.transaction('rw', db.subjects, db.systems, db.history, db.pyqYears, async () => {
-    await db.history.where('subjectId').equals(id).modify({ deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
-    await db.systems.where('subjectId').equals(id).modify({ deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
-    await db.pyqYears.where('subjectId').equals(id).modify({ deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
-    await db.subjects.update(id, { deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
+export async function deleteSubject(id: number | string) {
+  await db.transaction('rw', db.subjects, db.systems, db.history, db.pyqYears, db.curriculumSets, db.revisionSets, db.uiPreferences, async () => {
+    const now = new Date();
+    const hlc = generateHLC();
+    await db.history.where('subjectId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    await db.systems.where('subjectId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    await db.pyqYears.where('subjectId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    if (db.curriculumSets) {
+      await db.curriculumSets.where('subjectId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    }
+    if (db.revisionSets) {
+      await db.revisionSets.where('subjectId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    }
+    await db.subjects.update(id, { deletedAt: now, updatedAt: now, hlc });
+    await db.uiPreferences.delete(`subject:${id}`);
   });
 }
 
@@ -126,10 +135,19 @@ export async function setSubjectFocus(subjectId: number, focus: 'primary' | 'sec
   });
 }
 
-export async function deleteSystem(id: number) {
-  await db.transaction('rw', db.systems, db.history, async () => {
-    await db.history.where('systemId').equals(id).modify({ deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
-    await db.systems.update(id, { deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
+export async function deleteSystem(id: number | string) {
+  await db.transaction('rw', db.systems, db.history, db.curriculumSets, db.revisionSets, db.uiPreferences, async () => {
+    const now = new Date();
+    const hlc = generateHLC();
+    await db.history.where('systemId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    if (db.curriculumSets) {
+      await db.curriculumSets.where('systemId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    }
+    if (db.revisionSets) {
+      await db.revisionSets.where('systemId').equals(id).modify({ deletedAt: now, updatedAt: now, hlc });
+    }
+    await db.systems.update(id, { deletedAt: now, updatedAt: now, hlc });
+    await db.uiPreferences.delete(`system:${id}`);
   });
 }
 
@@ -513,7 +531,7 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 
 // ── Study Blocks ──────────────────────────────────────────────────────────
 
-export async function createCurriculumSet(data: { subjectId: number; systemId: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray' }) {
+export async function createCurriculumSet(data: { subjectId: number; systemId: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
   const newSet: import('./types').CurriculumSet = {
     id: crypto.randomUUID(),
     ...data,
@@ -553,18 +571,22 @@ export async function logCurriculumSetScore(
   score: number,
   reviewedTopicIds: string[],
   subjectName: string = 'General',
-  timeTakenMinutes?: number
+  timeTakenMinutes?: number,
+  customDate?: Date | string
 ) {
   const table = db.curriculumSets || db.revisionSets;
   const set = await table.get(curriculumSetId);
   if (!set || set.deletedAt) return;
 
+  const logDate = customDate ? new Date(customDate) : new Date();
   const normalizedScore = score > 1 ? score / 100 : score;
 
-  const { updatedSet } = calibrateCurriculumSetSDSR(
+  const { updatedSet, nextRevisionDate } = calibrateCurriculumSetSDSR(
     set,
     normalizedScore,
-    subjectName
+    subjectName,
+    0.70,
+    logDate
   );
 
   // Auto-calibrate pacing from actual time taken
@@ -578,18 +600,50 @@ export async function logCurriculumSetScore(
     }
   }
 
-  await table.update(curriculumSetId, updatedSet);
+  // If this log is backdated and there exists a newer lastRevisionDate already recorded on this set,
+  // keep the more recent lastRevisionDate & interval, but increment count & average score.
+  if (set.lastRevisionDate && new Date(set.lastRevisionDate).getTime() > logDate.getTime()) {
+    const count = set.revisionCount || 0;
+    const oldAvg = set.averageScore ?? normalizedScore;
+    const newAverageScore = (oldAvg * count + normalizedScore) / (count + 1);
+    await table.update(curriculumSetId, {
+      revisionCount: count + 1,
+      averageScore: newAverageScore,
+      updatedAt: new Date(),
+      hlc: generateHLC(),
+    });
+  } else {
+    await table.update(curriculumSetId, {
+      ...updatedSet,
+      hlc: generateHLC(),
+    });
 
-  const now = new Date();
-  
+    // Synchronize parent system lastRevisionDate and nextRevisionDate if applicable
+    if (set.systemId) {
+      const sys = await db.systems.get(set.systemId);
+      if (sys && (!sys.lastRevisionDate || new Date(sys.lastRevisionDate).getTime() <= logDate.getTime())) {
+        await db.systems.update(set.systemId, {
+          lastRevisionDate: logDate,
+          nextRevisionDate: nextRevisionDate,
+          revisionCount: (sys.revisionCount || 0) + 1,
+          updatedAt: new Date(),
+          hlc: generateHLC(),
+        });
+      }
+    }
+  }
+
   const scorePercent = Math.round(normalizedScore * 100);
-  await db.scoreLogs.add({ title: 'Revision', total: 100, percentage: score, 
+  await db.scoreLogs.add({
+    title: 'Revision',
+    total: 100,
+    percentage: scorePercent,
     type: 'set',
     subjectId: set.subjectId,
     systemId: set.systemId,
     curriculumSetId: curriculumSetId,
     score: scorePercent,
-    timestamp: now,
+    timestamp: logDate,
   });
 
   await logCompletion({
@@ -599,13 +653,18 @@ export async function logCurriculumSetScore(
     systemName: set.name,
     taskKey: 'curriculum_set_revision',
     taskLabel: 'Reviewed ' + set.name + ' (' + scorePercent + '%)',
-    completedAt: now,
+    completedAt: logDate,
   });
 
   recordSessionCompletion('curriculum_set', timeTakenMinutes || 25, true);
 
+  const formattedLogDate = logDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const isBackdated = Math.abs(Date.now() - logDate.getTime()) > 86400000;
+
   toast.success('Score saved', {
-    description: 'Atlas updated next review interval & pacing calibration for ' + set.name + '.',
+    description: isBackdated
+      ? `SDSR calibrated for ${set.name} based on ${formattedLogDate} revision.`
+      : `Atlas updated next review interval & pacing calibration for ${set.name}.`,
   });
 }
 
@@ -617,7 +676,7 @@ export async function logCurriculumSetScore(
 export async function adaptTopicPacingFeedback(
   systemId: number,
   curriculumSetId?: string,
-  feedbackType: 'needs_deep_work' | 'fast_recall' | 'too_difficult' = 'needs_deep_work'
+  feedbackType: 'needs_deep_work' | 'fast_recall' | 'standard' | 'too_difficult' = 'needs_deep_work'
 ) {
   const now = new Date();
   const table = db.curriculumSets || db.revisionSets;
@@ -625,6 +684,7 @@ export async function adaptTopicPacingFeedback(
   if (feedbackType === 'needs_deep_work') {
     if (curriculumSetId) {
       await table.update(curriculumSetId, {
+        depth: 'deep',
         isLengthy: true,
         paceMultiplier: 1.5,
         updatedAt: now,
@@ -642,6 +702,7 @@ export async function adaptTopicPacingFeedback(
   } else if (feedbackType === 'fast_recall') {
     if (curriculumSetId) {
       await table.update(curriculumSetId, {
+        depth: 'rapid',
         isLengthy: false,
         paceMultiplier: 0.75,
         updatedAt: now,
@@ -656,9 +717,29 @@ export async function adaptTopicPacingFeedback(
         hlc: generateHLC(),
       });
     }
+  } else if (feedbackType === 'standard') {
+    if (curriculumSetId) {
+      await table.update(curriculumSetId, {
+        depth: 'standard',
+        isLengthy: false,
+        paceMultiplier: 1.0,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
+    if (systemId) {
+      await db.systems.update(systemId, {
+        isLengthy: false,
+        paceMultiplier: 1.0,
+        updatedAt: now,
+        hlc: generateHLC(),
+      });
+    }
   } else if (feedbackType === 'too_difficult') {
     if (curriculumSetId) {
       await table.update(curriculumSetId, {
+        depth: 'deep',
+        isLengthy: true,
         paceMultiplier: 1.35,
         updatedAt: now,
         hlc: generateHLC(),
@@ -792,3 +873,60 @@ export async function addRecommendationSkip(
     expiresAt
   });
 }
+
+// ── Operational Mode Mutations (Adaptive Focus & Soft Recalibration Engine) ──
+
+export async function setOperationalMode(config: Partial<OperationalModeConfig>): Promise<OperationalModeRecord> {
+  const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
+  
+  const isModeChanging = config.mode !== undefined && config.mode !== existing.mode;
+  const newMode = config.mode ?? existing.mode;
+  
+  const updatedRecord: OperationalModeRecord = {
+    id: 'current',
+    mode: newMode,
+    targetSubjectIds: config.targetSubjectIds !== undefined 
+      ? config.targetSubjectIds 
+      : existing.targetSubjectIds || [],
+    targetDate: config.targetDate !== undefined 
+      ? config.targetDate 
+      : (existing.targetDate ?? null),
+    dailyCapacityMinutes: config.dailyCapacityMinutes !== undefined 
+      ? config.dailyCapacityMinutes 
+      : (newMode === 'holiday' ? 0 : newMode === 'clinical_duty' ? 30 : newMode === 'tactical_sprint' ? 480 : existing.dailyCapacityMinutes || 180),
+    activatedAt: isModeChanging ? new Date().toISOString() : (config.activatedAt || existing.activatedAt || new Date().toISOString()),
+    recalibrationWindowDays: config.recalibrationWindowDays !== undefined 
+      ? config.recalibrationWindowDays 
+      : (existing.recalibrationWindowDays || 10),
+    previousMode: isModeChanging ? existing.mode : (config.previousMode ?? existing.previousMode),
+    lastRecalibratedAt: config.lastRecalibratedAt ?? existing.lastRecalibratedAt,
+    notes: config.notes !== undefined ? config.notes : existing.notes,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  };
+
+  await db.operationalModes.put(updatedRecord);
+  return updatedRecord;
+}
+
+export async function resetOperationalMode(recalibrationDays: number = 10): Promise<OperationalModeRecord> {
+  const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
+  
+  const resetRecord: OperationalModeRecord = {
+    id: 'current',
+    mode: 'standard',
+    targetSubjectIds: [],
+    targetDate: null,
+    dailyCapacityMinutes: 180,
+    activatedAt: new Date().toISOString(),
+    recalibrationWindowDays: recalibrationDays,
+    previousMode: existing.mode,
+    lastRecalibratedAt: new Date().toISOString(),
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  };
+
+  await db.operationalModes.put(resetRecord);
+  return resetRecord;
+}
+

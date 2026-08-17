@@ -27,9 +27,10 @@ export function calibrateSystemSDSR(
   system: StudySystem,
   score: number,
   subjectName: string,
-  globalRetentionScore: number = 0.70
+  globalRetentionScore: number = 0.70,
+  referenceDate?: Date | string
 ): Partial<StudySystem> {
-  const now = new Date();
+  const refDate = referenceDate ? new Date(referenceDate) : new Date();
   let baseInterval = system.currentRevisionInterval;
 
   if (!baseInterval) {
@@ -39,8 +40,9 @@ export function calibrateSystemSDSR(
     else baseInterval = 21;
   } else {
     if (system.lastRevisionDate) {
-      const actualIntervalDays = (now.getTime() - new Date(system.lastRevisionDate).getTime()) / (1000 * 60 * 60 * 24);
-      if (score >= 0.70 && actualIntervalDays > baseInterval) {
+      const prevDate = new Date(system.lastRevisionDate);
+      const actualIntervalDays = (refDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (score >= 0.70 && actualIntervalDays > baseInterval && actualIntervalDays > 0) {
         baseInterval = actualIntervalDays;
       }
     }
@@ -60,7 +62,7 @@ export function calibrateSystemSDSR(
   newInterval = Math.max(3, newInterval);
   newInterval = Math.min(150, newInterval);
 
-  const nextRevisionDate = new Date(now.getTime() + (newInterval * 24 * 60 * 60 * 1000));
+  const nextRevisionDate = new Date(refDate.getTime() + (newInterval * 24 * 60 * 60 * 1000));
 
   // Determine standard confidence enum based on score to keep UI consistent
   let status: 'Strong' | 'Average' | 'Weak' = 'Average';
@@ -69,11 +71,11 @@ export function calibrateSystemSDSR(
 
   return {
     status,
-    lastRevisionDate: now,
+    lastRevisionDate: refDate,
     nextRevisionDate,
-    currentRevisionInterval: newInterval,
+    currentRevisionInterval: Math.round(newInterval),
     revisionCount: (system.revisionCount || 0) + 1,
-    updatedAt: now,
+    updatedAt: new Date(),
   };
 }
 
@@ -90,10 +92,11 @@ export function calibrateCurriculumSetSDSR(
   curriculumSet: CurriculumSet,
   score: number,
   subjectName: string = 'General',
-  globalRetentionScore: number = 0.70
+  globalRetentionScore: number = 0.70,
+  referenceDate?: Date | string
 ): CurriculumSetSDSRResult {
   const normalizedScore = score > 1 ? score / 100 : score;
-  const now = new Date();
+  const refDate = referenceDate ? new Date(referenceDate) : new Date();
   let baseInterval = curriculumSet.currentRevisionInterval;
 
   if (!baseInterval) {
@@ -103,8 +106,9 @@ export function calibrateCurriculumSetSDSR(
     else baseInterval = 21;
   } else {
     if (curriculumSet.lastRevisionDate) {
-      const actualIntervalDays = (now.getTime() - new Date(curriculumSet.lastRevisionDate).getTime()) / (1000 * 60 * 60 * 24);
-      if (normalizedScore >= 0.70 && actualIntervalDays > baseInterval) {
+      const prevDate = new Date(curriculumSet.lastRevisionDate);
+      const actualIntervalDays = (refDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (normalizedScore >= 0.70 && actualIntervalDays > baseInterval && actualIntervalDays > 0) {
         baseInterval = actualIntervalDays;
       }
     }
@@ -122,7 +126,7 @@ export function calibrateCurriculumSetSDSR(
   let newInterval = baseInterval * Pm * Dm * alpha;
   newInterval = Math.max(3, Math.min(150, newInterval));
 
-  const nextRevisionDate = new Date(now.getTime() + (newInterval * 24 * 60 * 60 * 1000));
+  const nextRevisionDate = new Date(refDate.getTime() + (newInterval * 24 * 60 * 60 * 1000));
   const count = curriculumSet.revisionCount || 0;
   const oldAvg = curriculumSet.averageScore ?? normalizedScore;
   const newAverageScore = (oldAvg * count + normalizedScore) / (count + 1);
@@ -130,10 +134,10 @@ export function calibrateCurriculumSetSDSR(
   const updatedSet: any = {
     currentRevisionInterval: Math.round(newInterval),
     nextRevisionDate,
-    lastRevisionDate: now,
+    lastRevisionDate: refDate,
     revisionCount: count + 1,
     averageScore: newAverageScore,
-    updatedAt: now,
+    updatedAt: new Date(),
   };
 
   return {

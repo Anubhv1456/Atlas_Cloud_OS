@@ -16,6 +16,7 @@ import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
+import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 
 import NotFound from '@/pages/not-found';
@@ -183,20 +184,20 @@ function ProtectedApp() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[100dvh] w-full">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20" />
-      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[120vw] h-[120vw] max-w-[800px] max-h-[800px] meridian-ring opacity-20" />
-      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[90vw] h-[90vw] max-w-[600px] max-h-[600px] meridian-ring opacity-30" />
+    <div className="flex flex-col md:flex-row min-h-screen w-full relative">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
+      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
+      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
       <GlobalAnnouncements />
       <AutoSyncEngine />
       <BottomNav />
-      <div className="flex-1 w-full relative z-10 overflow-x-hidden md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-[100dvh]">
+      <div className="flex-1 w-full relative z-10 md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-screen">
         <OfflineLeaseBanner />
         <motion.main
           key={location}
-          initial={{ opacity: 0, y: 12, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.4, type: "spring", bounce: 0, damping: 25, stiffness: 200 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           className="w-full flex-1 flex flex-col"
         >
           <Suspense fallback={<AtlasLoadingScreen />}>
@@ -221,15 +222,18 @@ function ProtectedApp() {
 
 function App() {
   useEffect(() => {
-    // Non-blocking, idempotent check for initial database bootstrap
+    // Non-blocking, idempotent check for initial database bootstrap and schedule health
     const checkOntology = async () => {
       try {
         const count = await db.subjects.count();
         if (count === 0) {
           await loadUniversalOntology();
+        } else {
+          // Verify and auto-rehydrate revision dates if prior JSON import lacked curriculumSets
+          await repairAndRehydrateRevisionDates();
         }
       } catch (err) {
-        console.warn('Initial ontology verification deferred:', err);
+        console.warn('Initial ontology verification or schedule rehydration deferred:', err);
       }
     };
     checkOntology();

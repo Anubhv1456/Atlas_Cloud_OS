@@ -8,7 +8,8 @@ import { useState, ReactNode, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { 
   useSubjects, useAllSystems, addSubject, updateSubject, deleteSubject, 
-  useCurrentStreak, setFocus, setSubjectFocus, updateSubjectsOrder, useAllPYQs, Subject, StudySystem 
+  useCurrentStreak, setFocus, setSubjectFocus, updateSubjectsOrder, useAllPYQs, Subject, StudySystem,
+  useOperationalMode 
 } from '@/db';
 import { 
   sortSystemsByRevisionPriority, isRevisionDue, isRevisionOverdue, 
@@ -37,6 +38,8 @@ export function useHomeLogic() {
 
   const [focusDialogType, setFocusDialogType] = useState<'primary' | 'secondary' | null>(null);
 
+  const opMode = useOperationalMode();
+
   const {
     customPrimarySubject,
     customPrimarySystem,
@@ -54,7 +57,7 @@ export function useHomeLogic() {
     isSecondaryOverriddenByRevision,
     dueRevisions,
     secondaryDaysOverdue
-  } = determineFocusSystems(subjects, systems, curriculumSets, today());
+  } = determineFocusSystems(subjects, systems, curriculumSets, today(), opMode);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -104,7 +107,20 @@ export function useHomeLogic() {
     }
 
     // 1. KNOWLEDGE DECAY & REVISION DEBT (Highest Priority: 98-100)
-    const sortedByDecay = sortSystemsByRevisionPriority(systems, curriculumSets, now);
+    const targetCandidateSystems = (opMode?.mode === 'tactical_sprint' && opMode.targetSubjectIds && opMode.targetSubjectIds.length > 0)
+      ? systems.filter(sys => {
+          const targetSet = new Set(opMode.targetSubjectIds.map(String));
+          if (targetSet.has(String(sys.subjectId))) return true;
+          const sub = subjects.find(s => String(s.id) === String(sys.subjectId));
+          if (sub?.ontologySubjectId && targetSet.has(String(sub.ontologySubjectId))) return true;
+          return opMode.targetSubjectIds.some(tid => {
+            const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
+            return onto && sub?.name && onto.name.toLowerCase() === sub.name.toLowerCase();
+          });
+        })
+      : systems;
+
+    const sortedByDecay = sortSystemsByRevisionPriority(targetCandidateSystems, curriculumSets, now);
     const topDecaySystem = sortedByDecay[0];
     if (topDecaySystem && (isRevisionDue(topDecaySystem, curriculumSets, now) || topDecaySystem.status === 'Weak' || topDecaySystem.revisionState === 'in_progress')) {
       const sub = subjects.find(s => s.id === topDecaySystem.subjectId);
@@ -280,7 +296,7 @@ export function useHomeLogic() {
 
     candidates.sort((a, b) => b.confidence - a.confidence);
     return candidates.slice(0, 2);
-  }, [systems, subjects, pyqs, primaryFocus, customPrimarySubject, customSecondarySubject, streak, setLocation]);
+  }, [systems, subjects, curriculumSets, pyqs, primaryFocus, customPrimarySubject, customSecondarySubject, streak, setLocation]);
 
   const handleSetFocus = (systemId: number) => {
     if (focusDialogType) {

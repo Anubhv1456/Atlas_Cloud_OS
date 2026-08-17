@@ -1,39 +1,29 @@
-import { useState, useRef } from 'react';
-import { Upload, Database, Download } from 'lucide-react';
-import { db } from '@/db/schema';
+import React, { useState, useRef } from 'react';
+import { Database, Download } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { SettingsRow } from './SettingsLayout';
+import { exportCompleteVault, restoreCompleteVault } from '@/lib/vaultSync';
+import { useAuth } from '@/hooks/useAuth';
 
 export function LegacyDataSection() {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
-  
   const handleExport = async () => {
     try {
       setLoading(true);
-      const data = {
-        subjects: await db.subjects.toArray(),
-        systems: await db.systems.toArray(),
-        history: await db.history.toArray(),
-        pyqYears: await db.pyqYears.toArray(),
-        scoreLogs: await db.scoreLogs.toArray(),
-        uiPreferences: await db.uiPreferences.toArray(),
-        topicProgress: await db.topicProgress.toArray()
-      };
-      
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const { blob, filename } = await exportCompleteVault(user);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `atlas-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success('Data exported successfully.');
+      toast.success('Complete data vault exported successfully.');
     } catch (e) {
       console.error(e);
       toast.error('Failed to export data.');
@@ -49,29 +39,18 @@ export function LegacyDataSection() {
     try {
       setLoading(true);
       const text = await file.text();
-      const data = JSON.parse(text);
+      const result = await restoreCompleteVault(text, user);
 
-      if (data.subjects || data.systems) {
-        await db.transaction('rw', [db.subjects, db.systems, db.history, db.pyqYears, db.scoreLogs, db.uiPreferences, db.topicProgress], async () => {
-          if (data.subjects) await db.subjects.bulkPut(data.subjects);
-          if (data.systems) await db.systems.bulkPut(data.systems);
-          if (data.history) await db.history.bulkPut(data.history);
-          if (data.pyqYears) await db.pyqYears.bulkPut(data.pyqYears);
-          if (data.scoreLogs) await db.scoreLogs.bulkPut(data.scoreLogs);
-          if (data.uiPreferences) await db.uiPreferences.bulkPut(data.uiPreferences);
-          if (data.topicProgress) await db.topicProgress.bulkPut(data.topicProgress);
+      if (result.success) {
+        toast.success('Data vault imported successfully.', { 
+          description: result.message 
         });
-        
-        toast.info('Syncing imported data to Firebase...');
-        
-        
-        toast.success('Legacy data imported and synced successfully.', { description: 'Refresh the app to see the changes.' });
-      } else {
-        toast.error('Invalid backup file format.');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error('Failed to import data.');
+      toast.error('Failed to import backup.', {
+        description: e?.message || 'Invalid backup structure.'
+      });
     } finally {
       setLoading(false);
       if (fileInputRef.current) {
@@ -91,12 +70,12 @@ export function LegacyDataSection() {
       />
       <SettingsRow
         icon={Database}
-        label={loading ? 'Importing & Syncing...' : 'Restore Legacy JSON'}
+        label={loading ? 'Restoring & Rehydrating...' : 'Restore JSON Backup'}
         onClick={() => fileInputRef.current?.click()}
       />
-    <SettingsRow
+      <SettingsRow
         icon={Download}
-        label={loading ? "Exporting..." : "Export Data (JSON)"}
+        label={loading ? "Exporting..." : "Export Complete Vault (JSON)"}
         onClick={handleExport}
       />
     </>

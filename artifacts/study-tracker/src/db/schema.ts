@@ -249,22 +249,93 @@ class FirestoreTable<T> {
   }
 
   where(field: string) {
+    const matchesValue = (itemVal: any, targetVal: any) => {
+      if (itemVal === targetVal) return true;
+      if (itemVal !== null && itemVal !== undefined && targetVal !== null && targetVal !== undefined) {
+        return String(itemVal) === String(targetVal);
+      }
+      return false;
+    };
+
     return {
       equals: (value: any) => {
+         const getMatchedItems = async () => {
+           const all = await this.toArray();
+           return all.filter((item: any) => matchesValue(item[field], value));
+         };
+
          return {
-            toArray: async (): Promise<T[]> => {
-               const all = await this.toArray();
-               return all.filter((item: any) => item[field] === value);
-            },
+            toArray: getMatchedItems,
             filter: (predicate: any) => {
+               const getFiltered = async () => {
+                 const matched = await getMatchedItems();
+                 return matched.filter(predicate);
+               };
                return {
-                  toArray: async (): Promise<T[]> => {
-                     const all = await this.toArray();
-                     return all.filter((item: any) => item[field] === value).filter(predicate);
+                  toArray: getFiltered,
+                  modify: async (changes: Partial<T> | ((item: T) => void)): Promise<number> => {
+                    const items = await getFiltered();
+                    let count = 0;
+                    for (const item of items) {
+                      const id = (item as any).id;
+                      if (id !== undefined && id !== null) {
+                        if (typeof changes === 'function') {
+                          const cloned = { ...item };
+                          changes(cloned);
+                          await this.update(id, cloned);
+                        } else {
+                          await this.update(id, changes);
+                        }
+                        count++;
+                      }
+                    }
+                    return count;
+                  },
+                  delete: async (): Promise<number> => {
+                    const items = await getFiltered();
+                    let count = 0;
+                    for (const item of items) {
+                      const id = (item as any).id;
+                      if (id !== undefined && id !== null) {
+                        await this.delete(id);
+                        count++;
+                      }
+                    }
+                    return count;
                   }
-               }
+               };
+            },
+            modify: async (changes: Partial<T> | ((item: T) => void)): Promise<number> => {
+              const items = await getMatchedItems();
+              let count = 0;
+              for (const item of items) {
+                const id = (item as any).id;
+                if (id !== undefined && id !== null) {
+                  if (typeof changes === 'function') {
+                    const cloned = { ...item };
+                    changes(cloned);
+                    await this.update(id, cloned);
+                  } else {
+                    await this.update(id, changes);
+                  }
+                  count++;
+                }
+              }
+              return count;
+            },
+            delete: async (): Promise<number> => {
+              const items = await getMatchedItems();
+              let count = 0;
+              for (const item of items) {
+                const id = (item as any).id;
+                if (id !== undefined && id !== null) {
+                  await this.delete(id);
+                  count++;
+                }
+              }
+              return count;
             }
-         }
+         };
       },
       between: (lower: any, upper: any, includeLower: boolean = true, includeUpper: boolean = false) => {
          return {
@@ -293,31 +364,126 @@ class FirestoreTable<T> {
          }
       },
       anyOf: (values: any[]) => {
+         const getAnyOfItems = async () => {
+           const all = await this.toArray();
+           return all.filter((item: any) => values.some(val => matchesValue(item[field], val)));
+         };
+
          return {
-            toArray: async (): Promise<T[]> => {
-               const all = await this.toArray();
-               return all.filter((item: any) => values.includes(item[field]));
-            },
+            toArray: getAnyOfItems,
             filter: (predicate: any) => {
+               const getFiltered = async () => {
+                 const matched = await getAnyOfItems();
+                 return matched.filter(predicate);
+               };
                return {
-                  toArray: async (): Promise<T[]> => {
-                     const all = await this.toArray();
-                     return all.filter((item: any) => values.includes(item[field])).filter(predicate);
+                  toArray: getFiltered,
+                  modify: async (changes: Partial<T> | ((item: T) => void)): Promise<number> => {
+                    const items = await getFiltered();
+                    let count = 0;
+                    for (const item of items) {
+                      const id = (item as any).id;
+                      if (id !== undefined && id !== null) {
+                        if (typeof changes === 'function') {
+                          const cloned = { ...item };
+                          changes(cloned);
+                          await this.update(id, cloned);
+                        } else {
+                          await this.update(id, changes);
+                        }
+                        count++;
+                      }
+                    }
+                    return count;
+                  },
+                  delete: async (): Promise<number> => {
+                    const items = await getFiltered();
+                    let count = 0;
+                    for (const item of items) {
+                      const id = (item as any).id;
+                      if (id !== undefined && id !== null) {
+                        await this.delete(id);
+                        count++;
+                      }
+                    }
+                    return count;
                   }
-               }
+               };
+            },
+            modify: async (changes: Partial<T> | ((item: T) => void)): Promise<number> => {
+              const items = await getAnyOfItems();
+              let count = 0;
+              for (const item of items) {
+                const id = (item as any).id;
+                if (id !== undefined && id !== null) {
+                  if (typeof changes === 'function') {
+                    const cloned = { ...item };
+                    changes(cloned);
+                    await this.update(id, cloned);
+                  } else {
+                    await this.update(id, changes);
+                  }
+                  count++;
+                }
+              }
+              return count;
+            },
+            delete: async (): Promise<number> => {
+              const items = await getAnyOfItems();
+              let count = 0;
+              for (const item of items) {
+                const id = (item as any).id;
+                if (id !== undefined && id !== null) {
+                  await this.delete(id);
+                  count++;
+                }
+              }
+              return count;
             }
-         }
+         };
       }
-    }
+    };
   }
 
   filter(predicate: (item: T) => boolean) {
+     const getFiltered = async (): Promise<T[]> => {
+        const all = await this.toArray();
+        return all.filter(predicate);
+     };
+
      return {
-        toArray: async (): Promise<T[]> => {
-           const all = await this.toArray();
-           return all.filter(predicate);
+        toArray: getFiltered,
+        modify: async (changes: Partial<T> | ((item: T) => void)): Promise<number> => {
+          const items = await getFiltered();
+          let count = 0;
+          for (const item of items) {
+            const id = (item as any).id;
+            if (id !== undefined && id !== null) {
+              if (typeof changes === 'function') {
+                const cloned = { ...item };
+                changes(cloned);
+                await this.update(id, cloned);
+              } else {
+                await this.update(id, changes);
+              }
+              count++;
+            }
+          }
+          return count;
+        },
+        delete: async (): Promise<number> => {
+          const items = await getFiltered();
+          let count = 0;
+          for (const item of items) {
+            const id = (item as any).id;
+            if (id !== undefined && id !== null) {
+              await this.delete(id);
+              count++;
+            }
+          }
+          return count;
         }
-     }
+     };
   }
 
   orderBy(field: string) {
@@ -372,6 +538,7 @@ class AtlasDB {
   revisionSets = new FirestoreTable<T.CurriculumSet>('revisionSets');
   mistakeLogs = new FirestoreTable<T.MistakeLog>('mistakeLogs');
   recommendationSkips = new FirestoreTable<T.RecommendationSkip>('recommendationSkips');
+  operationalModes = new FirestoreTable<T.OperationalModeRecord>('operationalModes');
 
   constructor() {
     onAuthStateChanged(auth, (user) => {
@@ -387,6 +554,7 @@ class AtlasDB {
         this.revisionSets.startListener(user.uid);
         this.mistakeLogs.startListener(user.uid);
         this.recommendationSkips.startListener(user.uid);
+        this.operationalModes.startListener(user.uid);
       } else {
         this.subjects.stopListener();
         this.systems.stopListener();
@@ -399,6 +567,7 @@ class AtlasDB {
         this.revisionSets.stopListener();
         this.mistakeLogs.stopListener();
         this.recommendationSkips.stopListener();
+        this.operationalModes.stopListener();
       }
     });
   }

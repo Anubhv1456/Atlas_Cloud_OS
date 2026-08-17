@@ -219,7 +219,7 @@ export function ScoreLogModal({
         
         if (systemId && selectedSys) {
           // System-level SDSR
-          const sysUpdates = calibrateSystemSDSR(selectedSys, scoreRatio, selectedSub.name, globalRetentionScore);
+          const sysUpdates = calibrateSystemSDSR(selectedSys, scoreRatio, selectedSub.name, globalRetentionScore, logTimestamp);
           await db.systems.update(systemId, sysUpdates);
           console.log(`SDSR Calibrated System: ${systemId} -> new interval ${sysUpdates.currentRevisionInterval} days`);
         }

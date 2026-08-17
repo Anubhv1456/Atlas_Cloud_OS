@@ -1,4 +1,4 @@
-import { StudySystem, SystemStatus, RevisionLog, CurriculumSet } from './types';
+import { StudySystem, SystemStatus, RevisionLog, CurriculumSet, OperationalModeRecord } from './types';
 
 // Constants
 export const REVISION_CONFIG = {
@@ -338,3 +338,95 @@ export const DECAY_CALIBRATION_PRESETS = [
   { label: '1.2x (Faster)', value: 1.2 },
   { label: '1.5x (Fastest)', value: 1.5 }
 ];
+
+// ── Operational Mode & Knapsack Smoothing Mechanics ──────────────────────────
+
+/**
+ * Knapsack Priority Formula:
+ * Priority = (SubjectWeight * YieldIndex * MemoryDecay) / EstimatedMinutes
+ */
+export function calculateKnapsackPriority(params: {
+  subjectWeight: number; // e.g. 70-100
+  yieldWeight?: number;  // e.g. 80-120
+  memoryLoss: number;    // 0-100 (100 - Retrievability)
+  estimatedMinutes: number; // e.g. 15-45
+  mistakeBonus?: number; // e.g. active mistake count * 10
+}): number {
+  const { subjectWeight, yieldWeight = 100, memoryLoss, estimatedMinutes, mistakeBonus = 0 } = params;
+  const safeTime = Math.max(8, estimatedMinutes);
+  const normalizedYield = yieldWeight / 100;
+  const normalizedSubject = subjectWeight / 100;
+  const decayUrgency = Math.max(5, memoryLoss);
+
+  // Score = (Weight * Yield * Decay + MistakeBonus) / sqrt(timeCost)
+  const rawPriority = ((normalizedSubject * normalizedYield * decayUrgency) + mistakeBonus) / Math.sqrt(safeTime);
+  return Math.round(rawPriority * 10) / 10;
+}
+
+/**
+ * Filter systems by active operational mode:
+ * - tactical_sprint: only systems belonging to targetSubjectIds
+ * - clinical_duty / standard / final_lap: returns all systems (pacing applied during scheduling)
+ */
+export function filterSystemsByOperationalMode(
+  systems: StudySystem[],
+  opMode?: OperationalModeRecord | null
+): StudySystem[] {
+  if (!opMode || opMode.mode === 'standard') return systems;
+  
+  if (opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0) {
+    const targetSet = new Set(opMode.targetSubjectIds.map(String));
+    return systems.filter(sys => targetSet.has(String(sys.subjectId)));
+  }
+  
+  return systems;
+}
+
+/**
+ * Filter curriculum sets by active operational mode:
+ * - tactical_sprint: only sets belonging to targetSubjectIds
+ */
+export function filterCurriculumSetsByOperationalMode(
+  sets: CurriculumSet[],
+  opMode?: OperationalModeRecord | null
+): CurriculumSet[] {
+  if (!opMode || opMode.mode === 'standard') return sets;
+
+  if (opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0) {
+    const targetSet = new Set(opMode.targetSubjectIds.map(String));
+    return sets.filter(set => targetSet.has(String(set.subjectId)));
+  }
+
+  return sets;
+}
+
+/**
+ * Checks if the user is in an active Soft Recalibration recovery phase.
+ * A user is recalibrating if:
+ * 1. Mode is 'standard'
+ * 2. previousMode exists (e.g. was 'tactical_sprint' or 'clinical_duty')
+ * 3. lastRecalibratedAt is within the recalibrationWindowDays
+ */
+export function isSoftRecalibrating(opMode?: OperationalModeRecord | null, now: Date = today()): {
+  active: boolean;
+  daysRemaining: number;
+  progressRatio: number;
+} {
+  if (!opMode || opMode.mode !== 'standard' || !opMode.lastRecalibratedAt) {
+    return { active: false, daysRemaining: 0, progressRatio: 1 };
+  }
+
+  const recalibratedTime = new Date(opMode.lastRecalibratedAt).getTime();
+  const windowDays = opMode.recalibrationWindowDays || 10;
+  const windowMs = windowDays * 24 * 60 * 60 * 1000;
+  const elapsedMs = Math.max(0, now.getTime() - recalibratedTime);
+
+  if (elapsedMs < windowMs) {
+    const daysRemaining = Math.max(1, Math.ceil((windowMs - elapsedMs) / (24 * 60 * 60 * 1000)));
+    const progressRatio = Math.min(1, elapsedMs / windowMs);
+    return { active: true, daysRemaining, progressRatio };
+  }
+
+  return { active: false, daysRemaining: 0, progressRatio: 1 };
+}
+

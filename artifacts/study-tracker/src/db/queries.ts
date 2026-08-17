@@ -1,6 +1,6 @@
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from './schema';
-import { Subject, StudySystem, HistoryEntry, PYQYear, ScoreLog } from './types';
+import { Subject, StudySystem, HistoryEntry, PYQYear, ScoreLog, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE } from './types';
 import { SystemStatus } from './types';
 import { scheduleFirstRevision, scheduleNextRevision, isRevisionDue, today, sortSystemsByRevisionPriority, calculateDurationMultiplier, getActiveRevisionSystems } from './revisionEngine';
 import { toast } from 'sonner';
@@ -145,9 +145,18 @@ export function useCurrentStreak(): number {
     const history = await db.history.orderBy('completedAt').reverse().toArray().then(res => res.filter(h => !h.deletedAt));
     if (history.length === 0) return 0;
 
+    const opMode = await db.operationalModes.get('current');
+    const isHoliday = opMode?.mode === 'holiday';
+
     let streak = 0;
     let currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
+
+    if (isHoliday && opMode?.activatedAt) {
+      // Streak is frozen at holiday activation date
+      currentDate = new Date(opMode.activatedAt);
+      currentDate.setHours(0, 0, 0, 0);
+    }
 
     const dates = new Set(history.map(entry => {
       const d = new Date(entry.completedAt);
@@ -155,13 +164,12 @@ export function useCurrentStreak(): number {
       return d.getTime();
     }));
 
-    // Check if there is an entry for today. If not, maybe yesterday?
+    // Check if there is an entry for reference date. If not, check the day before.
     let timeToCheck = currentDate.getTime();
     if (!dates.has(timeToCheck)) {
-      // Allow streak to continue if they haven't done anything today yet, but did yesterday.
       timeToCheck -= 86400000;
       if (!dates.has(timeToCheck)) {
-        return 0; // Missed yesterday and today
+        return 0; // Missed prior days
       }
     }
 
@@ -184,3 +192,51 @@ export async function getDaysSinceLastStudy(): Promise<number> {
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 }
+
+// ── Operational Mode Queries (Adaptive Focus & Soft Recalibration) ──────────
+
+export async function checkAndHandleAutoExpiry(rec?: OperationalModeRecord | null): Promise<OperationalModeRecord> {
+  const current = rec || DEFAULT_OPERATIONAL_MODE;
+  if ((current.mode === 'tactical_sprint' || current.mode === 'holiday') && current.targetDate) {
+    const targetDateObj = new Date(current.targetDate);
+    // Consider end of target date (or direct ISO timestamp if formatted)
+    const targetTime = targetDateObj.getTime();
+    if (!isNaN(targetTime) && targetTime < Date.now()) {
+      // Auto-trigger soft recalibration recovery without user intervention
+      const autoRecalibrated: OperationalModeRecord = {
+        id: 'current',
+        mode: 'standard',
+        targetSubjectIds: [],
+        targetDate: null,
+        dailyCapacityMinutes: 180,
+        activatedAt: new Date().toISOString(),
+        recalibrationWindowDays: current.recalibrationWindowDays || 10,
+        previousMode: current.mode,
+        lastRecalibratedAt: new Date().toISOString(),
+        notes: current.mode === 'holiday' 
+          ? 'Auto-transitioned to standard recovery after holiday ended'
+          : 'Auto-transitioned to standard recovery after sprint target date elapsed',
+        updatedAt: new Date(),
+        hlc: generateHLC(),
+      };
+      await db.operationalModes.put(autoRecalibrated);
+      return autoRecalibrated;
+    }
+  }
+  return current;
+}
+
+export function useOperationalMode(): OperationalModeRecord {
+  const record = useLiveQuery(async () => {
+    const rec = await db.operationalModes.get('current');
+    return await checkAndHandleAutoExpiry(rec);
+  });
+
+  return record ?? DEFAULT_OPERATIONAL_MODE;
+}
+
+export async function getOperationalMode(): Promise<OperationalModeRecord> {
+  const rec = await db.operationalModes.get('current');
+  return await checkAndHandleAutoExpiry(rec);
+}
+

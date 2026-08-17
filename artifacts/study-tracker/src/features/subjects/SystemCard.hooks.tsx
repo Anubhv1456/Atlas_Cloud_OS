@@ -161,19 +161,60 @@ export function useSystemCardLogic({
      await updateSystem(system.id!, { customTopics });
   };
 
-  const handleRenameTopic = (topicId: string, name: string) => {
-    handleUpdateTopic(topicId, { name });
+  const handleRenameTopic = async (topicId: string, name: string) => {
+    try {
+      const cleanName = name.trim();
+      if (!cleanName) return;
+      await handleUpdateTopic(topicId, { name: cleanName });
+      toast.success(`Renamed topic to "${cleanName}"`);
+    } catch (e: any) {
+      console.error('Failed to rename topic:', e);
+      toast.error('Failed to rename topic', { description: e?.message });
+    }
   };
 
-  const handleDeleteTopic = (topicId: string) => {
-    handleUpdateTopic(topicId, { deleted: true });
+  const handleDeleteTopic = async (topicId: string) => {
+    try {
+      await handleUpdateTopic(topicId, { deleted: true });
+      // Remove topic ID from any curriculumSets or revisionSets
+      const targetTable = db.curriculumSets || db.revisionSets;
+      if (targetTable) {
+        const sets = await targetTable.where('systemId').equals(system.id!).toArray();
+        for (const s of sets) {
+          if (s.topicIds && s.topicIds.includes(topicId)) {
+            const nextTopicIds = s.topicIds.filter(id => id !== topicId);
+            await targetTable.update(s.id!, {
+              topicIds: nextTopicIds,
+              updatedAt: new Date(),
+              hlc: generateHLC()
+            });
+          }
+        }
+      }
+      toast.success('Topic deleted');
+    } catch (e: any) {
+      console.error('Failed to delete topic:', e);
+      toast.error('Failed to delete topic', { description: e?.message });
+    }
   };
 
   const handleAddCustomTopic = async (name: string) => {
+     const cleanName = name.trim();
+     if (!cleanName) return;
      let customTopics = system.customTopics ? [...system.customTopics] : [];
-     customTopics.push({ id: `CUSTOM_TOPIC_${Date.now()}`, name });
+     customTopics.push({ id: `CUSTOM_TOPIC_${Date.now()}`, name: cleanName });
      await updateSystem(system.id!, { customTopics });
-     toast.success('Custom topic added');
+     toast.success(`Added "${cleanName}"`);
+  };
+
+  const handleResetTopics = async () => {
+    try {
+      await updateSystem(system.id!, { customTopics: [] });
+      toast.success('Topics restored to default curriculum');
+    } catch (e: any) {
+      console.error('Failed to reset topics:', e);
+      toast.error('Failed to reset topics', { description: e?.message });
+    }
   };
 
 
@@ -207,9 +248,16 @@ export function useSystemCardLogic({
   };
 
   const handleDeleteConfirm = async () => {
-    await deleteSystem(system.id!);
-    setShowDeleteConfirm(false);
-    toast.success('System deleted');
+    try {
+      if (system.id !== undefined && system.id !== null) {
+        await deleteSystem(system.id);
+        setShowDeleteConfirm(false);
+        toast.success(`Deleted ${system.name}`);
+      }
+    } catch (e: any) {
+      console.error('Failed to delete system:', e);
+      toast.error('Failed to delete system', { description: e?.message || 'Unknown database error' });
+    }
   };
 
   const handleRenameSave = async () => {
@@ -292,6 +340,8 @@ export function useSystemCardLogic({
     toggleQBank, handleEvalSelect, toggleHighYield,
     localNotes, handleStatusChange, handleNotesChange, handleDelete, handleDeleteConfirm,
     handleRenameSave, handleRevisionComplete,
-    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, finalTopics
+    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, handleResetTopics,
+    hasCustomTopicEdits: Boolean(system.customTopics && system.customTopics.length > 0),
+    finalTopics
   };
 }

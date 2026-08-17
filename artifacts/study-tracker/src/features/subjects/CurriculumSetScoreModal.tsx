@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { OntologyTopic, ALL_SUBJECTS } from '@/data/ontology';
 import { logCurriculumSetScore } from '@/db/mutations';
 import { CurriculumSet } from '@/db/types';
-import { Clock, Sparkles, Target, TriangleAlert, ArrowRight, Check } from 'lucide-react';
+import { Sparkles, Target, TriangleAlert, ArrowRight, Check, Calendar, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { db } from '@/db';
@@ -21,6 +21,7 @@ interface CurriculumSetScoreModalProps {
 }
 
 const QUICK_SCORES = [40, 60, 70, 80, 90];
+type DatePreset = 'today' | 'yesterday' | '2days' | 'custom';
 
 export function CurriculumSetScoreModal({
   isOpen,
@@ -30,7 +31,14 @@ export function CurriculumSetScoreModal({
 }: CurriculumSetScoreModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [score, setScore] = useState<number>(70);
-  const [timeTaken, setTimeTaken] = useState<number>(30);
+  const [datePreset, setDatePreset] = useState<DatePreset>('today');
+  const [customDate, setCustomDate] = useState<string>(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const [selectedWeakTopicIds, setSelectedWeakTopicIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,11 +54,40 @@ export function CurriculumSetScoreModal({
     [setTopics.map(t => t.id).join(',')]
   ) || [];
 
+  const getEffectiveDate = (): Date => {
+    const now = new Date();
+    if (datePreset === 'today') {
+      return now;
+    }
+    if (datePreset === 'yesterday') {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      return d;
+    }
+    if (datePreset === '2days') {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 2);
+      return d;
+    }
+    if (datePreset === 'custom' && customDate) {
+      const [y, m, d] = customDate.split('-').map(Number);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        return new Date(y, m - 1, d, 12, 0, 0);
+      }
+    }
+    return now;
+  };
+
   useEffect(() => {
     if (isOpen && curriculumSet) {
-            setStep(1);
+      setStep(1);
       setScore(70);
-      setTimeTaken(30);
+      setDatePreset('today');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      setCustomDate(`${year}-${month}-${day}`);
       const initialWeak = new Set<string>();
       topicProgresses.forEach(tp => {
         if (tp.isWeak) initialWeak.add(tp.topicId);
@@ -81,12 +118,15 @@ export function CurriculumSetScoreModal({
     setIsSubmitting(true);
     try {
       const subjectName = ALL_SUBJECTS.find((s) => s.id == (curriculumSet.subjectId as any))?.name || 'General';
+      const effectiveDate = getEffectiveDate();
+
       await logCurriculumSetScore(
         curriculumSet.id!,
         score,
         curriculumSet.topicIds,
         subjectName,
-        timeTaken
+        undefined,
+        effectiveDate
       );
 
       // Save weak topics
@@ -112,6 +152,11 @@ export function CurriculumSetScoreModal({
     }
   };
 
+  const todayDateStr = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[440px] max-h-[90vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
@@ -135,8 +180,67 @@ export function CurriculumSetScoreModal({
 
         {step === 1 ? (
           <form onSubmit={handleContinue} className="flex-1 flex flex-col min-h-0 pt-4">
-            <div className="space-y-6 overflow-y-auto flex-1 px-1 pr-2">
-              <div className="space-y-3 p-4 rounded-xl bg-card border border-border/60">
+            <div className="space-y-4 overflow-y-auto flex-1 px-1 pr-2">
+              {/* Date Selection Box */}
+              <div className="space-y-2.5 p-3.5 rounded-xl bg-card border border-border/60">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> Revision Date
+                  </Label>
+                  {datePreset !== 'today' && (
+                    <span className="text-[10px] font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                      Backdated Log
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-1.5">
+                  {[
+                    { id: 'today', label: 'Today' },
+                    { id: 'yesterday', label: 'Yesterday' },
+                    { id: '2days', label: '2d Ago' },
+                    { id: 'custom', label: 'Custom' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setDatePreset(item.id as DatePreset)}
+                      className={cn(
+                        "flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer text-center",
+                        datePreset === item.id
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                          : "bg-muted/40 hover:bg-muted text-muted-foreground border-border/50"
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {datePreset === 'custom' && (
+                  <div className="pt-1">
+                    <Input
+                      type="date"
+                      max={todayDateStr}
+                      value={customDate}
+                      onChange={(e) => setCustomDate(e.target.value)}
+                      className="w-full h-8 rounded-lg text-xs font-semibold bg-muted/30 border-border/70"
+                    />
+                  </div>
+                )}
+
+                <p className="text-[11px] text-muted-foreground/80 flex items-center gap-1.5">
+                  <History className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <span>
+                    {datePreset === 'today'
+                      ? `Logged as of today (${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`
+                      : `SDSR schedules next recall interval based on this date.`}
+                  </span>
+                </p>
+              </div>
+
+              {/* Score Box */}
+              <div className="space-y-3 p-3.5 rounded-xl bg-card border border-border/60">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Overall Score
@@ -180,34 +284,6 @@ export function CurriculumSetScoreModal({
                   ))}
                 </div>
               </div>
-
-              <div className="space-y-3 p-4 rounded-xl bg-card border border-border/60">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> Time Taken
-                  </Label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={300}
-                      value={timeTaken}
-                      onChange={(e) => setTimeTaken(Math.min(300, Math.max(1, Number(e.target.value))))}
-                      className="w-16 text-center font-bold text-lg h-9 rounded-lg"
-                    />
-                    <span className="font-bold text-foreground text-sm">min</span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={120}
-                  step={5}
-                  value={timeTaken}
-                  onChange={(e) => setTimeTaken(Number(e.target.value))}
-                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary py-1"
-                />
-              </div>
             </div>
             <DialogFooter className="pt-4 border-t border-border/50 sm:gap-2">
               <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
@@ -248,7 +324,6 @@ export function CurriculumSetScoreModal({
                   )}>
                     {selectedWeakTopicIds.has(t.id) && <Check className="w-3.5 h-3.5" />}
                   </div>
-                  {/* Invisible checkbox for accessibility */}
                   <input
                     type="checkbox"
                     className="sr-only"

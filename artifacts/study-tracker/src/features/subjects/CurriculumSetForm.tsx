@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { OntologyTopic } from '@/data/ontology';
 import { createCurriculumSet, updateCurriculumSet } from '@/db/mutations';
 import { CurriculumSet } from '@/db/types';
-import { Check } from 'lucide-react';
+import { Check, Zap, Sparkles, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -25,7 +25,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
   const [name, setName] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [color, setColor] = useState<'teal' | 'amber' | 'purple' | 'blue' | 'gray'>('teal');
-  const [isLengthy, setIsLengthy] = useState(false);
+  const [depth, setDepth] = useState<'rapid' | 'standard' | 'deep'>('standard');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
         setName(initialData.name);
         setSelectedTopicIds(new Set(initialData.topicIds));
         setColor(initialData.color || 'teal');
-        setIsLengthy(Boolean(initialData.isLengthy));
+        setDepth(initialData.depth || (initialData.isLengthy ? 'deep' : 'standard'));
       } else {
         setName('');
         setSelectedTopicIds(new Set());
         setColor('teal');
-        setIsLengthy(false);
+        setDepth('standard');
       }
       setSearch('');
     }
@@ -66,7 +66,8 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           name: name.trim(),
           topicIds: Array.from(selectedTopicIds),
           color,
-          isLengthy,
+          depth,
+          isLengthy: depth === 'deep',
         });
         toast.success('Study block updated');
       } else {
@@ -76,7 +77,8 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
           name: name.trim(),
           topicIds: Array.from(selectedTopicIds),
           color,
-          isLengthy,
+          depth,
+          isLengthy: depth === 'deep',
         });
         toast.success('Study block created');
       }
@@ -91,7 +93,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[420px] max-h-[85vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
+      <DialogContent className="sm:max-w-[440px] max-h-[85vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit Study Block' : 'Create Study Block'}</DialogTitle>
         </DialogHeader>
@@ -106,6 +108,54 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                 placeholder="e.g. Revision QBank, Main Content Block 1..."
                 required
               />
+            </div>
+
+            {/* Cognitive Depth Selector */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Cognitive Depth</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDepth('rapid')}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all cursor-pointer font-semibold text-xs",
+                    depth === 'rapid'
+                      ? "border-amber-500/50 bg-amber-500/10 shadow-xs text-amber-400 font-bold"
+                      : "border-border/60 bg-muted/20 hover:bg-muted/40 text-muted-foreground"
+                  )}
+                >
+                  <Zap className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Rapid Recall</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDepth('standard')}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all cursor-pointer font-semibold text-xs",
+                    depth === 'standard'
+                      ? "border-teal-500/50 bg-teal-500/10 shadow-xs text-teal-400 font-bold"
+                      : "border-border/60 bg-muted/20 hover:bg-muted/40 text-muted-foreground"
+                  )}
+                >
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Standard</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDepth('deep')}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all cursor-pointer font-semibold text-xs",
+                    depth === 'deep'
+                      ? "border-sky-500/50 bg-sky-500/10 shadow-xs text-sky-400 font-bold"
+                      : "border-border/60 bg-muted/20 hover:bg-muted/40 text-muted-foreground"
+                  )}
+                >
+                  <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Deep Focus</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -130,23 +180,6 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="rounded-xl border border-border/70 p-3 bg-muted/20">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 rounded border-input text-primary focus:ring-primary h-4 w-4"
-                  checked={isLengthy}
-                  onChange={e => setIsLengthy(e.target.checked)}
-                />
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-foreground">Deep Work Block 📚</span>
-                  <span className="text-[11px] text-muted-foreground leading-tight">
-                    Topics require in-depth retention / high friction (~35–50 min). Atlas will prioritize this in Deep Work sessions.
-                  </span>
-                </div>
-              </label>
             </div>
 
             <div className="space-y-1.5 flex-1 flex flex-col min-h-0">

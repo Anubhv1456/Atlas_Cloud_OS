@@ -7,6 +7,7 @@ export interface VaultTelemetryMetrics {
   mistakeLogsCount: number;
   subjectCount: number;
   systemCount: number;
+  curriculumSetsCount?: number;
   historyCount: number;
 }
 
@@ -21,12 +22,17 @@ export interface AtlasVaultEnvelope {
   payload: {
     subjects?: any[];
     systems?: any[];
+    curriculumSets?: any[];
+    revisionSets?: any[];
     history?: any[];
     pyqYears?: any[];
     scoreLogs?: any[];
     uiPreferences?: any[];
     topicProgress?: any[];
+    mistakeLogs?: any[];
     notebookMistakes?: any[];
+    recommendationSkips?: any[];
+    operationalModes?: any[];
     [key: string]: any;
   };
 }
@@ -72,8 +78,14 @@ export function computeVaultMetrics(data: any): VaultTelemetryMetrics {
   const history = Array.isArray(data.history) ? data.history : [];
   const subjects = Array.isArray(data.subjects) ? data.subjects : [];
   const systems = Array.isArray(data.systems) ? data.systems : [];
+  const curriculumSets = Array.isArray(data.curriculumSets) 
+    ? data.curriculumSets 
+    : Array.isArray(data.revisionSets) 
+    ? data.revisionSets 
+    : [];
   const scoreLogs = Array.isArray(data.scoreLogs) ? data.scoreLogs : [];
   const topicProgress = Array.isArray(data.topicProgress) ? data.topicProgress : [];
+  const mistakeLogs = Array.isArray(data.mistakeLogs) ? data.mistakeLogs : [];
   const notebookMistakes = Array.isArray(data.notebookMistakes) ? data.notebookMistakes : [];
 
   // Calculate total study minutes from history
@@ -99,9 +111,10 @@ export function computeVaultMetrics(data: any): VaultTelemetryMetrics {
     totalStudyMinutes,
     completedTopics: Math.max(completedTopics, topicProgress.length),
     scoreLogsCount: scoreLogs.length,
-    mistakeLogsCount: notebookMistakes.length + history.filter((h: any) => h.wasIncorrect || h.isMistake).length,
+    mistakeLogsCount: mistakeLogs.length + notebookMistakes.length + history.filter((h: any) => h.wasIncorrect || h.isMistake).length,
     subjectCount: subjects.length,
     systemCount: systems.length,
+    curriculumSetsCount: curriculumSets.length,
     historyCount: history.length,
   };
 }

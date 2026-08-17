@@ -1,3 +1,0 @@
-s/system.contentCompleted &&//g
-s/system.contentCompleted, //g
-s/(system.contentCompleted ? 100 : 0)/0/g

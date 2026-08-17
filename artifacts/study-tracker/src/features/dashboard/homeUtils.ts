@@ -1,17 +1,39 @@
 import { ReactNode } from 'react';
 import { Subject, StudySystem, PYQYear } from '@/db';
-import { CurriculumSet } from '@/db/types';
+import { CurriculumSet, OperationalModeRecord } from '@/db/types';
 import { isRevisionDue, isRevisionDueToday, daysOverdue, calculateDecayScore, sortSystemsByRevisionPriority } from '@/db';
 import { isSystemComplete } from '@/lib/progress';
+import { ALL_SUBJECTS } from '@/data/ontology';
 import React from 'react';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 
 export function determineFocusSystems(
-  subjects: Subject[],
-  systems: StudySystem[],
-  curriculumSets: CurriculumSet[],
-  now: Date
+  rawSubjects: Subject[],
+  rawSystems: StudySystem[],
+  rawCurriculumSets: CurriculumSet[],
+  now: Date,
+  opMode?: OperationalModeRecord | null
 ) {
+  let subjects = rawSubjects;
+  let systems = rawSystems;
+  let curriculumSets = rawCurriculumSets;
+
+  if (opMode?.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0) {
+    const targetSet = new Set(opMode.targetSubjectIds.map(String));
+    subjects = rawSubjects.filter(s => {
+      if (targetSet.has(String(s.id))) return true;
+      if (s.ontologySubjectId && targetSet.has(String(s.ontologySubjectId))) return true;
+      const matchesTarget = opMode.targetSubjectIds?.some(tid => {
+        const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
+        return onto && s.name && onto.name.toLowerCase() === s.name.toLowerCase();
+      });
+      return Boolean(matchesTarget);
+    });
+    const matchedSubIds = new Set(subjects.map(s => String(s.id)));
+    systems = rawSystems.filter(sys => matchedSubIds.has(String(sys.subjectId)));
+    curriculumSets = rawCurriculumSets.filter(set => matchedSubIds.has(String(set.subjectId)));
+  }
+
   const customPrimarySubject = subjects.find(s => s.focus === 'primary');
   const primarySubjectStale = customPrimarySubject?.focusUpdatedAt && (now.getTime() - new Date(customPrimarySubject.focusUpdatedAt).getTime() > 72 * 60 * 60 * 1000);
   

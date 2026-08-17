@@ -1,15 +1,43 @@
 
 import { db } from '@/db';
-import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval } from '@/db';
+import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval, isSoftRecalibrating, calculateKnapsackPriority } from '@/db';
 import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
 import { getSubjectWeightageInfo } from '@/lib/recommendation-engine';
-import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog } from '@/db/types';
+import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE, HistoryEntry } from '@/db/types';
 import { getDaysSinceLastStudy } from '@/db/queries';
+
+export type RecommendationArchetype = 
+  | 'tactical_strike' 
+  | 'clinical_duty' 
+  | 'remediation_clinic' 
+  | 'flow_momentum' 
+  | 'soft_recalibration' 
+  | 'tactical_sprint' 
+  | 'zenith' 
+  | 'holiday';
+
+export type SessionBudget = 'quick' | 'standard' | 'deep';
 
 export interface RationaleBadge {
   label: string;
   variant: 'amber' | 'emerald' | 'destructive' | 'primary' | 'muted';
   iconType?: 'clock' | 'target' | 'alert' | 'zap' | 'book';
+}
+
+export interface AlgorithmWhyBreakdown {
+  priorityScore: number;
+  subjectName: string;
+  examWeightage: number;
+  retrievabilityPercent: number;
+  memoryDecayPercent: number;
+  activeMistakes: number;
+  weakTopicsCount: number;
+  revisionPass: number;
+  depthLabel: string;
+  estimatedMinutes?: number;
+  circadianAffinity: string;
+  formulaString: string;
+  rationaleNarrative: string;
 }
 
 export interface NextActionRecommendation {
@@ -21,11 +49,14 @@ export interface NextActionRecommendation {
   subjectId: number;
   systemId: number;
   curriculumSetId?: string;
+  depth: 'rapid' | 'standard' | 'deep';
   isLengthy: boolean;
   isQuickEligible: boolean;
-  estimatedMinutes: number;
+  estimatedMinutes?: number;
   priorityScore: number;
+  archetype: RecommendationArchetype;
   rationaleBadges: RationaleBadge[];
+  whyBreakdown: AlgorithmWhyBreakdown;
   topicCount?: number;
   weakCount?: number;
   mistakeCount?: number;
@@ -41,18 +72,33 @@ export interface NextActionRecommendation {
 export interface NextActionEngineResult {
   primary: NextActionRecommendation | null;
   fallback: NextActionRecommendation | null;
-  sessionBudget: 'quick' | 'deep';
+  sessionBudget: SessionBudget;
   totalCandidatesEvaluated: number;
   quickEligibleCount: number;
   isTriageMode: boolean;
   hasAnyCurriculumSets: boolean;
   hasPendingSyllabus: boolean;
+  operationalMode: OperationalModeRecord;
+  circadianPeriod: 'morning' | 'midday' | 'evening';
+  circadianLabel: string;
+  sessionsCompletedToday: number;
+  minutesStudiedToday: number;
+  recalibrationStatus?: {
+    active: boolean;
+    daysRemaining: number;
+    progressRatio: number;
+  };
+  activeSprintSummary?: {
+    subjectNames: string[];
+    targetDate: string | null;
+  };
 }
 
 export interface EngineOptions {
-  sessionBudget?: 'quick' | 'deep';
+  sessionBudget?: SessionBudget;
   skipIds?: string[];
   targetExam?: string;
+  operationalMode?: OperationalModeRecord;
 }
 
 export interface DurationCalculationParams {
@@ -68,13 +114,6 @@ export interface DurationCalculationParams {
 
 /**
  * State-of-the-art multi-factor dynamic duration estimation with user pacing feedback loop.
- *
- * 1. Base calibration overhead (3 min)
- * 2. Topic volume (4 min per topic)
- * 3. Cognitive retrieval load: weak topics (+3m each) and active mistake queue (+1.5m each)
- * 4. Pass velocity decay: Pass 0 (1.5x), Pass 1 (1.0x), Pass 2 (0.7x), Pass 3+ (0.45x)
- * 5. System/Block lengthy toggles (1.6x)
- * 6. Historical student pacing & feedback multipliers (0.5x - 2.5x)
  */
 export function calculateEstimatedDurationMinutes(params: DurationCalculationParams): number {
   const {
@@ -110,29 +149,88 @@ export function calculateEstimatedDurationMinutes(params: DurationCalculationPar
   return Math.max(8, Math.min(120, Math.round(rawMinutes)));
 }
 
+/**
+ * Evaluates current time of day for circadian learning affinity.
+ */
+export function getCircadianContext(now: Date = new Date()): {
+  period: 'morning' | 'midday' | 'evening';
+  label: string;
+} {
+  const hour = now.getHours();
+  if (hour >= 5 && hour < 12) {
+    return { period: 'morning', label: 'Morning Prime Cortex • High Synthesis' };
+  } else if (hour >= 12 && hour < 18) {
+    return { period: 'midday', label: 'Midday Active Recall • Clinical Vignettes' };
+  } else {
+    return { period: 'evening', label: 'Evening Volatiles • High-Speed Refresh' };
+  }
+}
+
 export async function getNextActionRecommendation(
   options: EngineOptions = {}
 ): Promise<NextActionEngineResult> {
-  const sessionBudget = options.sessionBudget || 'quick';
   const localSkipIds = new Set(options.skipIds || []);
   const targetExam = options.targetExam || 'NEET PG';
   const now = new Date();
 
-  // 1. Fetch persistent skips & parse adaptive pacing feedback
+  // Circadian evaluation
+  const circadian = getCircadianContext(now);
+
+  // 1. Fetch active Operational Mode
+  const operationalMode = options.operationalMode || (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
+  const mode = operationalMode.mode || 'standard';
+  const isTacticalSprint = mode === 'tactical_sprint';
+  const isClinicalDuty = mode === 'clinical_duty';
+  const isFinalLap = mode === 'final_lap';
+  const isHoliday = mode === 'holiday';
+
+  // 2. Fetch history for today to detect momentum & daily volume
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const historyEntries: HistoryEntry[] = await db.history.filter(h => !h.deletedAt).toArray();
+  const todayHistory = historyEntries.filter(h => new Date(h.completedAt).getTime() >= todayStart.getTime());
+  const sessionsCompletedToday = todayHistory.length;
+  const minutesStudiedToday = todayHistory.reduce((acc, h) => acc + (h.durationMinutes || 20), 0);
+
+  if (isHoliday) {
+    return {
+      hasAnyCurriculumSets: true,
+      hasPendingSyllabus: false,
+      primary: null,
+      fallback: null,
+      sessionBudget: 'quick',
+      totalCandidatesEvaluated: 0,
+      quickEligibleCount: 0,
+      isTriageMode: false,
+      operationalMode,
+      circadianPeriod: circadian.period,
+      circadianLabel: circadian.label,
+      sessionsCompletedToday,
+      minutesStudiedToday,
+      recalibrationStatus: undefined,
+      activeSprintSummary: undefined
+    };
+  }
+
+  // In Clinical Duty mode, force quick session budget and cap to 30 min micro-doses
+  const sessionBudget: SessionBudget = isClinicalDuty ? 'quick' : (options.sessionBudget || 'quick');
+
+  // Recalibration status check
+  const recalibrationStatus = isSoftRecalibrating(operationalMode, now);
+
+  // 3. Fetch persistent skips & parse adaptive pacing feedback
   const persistentSkips = await db.recommendationSkips.filter(s => s.expiresAt > now).toArray();
   const adaptiveFeedbackMultipliers = new Map<string, number>();
 
   for (const s of persistentSkips) {
     if (s.reason === 'needs_deep_work') {
       adaptiveFeedbackMultipliers.set(s.targetId, 1.5);
-      // If user is currently in quick mode, hide this block since it needs deep work
       if (sessionBudget === 'quick') {
         localSkipIds.add(s.targetId);
       }
     } else if (s.reason === 'fast_recall') {
       adaptiveFeedbackMultipliers.set(s.targetId, 0.75);
     } else {
-      // Standard skips (already_studied, not_today, not_relevant, too_difficult, etc.)
       localSkipIds.add(s.targetId);
       if (s.reason === 'too_difficult') {
         adaptiveFeedbackMultipliers.set(s.targetId, 1.35);
@@ -140,21 +238,46 @@ export async function getNextActionRecommendation(
     }
   }
 
-  // 2. Triage Mode Check
+  // 4. Triage Mode Check (only outside soft recalibration)
   const daysSinceLastStudy = await getDaysSinceLastStudy();
-  const isTriageMode = daysSinceLastStudy > 3;
+  const isTriageMode = daysSinceLastStudy > 3 && !recalibrationStatus.active && !isClinicalDuty;
 
-  const subjects = await db.subjects.filter(s => !s.deletedAt).toArray();
-  const systems = await db.systems.filter(s => !s.deletedAt).toArray();
+  const allDbSubjects = await db.subjects.filter(s => !s.deletedAt).toArray();
+  let subjects = [...allDbSubjects];
+  let systems = await db.systems.filter(s => !s.deletedAt).toArray();
   
   const setTable = db.curriculumSets || db.revisionSets;
-  const curriculumSets: CurriculumSet[] = setTable 
+  let curriculumSets: CurriculumSet[] = setTable 
     ? await setTable.filter(s => !s.deletedAt).toArray() 
     : [];
+
+  const sprintSubjectIds = new Set((operationalMode.targetSubjectIds || []).map(String));
+
+  // ── Tactical Sprint Filter: strictly isolate sprint subjects ───────────────
+  if (isTacticalSprint && sprintSubjectIds.size > 0) {
+    subjects = subjects.filter(s => {
+      if (sprintSubjectIds.has(String(s.id))) return true;
+      if (s.ontologySubjectId && sprintSubjectIds.has(String(s.ontologySubjectId))) return true;
+      const matchesTarget = operationalMode.targetSubjectIds?.some(tid => {
+        const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
+        return onto && s.name && onto.name.toLowerCase() === s.name.toLowerCase();
+      });
+      return Boolean(matchesTarget);
+    });
+
+    const activeDbSubjectIds = new Set(subjects.map(s => String(s.id)));
+    systems = systems.filter(sys => activeDbSubjectIds.has(String(sys.subjectId)));
+    curriculumSets = curriculumSets.filter(set => activeDbSubjectIds.has(String(set.subjectId)));
+  }
     
   const topicProgresses: TopicProgress[] = await db.topicProgress.toArray();
-  const activeMistakes: MistakeLog[] = await db.mistakeLogs.filter(m => !m.deletedAt && !m.resolved).toArray();
+  let activeMistakes: MistakeLog[] = await db.mistakeLogs.filter(m => !m.deletedAt && !m.resolved).toArray();
   
+  if (isTacticalSprint && sprintSubjectIds.size > 0) {
+    const activeDbSubjectIds = new Set(subjects.map(s => String(s.id)));
+    activeMistakes = activeMistakes.filter(m => m.subjectId && (sprintSubjectIds.has(String(m.subjectId)) || activeDbSubjectIds.has(String(m.subjectId))));
+  }
+
   const weakTopicMap = new Set(
     topicProgresses.filter(tp => tp.isWeak).map(tp => tp.topicId)
   );
@@ -177,7 +300,7 @@ export async function getNextActionRecommendation(
   const rawCandidates: NextActionRecommendation[] = [];
   const systemsWithSets = new Set<number>();
 
-  // 3. Process Study Blocks (Primary Scheduling Entity)
+  // 5. Process Study Blocks (Primary Scheduling Entity)
   for (const set of curriculumSets) {
     if (!set.id) continue;
     const candidateId = `set:${set.id}`;
@@ -200,28 +323,9 @@ export async function getNextActionRecommendation(
     const yieldInfo = getSubjectWeightageInfo(subjectName, targetExam);
     const yieldWeight = yieldInfo.weight || 70;
     
-    // Explicit system-level and set-level lengthy toggles and pacing multipliers
-    const isSystemLengthy = Boolean(parentSystem?.isLengthy);
-    const isBlockLengthy = Boolean(set.isLengthy);
-    const revisionCount = set.revisionCount || 0;
-    const combinedPace = (set.paceMultiplier || 1.0) * (parentSystem?.paceMultiplier || 1.0);
-    const adaptiveMultiplier = adaptiveFeedbackMultipliers.get(candidateId) || 
-      (parentSystem?.id ? adaptiveFeedbackMultipliers.get(`sys:${parentSystem.id}`) : 1.0) || 1.0;
-    
-    // Dynamic mathematical duration calculation with pacing feedback
-    const estimatedMinutes = set.customDurationMinutes || calculateEstimatedDurationMinutes({
-      topicCount,
-      weakCount: weakTopicsInSet,
-      mistakeCount: activeMistakesInSet,
-      revisionPassCount: revisionCount,
-      isSystemLengthy,
-      isBlockLengthy,
-      paceMultiplier: combinedPace,
-      adaptiveSkipMultiplier: adaptiveMultiplier
-    });
-
-    const isLengthy = estimatedMinutes > 25;
-    const isQuickEligible = estimatedMinutes <= 25;
+    const setDepth: 'rapid' | 'standard' | 'deep' = set.depth || (set.isLengthy ? 'deep' : ((set.topicIds && set.topicIds.length <= 3) ? 'rapid' : 'standard'));
+    const isLengthy = setDepth === 'deep' || Boolean(set.isLengthy);
+    const isQuickEligible = setDepth === 'rapid' || (setDepth === 'standard' && (topicCount <= 4 || activeMistakesInSet > 0));
     
     let daysOverdue = 0;
     let isOverdue = false;
@@ -251,14 +355,24 @@ export async function getNextActionRecommendation(
     });
     
     const baseMemoryLoss = calculateBlockMemoryLoss(topicMemoryLosses);
-    
     const yieldModifier = yieldWeight >= 85 ? 1.2 : (yieldWeight <= 40 ? 0.8 : 1.0);
     
     let actionIndex = Math.min(100, Math.round(baseMemoryLoss * yieldModifier));
-    
-    // Add bonus priority for active mistakes needing remediation
-    if (activeMistakesInSet > 0) {
-      actionIndex += Math.min(25, activeMistakesInSet * 5);
+
+    // ── Soft Recalibration Knapsack Scoring ─────────────────────────────────
+    if (recalibrationStatus.active) {
+      const knapsackScore = calculateKnapsackPriority({
+        subjectWeight: 100,
+        yieldWeight,
+        memoryLoss: baseMemoryLoss,
+        estimatedMinutes: setDepth === 'rapid' ? 15 : setDepth === 'deep' ? 45 : 30,
+        mistakeBonus: activeMistakesInSet * 8
+      });
+      actionIndex = Math.min(100, Math.round(knapsackScore * 2.5));
+    } else {
+      if (activeMistakesInSet > 0) {
+        actionIndex += Math.min(25, activeMistakesInSet * 5);
+      }
     }
     
     // Recent exposure suppression (last 18 hours)
@@ -275,28 +389,53 @@ export async function getNextActionRecommendation(
       const hoursSincePin = (now.getTime() - pinDate.getTime()) / (1000 * 3600);
       
       if (hoursSincePin > 168) {
-        // > 7 days (168 hours): Auto-Downgrade
         wasPinned = true;
       } else {
         isPinned = true;
         actionIndex += 1000; // Force position #1
-        
         if (hoursSincePin >= 48) {
-          // 48-168 hours: Aging Pin
           isAgingPin = true;
         }
       }
     }
     
-    // Triage Mode Filter
+    // Triage Mode Filter (only in standard triage)
     if (isTriageMode && !isPinned && actionIndex <= 80) {
-      continue; // Skip blocks that don't meet critical triage threshold
+      continue;
+    }
+
+    // Determine Archetype
+    let archetype: RecommendationArchetype = 'tactical_strike';
+    if (isTacticalSprint) {
+      archetype = 'tactical_sprint';
+    } else if (isClinicalDuty) {
+      archetype = 'clinical_duty';
+    } else if (recalibrationStatus.active) {
+      archetype = 'soft_recalibration';
+    } else if (activeMistakesInSet >= 2 || (weakTopicsInSet >= 2 && baseMemoryLoss > 60)) {
+      archetype = 'remediation_clinic';
+    } else if (sessionsCompletedToday >= 1) {
+      archetype = 'flow_momentum';
+    } else {
+      archetype = 'tactical_strike';
     }
     
     // Build Rationale Badges
     const badges: RationaleBadge[] = [];
-    
-    if (isTriageMode && actionIndex > 80 && !isPinned) {
+
+    if (archetype === 'tactical_sprint') {
+      badges.push({ label: '🎯 Sprint Target', variant: 'primary', iconType: 'target' });
+    } else if (archetype === 'clinical_duty') {
+      badges.push({ label: '🌙 Duty Micro-Dose', variant: 'emerald', iconType: 'zap' });
+    } else if (archetype === 'remediation_clinic') {
+      badges.push({ label: `⚠️ Diagnostic Gap (${activeMistakesInSet} Mistakes)`, variant: 'destructive', iconType: 'alert' });
+    } else if (archetype === 'flow_momentum') {
+      badges.push({ label: `🔥 Momentum (${sessionsCompletedToday} done)`, variant: 'primary', iconType: 'zap' });
+    }
+
+    if (recalibrationStatus.active && isOverdue) {
+      badges.push({ label: '⚡ Recalibration Step', variant: 'primary', iconType: 'zap' });
+    } else if (isTriageMode && actionIndex > 80 && !isPinned) {
       badges.push({ label: '🚨 Triage Priority', variant: 'destructive', iconType: 'alert' });
     } else if (isOverdue) {
       badges.push({ label: `⚡ Overdue (${daysOverdue}d)`, variant: 'amber', iconType: 'clock' });
@@ -304,12 +443,12 @@ export async function getNextActionRecommendation(
       badges.push({ label: '🕒 Due Today', variant: 'amber', iconType: 'clock' });
     }
     
-    if (yieldWeight >= 85) {
-      badges.push({ label: '🎯 High Yield', variant: 'primary', iconType: 'target' });
+    if (yieldWeight >= 85 && !isTacticalSprint) {
+      badges.push({ label: '🎯 High Yield (90%+)', variant: 'primary', iconType: 'target' });
     }
     
     const isBlockWeak = weakTopicsInSet > 0 || (topicMemoryLosses.length > 0 && topicMemoryLosses.some(loss => loss > 80));
-    if (isBlockWeak) {
+    if (isBlockWeak && archetype !== 'remediation_clinic') {
       badges.push({ 
         label: weakTopicsInSet > 1 ? `⚠️ ${weakTopicsInSet} Weak Topics` : '⚠️ Weak Area', 
         variant: 'destructive', 
@@ -317,7 +456,7 @@ export async function getNextActionRecommendation(
       });
     }
 
-    if (activeMistakesInSet > 0) {
+    if (activeMistakesInSet > 0 && archetype !== 'remediation_clinic') {
       badges.push({
         label: `⚠️ ${activeMistakesInSet} Mistake${activeMistakesInSet > 1 ? 's' : ''}`,
         variant: 'destructive',
@@ -326,9 +465,56 @@ export async function getNextActionRecommendation(
     }
     
     let statusText = '';
-    if (isOverdue) statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
-    else if (isDueToday) statusText = `Due today (Pass #${revisionCount + 1})`;
-    else statusText = `Completed • Pass #${revisionCount}`;
+    if (isTacticalSprint) {
+      statusText = isOverdue
+        ? `${daysOverdue}d overdue • Sprint Pass #${revisionCount + 1}`
+        : isDueToday
+        ? `Due today • Sprint Pass #${revisionCount + 1}`
+        : `Sprint Focus • Pass #${revisionCount + 1} (Retention ~${Math.round(100 - baseMemoryLoss)}%)`;
+    } else if (recalibrationStatus.active && isOverdue) {
+      statusText = `Smoothing Quota (Day ${Math.max(1, 10 - recalibrationStatus.daysRemaining)}/10)`;
+    } else if (archetype === 'remediation_clinic') {
+      statusText = `${activeMistakesInSet} unresolved clinical errors • High-friction zone`;
+    } else if (isOverdue) {
+      statusText = `${daysOverdue} days overdue (Pass #${revisionCount + 1})`;
+    } else if (isDueToday) {
+      statusText = `Due today (Pass #${revisionCount + 1})`;
+    } else {
+      statusText = `Pass #${revisionCount + 1} scheduled • Retention ~${Math.round(100 - baseMemoryLoss)}%`;
+    }
+
+    // Build Transparent Algorithmic "Why" Breakdown
+    const retrievabilityPercent = Math.max(10, Math.min(100, Math.round(100 - baseMemoryLoss)));
+    const memoryDecayPercent = Math.round(baseMemoryLoss);
+
+    const formulaString = recalibrationStatus.active
+      ? `Priority (${actionIndex}) = [Yield (${yieldWeight}%) × Decay (${memoryDecayPercent}%)] + [Mistakes (${activeMistakesInSet}) × 5] [Knapsack Pacing]`
+      : `Priority (${actionIndex}) = [Yield (${yieldWeight}%) × Decay (${memoryDecayPercent}%)] + [Mistakes (${activeMistakesInSet}) × 5]`;
+
+    const depthLabel = setDepth === 'rapid' ? 'Rapid Recall' : setDepth === 'deep' ? 'Deep Focus' : 'Standard Review';
+
+    const rationaleNarrative = archetype === 'remediation_clinic'
+      ? `High diagnostic friction detected. You have ${activeMistakesInSet} unresolved mistake(s) and retention has fallen to ${retrievabilityPercent}%. Immediate active remediation recommended to reinforce neural pathways.`
+      : archetype === 'clinical_duty'
+      ? `Calibrated for hospital ward duty: rapid recall action targeting volatile high-yield concepts.`
+      : archetype === 'soft_recalibration'
+      ? `Paced via Knapsack decay redistribution to clear accumulated memory decay smoothly without debt anxiety.`
+      : `Targeted for Pass #${revisionCount + 1}. Retention is calculated at ${retrievabilityPercent}% based on Ebbinghaus decay curves and high exam weightage (${yieldWeight}%).`;
+
+    const whyBreakdown: AlgorithmWhyBreakdown = {
+      priorityScore: actionIndex,
+      subjectName,
+      examWeightage: yieldWeight,
+      retrievabilityPercent,
+      memoryDecayPercent,
+      activeMistakes: activeMistakesInSet,
+      weakTopicsCount: weakTopicsInSet,
+      revisionPass: revisionCount + 1,
+      depthLabel,
+      circadianAffinity: circadian.label,
+      formulaString,
+      rationaleNarrative
+    };
     
     rawCandidates.push({
       id: candidateId,
@@ -339,15 +525,17 @@ export async function getNextActionRecommendation(
       subjectId: Number(set.subjectId),
       systemId: set.systemId,
       curriculumSetId: set.id,
+      depth: setDepth,
       isLengthy,
       isQuickEligible,
-      estimatedMinutes,
       priorityScore: actionIndex,
+      archetype,
       rationaleBadges: badges,
+      whyBreakdown,
       topicCount,
       weakCount: weakTopicsInSet,
       mistakeCount: activeMistakesInSet,
-      inferredScore: 100 - baseMemoryLoss,
+      inferredScore: retrievabilityPercent,
       daysOverdue: isOverdue ? daysOverdue : 0,
       revisionCount,
       statusText,
@@ -363,29 +551,36 @@ export async function getNextActionRecommendation(
 
   let filteredCandidates: NextActionRecommendation[] = [];
 
-  if (sessionBudget === 'quick') {
-    // Quick budget: prioritize candidates with estimatedMinutes <= 25
-    const naturalQuick = rawCandidates.filter(c => c.estimatedMinutes <= 25);
+  if (sessionBudget === 'quick' || isClinicalDuty) {
+    // Quick / Clinical budget: prioritize candidates with Rapid Recall intent or short volatile focus
+    const rapidCandidates = rawCandidates.filter(c => c.depth === 'rapid' || c.isQuickEligible);
     
-    if (naturalQuick.length > 0) {
-      filteredCandidates = naturalQuick;
+    if (rapidCandidates.length > 0) {
+      filteredCandidates = rapidCandidates;
     } else if (rawCandidates.length > 0) {
-      // Intelligent Micro-Slicing: Derive focused 15m Spot Drills from top deep blocks
+      // Intelligent Spot Drill Slicing: Derive focused Rapid Recall Spot Drills from top candidate
       const topDeep = rawCandidates[0];
       const microSlicedPrimary: NextActionRecommendation = {
         ...topDeep,
         id: `${topDeep.id}:spot_drill`,
         type: 'spotDrill',
-        title: `${topDeep.title} • Spot Drill`,
-        estimatedMinutes: 15,
+        title: `${topDeep.title} • Rapid Drill`,
+        depth: 'rapid',
         isLengthy: false,
         isQuickEligible: true,
         isMicroSliced: true,
-        statusText: `15m Focused Recall Drill • ${topDeep.statusText}`,
+        statusText: isClinicalDuty 
+          ? `Duty Micro-Dose • ${topDeep.subjectName}` 
+          : `Rapid Recall Drill • ${topDeep.statusText}`,
         rationaleBadges: [
-          { label: '⚡ Spot Drill (15m)', variant: 'primary', iconType: 'zap' },
+          { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ Rapid Drill', variant: 'primary', iconType: 'zap' },
           ...topDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
-        ]
+        ],
+        whyBreakdown: {
+          ...topDeep.whyBreakdown,
+          depthLabel: 'Rapid Recall',
+          formulaString: `Spot drill derived from high-yield core block (${topDeep.title})`
+        }
       };
 
       filteredCandidates = [microSlicedPrimary];
@@ -396,30 +591,50 @@ export async function getNextActionRecommendation(
           ...secondDeep,
           id: `${secondDeep.id}:spot_drill`,
           type: 'spotDrill',
-          title: `${secondDeep.title} • Spot Drill`,
-          estimatedMinutes: 15,
+          title: `${secondDeep.title} • Rapid Drill`,
+          depth: 'rapid',
           isLengthy: false,
           isQuickEligible: true,
           isMicroSliced: true,
-          statusText: `15m Focused Recall Drill • ${secondDeep.statusText}`,
+          statusText: isClinicalDuty 
+            ? `Duty Micro-Dose • ${secondDeep.subjectName}` 
+            : `Rapid Recall Drill • ${secondDeep.statusText}`,
           rationaleBadges: [
-            { label: '⚡ Spot Drill (15m)', variant: 'primary', iconType: 'zap' },
+            { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ Rapid Drill', variant: 'primary', iconType: 'zap' },
             ...secondDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
-          ]
+          ],
+          whyBreakdown: {
+            ...secondDeep.whyBreakdown,
+            depthLabel: 'Rapid Recall',
+            formulaString: `Spot drill derived from secondary candidate (${secondDeep.title})`
+          }
         });
       }
     }
-  } else {
-    // Deep session budget: Prioritize comprehensive deep blocks (>= 25 min), but keep all available
+  } else if (sessionBudget === 'deep') {
+    // Deep Focus budget: Prioritize deep focus blocks & comprehensive topics
     filteredCandidates = [...rawCandidates].sort((a, b) => {
-      const aDeep = a.estimatedMinutes >= 25 ? 1 : 0;
-      const bDeep = b.estimatedMinutes >= 25 ? 1 : 0;
+      const aDeep = (a.depth === 'deep' || a.isLengthy) ? 1 : 0;
+      const bDeep = (b.depth === 'deep' || b.isLengthy) ? 1 : 0;
       if (aDeep !== bDeep) return bDeep - aDeep;
+      return b.priorityScore - a.priorityScore;
+    });
+  } else {
+    // Standard Review budget: Prioritize standard balanced sets and due systems
+    filteredCandidates = [...rawCandidates].sort((a, b) => {
+      const aStandard = a.depth === 'standard' ? 1 : 0;
+      const bStandard = b.depth === 'standard' ? 1 : 0;
+      if (aStandard !== bStandard) return bStandard - aStandard;
       return b.priorityScore - a.priorityScore;
     });
   }
 
-  const quickEligibleCount = rawCandidates.filter(c => c.estimatedMinutes <= 25).length;
+  // In Clinical Duty mode, cap total candidate presentation to 3 micro-actions
+  if (isClinicalDuty) {
+    filteredCandidates = filteredCandidates.slice(0, 3);
+  }
+
+  const quickEligibleCount = rawCandidates.filter(c => c.depth === 'rapid' || c.isQuickEligible).length;
   
   const primary = filteredCandidates[0] || null;
   const fallback = filteredCandidates[1] || (filteredCandidates.length > 1 ? filteredCandidates.find(c => c.id !== primary?.id) : null) || null;
@@ -427,6 +642,21 @@ export async function getNextActionRecommendation(
   const hasAnyCurriculumSets = curriculumSets.length > 0;
   const totalSyllabusSystemCount = ALL_SYSTEMS.length;
   const hasPendingSyllabus = systems.some(s => !s.contentCompleted) || systems.length < totalSyllabusSystemCount;
+
+  // Compute active sprint summary if tactical sprint is active
+  const activeSprintSummary = isTacticalSprint && operationalMode.targetSubjectIds && operationalMode.targetSubjectIds.length > 0
+    ? {
+        subjectNames: operationalMode.targetSubjectIds.map(id => {
+          const dbSub = allDbSubjects.find(sub => String(sub.id) === String(id));
+          if (dbSub) return dbSub.name;
+          const ontoSub = ALL_SUBJECTS.find(sub => String(sub.id) === String(id));
+          if (ontoSub) return ontoSub.name;
+          const fuzzy = allDbSubjects.find(sub => sub.name && sub.name.toLowerCase().includes(String(id).toLowerCase()));
+          return fuzzy ? fuzzy.name : null;
+        }).filter(Boolean) as string[],
+        targetDate: operationalMode.targetDate || null
+      }
+    : undefined;
 
   return {
     hasAnyCurriculumSets,
@@ -436,7 +666,14 @@ export async function getNextActionRecommendation(
     sessionBudget,
     totalCandidatesEvaluated,
     quickEligibleCount,
-    isTriageMode
+    isTriageMode,
+    operationalMode,
+    circadianPeriod: circadian.period,
+    circadianLabel: circadian.label,
+    sessionsCompletedToday,
+    minutesStudiedToday,
+    recalibrationStatus: recalibrationStatus.active ? recalibrationStatus : undefined,
+    activeSprintSummary
   };
 }
 
