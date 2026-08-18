@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Database, Download, Upload, FileSpreadsheet, HardDrive, Sparkles, RefreshCw, Layers, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Database, Download, Upload, FileSpreadsheet, HardDrive, Sparkles, RefreshCw, Layers, CheckCircle2, AlertCircle, Merge, CopyPlus, ShieldCheck } from 'lucide-react';
 import { db } from '@/db/schema';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { exportCompleteVault, restoreCompleteVault, repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
+import { findDuplicateSubjectGroups, mergeAndDeduplicateAllSubjects, DuplicateSubjectGroup } from '@/lib/subjectDeduplication';
 import { toast } from 'sonner';
 
 export function DataVaultSection() {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loadingAction, setLoadingAction] = useState<'export-json' | 'import-json' | 'export-csv' | 'repair-schedules' | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'export-json' | 'import-json' | 'export-csv' | 'repair-schedules' | 'merge-duplicates' | null>(null);
+  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateSubjectGroup[]>([]);
 
   // Live Storage Telemetry Query
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
@@ -18,16 +20,51 @@ export function DataVaultSection() {
   const scoreLogs = useLiveQuery(() => db.scoreLogs.toArray(), []);
   const history = useLiveQuery(() => db.history.toArray(), []);
 
-  const subjectCount = subjects?.length ?? 0;
-  const systemCount = systems?.length ?? 0;
-  const setsCount = curriculumSets?.filter(s => !s.deletedAt).length ?? 0;
-  const scoreCount = scoreLogs?.length ?? 0;
-  const historyCount = history?.length ?? 0;
+  const subjectCount = subjects?.filter(s => !s.deletedAt)?.length ?? 0;
+  const systemCount = systems?.filter(s => !s.deletedAt)?.length ?? 0;
+  const setsCount = curriculumSets?.filter(s => !s.deletedAt)?.length ?? 0;
+  const scoreCount = scoreLogs?.filter(s => !s.deletedAt)?.length ?? 0;
+  const historyCount = history?.filter(h => !h.deletedAt)?.length ?? 0;
+
+  // Detect duplicate subject groups
+  useEffect(() => {
+    let isMounted = true;
+    findDuplicateSubjectGroups().then(groups => {
+      if (isMounted) {
+        setDuplicateGroups(groups);
+      }
+    }).catch(console.error);
+    return () => { isMounted = false; };
+  }, [subjects, systems, curriculumSets, history]);
 
   // Detect if revision schedules might be out-of-sync or missing
   const completedSystemsCount = systems?.filter(s => !s.deletedAt && (s.contentCompleted || s.qbankDone || s.status === 'Strong' || s.status === 'Weak')).length ?? 0;
   const activeSchedulesCount = (curriculumSets?.filter(s => !s.deletedAt && s.nextRevisionDate).length ?? 0) + (systems?.filter(s => !s.deletedAt && s.nextRevisionDate).length ?? 0);
   const hasPotentialScheduleGap = completedSystemsCount > 0 && activeSchedulesCount === 0;
+
+  // Deduplication & Safe Merge Handler
+  const handleMergeAllDuplicates = async () => {
+    try {
+      setLoadingAction('merge-duplicates');
+      const result = await mergeAndDeduplicateAllSubjects();
+      if (result.mergedSubjectsCount > 0) {
+        toast.success(`Merged ${result.mergedSubjectsCount} duplicate subject(s) safely!`, {
+          description: `Preserved all study blocks, revision logs, and question history.`
+        });
+        const fresh = await findDuplicateSubjectGroups();
+        setDuplicateGroups(fresh);
+      } else {
+        toast.info('No duplicate subjects found', {
+          description: 'Your subject radar is clean and organized.'
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to merge duplicate subjects.');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   // JSON Export Handler with Cryptographic Provenance Stamping
   const handleExportJSON = async () => {
@@ -206,6 +243,40 @@ export function DataVaultSection() {
           </span>
         </div>
       </div>
+
+      {/* Duplicate Subjects Detection & Safe Consolidation Advisory */}
+      {duplicateGroups.length > 0 && (
+        <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5 text-primary">
+            <CopyPlus className="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-foreground">
+                Duplicate Subject Entries Detected ({duplicateGroups.length} group{duplicateGroups.length > 1 ? 's' : ''})
+              </p>
+              <p className="text-muted-foreground text-[11px] mt-0.5 leading-relaxed">
+                Found multiple subject cards for{' '}
+                <span className="font-semibold text-foreground">
+                  {duplicateGroups.map(g => `"${g.displayName}"`).join(', ')}
+                </span>
+                . Consolidate them into a single card while preserving all logged progress, revision dates, and question logs.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleMergeAllDuplicates}
+            disabled={loadingAction !== null}
+            className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:bg-primary/90 transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            {loadingAction === 'merge-duplicates' ? (
+              <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Merge className="w-3.5 h-3.5" />
+            )}
+            <span>Consolidate Progress</span>
+          </button>
+        </div>
+      )}
 
       {/* Revision Schedule Recovery Advisory Banner */}
       {hasPotentialScheduleGap && (

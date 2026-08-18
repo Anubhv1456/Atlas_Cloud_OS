@@ -7,6 +7,25 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generateHLC } from '../lib/hlc';
 import { recordSessionCompletion } from '../lib/telemetry';
+import { normalizeName } from '../lib/exam-presets';
+
+export async function checkSubjectHasProgress(subjectId: number | string): Promise<boolean> {
+  const setsTable = db.curriculumSets || db.revisionSets;
+  const [systems, sets, history, pyqs, scores] = await Promise.all([
+    db.systems.where('subjectId').equals(subjectId).toArray().then(r => r.filter(s => !s.deletedAt)),
+    setsTable ? setsTable.where('subjectId').equals(subjectId).toArray().then(r => r.filter(s => !s.deletedAt)) : [],
+    db.history.where('subjectId').equals(subjectId).toArray().then(r => r.filter(h => !h.deletedAt)),
+    db.pyqYears.where('subjectId').equals(subjectId).toArray().then(r => r.filter(p => !p.deletedAt)),
+    db.scoreLogs.where('subjectId').equals(subjectId).toArray().then(r => r.filter(sc => !sc.deletedAt))
+  ]);
+
+  const hasSystemProgress = systems.some(s => s.contentCompleted || s.qbankDone || (s.revisionCount && s.revisionCount > 0) || s.status === 'Strong' || s.status === 'Weak');
+  const hasSetProgress = sets.some(s => s.contentCompleted || s.qbankCompleted || (s.revisionCount && s.revisionCount > 0));
+  const hasPyqProgress = pyqs.some(p => p.completed);
+
+  return hasSystemProgress || hasSetProgress || hasPyqProgress || history.length > 0 || scores.length > 0;
+}
+
 async function updateUIPref(type: 'subject' | 'system', entityId: number, updates: Partial<UIPreference>) {
   if ('focus' in updates) {
     updates.focusUpdatedAt = new Date();
@@ -27,10 +46,19 @@ async function updateUIPref(type: 'subject' | 'system', entityId: number, update
 }
 
 export async function addSubject(name: string) {
-  const existingSubjects = await db.subjects.toArray();
+  const trimmedName = name.trim();
+  const existingSubjects = await db.subjects.toArray().then(res => res.filter(s => !s.deletedAt));
+  
+  // Guard against duplicate subject creation
+  const duplicate = existingSubjects.find(s => normalizeName(s.name) === normalizeName(trimmedName));
+  if (duplicate) {
+    toast.info(`Subject "${duplicate.name}" already exists.`);
+    return duplicate.id;
+  }
+
   const maxOrder = existingSubjects.reduce((max, sub) => Math.max(max, sub.order ?? 0), -1);
   return await db.subjects.add({
-    name,
+    name: trimmedName,
     order: maxOrder + 1,
     createdAt: new Date(),
     updatedAt: new Date(), hlc: generateHLC(),
