@@ -114,7 +114,7 @@ export async function restoreCompleteVault(
   }
 
   // 1. Sanitize & Deserialise Dates for Subjects
-  const cleanSubjects = (Array.isArray(data.subjects) ? data.subjects : []).map((s: any) => ({
+  const rawSubjects = (Array.isArray(data.subjects) ? data.subjects : []).map((s: any) => ({
     ...s,
     createdAt: parseDateSafe(s.createdAt) || new Date(),
     updatedAt: parseDateSafe(s.updatedAt) || new Date(),
@@ -122,46 +122,106 @@ export async function restoreCompleteVault(
     focusUpdatedAt: parseDateSafe(s.focusUpdatedAt),
   }));
 
-  // 2. Sanitize & Deserialise Dates for Systems
-  const cleanSystems: StudySystem[] = (Array.isArray(data.systems) ? data.systems : []).map((sys: any) => ({
-    ...sys,
-    nextRevisionDate: parseDateSafe(sys.nextRevisionDate),
-    lastRevisionDate: parseDateSafe(sys.lastRevisionDate),
-    completionDate: parseDateSafe(sys.completionDate),
-    revisionStartedAt: parseDateSafe(sys.revisionStartedAt),
-    createdAt: parseDateSafe(sys.createdAt) || new Date(),
-    updatedAt: parseDateSafe(sys.updatedAt) || new Date(),
-    deletedAt: parseDateSafe(sys.deletedAt),
-    focusUpdatedAt: parseDateSafe(sys.focusUpdatedAt),
-    revisionCount: typeof sys.revisionCount === 'number' ? sys.revisionCount : 0,
-    status: sys.status || 'Average'
-  }));
+  // Deduplicate incoming subjects by unique name (case-insensitive) to prevent duplicate subject cards
+  const subjectIdMap = new Map<number | string, number | string>();
+  const seenSubjectNames = new Map<string, typeof rawSubjects[0]>();
+  const cleanSubjects: typeof rawSubjects = [];
 
-  // 3. Sanitize & Deserialise Dates for CurriculumSets
+  for (const s of rawSubjects) {
+    if (!s || !s.name) continue;
+    const nameKey = s.name.trim().toLowerCase();
+    if (seenSubjectNames.has(nameKey)) {
+      const existing = seenSubjectNames.get(nameKey)!;
+      if (s.id && existing.id) {
+        subjectIdMap.set(s.id, existing.id);
+      }
+    } else {
+      seenSubjectNames.set(nameKey, s);
+      cleanSubjects.push(s);
+      if (s.id) {
+        subjectIdMap.set(s.id, s.id);
+      }
+    }
+  }
+
+  // 2. Sanitize & Deserialise Dates for Systems (and remap subjectId if needed)
+  const rawSystems: StudySystem[] = (Array.isArray(data.systems) ? data.systems : []).map((sys: any) => {
+    const remappedSubjId = sys.subjectId !== undefined ? (subjectIdMap.get(sys.subjectId) ?? sys.subjectId) : sys.subjectId;
+    return {
+      ...sys,
+      subjectId: typeof remappedSubjId === 'string' && !isNaN(Number(remappedSubjId)) ? Number(remappedSubjId) : remappedSubjId,
+      nextRevisionDate: parseDateSafe(sys.nextRevisionDate),
+      lastRevisionDate: parseDateSafe(sys.lastRevisionDate),
+      completionDate: parseDateSafe(sys.completionDate),
+      revisionStartedAt: parseDateSafe(sys.revisionStartedAt),
+      createdAt: parseDateSafe(sys.createdAt) || new Date(),
+      updatedAt: parseDateSafe(sys.updatedAt) || new Date(),
+      deletedAt: parseDateSafe(sys.deletedAt),
+      focusUpdatedAt: parseDateSafe(sys.focusUpdatedAt),
+      revisionCount: typeof sys.revisionCount === 'number' ? sys.revisionCount : 0,
+      status: sys.status || 'Average'
+    };
+  });
+
+  // Deduplicate incoming systems by (subjectId + name) key
+  const systemIdMap = new Map<number | string, number | string>();
+  const seenSystemKeys = new Map<string, StudySystem>();
+  const cleanSystems: StudySystem[] = [];
+
+  for (const sys of rawSystems) {
+    if (!sys || !sys.name) continue;
+    const key = `${sys.subjectId}_${sys.name.trim().toLowerCase()}`;
+    if (seenSystemKeys.has(key)) {
+      const existing = seenSystemKeys.get(key)!;
+      if (sys.id && existing.id) {
+        systemIdMap.set(sys.id, existing.id);
+      }
+    } else {
+      seenSystemKeys.set(key, sys);
+      cleanSystems.push(sys);
+      if (sys.id) {
+        systemIdMap.set(sys.id, sys.id);
+      }
+    }
+  }
+
+  // 3. Sanitize & Deserialise Dates for CurriculumSets (and remap subjectId / systemId)
   const incomingSets = Array.isArray(data.curriculumSets) && data.curriculumSets.length > 0
     ? data.curriculumSets
     : Array.isArray(data.revisionSets) && data.revisionSets.length > 0
     ? data.revisionSets
     : [];
 
-  const cleanCurriculumSets: CurriculumSet[] = incomingSets.map((set: any) => ({
-    ...set,
-    nextRevisionDate: set.nextRevisionDate ? (parseDateSafe(set.nextRevisionDate)?.toISOString() || String(set.nextRevisionDate)) : undefined,
-    lastRevisionDate: set.lastRevisionDate ? (parseDateSafe(set.lastRevisionDate)?.toISOString() || String(set.lastRevisionDate)) : undefined,
-    createdAt: parseDateSafe(set.createdAt) || new Date(),
-    updatedAt: parseDateSafe(set.updatedAt) || new Date(),
-    deletedAt: parseDateSafe(set.deletedAt),
-    focusUpdatedAt: parseDateSafe(set.focusUpdatedAt),
-    revisionCount: typeof set.revisionCount === 'number' ? set.revisionCount : 0,
-  }));
+  const cleanCurriculumSets: CurriculumSet[] = incomingSets.map((set: any) => {
+    const remappedSubjId = set.subjectId !== undefined ? (subjectIdMap.get(set.subjectId) ?? set.subjectId) : set.subjectId;
+    const remappedSysId = set.systemId !== undefined ? (systemIdMap.get(set.systemId) ?? set.systemId) : set.systemId;
+    return {
+      ...set,
+      subjectId: typeof remappedSubjId === 'string' && !isNaN(Number(remappedSubjId)) ? Number(remappedSubjId) : remappedSubjId,
+      systemId: typeof remappedSysId === 'string' && !isNaN(Number(remappedSysId)) ? Number(remappedSysId) : remappedSysId,
+      nextRevisionDate: set.nextRevisionDate ? (parseDateSafe(set.nextRevisionDate)?.toISOString() || String(set.nextRevisionDate)) : undefined,
+      lastRevisionDate: set.lastRevisionDate ? (parseDateSafe(set.lastRevisionDate)?.toISOString() || String(set.lastRevisionDate)) : undefined,
+      createdAt: parseDateSafe(set.createdAt) || new Date(),
+      updatedAt: parseDateSafe(set.updatedAt) || new Date(),
+      deletedAt: parseDateSafe(set.deletedAt),
+      focusUpdatedAt: parseDateSafe(set.focusUpdatedAt),
+      revisionCount: typeof set.revisionCount === 'number' ? set.revisionCount : 0,
+    };
+  });
 
   // 4. Sanitize History Entries
-  const cleanHistory: HistoryEntry[] = (Array.isArray(data.history) ? data.history : []).map((h: any) => ({
-    ...h,
-    completedAt: parseDateSafe(h.completedAt) || new Date(),
-    updatedAt: parseDateSafe(h.updatedAt) || new Date(),
-    deletedAt: parseDateSafe(h.deletedAt),
-  }));
+  const cleanHistory: HistoryEntry[] = (Array.isArray(data.history) ? data.history : []).map((h: any) => {
+    const remappedSubjId = h.subjectId !== undefined ? (subjectIdMap.get(h.subjectId) ?? h.subjectId) : h.subjectId;
+    const remappedSysId = h.systemId !== undefined ? (systemIdMap.get(h.systemId) ?? h.systemId) : h.systemId;
+    return {
+      ...h,
+      subjectId: typeof remappedSubjId === 'string' && !isNaN(Number(remappedSubjId)) ? Number(remappedSubjId) : remappedSubjId,
+      systemId: typeof remappedSysId === 'string' && !isNaN(Number(remappedSysId)) ? Number(remappedSysId) : remappedSysId,
+      completedAt: parseDateSafe(h.completedAt) || new Date(),
+      updatedAt: parseDateSafe(h.updatedAt) || new Date(),
+      deletedAt: parseDateSafe(h.deletedAt),
+    };
+  });
 
   // 5. Sanitize ScoreLogs
   const cleanScoreLogs = (Array.isArray(data.scoreLogs) ? data.scoreLogs : []).map((score: any) => ({
@@ -335,7 +395,7 @@ export async function restoreCompleteVault(
     }
   }
 
-  // 11. Execute Safe Atomic / Multi-Collection Database Write
+  // 11. Execute Safe Atomic / Multi-Collection Database Write with clean replacement
   await db.transaction('rw', [
     db.subjects,
     db.systems,
@@ -349,6 +409,21 @@ export async function restoreCompleteVault(
     db.recommendationSkips,
     db.operationalModes
   ], async () => {
+    // Clear existing data to prevent duplicate subjects/systems with different IDs
+    await Promise.all([
+      db.subjects.clear(),
+      db.systems.clear(),
+      db.curriculumSets.clear(),
+      db.history.clear(),
+      db.pyqYears.clear(),
+      db.scoreLogs.clear(),
+      db.uiPreferences.clear(),
+      db.topicProgress.clear(),
+      db.mistakeLogs.clear(),
+      db.recommendationSkips.clear(),
+      db.operationalModes.clear(),
+    ]);
+
     if (cleanSubjects.length > 0) await db.subjects.bulkPut(cleanSubjects);
     if (cleanSystems.length > 0) await db.systems.bulkPut(cleanSystems);
     if (cleanCurriculumSets.length > 0) await db.curriculumSets.bulkPut(cleanCurriculumSets);
@@ -361,6 +436,22 @@ export async function restoreCompleteVault(
     if (cleanSkips.length > 0) await db.recommendationSkips.bulkPut(cleanSkips);
     if (cleanOpModes.length > 0) await db.operationalModes.bulkPut(cleanOpModes);
   });
+
+  // Notify all UI live queries across all collections
+  const affectedTables = [
+    'subjects',
+    'systems',
+    'curriculumSets',
+    'history',
+    'pyqYears',
+    'scoreLogs',
+    'uiPreferences',
+    'topicProgress',
+    'mistakeLogs',
+    'recommendationSkips',
+    'operationalModes',
+  ];
+  affectedTables.forEach(table => dbEvents.emit('change', table));
 
   // 12. Account-Hopping Interceptor Protection
   if (verification.isForeignUid && verification.isHighHistoricalVolume) {

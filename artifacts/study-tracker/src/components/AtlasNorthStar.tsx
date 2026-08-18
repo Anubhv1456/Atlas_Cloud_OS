@@ -2,15 +2,19 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface AtlasNorthStarProps {
-  globalHealth: number;
+  globalHealth?: number;
+  size?: 'sm' | 'md' | 'lg';
+  pulse?: boolean;
+  glowing?: boolean;
 }
 
-export function AtlasNorthStar({ globalHealth }: AtlasNorthStarProps) {
-  // Scale the entire SVG based on health
-  const baseScale = 2.5; 
-  const scale = baseScale + (globalHealth / 100) * 1.5; 
+export function AtlasNorthStar({ globalHealth = 0, size = 'md' }: AtlasNorthStarProps) {
+  // Scale the entire SVG based on health and base size
+  const sizeMultiplier = size === 'sm' ? 0.6 : size === 'lg' ? 1.2 : 1;
+  const baseScale = 2.5 * sizeMultiplier; 
+  const scale = baseScale + ((globalHealth || 0) / 100) * 1.5 * sizeMultiplier; 
 
-  const isHighHealth = globalHealth >= 90;
+  const isHighHealth = (globalHealth || 0) >= 90;
   
   // Choose colors based on health
   const starColor = isHighHealth ? "#fbbf24" : "#20b59b"; // Amber-400 for high health, Teal for normal

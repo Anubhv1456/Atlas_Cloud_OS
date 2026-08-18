@@ -38,6 +38,7 @@ export interface AlgorithmWhyBreakdown {
   circadianAffinity: string;
   formulaString: string;
   rationaleNarrative: string;
+  budgetInfluence?: string;
 }
 
 export interface NextActionRecommendation {
@@ -67,6 +68,7 @@ export interface NextActionRecommendation {
   revisionCount?: number;
   statusText: string;
   isMicroSliced?: boolean;
+  priorityOverrideNotice?: string;
 }
 
 export interface NextActionEngineResult {
@@ -329,7 +331,8 @@ export async function getNextActionRecommendation(
     
     const setDepth: 'rapid' | 'standard' | 'deep' = set.depth || (set.isLengthy ? 'deep' : ((set.topicIds && set.topicIds.length <= 3) ? 'rapid' : 'standard'));
     const isLengthy = setDepth === 'deep' || Boolean(set.isLengthy);
-    const isQuickEligible = setDepth === 'rapid' || (setDepth === 'standard' && (topicCount <= 4 || activeMistakesInSet > 0));
+    // Strict rapid qualification: explicitly marked rapid OR compact (<= 3 topics)
+    const isQuickEligible = setDepth === 'rapid' || (topicCount <= 3 && setDepth !== 'deep');
     
     let daysOverdue = 0;
     let isOverdue = false;
@@ -616,14 +619,25 @@ export async function getNextActionRecommendation(
   let filteredCandidates: NextActionRecommendation[] = [];
 
   if (sessionBudget === 'quick' || isClinicalDuty) {
-    // Quick / Clinical budget: prioritize candidates with Rapid Recall intent or short volatile focus
+    // Quick / Clinical budget: prioritize candidates with strict Rapid Recall intent or compact focus
     const rapidCandidates = rawCandidates.filter(c => c.depth === 'rapid' || c.isQuickEligible);
     
     if (rapidCandidates.length > 0) {
-      filteredCandidates = rapidCandidates;
+      filteredCandidates = rapidCandidates.map(c => ({
+        ...c,
+        whyBreakdown: {
+          ...c.whyBreakdown,
+          budgetInfluence: 'Filtered for Rapid Recall (15m): matched short duration & compact high-yield target.'
+        }
+      }));
     } else if (rawCandidates.length > 0) {
-      // Intelligent Spot Drill Slicing: Derive focused Rapid Recall Spot Drills from top candidate
+      // Intelligent Spot Drill Slicing: Derive focused Rapid Recall Spot Drill from top candidate
       const topDeep = rawCandidates[0];
+      const isTopOverdue = (topDeep.daysOverdue || 0) > 0;
+      const overrideNotice = isTopOverdue
+        ? `Serving #1 Overdue Priority: No dedicated Rapid blocks in queue. Sliced into a 15m Spot Drill to clear urgent debt.`
+        : `No dedicated Rapid blocks in queue. Sliced top candidate into a 15m focused recall drill.`;
+
       const microSlicedPrimary: NextActionRecommendation = {
         ...topDeep,
         id: `${topDeep.id}:spot_drill`,
@@ -633,17 +647,19 @@ export async function getNextActionRecommendation(
         isLengthy: false,
         isQuickEligible: true,
         isMicroSliced: true,
+        priorityOverrideNotice: overrideNotice,
         statusText: isClinicalDuty 
           ? `Duty Micro-Dose • ${topDeep.subjectName}` 
-          : `Rapid Recall Drill • ${topDeep.statusText}`,
+          : `Rapid Drill (15m) • ${topDeep.statusText}`,
         rationaleBadges: [
-          { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ Rapid Drill', variant: 'primary', iconType: 'zap' },
+          { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ 15m Rapid Drill', variant: 'amber', iconType: 'zap' },
           ...topDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
         ],
         whyBreakdown: {
           ...topDeep.whyBreakdown,
-          depthLabel: 'Rapid Recall',
-          formulaString: `Spot drill derived from high-yield core block (${topDeep.title})`
+          depthLabel: 'Rapid Recall (15m)',
+          formulaString: `Spot drill derived from high-yield core block (${topDeep.title})`,
+          budgetInfluence: `Rapid Recall (15m) active: converted top overdue candidate (${topDeep.title}) into an accelerated 15m spot drill.`
         }
       };
 
@@ -662,35 +678,86 @@ export async function getNextActionRecommendation(
           isMicroSliced: true,
           statusText: isClinicalDuty 
             ? `Duty Micro-Dose • ${secondDeep.subjectName}` 
-            : `Rapid Recall Drill • ${secondDeep.statusText}`,
+            : `Rapid Drill (15m) • ${secondDeep.statusText}`,
           rationaleBadges: [
-            { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ Rapid Drill', variant: 'primary', iconType: 'zap' },
+            { label: isClinicalDuty ? '🌙 Clinical Micro-Dose' : '⚡ 15m Rapid Drill', variant: 'amber', iconType: 'zap' },
             ...secondDeep.rationaleBadges.filter(b => b.iconType !== 'clock')
           ],
           whyBreakdown: {
             ...secondDeep.whyBreakdown,
-            depthLabel: 'Rapid Recall',
-            formulaString: `Spot drill derived from secondary candidate (${secondDeep.title})`
+            depthLabel: 'Rapid Recall (15m)',
+            formulaString: `Spot drill derived from secondary candidate (${secondDeep.title})`,
+            budgetInfluence: `Filtered for Rapid Recall budget.`
           }
         });
       }
     }
   } else if (sessionBudget === 'deep') {
     // Deep Focus budget: Prioritize deep focus blocks & comprehensive topics
-    filteredCandidates = [...rawCandidates].sort((a, b) => {
-      const aDeep = (a.depth === 'deep' || a.isLengthy) ? 1 : 0;
-      const bDeep = (b.depth === 'deep' || b.isLengthy) ? 1 : 0;
-      if (aDeep !== bDeep) return bDeep - aDeep;
-      return b.priorityScore - a.priorityScore;
-    });
+    const deepCandidates = rawCandidates.filter(c => c.depth === 'deep' || c.isLengthy);
+
+    if (deepCandidates.length > 0) {
+      filteredCandidates = deepCandidates.map(c => ({
+        ...c,
+        whyBreakdown: {
+          ...c.whyBreakdown,
+          budgetInfluence: 'Deep Focus (60m) active: prioritized comprehensive multi-topic and lengthy organ systems.'
+        }
+      }));
+    } else if (rawCandidates.length > 0) {
+      // Fallback: Frame top candidate as Comprehensive Deep Review
+      const topCand = rawCandidates[0];
+      const isTopOverdue = (topCand.daysOverdue || 0) > 0;
+      const overrideNotice = isTopOverdue
+        ? `No dedicated Deep blocks in queue — Prioritizing urgent ${topCand.daysOverdue}d overdue debt for full comprehensive recall.`
+        : `No dedicated Deep blocks in queue — Expanded top candidate into a comprehensive deep review session.`;
+
+      const deepFramedPrimary: NextActionRecommendation = {
+        ...topCand,
+        depth: 'deep',
+        isLengthy: true,
+        priorityOverrideNotice: overrideNotice,
+        statusText: `Deep Focus Review • ${topCand.statusText}`,
+        rationaleBadges: [
+          { label: '🔬 Deep Comprehensive Review', variant: 'primary', iconType: 'book' },
+          ...topCand.rationaleBadges.filter(b => !b.label.includes('Standard') && b.iconType !== 'zap')
+        ],
+        whyBreakdown: {
+          ...topCand.whyBreakdown,
+          depthLabel: 'Deep Focus (60m)',
+          budgetInfluence: `Deep Focus (60m) active: no native lengthy blocks in queue, expanding priority block (${topCand.title}) into full theory + Q-Bank review.`
+        }
+      };
+
+      filteredCandidates = [deepFramedPrimary, ...rawCandidates.slice(1).map(c => ({
+        ...c,
+        whyBreakdown: {
+          ...c.whyBreakdown,
+          budgetInfluence: `Ranked within Deep Focus queue.`
+        }
+      }))];
+    }
   } else {
-    // Standard Review budget: Prioritize standard balanced sets and due systems
-    filteredCandidates = [...rawCandidates].sort((a, b) => {
-      const aStandard = a.depth === 'standard' ? 1 : 0;
-      const bStandard = b.depth === 'standard' ? 1 : 0;
-      if (aStandard !== bStandard) return bStandard - aStandard;
-      return b.priorityScore - a.priorityScore;
-    });
+    // Standard Review budget (30m): Prioritize standard balanced sets and due systems
+    const standardCandidates = rawCandidates.filter(c => c.depth === 'standard');
+
+    if (standardCandidates.length > 0) {
+      filteredCandidates = standardCandidates.map(c => ({
+        ...c,
+        whyBreakdown: {
+          ...c.whyBreakdown,
+          budgetInfluence: 'Standard (30m) active: calibrated for standard balanced review blocks.'
+        }
+      }));
+    } else {
+      filteredCandidates = rawCandidates.map(c => ({
+        ...c,
+        whyBreakdown: {
+          ...c.whyBreakdown,
+          budgetInfluence: 'Standard review queue prioritized by Ebbinghaus memory decay and NEET exam yield.'
+        }
+      }));
+    }
   }
 
   // In Clinical Duty mode, cap total candidate presentation to 3 micro-actions

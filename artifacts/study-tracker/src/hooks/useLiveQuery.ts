@@ -11,7 +11,6 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
     
     const run = async () => {
       try {
-        if (!auth.currentUser) return;
         const result = await queryFn();
         if (isMounted) setData(result as T);
       } catch (e) {
@@ -19,8 +18,8 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
       }
     };
 
-    const unsubAuth = onAuthStateChanged(auth, (user) => {
-        if (user) run();
+    const unsubAuth = onAuthStateChanged(auth, () => {
+      run();
     });
 
     const handler = () => run();

@@ -382,10 +382,10 @@ export function NextActionCard({
                       ? "bg-background text-amber-500 shadow-xs border border-amber-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Filter Rapid Recall drills & volatile concepts"
+                  title="Filter 15m Rapid Recall drills & volatile concepts"
                 >
                   <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Rapid Recall</span>
+                  <span>Rapid (15m)</span>
                 </button>
                 <button
                   type="button"
@@ -396,10 +396,10 @@ export function NextActionCard({
                       ? "bg-background text-teal-400 shadow-xs border border-teal-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Standard organ systems & core PYQs"
+                  title="Standard 30m organ systems & core PYQs"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                  <span>Standard</span>
+                  <span>Standard (30m)</span>
                 </button>
                 <button
                   type="button"
@@ -410,10 +410,10 @@ export function NextActionCard({
                       ? "bg-background text-sky-400 shadow-xs border border-sky-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Deep focus sessions for complex multi-step systems"
+                  title="Deep focus 60m sessions for complex multi-step systems"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>Deep Focus</span>
+                  <span>Deep (60m)</span>
                 </button>
               </div>
             )}
@@ -518,6 +518,14 @@ export function NextActionCard({
           </div>
         ) : primary ? (
           <div className={cn("transition-opacity duration-200 min-w-0", isSwapping ? "opacity-30" : "opacity-100")}>
+            {/* Priority Override & Contextual Fallback Banner */}
+            {primary.priorityOverrideNotice && (
+              <div className="mb-3.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2 text-xs text-amber-500 dark:text-amber-400">
+                <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                <span className="font-semibold">{primary.priorityOverrideNotice}</span>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 min-w-0">
               <div className="space-y-1.5 min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
@@ -640,7 +648,13 @@ export function NextActionCard({
                   onClick={() => handleStartRevision(primary)}
                   className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none"
                 >
-                  <span>{cardConfig.actionText}</span>
+                  <span>
+                    {sessionBudget === 'quick' || primary.depth === 'rapid'
+                      ? 'Initiate 15m Rapid Drill'
+                      : sessionBudget === 'deep' || primary.depth === 'deep'
+                      ? 'Initiate Deep Session'
+                      : cardConfig.actionText}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </Button>
 

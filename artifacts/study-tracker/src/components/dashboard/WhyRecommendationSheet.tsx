@@ -133,6 +133,19 @@ export function WhyRecommendationSheet({
             </p>
           </div>
 
+          {/* Session Budget & Depth Filtering Impact */}
+          {whyBreakdown.budgetInfluence && (
+            <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Session Budget & Filtering Impact</span>
+              </div>
+              <p className="text-xs text-foreground/90 leading-relaxed font-medium">
+                {whyBreakdown.budgetInfluence}
+              </p>
+            </div>
+          )}
+
           {/* Diagnostic & Friction Factors */}
           {(whyBreakdown.activeMistakes > 0 || whyBreakdown.weakTopicsCount > 0) && (
             <div className="p-3.5 rounded-2xl bg-destructive/10 border border-destructive/25 space-y-2">

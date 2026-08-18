@@ -279,7 +279,7 @@ export function AtlasSkyShareModal({
 
               {/* Central North Star Anchor */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center justify-center">
-                <AtlasNorthStar size="sm" pulse glowing />
+                <AtlasNorthStar size="sm" pulse glowing globalHealth={globalHealth} />
               </div>
 
               {/* Subject Celestial Star Nodes */}
