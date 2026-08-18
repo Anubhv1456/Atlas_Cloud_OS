@@ -382,10 +382,10 @@ export function NextActionCard({
                       ? "bg-background text-amber-500 shadow-xs border border-amber-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Filter 15m Rapid Recall drills & volatile concepts"
+                  title="Filter Rapid Recall drills & volatile concepts"
                 >
                   <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Rapid (15m)</span>
+                  <span>Rapid Recall</span>
                 </button>
                 <button
                   type="button"
@@ -396,10 +396,10 @@ export function NextActionCard({
                       ? "bg-background text-teal-400 shadow-xs border border-teal-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Standard 30m organ systems & core PYQs"
+                  title="Standard organ systems & core PYQs"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                  <span>Standard (30m)</span>
+                  <span>Standard</span>
                 </button>
                 <button
                   type="button"
@@ -410,10 +410,10 @@ export function NextActionCard({
                       ? "bg-background text-sky-400 shadow-xs border border-sky-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Deep focus 60m sessions for complex multi-step systems"
+                  title="Deep focus sessions for complex multi-step systems"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>Deep (60m)</span>
+                  <span>Deep Focus</span>
                 </button>
               </div>
             )}
@@ -650,7 +650,7 @@ export function NextActionCard({
                 >
                   <span>
                     {sessionBudget === 'quick' || primary.depth === 'rapid'
-                      ? 'Initiate 15m Rapid Drill'
+                      ? 'Initiate Rapid Drill'
                       : sessionBudget === 'deep' || primary.depth === 'deep'
                       ? 'Initiate Deep Session'
                       : cardConfig.actionText}
