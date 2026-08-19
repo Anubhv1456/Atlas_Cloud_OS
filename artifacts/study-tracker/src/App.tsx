@@ -17,6 +17,7 @@ import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
+import { mergeAndDeduplicateAllSubjects, findDuplicateSubjectGroups } from '@/lib/subjectDeduplication';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 import { db, dbEvents } from '@/db';
 
@@ -201,12 +202,21 @@ function App() {
     let hasRun = false;
     const checkOntologyAndRehydrate = async () => {
       try {
+        // Wait for Firestore initial snapshot load to avoid cold-boot race conditions
+        await db.subjects.ready;
         const count = await db.subjects.count();
         if (count === 0) {
           await loadUniversalOntology();
-        } else if (!hasRun) {
-          hasRun = true;
-          await repairAndRehydrateRevisionDates();
+        } else {
+          // Check if there are any residual duplicate subjects from earlier sessions and safely merge
+          const dups = await findDuplicateSubjectGroups();
+          if (dups.length > 0) {
+            await mergeAndDeduplicateAllSubjects();
+          }
+          if (!hasRun) {
+            hasRun = true;
+            await repairAndRehydrateRevisionDates();
+          }
         }
       } catch (err) {
         console.warn('Initial ontology verification or schedule rehydration deferred:', err);

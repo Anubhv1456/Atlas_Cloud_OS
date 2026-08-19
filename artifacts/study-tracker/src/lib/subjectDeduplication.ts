@@ -1,4 +1,4 @@
-import { db } from '@/db/schema';
+import { db, dbEvents } from '@/db/schema';
 import { Subject, StudySystem, CurriculumSet, HistoryEntry, PYQYear, ScoreLog, UIPreference } from '@/db/types';
 import { generateHLC } from '@/lib/hlc';
 import { normalizeName } from '@/lib/exam-presets';
@@ -357,6 +357,16 @@ export async function mergeAndDeduplicateAllSubjects(): Promise<MergeDeduplicate
       details.push(`Preserved progress for "${keeperName}" and merged ${group.duplicateSubjects.length} duplicate copy(ies).`);
     }
   });
+
+  // Emit refresh notifications across all database channels
+  dbEvents.emit('change', 'subjects');
+  dbEvents.emit('change', 'systems');
+  dbEvents.emit('change', 'curriculumSets');
+  dbEvents.emit('change', 'revisionSets');
+  dbEvents.emit('change', 'history');
+  dbEvents.emit('change', 'pyqYears');
+  dbEvents.emit('change', 'scoreLogs');
+  dbEvents.emit('change', 'uiPreferences');
 
   return {
     mergedSubjectsCount: totalMergedSubjects,

@@ -8,7 +8,7 @@ import { generateHLC } from './hlc';
 import { doc, setDoc, getDocs, collection, writeBatch } from 'firebase/firestore';
 import { firestoreDb } from './firebase';
 import { calibrateCurriculumSetSDSR, calibrateSystemSDSR } from './sdsr-engine';
-import { loadUniversalOntology } from './exam-presets';
+import { loadUniversalOntology, normalizeName } from './exam-presets';
 
 /**
  * Safely parses any date-like value into a valid Date object or null
@@ -122,14 +122,14 @@ export async function restoreCompleteVault(
     focusUpdatedAt: parseDateSafe(s.focusUpdatedAt),
   }));
 
-  // Deduplicate incoming subjects by unique name (case-insensitive) to prevent duplicate subject cards
+  // Deduplicate incoming subjects by unique normalized name to prevent duplicate subject cards
   const subjectIdMap = new Map<number | string, number | string>();
   const seenSubjectNames = new Map<string, typeof rawSubjects[0]>();
   const cleanSubjects: typeof rawSubjects = [];
 
   for (const s of rawSubjects) {
     if (!s || !s.name) continue;
-    const nameKey = s.name.trim().toLowerCase();
+    const nameKey = normalizeName(s.name);
     if (seenSubjectNames.has(nameKey)) {
       const existing = seenSubjectNames.get(nameKey)!;
       if (s.id && existing.id) {

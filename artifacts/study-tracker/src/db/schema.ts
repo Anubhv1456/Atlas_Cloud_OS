@@ -75,8 +75,15 @@ function sanitizeForFirestore(obj: any, preserveNullOrUndefinedKeys: boolean = f
 class FirestoreTable<T> {
   private cache: Map<string, T> = new Map();
   private unsubscribe: (() => void) | null = null;
+  private readyResolve!: () => void;
+  public ready: Promise<void>;
+  private isInitialLoadDone = false;
 
-  constructor(public name: string) {}
+  constructor(public name: string) {
+    this.ready = new Promise<void>((resolve) => {
+      this.readyResolve = resolve;
+    });
+  }
 
   public startListener(uid: string) {
     if (this.unsubscribe) this.unsubscribe();
@@ -100,10 +107,18 @@ class FirestoreTable<T> {
             this.cache.delete(change.doc.id);
           }
         });
+        if (!this.isInitialLoadDone) {
+          this.isInitialLoadDone = true;
+          this.readyResolve();
+        }
         dbEvents.emit('change', this.name);
       },
       (error) => {
         console.warn(`[FirestoreTable:${this.name}] Snapshot listener operating in offline/cache mode:`, error);
+        if (!this.isInitialLoadDone) {
+          this.isInitialLoadDone = true;
+          this.readyResolve();
+        }
       }
     );
   }
@@ -114,6 +129,10 @@ class FirestoreTable<T> {
       this.unsubscribe = null;
     }
     this.cache.clear();
+    this.isInitialLoadDone = false;
+    this.ready = new Promise<void>((resolve) => {
+      this.readyResolve = resolve;
+    });
   }
 
   getCollectionRef() {

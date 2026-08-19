@@ -204,11 +204,11 @@ export function DataVaultSection() {
           </div>
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Data Vault & Spaced Recall Telemetry
+              Study Vault & Data Security
             </h3>
             <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
               <HardDrive className="w-3 h-3 text-emerald-500" />
-              <span>Full IndexedDB & Revision Persistence Active</span>
+              <span>Offline Storage & Cloud Backup Active</span>
             </p>
           </div>
         </div>
@@ -218,7 +218,7 @@ export function DataVaultSection() {
         </div>
       </div>
 
-      {/* Storage Telemetry Banner */}
+      {/* Storage Summary Banner */}
       <div className="bg-muted/30 border border-border/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
           <span className="font-medium">

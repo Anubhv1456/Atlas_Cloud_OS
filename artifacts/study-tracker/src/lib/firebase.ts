@@ -4,9 +4,9 @@ import { getFirestore, initializeFirestore, persistentLocalCache, persistentMult
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 import firebaseConfig from "../firebase-applet-config.json";
 
-// Silence verbose internal connection retry logs in transient/offline states
+// Silence verbose internal connection retry and offline warning logs
 try {
-  setLogLevel('error');
+  setLogLevel('silent');
 } catch (e) {
   // Ignore if setLogLevel fails
 }

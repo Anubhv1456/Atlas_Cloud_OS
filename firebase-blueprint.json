@@ -1,21 +1,180 @@
 {
   "entities": {
-    "UserBackup": {
-      "title": "User Backup",
-      "description": "A full snapshot of the user's study tracker Dexie database.",
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile, trial metadata, and beta subscription status.",
       "type": "object",
       "properties": {
-        "userId": { "type": "string", "maxLength": 128 },
-        "lastSyncedAt": { "type": "number" },
-        "data": { "type": "string", "description": "JSON stringified backup of Dexie DB" }
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "betaAccess": { "type": "boolean" },
+        "betaAccessExpiresAt": { "type": "number" },
+        "betaGrantedAt": { "type": "string", "format": "date-time" },
+        "isTrial": { "type": "boolean" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "paymentRejectionNote": { "type": "string" },
+        "pendingPaymentId": { "type": "string" },
+        "lastPaymentSubmittedAt": { "type": "string", "format": "date-time" },
+        "referralCode": { "type": "string" },
+        "referredByCode": { "type": "string" },
+        "referredByUid": { "type": "string" },
+        "referralStatus": { "type": "string", "enum": ["claimed", "qualified", "revoked"] },
+        "passesRemaining": { "type": "number" },
+        "vaultActivationRequired": { "type": "boolean" },
+        "vaultImportProvenance": { "type": "object" },
+        "role": { "type": "string", "enum": ["admin", "student", "candidate"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PaymentSubmission": {
+      "title": "Payment Submission",
+      "description": "UPI payment verification record for beta enrollment.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "upiReference": { "type": "string" },
+        "proofUrl": { "type": "string" },
+        "amount": { "type": "number" },
+        "plan": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "reviewedBy": { "type": "string" },
+        "rejectionNote": { "type": "string" }
       },
-      "required": ["userId", "lastSyncedAt", "data"]
+      "required": ["userId", "userEmail", "upiReference", "proofUrl", "status"]
+    },
+    "InsightMarker": {
+      "title": "Community Study Marker",
+      "description": "Peer clinical pearl, mnemonic, or high-yield pitfall marker.",
+      "type": "object",
+      "properties": {
+        "subjectId": { "type": "number" },
+        "systemId": { "type": "string" },
+        "topicId": { "type": "string" },
+        "subjectName": { "type": "string" },
+        "systemName": { "type": "string" },
+        "topicName": { "type": "string" },
+        "type": { "type": "string", "enum": ["clinical_pearl", "mnemonic", "pitfall", "resource", "high_yield", "memory_trick"] },
+        "content": { "type": "string" },
+        "source": { "type": "string" },
+        "userId": { "type": "string" },
+        "authorAlias": { "type": "string" },
+        "usefulCount": { "type": "number" },
+        "helpfulBy": { "type": "array", "items": { "type": "string" } },
+        "savedBy": { "type": "array", "items": { "type": "string" } },
+        "notHelpfulBy": { "type": "array", "items": { "type": "string" } },
+        "reportedBy": { "type": "array", "items": { "type": "string" } },
+        "readCount": { "type": "number" },
+        "qualityScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "published", "trusted", "featured", "low_quality", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content", "type", "status"]
+    },
+    "ContactMessage": {
+      "title": "Contact Message",
+      "description": "Support and candidate feedback inquiries.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "category": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["unread", "read", "archived"] },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message", "status"]
+    },
+    "ReferralCode": {
+      "title": "Referral Code",
+      "description": "Personalized study pass referral token generated by students.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "ownerUid": { "type": "string" },
+        "ownerEmail": { "type": "string" },
+        "ownerDisplayName": { "type": "string" },
+        "totalClaimed": { "type": "number" },
+        "totalQualified": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "ownerUid", "totalClaimed"]
+    },
+    "ReferralRecord": {
+      "title": "Referral Record",
+      "description": "Audit record linking an invitation code claim to referee and bonus rewards.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "referrerUid": { "type": "string" },
+        "refereeUid": { "type": "string" },
+        "refereeEmail": { "type": "string" },
+        "refereeName": { "type": "string" },
+        "code": { "type": "string" },
+        "status": { "type": "string", "enum": ["claimed", "qualified", "revoked"] },
+        "bonusDaysAwarded": { "type": "number" },
+        "claimedAt": { "type": "string", "format": "date-time" },
+        "qualifiedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["referrerUid", "refereeUid", "code", "status"]
+    },
+    "TelemetryLog": {
+      "title": "Telemetry Log",
+      "description": "Anonymized cohort learning and decision velocity metrics.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string" },
+        "hlc": { "type": "string" },
+        "events_count": { "type": "number" },
+        "s10_avg_decision_time_ms": { "type": "number" },
+        "accepted_recommendations_count": { "type": "number" },
+        "skipped_recommendations_count": { "type": "number" },
+        "skip_reasons": { "type": "object" },
+        "drills_cleared_count": { "type": "number" },
+        "drills_total_count": { "type": "number" },
+        "error_categories": { "type": "object" },
+        "knowledge_gaps": { "type": "array" },
+        "sessions_completed_count": { "type": "number" },
+        "cohort_id": { "type": "string" }
+      },
+      "required": ["timestamp", "events_count", "cohort_id"]
     }
   },
   "firestore": {
     "users/{userId}": {
-      "schema": "UserBackup",
-      "description": "User's data backups."
+      "schema": "UserProfile",
+      "description": "Student user profile and authorization status."
+    },
+    "payments/{paymentId}": {
+      "schema": "PaymentSubmission",
+      "description": "Student payment proof submissions."
+    },
+    "insights/{insightId}": {
+      "schema": "InsightMarker",
+      "description": "Peer study markers and clinical pearls."
+    },
+    "contact_messages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Student support inquiries."
+    },
+    "referralCodes/{code}": {
+      "schema": "ReferralCode",
+      "description": "Referral code index."
+    },
+    "referrals/{referralId}": {
+      "schema": "ReferralRecord",
+      "description": "Referral claims and qualification records."
+    },
+    "telemetry_logs/{logId}": {
+      "schema": "TelemetryLog",
+      "description": "Cohort analytics and performance logs."
     }
   }
 }

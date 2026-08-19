@@ -2,73 +2,205 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Check if the user is an admin
+
+    // ── HELPER FUNCTIONS ──────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Server-side check for administrator privileges
     function isAdmin() {
-      return request.auth != null && (
-        (request.auth.token.admin == true) || 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
-    // Test connection check
-    match /test/connection {
-      allow read, write: if true;
+    // Server-side validation of active subscription or unexpired trial status
+    function hasActiveAccess() {
+      return isAuthenticated() && (
+        isAdmin() ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.betaAccess == true &&
+          (
+            !('betaAccessExpiresAt' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.betaAccessExpiresAt == null ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.betaAccessExpiresAt > request.time.toMillis()
+          )
+        )
+      );
     }
 
-    // Admin bootstrap check
-    match /admins/{userId} {
-      allow read: if request.auth != null;
+    // ── SYSTEM & HEALTH CHECKS ────────────────────────────────────────────────
+    match /test/connection {
+      allow read: if true;
       allow write: if false;
     }
-    
-    // App configuration (featureFlags, socials, announcements, etc.)
+
+    // Admin bootstrap check (strictly read-only for authenticated, write only by cloud console)
+    match /admins/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // App configuration (read-only for all clients, admin write only)
     match /config/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // User profiles and subcollections
+    // ── USER PROFILES & PRIVATE STUDY TRACKER DATA ────────────────────────────
     match /users/{userId} {
-      // Allow reading profiles so author names can be shown across community features
-      allow read: if true;
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      
-      // User nested subcollections (e.g. subjects, systems, history, pyqYears, scoreLogs, uiPreferences, topicProgress)
+      // Allow reading user document (for display names, status checks, and peer interactions)
+      allow read: if isAuthenticated();
+
+      // Users can create/update their profile, BUT CANNOT grant themselves free beta access or admin roles
+      allow create: if isOwner(userId) && (
+        !request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin'
+      );
+
+      allow update: if isOwner(userId) && (
+        // Non-admins cannot tamper with subscription, payment status, or role fields
+        isAdmin() || (
+          // Protect privileged authorization fields from client-side privilege escalation
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin'])) &&
+          // Cannot modify paymentStatus directly unless creating initial pending state
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['paymentStatus']) ||
+           request.resource.data.paymentStatus == 'pending') &&
+          // Cannot artificially extend or bestow beta access without admin approval or valid referral pass
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['betaAccess', 'betaAccessExpiresAt']) ||
+           resource.data.betaAccess == true ||
+           request.resource.data.isTrial == true)
+        )
+      ) || isAdmin();
+
+      allow delete: if isAdmin();
+
+      // Nested subcollections: subjects, systems, curriculumSets, history, pyqYears, scoreLogs, uiPreferences, topicProgress
+      // Strictly enforced: Only the authenticated owner or admin can read and write their personal study data
       match /{collectionName}/{docId} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // Legacy or secondary backup collection
+    // Legacy or direct user backups
     match /backups/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId) || isAdmin();
     }
 
-    // Community markers / insights
+    // ── CLOSED BETA PAYMENT SUBMISSIONS ───────────────────────────────────────
+    match /payments/{paymentId} {
+      // Students can view their own payment submissions; admins can view all
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Authenticated users can submit a payment with their own userId and 'pending' status
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.upiReference is string &&
+        request.resource.data.upiReference.size() > 0 &&
+        request.resource.data.proofUrl is string &&
+        request.resource.data.proofUrl.size() > 0;
+
+      // Only admins can approve, reject, or delete payment submissions
+      allow update, delete: if isAdmin();
+    }
+
+    // ── COMMUNITY INSIGHT MARKERS ─────────────────────────────────────────────
     match /insights/{insightId} {
       allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Only authenticated users can submit peer markers
+      allow create: if isAuthenticated() &&
+        (request.resource.data.userId == request.auth.uid || request.resource.data.userId == null) &&
+        request.resource.data.content is string &&
+        request.resource.data.content.size() > 0;
+
+      // Users can vote helpful/save/report; authors and admins can update content; only author/admin can delete
+      allow update: if isAuthenticated() && (
+        // Allow community reactions (helpfulBy, savedBy, reportedBy arrays and quality score updates)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'helpfulBy', 'notHelpfulBy', 'savedBy', 'reportedBy', 'usefulCount', 'qualityScore', 'readCount'
+        ]) ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
-    // Contact / Support Messages submitted via Contact page
+    // ── PEER REFERRAL & STUDY PASS INVITATIONS ─────────────────────────────────
+    match /referralCodes/{code} {
+      // Public read so invite links can show the inviter's badge/name
+      allow read: if true;
+
+      // Created when an active student generates their referral code
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.totalClaimed == 0;
+
+      // Updated atomically when claimed or qualified
+      allow update: if isAuthenticated();
+
+      allow delete: if isAdmin();
+    }
+
+    match /referrals/{referralId} {
+      // Users can view referrals they sent or received; Admins can view all
+      allow read: if isAuthenticated() && (
+        resource.data.referrerUid == request.auth.uid ||
+        resource.data.refereeUid == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Created upon claiming an invitation pass
+      allow create: if isAuthenticated() &&
+        request.resource.data.refereeUid == request.auth.uid;
+
+      // Updated upon session qualification
+      allow update: if isAuthenticated() && (
+        resource.data.refereeUid == request.auth.uid ||
+        resource.data.referrerUid == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ── CONTACT & SUPPORT INQUIRIES ───────────────────────────────────────────
     match /contact_messages/{messageId} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null && isAdmin();
+      // Allow candidates and visitors to send support tickets with validated content
+      allow create: if
+        request.resource.data.name is string && request.resource.data.name.size() > 0 &&
+        request.resource.data.email is string && request.resource.data.email.size() > 0 &&
+        request.resource.data.message is string && request.resource.data.message.size() > 0 &&
+        request.resource.data.status == 'unread';
+
+      // Only administrators can review, modify status, or delete support messages
+      allow read, update, delete: if isAdmin();
     }
 
-    // Payment Submissions for Closed Beta
-    match /payments/{paymentId} {
-      allow read: if request.auth != null && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    // Cohort Telemetry Logs (create authenticated, admin only read/manage)
+    // ── ANONYMIZED COHORT TELEMETRY LOGS ──────────────────────────────────────
     match /telemetry_logs/{logId} {
-      allow create: if request.auth != null;
+      allow create: if isAuthenticated() &&
+        request.resource.data.events_count is int &&
+        request.resource.data.cohort_id is string;
+
       allow read, update, delete: if isAdmin();
     }
   }

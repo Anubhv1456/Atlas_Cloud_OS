@@ -217,37 +217,37 @@ export function NextActionCard({
         return {
           glowColor: 'bg-primary/15',
           borderColor: 'hover:border-primary/60 border-primary/30',
-          badgeText: '🎯 Tactical Sprint Direct',
+          badgeText: '🎯 Target Focus',
           badgeBg: 'bg-primary/15 text-primary border-primary/35',
-          headerLabel: 'Sprint Directive',
-          actionText: 'Initiate Sprint Block',
+          headerLabel: 'High-Priority Target',
+          actionText: 'Start Target Study Block',
           icon: <Target className="h-5 w-5 text-primary" />
         };
       case 'clinical_duty':
         return {
           glowColor: 'bg-emerald-500/15',
           borderColor: 'hover:border-emerald-500/60 border-emerald-500/30',
-          badgeText: '🌙 Clinical Duty Micro-Dose',
+          badgeText: '🌙 Quick Ward Review',
           badgeBg: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/35',
-          headerLabel: 'Ward Micro-Action',
-          actionText: 'Start 15m Micro-Dose',
+          headerLabel: 'Quick Micro-Review',
+          actionText: 'Start Quick Review',
           icon: <Zap className="h-5 w-5 text-emerald-500" />
         };
       case 'remediation_clinic':
         return {
           glowColor: 'bg-destructive/15',
           borderColor: 'hover:border-destructive/60 border-destructive/30',
-          badgeText: '⚠️ Diagnostic Friction Gap',
+          badgeText: '⚠️ Weak Area Review',
           badgeBg: 'bg-destructive/15 text-destructive border-destructive/35',
-          headerLabel: 'Diagnostic Gap Remediation',
-          actionText: primary?.mistakeCount && primary.mistakeCount > 0 ? `Remediate ${primary.mistakeCount} Mistake${primary.mistakeCount > 1 ? 's' : ''}` : 'Initiate Remediation',
+          headerLabel: 'Error Remediation',
+          actionText: primary?.mistakeCount && primary.mistakeCount > 0 ? `Review ${primary.mistakeCount} Saved Mistake${primary.mistakeCount > 1 ? 's' : ''}` : 'Review Weak Area',
           icon: <Stethoscope className="h-5 w-5 text-destructive" />
         };
       case 'flow_momentum':
         return {
           glowColor: 'bg-sky-500/15',
           borderColor: 'hover:border-sky-500/60 border-sky-500/30',
-          badgeText: '🔥 Flow-State Momentum',
+          badgeText: '🔥 Study Momentum',
           badgeBg: 'bg-sky-500/15 text-sky-400 border-sky-500/35',
           headerLabel: 'Sequential Step',
           actionText: 'Maintain Momentum',
@@ -257,10 +257,10 @@ export function NextActionCard({
         return {
           glowColor: 'bg-teal-500/15',
           borderColor: 'hover:border-teal-500/60 border-teal-500/30',
-          badgeText: '⚡ Soft Recalibration Paced',
+          badgeText: '⚡ Catch-Up Pace',
           badgeBg: 'bg-teal-500/15 text-teal-400 border-teal-500/35',
-          headerLabel: 'Smoothing Quota',
-          actionText: 'Complete Quota Block',
+          headerLabel: 'Daily Quota',
+          actionText: 'Complete Daily Block',
           icon: <Activity className="h-5 w-5 text-teal-400" />
         };
       case 'holiday':
@@ -278,10 +278,10 @@ export function NextActionCard({
         return {
           glowColor: 'bg-primary/10',
           borderColor: 'hover:border-primary/40 border-border/70',
-          badgeText: isCustomFocusPinned ? '📌 Target Focus Pinned' : 'Calculated Priority',
+          badgeText: isCustomFocusPinned ? '📌 Target Focus Pinned' : 'Top Priority',
           badgeBg: 'bg-primary/10 text-primary border-primary/30',
-          headerLabel: isCustomFocusPinned ? 'Target Focus' : 'Recommended Action',
-          actionText: 'Initiate Revision',
+          headerLabel: isCustomFocusPinned ? 'Target Focus' : 'Recommended Next Step',
+          actionText: 'Start Revision Session',
           icon: isCustomFocusPinned ? <Target className="h-5 w-5 text-primary" /> : <Compass className="h-5 w-5 text-primary" />
         };
     }
