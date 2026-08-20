@@ -24,14 +24,29 @@ export function useSubjects() {
 
 export function useSubject(id: number | string) {
   return useLiveQuery(async () => {
-    const sub = await db.subjects.get(id);
+    let sub = await db.subjects.get(id);
+    if (!sub || sub.deletedAt) {
+      if (!isNaN(Number(id))) {
+        sub = await db.subjects.get(Number(id));
+      }
+    }
+    if (!sub || sub.deletedAt) {
+      const all = await db.subjects.toArray().then(res => res.filter(s => !s.deletedAt));
+      const strId = String(id).toLowerCase();
+      sub = all.find(s => 
+        String(s.id).toLowerCase() === strId ||
+        (s.ontologySubjectId && String(s.ontologySubjectId).toLowerCase() === strId) ||
+        (s.name && s.name.toLowerCase() === strId) ||
+        (s.name && s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === strId.replace(/[^a-z0-9]/g, ''))
+      );
+    }
     if (!sub || sub.deletedAt) return undefined;
-    const p = await db.uiPreferences.get(`subject:${id}`);
+    const p = await db.uiPreferences.get(`subject:${sub.id}`);
     return {
       ...sub,
       order: p?.order ?? sub.id ?? 0,
       focus: p?.focus ?? null,
-        focusUpdatedAt: p?.focusUpdatedAt ?? null
+      focusUpdatedAt: p?.focusUpdatedAt ?? null
     };
   }, [id]);
 }

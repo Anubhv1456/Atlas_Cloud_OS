@@ -5,6 +5,8 @@ import {
   useSubjects, useAllSystems, db, deleteHistoryEntry, useHistory
 } from '@/db';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useExamProfile } from '@/hooks/useExamProfile';
+import { isSubjectInProfScope } from '@/lib/curriculumScope';
 import { 
   eventMatchesFilter, TimelineEvent, TimelineFilter
 } from '@/db';
@@ -19,6 +21,13 @@ export function useTimelineLogic() {
   const history  = useHistory();
   const systems  = useAllSystems();
   const subjects = useSubjects();
+  const { profile } = useExamProfile();
+
+  const isMBBSProf = Boolean(
+    profile.targetExam && 
+    (profile.targetExam.toLowerCase().includes('mbbs') || profile.targetExam.toLowerCase().includes('professional exam'))
+  );
+  const activeYear = profile.currentYear || 'Final MBBS';
   
   const curriculumSets = useLiveQuery(
     () => (db.curriculumSets || db.revisionSets)
@@ -100,6 +109,11 @@ export function useTimelineLogic() {
       const sub = subjects.find(s => s.id === set.subjectId);
       const subName = sub?.name ?? '';
 
+      // If user is in MBBS Prof exam mode, respect active academic year
+      if (isMBBSProf && !isSubjectInProfScope(subName, profile.targetExam, activeYear)) {
+        return;
+      }
+
       const due = new Date(set.nextRevisionDate);
       const dueStart = new Date(due);
       dueStart.setHours(0, 0, 0, 0);
@@ -129,7 +143,7 @@ export function useTimelineLogic() {
       actionableQueue: [...overdue, ...dueToday],
       allUpcomingRevisions: upcoming,
     };
-  }, [curriculumSets, subjects, monthStart, monthEnd, now]);
+  }, [curriculumSets, subjects, monthStart, monthEnd, now, isMBBSProf, profile.targetExam, activeYear]);
 
   // 5. Completed events in the visible month
   const monthCompleted = useMemo(() => {

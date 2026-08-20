@@ -36,6 +36,7 @@ import Settings from '@/features/settings/Settings';
 import Timeline from '@/features/timeline/Timeline';
 import SubjectDetail from '@/features/subjects/SubjectDetail';
 import MistakeRecoveryQueue from '@/features/mistakes/MistakeRecoveryQueue';
+import SubjectRadarPage from '@/features/radar/SubjectRadarPage';
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';
@@ -182,8 +183,9 @@ function ProtectedApp() {
               <Route path="/" component={Home} />
               <Route path="/subjects/:id" component={SubjectDetail} />
               <Route path="/timeline" component={Timeline} />
-              <Route path="/mistakes" component={MistakeRecoveryQueue} />
+              <Route path="/radar" component={SubjectRadarPage} />
               <Route path="/analytics" component={Analytics} />
+              <Route path="/mistakes" component={MistakeRecoveryQueue} />
               <Route path="/settings" component={Settings} />
               <Route path="/privacy" component={PrivacyPolicy} />
               <Route path="/terms" component={TermsOfService} />

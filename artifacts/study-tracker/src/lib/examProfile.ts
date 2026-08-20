@@ -75,11 +75,13 @@ export async function fetchExamProfile(userId?: string): Promise<ExamProfile> {
       if (snap.exists()) {
         const data = snap.data();
         const profileFromCloud: ExamProfile = {
-          targetExam: data.targetExam || local.targetExam || '',
-          targetExamDate: data.targetExamDate || local.targetExamDate || '',
-          curriculum: data.curriculum || local.curriculum || DEFAULT_EXAM_PROFILE.curriculum,
-          targetScore: data.targetScore || local.targetScore || '',
-          dailyQuestionGoal: data.dailyQuestionGoal || local.dailyQuestionGoal || 40,
+          targetExam: data.targetExam ?? local.targetExam ?? '',
+          targetExamDate: data.targetExamDate ?? local.targetExamDate ?? '',
+          curriculum: data.curriculum ?? local.curriculum ?? DEFAULT_EXAM_PROFILE.curriculum,
+          targetScore: data.targetScore ?? local.targetScore ?? '',
+          dailyQuestionGoal: data.dailyQuestionGoal ?? local.dailyQuestionGoal ?? 40,
+          currentYear: data.currentYear ?? local.currentYear ?? DEFAULT_EXAM_PROFILE.currentYear,
+          startedStudying: data.startedStudying ?? local.startedStudying ?? 'yes',
         };
         setLocalExamProfile(profileFromCloud);
         return profileFromCloud;
@@ -119,6 +121,8 @@ export async function saveExamProfile(profile: ExamProfile, userId?: string): Pr
       curriculum: profile.curriculum,
       targetScore: profile.targetScore,
       dailyQuestionGoal: profile.dailyQuestionGoal,
+      currentYear: profile.currentYear || 'Final MBBS',
+      startedStudying: profile.startedStudying || 'yes',
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (err) {

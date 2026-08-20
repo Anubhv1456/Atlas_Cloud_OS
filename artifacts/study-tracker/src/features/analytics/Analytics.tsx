@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { Link } from 'wouter';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db, Subject, StudySystem } from '@/db';
@@ -49,6 +50,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAnalyticsLogic } from './Analytics.hooks';
 import { Activity, Globe, Lightbulb } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { MistakesNotebookCard } from '@/features/mistakes/MistakesNotebookCard';
 
 export default function Analytics() {
 
@@ -118,7 +120,16 @@ export default function Analytics() {
               {studyRecommendation.reason}
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0 pt-3 md:pt-0">
+          <div className="flex items-center gap-2.5 shrink-0 pt-3 md:pt-0">
+            <Link
+              href={`/mistakes?subjectId=${encodeURIComponent(String(studyRecommendation.system.subjectId))}&systemId=${encodeURIComponent(String(studyRecommendation.system.id || ''))}&origin=analytics_apex`}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border/80 hover:border-primary/40 text-xs font-bold text-muted-foreground hover:text-foreground transition-all shadow-2xs hover:shadow-xs cursor-pointer active:scale-95"
+              title={`Review 20th Notebook rules for ${studyRecommendation.subjectName}`}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-primary" />
+              <span>Review Mistakes</span>
+            </Link>
+
             <Button
               size="lg"
               onClick={() => handleSetRecommendationAsPrimary(studyRecommendation.system)}
@@ -265,14 +276,29 @@ export default function Analytics() {
                     scoreColor = "text-amber-600 dark:text-amber-500";
                   }
 
+                  const mistakesUrl = sys.subjectId 
+                    ? `/mistakes?subjectId=${encodeURIComponent(String(sys.subjectId))}${sys.systemId ? `&systemId=${encodeURIComponent(String(sys.systemId))}` : ''}&origin=vulnerability_matrix`
+                    : null;
+
                   return (
                     <div 
                       key={sys.name} 
-                      className={`rounded-3xl p-4 flex flex-col justify-between transition-transform hover:scale-[1.02] cursor-default ${spanClasses} ${colorClasses}`}
+                      className={`group relative rounded-3xl p-4 flex flex-col justify-between transition-all duration-200 hover:scale-[1.02] border border-border/20 ${spanClasses} ${colorClasses}`}
                     >
-                      <span className={`font-bold ${idx === 0 ? 'text-lg md:text-xl' : 'text-sm'} leading-tight tracking-tight`}>
-                        {sys.fullName}
-                      </span>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className={`font-bold ${idx === 0 ? 'text-lg md:text-xl' : 'text-sm'} leading-tight tracking-tight text-foreground/90`}>
+                          {sys.fullName}
+                        </span>
+                        {mistakesUrl && (
+                          <Link
+                            href={mistakesUrl}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg bg-background/80 hover:bg-background text-foreground shadow-2xs cursor-pointer shrink-0"
+                            title={`Open 20th Notebook rules for ${sys.fullName}`}
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-primary" />
+                          </Link>
+                        )}
+                      </div>
                       <div className="flex items-end justify-between mt-2">
                         <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
                           {sys.count} Logs
@@ -288,6 +314,9 @@ export default function Analytics() {
           )}
         </div>
       </div>
+
+      {/* 20th Notebook (Mistakes & Clinical Traps Hub) */}
+      <MistakesNotebookCard />
 
       {/* Score History Table */}
       <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">

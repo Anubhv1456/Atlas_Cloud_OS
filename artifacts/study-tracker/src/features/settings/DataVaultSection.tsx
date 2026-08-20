@@ -204,11 +204,11 @@ export function DataVaultSection() {
           </div>
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Study Vault & Data Security
+              Storage & Backup
             </h3>
             <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
               <HardDrive className="w-3 h-3 text-emerald-500" />
-              <span>Offline Storage & Cloud Backup Active</span>
+              <span>Local IndexedDB Storage</span>
             </p>
           </div>
         </div>

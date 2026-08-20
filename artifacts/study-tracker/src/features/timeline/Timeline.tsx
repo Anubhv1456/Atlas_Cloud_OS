@@ -195,11 +195,11 @@ export default function Timeline() {
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-1.5 text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">
-              <Sparkles className="w-3.5 h-3.5" /> Spaced Repetition Radar
+              <CalendarDays className="w-3.5 h-3.5" /> Spaced Repetition Schedule
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Timeline</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Schedule</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Active recall history, daily momentum, and spaced repetition horizon.
+              Active recall history, scheduled revisions, and calendar agenda.
             </p>
           </div>
         </header>

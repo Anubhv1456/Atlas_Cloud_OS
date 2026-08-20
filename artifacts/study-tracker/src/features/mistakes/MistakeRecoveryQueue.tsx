@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useSearch, Link } from 'wouter';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { MistakeLog } from '@/db/types';
@@ -13,1550 +14,851 @@ import {
   Plus, 
   Trash2, 
   BookOpen, 
-  Brain, 
   ChevronRight, 
   Search,
   X,
-  ChevronDown,
-  Sparkles,
   Zap,
-  Command,
-  Flame,
   CheckCircle2,
-  Circle,
   Tag,
   ArrowLeft,
-  Filter,
-  Download,
-  FileText,
-  RotateCcw,
+  Share2,
+  Copy,
+  Check,
+  Edit3,
+  Layers,
+  Archive,
+  ArchiveRestore,
+  Sparkles,
   SlidersHorizontal,
-  FolderOpen,
-  Eye,
-  HelpCircle,
-  Pencil
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { ALL_SUBJECTS, UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { ALL_SUBJECTS } from '@/data/ontology';
 import { toast } from 'sonner';
 
 export function getTagMeta(tag: string) {
   const norm = tag.toLowerCase();
   if (norm === 'doc' || norm.includes('pharma') || norm.includes('drug')) {
-    return { icon: '💊', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' };
+    return { icon: '💊', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' };
   }
   if (norm === 'ioc' || norm.includes('investigation')) {
-    return { icon: '🔍', color: 'bg-sky-500/10 text-sky-500 border-sky-500/30' };
+    return { icon: '🔍', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25' };
   }
   if (norm === 'histopath' || norm === 'biopsy' || norm.includes('pathology')) {
-    return { icon: '🔬', color: 'bg-purple-500/10 text-purple-500 border-purple-500/30' };
+    return { icon: '🔬', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25' };
   }
   if (norm === 'imaging' || norm.includes('radiology') || norm === 'x-ray' || norm === 'ct') {
-    return { icon: '🩻', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' };
+    return { icon: '🩻', color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25' };
   }
   if (norm === 'triad' || norm.includes('sign')) {
-    return { icon: '⚠️', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' };
+    return { icon: '⚠️', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25' };
   }
   if (norm === 'criteria' || norm === 'staging' || norm === 'score') {
-    return { icon: '📊', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30' };
+    return { icon: '📊', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25' };
   }
   if (norm === 'contraindicated' || norm === 'contra') {
-    return { icon: '🚫', color: 'bg-rose-500/10 text-rose-500 border-rose-500/30' };
+    return { icon: '🚫', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25' };
   }
   if (norm.includes('peds') || norm.includes('preg')) {
-    return { icon: '👶', color: 'bg-pink-500/10 text-pink-500 border-pink-500/30' };
+    return { icon: '👶', color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/25' };
+  }
+  if (norm.includes('confusion') || norm.includes('twin')) {
+    return { icon: '🔄', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/25' };
   }
   if (norm === 'volatile') {
-    return { icon: '⚡', color: 'bg-amber-500/15 text-amber-500 border-amber-500/40 font-bold' };
+    return { icon: '⚡', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/35 font-bold' };
   }
   return { icon: null, color: 'bg-primary/10 text-primary border-primary/20 font-semibold' };
 }
 
 export default function MistakeRecoveryQueue() {
+  const searchStr = useSearch();
+  const [, setLocation] = useLocation();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMistake, setEditingMistake] = useState<MistakeLog | null>(null);
   const [modalDefaultSubjectId, setModalDefaultSubjectId] = useState<string | number | undefined>(undefined);
-  const [modalDefaultSystemId, setModalDefaultSystemId] = useState<string | number | undefined>(undefined);
-  const [modalDefaultTags, setModalDefaultTags] = useState<string[]>([]);
-  
-  // Navigation & View State
-  const [activeView, setActiveView] = useState<'notebooks' | 'stream'>('notebooks');
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
 
-  // Filters within Subject or Stream
+  // Filters & View State
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [filterSubjectId, setFilterSubjectId] = useState<string>('all');
-  const [systemFilter, setSystemFilter] = useState<string>('all');
-  const [tagFilter, setTagFilter] = useState<string>('all');
-  const [volatileOnly, setVolatileOnly] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'mastered'>('active');
-  
-  // Collapsible subject sections state (in stream view)
-  const [collapsedSubjects, setCollapsedSubjects] = useState<Record<string, boolean>>({});
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'archived' | 'all'>('active');
+  const [viewLayout, setViewLayout] = useState<'grouped' | 'stream'>('grouped');
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Sync initial subject from query string if available (e.g. ?subjectId=...)
+  useEffect(() => {
+    if (searchStr) {
+      const params = new URLSearchParams(searchStr);
+      const subId = params.get('subjectId');
+      if (subId) {
+        setSelectedSubjectId(subId);
+        setModalDefaultSubjectId(subId);
+      }
+    }
+  }, [searchStr]);
 
+  // Database queries
   const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray()) || [];
-  const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
-  const systems = useLiveQuery(() => db.systems?.filter(s => !s.deletedAt).toArray()) || [];
+  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
 
-  // Robust ID-to-Name Map for Subjects
   const subjectMap = useMemo(() => {
     const map = new Map<string, string>();
-    subjects.forEach(s => {
-      if (s.id !== undefined) map.set(String(s.id), s.name);
-    });
-    ALL_SUBJECTS.forEach(s => {
-      if (!map.has(String(s.id))) map.set(String(s.id), s.name);
-    });
+    ALL_SUBJECTS.forEach(s => map.set(String(s.id), s.name));
+    dbSubjects.forEach(s => map.set(String(s.id), s.name));
     return map;
-  }, [subjects]);
+  }, [dbSubjects]);
 
-  // Robust ID-to-Name Map for Systems
-  const systemMap = useMemo(() => {
-    const map = new Map<string, string>();
-    systems.forEach(sys => {
-      if (sys.id !== undefined) map.set(String(sys.id), sys.name);
-    });
-    UNIVERSAL_ONTOLOGY.forEach(sub => {
-      sub.systems.forEach(sys => {
-        if (!map.has(String(sys.id))) map.set(String(sys.id), sys.name);
-      });
-    });
-    return map;
-  }, [systems]);
-
-  // Global keyboard shortcuts: 'N' to open modal, '⌘K' or '/' to focus search, 'Escape' to go back
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-
-      if (!isInput && !modalOpen) {
-        if (e.key === 'n' || e.key === 'N') {
-          e.preventDefault();
-          openModalWithContext();
-        } else if (e.key === '/') {
-          e.preventDefault();
-          searchInputRef.current?.focus();
-        } else if (e.key === 'Escape' && selectedSubjectId) {
-          e.preventDefault();
-          setSelectedSubjectId(null);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [modalOpen, selectedSubjectId]);
-
-  // Exclude soft-deleted logs and sort newest first
-  const mistakeLogs = useMemo(() => {
-    return rawMistakes
-      .filter(m => !m.deletedAt)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Metrics
+  const activeMistakes = useMemo(() => {
+    return rawMistakes.filter(m => !m.deletedAt && !m.resolved);
   }, [rawMistakes]);
 
-  // Metrics Summary
-  const totalLogs = mistakeLogs.length;
-  const volatileCount = useMemo(() => mistakeLogs.filter(m => m.isVolatile).length, [mistakeLogs]);
-  const masteredCount = useMemo(() => mistakeLogs.filter(m => m.resolved).length, [mistakeLogs]);
-  const activeCount = totalLogs - masteredCount;
+  const volatileMistakes = useMemo(() => {
+    return activeMistakes.filter(m => m.isVolatile);
+  }, [activeMistakes]);
 
-  // Find Top Weak Subject & Counts
-  const subjectErrorCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const log of mistakeLogs) {
-      if (log.resolved) continue;
-      const subName = subjectMap.get(String(log.subjectId)) || 'Subject';
-      counts[subName] = (counts[subName] || 0) + 1;
-    }
-    return counts;
-  }, [mistakeLogs, subjectMap]);
+  const archivedMistakes = useMemo(() => {
+    return rawMistakes.filter(m => !m.deletedAt && m.resolved);
+  }, [rawMistakes]);
 
-  const topErrorSubject = useMemo(() => {
-    if (mistakeLogs.length === 0) return null;
-    let topName = '';
-    let maxCount = 0;
-    for (const [name, count] of Object.entries(subjectErrorCounts)) {
-      if (count > maxCount) {
-        maxCount = count;
-        topName = name;
-      }
-    }
-    return topName && maxCount >= 3 ? { name: topName, count: maxCount } : null;
-  }, [mistakeLogs, subjectErrorCounts]);
-
-  // Dynamic Subject Notebooks Data (ONLY for subjects that contain mistake logs!)
-  interface SubjectNotebookMeta {
-    subjectId: string;
-    subjectName: string;
-    totalCount: number;
-    activeCount: number;
-    volatileCount: number;
-    masteredCount: number;
-    systems: { id: string; name: string; count: number }[];
-    crossTags: string[];
-    lastUpdated: Date;
-  }
-
-  const subjectNotebooks = useMemo(() => {
-    const map = new Map<string, {
-      subjectName: string;
-      logs: MistakeLog[];
-      systemsMap: Map<string, number>;
-      tagsSet: Set<string>;
-      lastUpdated: Date;
-    }>();
-
-    for (const log of mistakeLogs) {
-      const subId = String(log.subjectId || 0);
-      const subName = subjectMap.get(subId) || 'Subject';
-      const sysId = String(log.systemId || 0);
-      const logDate = new Date(log.createdAt || Date.now());
-
-      if (!map.has(subId)) {
-        map.set(subId, {
-          subjectName: subName,
-          logs: [],
-          systemsMap: new Map(),
-          tagsSet: new Set(),
-          lastUpdated: logDate
-        });
-      }
-
-      const entry = map.get(subId)!;
-      entry.logs.push(log);
-      if (logDate > entry.lastUpdated) {
-        entry.lastUpdated = logDate;
-      }
-
-      entry.systemsMap.set(sysId, (entry.systemsMap.get(sysId) || 0) + 1);
-
-      if (log.tags && Array.isArray(log.tags)) {
-        log.tags.forEach(t => entry.tagsSet.add(t));
-      }
-    }
-
-    const result: SubjectNotebookMeta[] = [];
-    map.forEach((val, subId) => {
-      const systemsArr: { id: string; name: string; count: number }[] = [];
-      val.systemsMap.forEach((count, sysId) => {
-        systemsArr.push({
-          id: sysId,
-          name: systemMap.get(sysId) || 'General',
-          count
-        });
-      });
-      systemsArr.sort((a, b) => b.count - a.count);
-
-      const totalCount = val.logs.length;
-      const mastered = val.logs.filter(l => l.resolved).length;
-      const active = totalCount - mastered;
-      const volatile = val.logs.filter(l => l.isVolatile).length;
-
-      result.push({
-        subjectId: subId,
-        subjectName: val.subjectName,
-        totalCount,
-        activeCount: active,
-        volatileCount: volatile,
-        masteredCount: mastered,
-        systems: systemsArr,
-        crossTags: Array.from(val.tagsSet),
-        lastUpdated: val.lastUpdated
-      });
+  const representedSubjectCount = useMemo(() => {
+    const set = new Set<string>();
+    activeMistakes.forEach(m => {
+      if (m.subjectId !== undefined) set.add(String(m.subjectId));
     });
+    return set.size;
+  }, [activeMistakes]);
 
-    // Sort by active count descending
-    return result.sort((a, b) => b.activeCount - a.activeCount || b.totalCount - a.totalCount);
-  }, [mistakeLogs, subjectMap, systemMap]);
-
-  // Selected Subject Details
-  const currentSubjectNotebook = useMemo(() => {
-    if (!selectedSubjectId) return null;
-    return subjectNotebooks.find(n => n.subjectId === selectedSubjectId) || null;
-  }, [selectedSubjectId, subjectNotebooks]);
-
-  // Filtered & Searched Logs for Current View
-  const filteredLogs = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-
-    return mistakeLogs.filter(log => {
-      // If we are deep inside a subject notebook
-      if (selectedSubjectId && String(log.subjectId) !== selectedSubjectId) {
-        return false;
-      }
-
-      // Subject filter (in stream mode)
-      if (!selectedSubjectId && filterSubjectId !== 'all' && String(log.subjectId) !== filterSubjectId) {
-        return false;
-      }
-
-      // System filter (inside notebook mode)
-      if (systemFilter !== 'all' && String(log.systemId) !== systemFilter) {
-        return false;
-      }
-
-      // Tag & Clinical Lens filter
-      if (tagFilter !== 'all') {
-        const qTag = tagFilter.toLowerCase();
-        const hasDirectTag = log.tags?.some(t => {
-          const tNorm = t.toLowerCase();
-          return tNorm === qTag || tNorm.includes(qTag) || qTag.includes(tNorm);
-        });
-
-        const takeawayLower = (log.keyTakeaway || '').toLowerCase();
-        const hasInlineOrPrefix = 
-          takeawayLower.includes(`#${qTag}`) ||
-          (qTag === 'doc' && (takeawayLower.includes('doc:') || takeawayLower.includes('drug of choice'))) ||
-          (qTag === 'ioc' && (takeawayLower.includes('ioc:') || takeawayLower.includes('investigation of choice'))) ||
-          (qTag === 'triad' && (takeawayLower.includes('triad:') || takeawayLower.includes('classic triad'))) ||
-          (qTag === 'histopath' && (takeawayLower.includes('biopsy:') || takeawayLower.includes('histopath') || takeawayLower.includes('stain'))) ||
-          (qTag === 'imaging' && (takeawayLower.includes('imaging:') || takeawayLower.includes('x-ray') || takeawayLower.includes('ct sign'))) ||
-          (qTag === 'contraindicated' && takeawayLower.includes('contraindicated:')) ||
-          (qTag === 'criteria' && (takeawayLower.includes('criteria:') || takeawayLower.includes('staging:')));
-
-        if (!hasDirectTag && !hasInlineOrPrefix) return false;
-      }
-
-      // Volatile filter
-      if (volatileOnly && !log.isVolatile) {
-        return false;
-      }
+  // Filtered dataset
+  const filteredMistakes = useMemo(() => {
+    return rawMistakes.filter(m => {
+      if (m.deletedAt) return false;
 
       // Status filter
-      if (statusFilter === 'active' && log.resolved) return false;
-      if (statusFilter === 'mastered' && !log.resolved) return false;
+      if (statusFilter === 'active' && m.resolved) return false;
+      if (statusFilter === 'archived' && !m.resolved) return false;
 
-      // Error Root Cause filter
-      if (typeFilter !== 'all' && log.errorType !== typeFilter) return false;
+      // Subject filter
+      if (selectedSubjectId !== 'all') {
+        const subMatch = String(m.subjectId) === selectedSubjectId;
+        const subNameMatch = subjectMap.get(String(m.subjectId))?.toLowerCase() === selectedSubjectId.toLowerCase();
+        if (!subMatch && !subNameMatch) return false;
+      }
 
-      // Text search query across takeaway text, title, trigger, topic, subject, tags, and system
-      if (query) {
-        const subName = (subjectMap.get(String(log.subjectId)) || '').toLowerCase();
-        const sysName = (systemMap.get(String(log.systemId)) || '').toLowerCase();
-        const takeaway = (log.keyTakeaway || '').toLowerCase();
-        const title = (log.title || '').toLowerCase();
-        const trigger = (log.clinicalTrigger || '').toLowerCase();
-        const topic = (log.topicId || '').toLowerCase();
-        const source = (log.source || '').toLowerCase();
-        const sourceExam = (log.sourceExam || '').toLowerCase();
-        const tagsJoined = (log.tags || []).join(' ').toLowerCase();
+      // Tag filter
+      if (selectedTag === 'volatile') {
+        if (!m.isVolatile) return false;
+      } else if (selectedTag !== 'all') {
+        const tags = m.tags || (m as any).coreLenses || [];
+        const hasTag = tags.some((t: string) => t.toLowerCase() === selectedTag.toLowerCase());
+        if (!hasTag) return false;
+      }
 
-        const matches = 
-          takeaway.includes(query) || 
-          title.includes(query) ||
-          trigger.includes(query) ||
-          topic.includes(query) || 
-          subName.includes(query) || 
-          sysName.includes(query) ||
-          source.includes(query) ||
-          sourceExam.includes(query) ||
-          tagsJoined.includes(query);
-
-        if (!matches) return false;
+      // Text search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const ruleText = (m.keyTakeaway || (m as any).goldenTakeaway || (m as any).questionTopic || '').toLowerCase();
+        const subName = (subjectMap.get(String(m.subjectId)) || '').toLowerCase();
+        const tagsStr = (m.tags || []).join(' ').toLowerCase();
+        if (!ruleText.includes(q) && !subName.includes(q) && !tagsStr.includes(q)) {
+          return false;
+        }
       }
 
       return true;
+    }).sort((a, b) => {
+      // Sort pinned volatile rules to top, then by recency
+      if (a.isVolatile && !b.isVolatile) return -1;
+      if (!a.isVolatile && b.isVolatile) return 1;
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     });
-  }, [
-    mistakeLogs, 
-    selectedSubjectId, 
-    filterSubjectId, 
-    systemFilter, 
-    tagFilter, 
-    volatileOnly, 
-    statusFilter, 
-    typeFilter, 
-    searchQuery, 
-    subjectMap, 
-    systemMap
-  ]);
+  }, [rawMistakes, statusFilter, selectedSubjectId, selectedTag, searchQuery, subjectMap]);
 
-  // Hierarchical Grouping for Stream View: Subject -> System
-  interface StreamSubjectGroup {
-    subjectId: string;
-    subjectName: string;
-    totalCount: number;
-    systems: {
-      systemId: string;
-      systemName: string;
-      logs: MistakeLog[];
-    }[];
-  }
+  // Grouped by Subject for Accordion Mode
+  const groupedMistakes = useMemo(() => {
+    const groups = new Map<string, { subjectId: string; subjectName: string; rules: MistakeLog[] }>();
 
-  const hierarchicalGroups = useMemo(() => {
-    const map = new Map<string, { subjectName: string; systemsMap: Map<string, { systemName: string; logs: MistakeLog[] }> }>();
-
-    for (const log of filteredLogs) {
-      const subId = String(log.subjectId || 0);
-      const subName = subjectMap.get(subId) || 'Subject';
-      const sysId = String(log.systemId || 0);
-      const sysName = systemMap.get(sysId) || 'General';
-
-      if (!map.has(subId)) {
-        map.set(subId, {
-          subjectName: subName,
-          systemsMap: new Map()
-        });
+    filteredMistakes.forEach(m => {
+      const sId = String(m.subjectId || 'general');
+      const sName = subjectMap.get(sId) || 'General Clinical';
+      if (!groups.has(sId)) {
+        groups.set(sId, { subjectId: sId, subjectName: sName, rules: [] });
       }
-
-      const subEntry = map.get(subId)!;
-      if (!subEntry.systemsMap.has(sysId)) {
-        subEntry.systemsMap.set(sysId, {
-          systemName: sysName,
-          logs: []
-        });
-      }
-
-      subEntry.systemsMap.get(sysId)!.logs.push(log);
-    }
-
-    const result: StreamSubjectGroup[] = [];
-    map.forEach((subVal, subId) => {
-      let subTotal = 0;
-      const systemsArr: { systemId: string; systemName: string; logs: MistakeLog[] }[] = [];
-      
-      subVal.systemsMap.forEach((sysVal, sysId) => {
-        subTotal += sysVal.logs.length;
-        systemsArr.push({
-          systemId: sysId,
-          systemName: sysVal.systemName,
-          logs: sysVal.logs
-        });
-      });
-
-      result.push({
-        subjectId: subId,
-        subjectName: subVal.subjectName,
-        totalCount: subTotal,
-        systems: systemsArr
-      });
+      groups.get(sId)!.rules.push(m);
     });
 
-    return result.sort((a, b) => b.totalCount - a.totalCount);
-  }, [filteredLogs, subjectMap, systemMap]);
+    return Array.from(groups.values()).sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+  }, [filteredMistakes, subjectMap]);
 
-  const hasActiveFilters = 
-    searchQuery.trim() !== '' || 
-    typeFilter !== 'all' || 
-    filterSubjectId !== 'all' ||
-    systemFilter !== 'all' ||
-    tagFilter !== 'all' ||
-    volatileOnly ||
-    statusFilter !== 'active';
-
-  const resetFilters = () => {
-    setSearchQuery('');
-    setTypeFilter('all');
-    setFilterSubjectId('all');
-    setSystemFilter('all');
-    setTagFilter('all');
-    setVolatileOnly(false);
-    setStatusFilter('active');
+  // Copy single rule to clipboard
+  const handleCopyRule = (rule: MistakeLog) => {
+    const subName = subjectMap.get(String(rule.subjectId)) || 'Clinical';
+    const text = (rule.keyTakeaway || (rule as any).goldenTakeaway || '').trim();
+    const formatted = `[${subName}] ${text}`;
+    navigator.clipboard.writeText(formatted);
+    setCopiedId(rule.id || null);
+    toast.success('Rule copied to clipboard');
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const toggleSubjectCollapse = (subId: string) => {
-    setCollapsedSubjects(prev => ({
-      ...prev,
-      [subId]: !prev[subId]
-    }));
-  };
-
-  // Safe Deletion with Undo Toast
-  const handleDelete = (log: MistakeLog) => {
-    if (log.id === undefined) return;
-    const logId = log.id;
-    const rulePreview = log.keyTakeaway.slice(0, 35);
-
-    deleteMistakeLog(logId);
-
-    toast('Takeaway deleted', {
-      description: `"${rulePreview}..."`,
-      action: {
-        label: 'Undo',
-        onClick: () => restoreMistakeLog(logId)
-      },
-      duration: 5000
-    });
-  };
-
-  // Toggle Mastered
-  const handleToggleMastered = (log: MistakeLog) => {
-    if (log.id === undefined) return;
-    resolveMistake(log.id, !log.resolved);
-  };
-
-  // Toggle Volatile Flag
-  const handleToggleVolatile = (log: MistakeLog) => {
-    if (log.id === undefined) return;
-    toggleMistakeVolatile(log.id, !log.isVolatile);
-  };
-
-  // Open Edit Modal for a Specific Mistake
-  const handleEdit = (log: MistakeLog) => {
-    setEditingMistake(log);
-    setModalOpen(true);
-  };
-
-  const openModalWithContext = (subId?: string | number, sysId?: string | number, tags?: string[]) => {
-    setEditingMistake(null);
-    setModalDefaultSubjectId(subId || selectedSubjectId || undefined);
-    setModalDefaultSystemId(sysId || (systemFilter !== 'all' ? systemFilter : undefined));
-    setModalDefaultTags(tags || (tagFilter !== 'all' ? [tagFilter] : []));
-    setModalOpen(true);
-  };
-
-  // Export 20th Notebook to Markdown / Plain Text
-  const exportNotebook = () => {
-    if (filteredLogs.length === 0) {
-      toast.error('No takeaways to export.');
+  // Copy entire filtered notebook as formatted markdown
+  const handleCopyFullSheet = () => {
+    if (filteredMistakes.length === 0) {
+      toast.error('No rules to copy.');
       return;
     }
 
-    const title = selectedSubjectId && currentSubjectNotebook 
-      ? `Atlas 20th Notebook - ${currentSubjectNotebook.subjectName}`
-      : `Atlas 20th Notebook - High Yield Revision Rules`;
-    
-    let content = `# ${title}\nGenerated on ${new Date().toLocaleDateString()} • ${filteredLogs.length} Rules\n\n`;
+    let markdown = `# 20th Notebook — Rapid Pre-GT Revision Sheet\n`;
+    markdown += `Generated on ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}\n\n`;
 
-    filteredLogs.forEach((log, idx) => {
-      const sub = subjectMap.get(String(log.subjectId)) || 'Subject';
-      const sys = systemMap.get(String(log.systemId)) || 'General';
-      content += `### ${idx + 1}. [${sub} › ${sys}] ${log.title ? `- ${log.title}` : ''}\n`;
-      if (log.clinicalTrigger) {
-        content += `> **Scenario / Trigger:** ${log.clinicalTrigger}\n\n`;
-      }
-      content += `**Rule:** ${log.keyTakeaway}\n\n`;
-      const metaParts: string[] = [];
-      if (log.isVolatile) metaParts.push('⚡ Volatile Fact');
-      if (log.errorType) metaParts.push(`Type: ${log.errorType}`);
-      if (log.source) metaParts.push(`Source: ${log.source} ${log.sourceExam ? `(${log.sourceExam})` : ''}`);
-      if (log.tags && log.tags.length > 0) metaParts.push(`Tags: #${log.tags.join(' #')}`);
-      content += `*${metaParts.join(' • ')}*\n\n---\n\n`;
+    groupedMistakes.forEach(group => {
+      markdown += `## ${group.subjectName} (${group.rules.length} rules)\n`;
+      group.rules.forEach(rule => {
+        const text = (rule.keyTakeaway || (rule as any).goldenTakeaway || '').trim();
+        const volatileMark = rule.isVolatile ? ' ⚡ [VOLATILE]' : '';
+        const tags = (rule.tags && rule.tags.length > 0) ? ` #${rule.tags.join(' #')}` : '';
+        markdown += `- ${text}${volatileMark}${tags}\n`;
+      });
+      markdown += `\n`;
     });
 
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${title.toLowerCase().replace(/[^a-z0-9]/gi, '_')}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success('20th Notebook exported to Markdown!');
+    navigator.clipboard.writeText(markdown);
+    toast.success('Complete Revision Sheet copied to clipboard!', {
+      description: 'Ready to paste into Obsidian, Notion, or print.'
+    });
+  };
+
+  const toggleGroupCollapse = (sId: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [sId]: !prev[sId]
+    }));
   };
 
   return (
-    <div id="mistake-journal-page" className="min-h-full bg-background px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 md:pb-12 max-w-5xl mx-auto space-y-4 sm:space-y-6 w-full overflow-hidden animate-in fade-in duration-200">
-      
-      {/* 1. Header & Global Toolbar */}
-      <div className="space-y-2 pb-3 border-b border-border/40 w-full">
-        {/* Top bar: Category badge + Action buttons */}
-        <div className="flex items-center justify-between gap-2 w-full">
-          <div className="flex items-center gap-1.5 text-primary font-bold tracking-wider uppercase text-[10px]">
-            <BookOpen className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">20th Notebook Architecture</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            {totalLogs > 0 && (
-              <Button
-                id="btn-export-mistakes"
-                variant="outline"
-                size="sm"
-                onClick={exportNotebook}
-                className="h-8 rounded-xl border-border/80 text-xs font-semibold gap-1 cursor-pointer text-muted-foreground hover:text-foreground px-2.5"
-                title="Export rules to Markdown"
-              >
-                <Download className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">Export</span>
-              </Button>
-            )}
-
-            <Button 
-              id="btn-open-log-mistake-modal"
-              onClick={() => openModalWithContext()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer px-3 h-8 shrink-0"
+    <div className="min-h-full bg-background text-foreground px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-28 md:pb-12 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300 w-full">
+      {/* ── Top Header & Navigation ────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/radar"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded-lg hover:bg-muted/60 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 shrink-0" />
-              <span>Log Takeaway</span>
-            </Button>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Subject Radar</span>
+            </Link>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              High-Density Rule Ledger
+            </span>
           </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+            <span>20th Notebook</span>
+            <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+              {activeMistakes.length} Active Rules
+            </span>
+          </h1>
+
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
+            Your personal cheat sheet of confusing twin concepts, drug choices, classic triads, and volatile facts curated across 19 subjects.
+          </p>
         </div>
 
-        {/* Title and Badges */}
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground">
-              Mistake Recovery Vault
-            </h1>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono font-bold text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full border border-border/40 shrink-0">
-                {activeCount} active
-              </span>
-              {volatileCount > 0 && (
-                <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1 shrink-0">
-                  <Flame className="w-3 h-3 shrink-0" /> {volatileCount} volatile
-                </span>
-              )}
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
-            Distilled high-yield rules from your QBank & Grand Test errors.
-          </p>
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCopyFullSheet}
+            className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer hover:bg-muted/80 shadow-2xs"
+            title="Copy all rules as markdown"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Export Sheet</span>
+            <span className="sm:hidden">Export</span>
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingMistake(null);
+              setModalOpen(true);
+            }}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1.5 h-9 px-3.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Rule</span>
+          </Button>
         </div>
       </div>
 
-      {/* 2. Intelligent High-Error Concentration Alert (If Exists) */}
-      {topErrorSubject && !selectedSubjectId && (
+      {/* ── Diagnostic Metrics Strip ────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div 
-          id="high-error-density-card" 
-          className="p-3 sm:p-3.5 rounded-2xl bg-card border border-primary/20 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full animate-in fade-in slide-in-from-top-1 duration-200"
+          onClick={() => { setStatusFilter('active'); setSelectedTag('all'); }}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            statusFilter === 'active' && selectedTag === 'all'
+              ? "bg-card border-border shadow-xs ring-1 ring-primary/30"
+              : "bg-muted/30 border-border/60 hover:bg-muted/50"
+          )}
         >
-          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 mt-0.5 sm:mt-0">
-              <Brain className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-bold text-foreground">
-                  High Mistake Concentration in {topErrorSubject.name}
-                </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
-                  {topErrorSubject.count} active mistakes
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground line-clamp-1 sm:line-clamp-none">
-                Consider prioritizing this subject during your next scheduled revision session.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const match = subjectNotebooks.find(n => n.subjectName.toLowerCase() === topErrorSubject.name.toLowerCase());
-              if (match) {
-                setSelectedSubjectId(match.subjectId);
-                setActiveView('notebooks');
-              }
-            }}
-            className="self-end sm:self-center text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0 px-2 py-1 cursor-pointer bg-primary/5 sm:bg-transparent rounded-lg border sm:border-transparent border-primary/20"
-          >
-            <span>Review</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* 3. View Switcher & Control Panel */}
-      {!selectedSubjectId && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full pb-0.5">
-          {/* Segmented Mode Control */}
-          <div className="flex items-center p-1 rounded-2xl bg-muted/30 border border-border/70 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setActiveView('notebooks')}
-              className={cn(
-                "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                activeView === 'notebooks'
-                  ? "bg-card text-foreground shadow-xs border border-border/60"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span>Subject Notebooks</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted/60 text-muted-foreground">
-                {subjectNotebooks.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('stream')}
-              className={cn(
-                "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                activeView === 'stream'
-                  ? "bg-card text-foreground shadow-xs border border-border/60"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Unified Stream</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted/60 text-muted-foreground">
-                {totalLogs}
-              </span>
-            </button>
-          </div>
-
-          {/* Quick Volatile Filter Toggle */}
-          <button
-            type="button"
-            onClick={() => setVolatileOnly(prev => !prev)}
-            className={cn(
-              "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer w-full sm:w-auto",
-              volatileOnly
-                ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs"
-                : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Flame className="w-3.5 h-3.5 shrink-0" />
-            <span>Volatile Traps ({volatileCount})</span>
-          </button>
-        </div>
-      )}
-
-      {/* Universal High-Yield Clinical Lens Strip (Available across all subjects) */}
-      {!selectedSubjectId && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 mr-1 shrink-0">
-            <Sparkles className="w-3 h-3 text-amber-500" /> Lenses:
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+            Active Rules
           </span>
-          <button
-            type="button"
-            onClick={() => setTagFilter('all')}
-            className={cn(
-              "px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0",
-              tagFilter === 'all'
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-card border border-border/70 text-muted-foreground hover:text-foreground"
-            )}
-          >
-            All Takeaways
-          </button>
-          {HIGH_YIELD_CLINICAL_LENSES.map(lens => {
-            const active = tagFilter === lens.tag;
-            return (
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold font-mono text-foreground">
+              {activeMistakes.length}
+            </span>
+            <span className="text-[11px] text-muted-foreground">active</span>
+          </div>
+        </div>
+
+        <div 
+          onClick={() => { setSelectedTag('volatile'); setStatusFilter('active'); }}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            selectedTag === 'volatile'
+              ? "bg-amber-500/15 border-amber-500/40 shadow-xs ring-1 ring-amber-500/40"
+              : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15"
+          )}
+        >
+          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+            Volatile Rules
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+              {volatileMistakes.length}
+            </span>
+            <span className="text-[11px] text-amber-600/80 dark:text-amber-400/80">urgent</span>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-0.5">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+            <BookOpen className="w-3 h-3" />
+            Subjects
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold font-mono text-primary">
+              {representedSubjectCount}
+            </span>
+            <span className="text-[11px] text-primary/80">of 19</span>
+          </div>
+        </div>
+
+        <div 
+          onClick={() => setStatusFilter(statusFilter === 'archived' ? 'active' : 'archived')}
+          className={cn(
+            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            statusFilter === 'archived'
+              ? "bg-emerald-500/15 border-emerald-500/40 shadow-xs ring-1 ring-emerald-500/40"
+              : "bg-muted/30 border-border/60 hover:bg-muted/50"
+          )}
+        >
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+            <Archive className="w-3 h-3 text-emerald-500" />
+            Archived
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold font-mono text-foreground">
+              {archivedMistakes.length}
+            </span>
+            <span className="text-[11px] text-muted-foreground">stored</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Search & Filter Controls ────────────────────────────────────── */}
+      <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs space-y-3.5">
+        {/* Search Bar & View Toggle */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search rules, drug names, triads, investigations, or subjects..."
+              className="pl-9 pr-8 h-9 text-xs rounded-xl bg-muted/40 border-border/80 focus:bg-background"
+            />
+            {searchQuery && (
               <button
-                key={lens.id}
                 type="button"
-                onClick={() => {
-                  const nextVal = active ? 'all' : lens.tag;
-                  setTagFilter(nextVal);
-                  if (nextVal !== 'all' && activeView === 'notebooks') {
-                    setActiveView('stream');
-                  }
-                }}
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-between sm:justify-start">
+            {/* Status Filter */}
+            <div className="flex items-center p-1 rounded-xl bg-muted/50 border border-border/80">
+              <button
+                type="button"
+                onClick={() => setStatusFilter('active')}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0",
-                  active
-                    ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-xs font-bold"
-                    : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  statusFilter === 'active'
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <span>{lens.icon}</span>
-                <span>{lens.label}</span>
+                Active
               </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('archived')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  statusFilter === 'archived'
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Archived ({archivedMistakes.length})
+              </button>
+            </div>
+
+            {/* Layout Toggle */}
+            <div className="flex items-center p-1 rounded-xl bg-muted/50 border border-border/80">
+              <button
+                type="button"
+                onClick={() => setViewLayout('grouped')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  viewLayout === 'grouped'
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Group by Subject"
+              >
+                Subjects
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewLayout('stream')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  viewLayout === 'stream'
+                    ? "bg-card text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Continuous Stream"
+              >
+                Stream
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Subject Filter Pills */}
+        <div className="space-y-1.5 pt-1 border-t border-border/40">
+          <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span>Subject Filter</span>
+            {selectedSubjectId !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSelectedSubjectId('all')}
+                className="text-primary hover:underline lowercase font-normal cursor-pointer"
+              >
+                clear filter
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setSelectedSubjectId('all')}
+              className={cn(
+                "px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
+                selectedSubjectId === 'all'
+                  ? "bg-foreground text-background border-foreground shadow-xs"
+                  : "bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              All Subjects ({filteredMistakes.length})
+            </button>
+
+            {ALL_SUBJECTS.map(sub => {
+              const count = rawMistakes.filter(m => !m.deletedAt && !m.resolved && String(m.subjectId) === String(sub.id)).length;
+              if (count === 0 && selectedSubjectId !== String(sub.id)) return null;
+
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setSelectedSubjectId(String(sub.id))}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
+                    selectedSubjectId === String(sub.id)
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <span>{sub.name}</span>
+                  {count > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-muted text-[10px] font-mono">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tag Lens Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+          <button
+            type="button"
+            onClick={() => setSelectedTag('all')}
+            className={cn(
+              "px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
+              selectedTag === 'all'
+                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                : "bg-muted/30 border-border/60 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All Tags
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedTag('volatile')}
+            className={cn(
+              "inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
+              selectedTag === 'volatile'
+                ? "bg-amber-500 text-white border-amber-500 shadow-xs"
+                : "bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+            )}
+          >
+            <Zap className="w-3 h-3 fill-current" />
+            <span>Volatile Only ({volatileMistakes.length})</span>
+          </button>
+
+          {HIGH_YIELD_CLINICAL_LENSES.map(lens => (
+            <button
+              key={lens.id}
+              type="button"
+              onClick={() => setSelectedTag(lens.tag)}
+              className={cn(
+                "inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
+                selectedTag === lens.tag
+                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                  : "bg-muted/30 border-border/60 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span>{lens.icon}</span>
+              <span>{lens.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main Ledger Display ────────────────────────────────────────── */}
+      {filteredMistakes.length === 0 ? (
+        /* Clean Empty State */
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/80 bg-muted/20 space-y-4">
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <div className="space-y-1 max-w-sm">
+            <h3 className="text-base font-bold text-foreground">
+              {statusFilter === 'archived' ? 'No Archived Rules' : 'No 20th Notebook Rules Found'}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {searchQuery || selectedSubjectId !== 'all' || selectedTag !== 'all'
+                ? 'No rules match your active filter criteria. Try clearing filters or search terms.'
+                : 'Whenever you miss an MCQ or confuse twin concepts in Grand Tests, log the single discriminating rule here for rapid pre-exam revision.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2">
+            {(searchQuery || selectedSubjectId !== 'all' || selectedTag !== 'all') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedSubjectId('all');
+                  setSelectedTag('all');
+                }}
+                className="text-xs font-semibold rounded-xl"
+              >
+                Reset Filters
+              </Button>
+            )}
+
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingMistake(null);
+                setModalOpen(true);
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 h-9 px-4 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Rule</span>
+            </Button>
+          </div>
+        </div>
+      ) : viewLayout === 'grouped' ? (
+        /* ── Subject Grouped Accordion Mode ─────────────────────────── */
+        <div className="space-y-4">
+          {groupedMistakes.map(group => {
+            const isCollapsed = collapsedGroups[group.subjectId];
+            return (
+              <div 
+                key={group.subjectId}
+                className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs transition-all hover:border-border"
+              >
+                {/* Group Header */}
+                <div 
+                  onClick={() => toggleGroupCollapse(group.subjectId)}
+                  className="flex items-center justify-between p-4 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer border-b border-border/40 select-none"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <h3 className="text-sm font-extrabold text-foreground tracking-tight">
+                      {group.subjectName}
+                    </h3>
+                    <span className="text-xs font-mono px-2 py-0.2 rounded-full bg-muted text-muted-foreground font-semibold">
+                      {group.rules.length} {group.rules.length === 1 ? 'rule' : 'rules'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalDefaultSubjectId(group.subjectId);
+                        setEditingMistake(null);
+                        setModalOpen(true);
+                      }}
+                      className="h-7 px-2 text-[11px] font-bold rounded-lg gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </Button>
+
+                    <button
+                      type="button"
+                      className="p-1 text-muted-foreground hover:text-foreground transition-transform"
+                    >
+                      {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group Rules Stream */}
+                {!isCollapsed && (
+                  <div className="divide-y divide-border/40">
+                    {group.rules.map(rule => (
+                      <RuleCardRow
+                        key={rule.id}
+                        rule={rule}
+                        subjectName={group.subjectName}
+                        isCopied={copiedId === rule.id}
+                        onCopy={() => handleCopyRule(rule)}
+                        onEdit={() => {
+                          setEditingMistake(rule);
+                          setModalOpen(true);
+                        }}
+                        onToggleVolatile={() => toggleMistakeVolatile(rule.id!, !rule.isVolatile)}
+                        onToggleArchive={() => resolveMistake(rule.id!, !rule.resolved)}
+                        onDelete={() => deleteMistakeLog(rule.id!)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* ── Continuous Flat Stream Mode ───────────────────────────── */
+        <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs divide-y divide-border/40">
+          {filteredMistakes.map(rule => {
+            const subName = subjectMap.get(String(rule.subjectId)) || 'Clinical';
+            return (
+              <RuleCardRow
+                key={rule.id}
+                rule={rule}
+                subjectName={subName}
+                isCopied={copiedId === rule.id}
+                onCopy={() => handleCopyRule(rule)}
+                onEdit={() => {
+                  setEditingMistake(rule);
+                  setModalOpen(true);
+                }}
+                onToggleVolatile={() => toggleMistakeVolatile(rule.id!, !rule.isVolatile)}
+                onToggleArchive={() => resolveMistake(rule.id!, !rule.resolved)}
+                onDelete={() => deleteMistakeLog(rule.id!)}
+              />
             );
           })}
         </div>
       )}
 
-      {/* 4. MODE A: SUBJECT NOTEBOOKS GALLERY */}
-      {activeView === 'notebooks' && !selectedSubjectId && (
-        <div className="space-y-3 w-full">
-          {subjectNotebooks.length > 0 ? (
-            <div id="subject-notebooks-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
-              {subjectNotebooks.map(notebook => {
-                return (
-                  <div
-                    key={notebook.subjectId}
-                    id={`notebook-card-${notebook.subjectId}`}
-                    onClick={() => {
-                      setSelectedSubjectId(notebook.subjectId);
-                      setSystemFilter('all');
-                      setTagFilter('all');
-                    }}
-                    className="group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden gap-3"
-                  >
-                    {/* Top Subject Title & Badges */}
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 group-hover:scale-105 transition-transform">
-                            <BookOpen className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="font-extrabold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors tracking-tight truncate">
-                              {notebook.subjectName}
-                            </h3>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                              Notebook
-                            </span>
-                          </div>
-                        </div>
-
-                        {notebook.volatileCount > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 shrink-0">
-                            <Flame className="w-2.5 h-2.5" />
-                            {notebook.volatileCount}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Systems Pill Preview */}
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        {notebook.systems.slice(0, 3).map(sys => (
-                          <span key={sys.id} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted/40 text-muted-foreground border border-border/40 truncate max-w-[120px] sm:max-w-[140px]">
-                            {sys.name} ({sys.count})
-                          </span>
-                        ))}
-                        {notebook.systems.length > 3 && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-muted/20 text-muted-foreground shrink-0">
-                            +{notebook.systems.length - 3}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Cross Tags Preview */}
-                      {notebook.crossTags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 items-center pt-0.5">
-                          <Tag className="w-2.5 h-2.5 text-primary/70 mr-0.5 shrink-0" />
-                          {notebook.crossTags.slice(0, 2).map(tag => (
-                            <span key={tag} className="text-[9px] font-bold text-primary/80 bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20 truncate max-w-[90px]">
-                              #{tag}
-                            </span>
-                          ))}
-                          {notebook.crossTags.length > 2 && (
-                            <span className="text-[9px] text-muted-foreground shrink-0">
-                              +{notebook.crossTags.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom Meta & Action */}
-                    <div className="pt-2.5 border-t border-border/40 flex items-center justify-between text-xs w-full">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-bold text-foreground font-mono">
-                          {notebook.activeCount}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground truncate">
-                          {notebook.activeCount === 1 ? 'active rule' : 'active rules'}
-                        </span>
-                        {notebook.masteredCount > 0 && (
-                          <span className="text-[10px] text-emerald-500 font-semibold shrink-0">
-                            ({notebook.masteredCount} mastered)
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1 font-bold text-primary text-xs shrink-0 group-hover:translate-x-0.5 transition-transform ml-2">
-                        <span>Open</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* Empty State for Notebooks */
-            <div id="mistakes-empty-state" className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 bg-card p-6 w-full">
-              <div className="inline-flex p-3 rounded-2xl bg-primary/10 text-primary border border-primary/20 mb-1">
-                <BookOpen className="w-7 h-7" />
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-foreground">
-                Your 20th Notebook is Pristine
-              </h3>
-              <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-                As you complete QBank modules and Grand Tests, log high-yield clinical rules, drug choices, triads, and volatile traps to build your subject-wise 20th Notebook.
-              </p>
-              <div className="pt-2 flex items-center justify-center gap-2">
-                <Button 
-                  id="btn-empty-log-mistake"
-                  onClick={() => openModalWithContext()}
-                  className="bg-primary text-primary-foreground font-bold text-xs rounded-xl gap-1.5 cursor-pointer px-4 h-8.5"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log First Takeaway</span>
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 5. MODE A (DEEP DIVE): SELECTED SUBJECT NOTEBOOK LEDGER */}
-      {selectedSubjectId && currentSubjectNotebook && (
-        <div id="subject-notebook-ledger" className="space-y-3.5 w-full animate-in fade-in duration-200">
-          
-          {/* Breadcrumb & Navigation Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 sm:p-4 rounded-2xl bg-card border border-border/80 shadow-xs w-full">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedSubjectId(null)}
-                className="h-8 px-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer gap-1 shrink-0"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>All Notebooks</span>
-              </Button>
-
-              <div className="h-4 w-px bg-border/60 shrink-0" />
-
-              <div className="min-w-0">
-                <h2 className="text-sm sm:text-base font-extrabold text-foreground tracking-tight flex items-center gap-1.5 truncate">
-                  <span className="truncate">{currentSubjectNotebook.subjectName}</span>
-                  <span className="text-[10px] font-mono font-medium text-muted-foreground bg-muted/40 px-1.5 py-0.2 rounded-full border border-border/40 shrink-0">
-                    {filteredLogs.length}
-                  </span>
-                </h2>
-              </div>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => openModalWithContext(currentSubjectNotebook.subjectId)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer h-8 shrink-0 self-start sm:self-center"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Takeaway</span>
-            </Button>
-          </div>
-
-          {/* System Chapters Filter Bar */}
-          {currentSubjectNotebook.systems.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
-              <button
-                type="button"
-                onClick={() => setSystemFilter('all')}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0",
-                  systemFilter === 'all'
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-card border border-border/70 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                All Chapters ({currentSubjectNotebook.totalCount})
-              </button>
-
-              {currentSubjectNotebook.systems.map(sys => (
-                <button
-                  key={sys.id}
-                  type="button"
-                  onClick={() => setSystemFilter(sys.id)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0",
-                    systemFilter === sys.id
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-card border-border/70 text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {sys.name} ({sys.count})
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Cross-Discipline Tags Filter Bar */}
-          {currentSubjectNotebook.crossTags.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1 mr-1 shrink-0">
-                <Tag className="w-3 h-3 text-primary" /> Tags:
-              </span>
-              <button
-                type="button"
-                onClick={() => setTagFilter('all')}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0",
-                  tagFilter === 'all'
-                    ? "bg-muted text-foreground font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                All
-              </button>
-              {currentSubjectNotebook.crossTags.map(tag => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setTagFilter(tag === tagFilter ? 'all' : tag)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap border transition-all cursor-pointer shrink-0",
-                    tagFilter === tag
-                      ? "bg-primary/20 text-primary border-primary/40"
-                      : "bg-muted/30 border-border/40 text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  #{tag}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Search & Status Filters */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-2xl border border-border/80 shadow-xs w-full">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-0">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                ref={searchInputRef}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder={`Search inside ${currentSubjectNotebook.subjectName} rules...`}
-                className="pl-8.5 pr-8 h-8 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Controls */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="flex items-center p-0.5 rounded-xl bg-muted/40 border border-border/60">
-                {(['active', 'mastered', 'all'] as const).map(st => (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setStatusFilter(st)}
-                    className={cn(
-                      "px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer capitalize",
-                      statusFilter === st
-                        ? "bg-card text-foreground shadow-xs border border-border/60"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setVolatileOnly(prev => !prev)}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer h-7.5",
-                  volatileOnly
-                    ? "bg-amber-500/20 text-amber-500 border-amber-500/40"
-                    : "bg-muted/20 border-border/70 text-muted-foreground hover:text-foreground"
-                )}
-                title="Filter volatile traps only"
-              >
-                <Flame className="w-3 h-3" />
-                <span className="hidden sm:inline">Volatile</span>
-              </button>
-
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="text-[11px] font-semibold text-primary hover:underline px-1 shrink-0 cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* List of Clinical Takeaway Cards */}
-          {filteredLogs.length > 0 ? (
-            <div className="space-y-2.5 w-full">
-              {filteredLogs.map(log => {
-                const sysName = systemMap.get(String(log.systemId)) || 'General Chapter';
-
-                return (
-                  <div
-                    key={String(log.id)}
-                    id={`mistake-card-${log.id}`}
-                    className={cn(
-                      "group relative p-3 sm:p-4 rounded-2xl bg-card border transition-all duration-150 space-y-2 w-full",
-                      log.resolved
-                        ? "border-border/40 opacity-70 bg-muted/10"
-                        : "border-border/80 hover:border-border shadow-xs"
-                    )}
-                  >
-                    {/* Top Row: System Chapter, Topic & Actions */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap w-full">
-                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                        <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1 truncate max-w-[160px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                          <span className="truncate">{sysName}</span>
-                        </span>
-
-                        {log.topicId && (
-                          <span className="text-[10px] font-bold text-primary/90 bg-primary/10 px-1.5 py-0.2 rounded-md border border-primary/20 truncate max-w-[120px]">
-                            {log.topicId}
-                          </span>
-                        )}
-
-                        {log.isVolatile && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30 shrink-0">
-                            <Flame className="w-2.5 h-2.5" /> Volatile
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Right Action Icons */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMastered(log)}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer",
-                            log.resolved
-                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
-                              : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                          )}
-                          title={log.resolved ? "Reopen for review" : "Mark as Mastered"}
-                        >
-                          {log.resolved ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                              <span>Mastered</span>
-                            </>
-                          ) : (
-                            <>
-                              <Circle className="w-3 h-3" />
-                              <span>Mastered</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleToggleVolatile(log)}
-                          className={cn(
-                            "p-1.5 rounded-lg border transition-all cursor-pointer",
-                            log.isVolatile
-                              ? "bg-amber-500/20 text-amber-500 border-amber-500/40"
-                              : "border-transparent text-muted-foreground/50 hover:text-amber-500 hover:bg-amber-500/10"
-                          )}
-                          title={log.isVolatile ? "Remove volatile flag" : "Mark as volatile trap"}
-                        >
-                          <Flame className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          id={`btn-edit-mistake-${log.id}`}
-                          type="button"
-                          onClick={() => handleEdit(log)}
-                          className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all cursor-pointer"
-                          title="Edit takeaway rule"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          id={`btn-delete-mistake-${log.id}`}
-                          type="button"
-                          onClick={() => handleDelete(log)}
-                          className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
-                          title="Delete takeaway (with 5s undo)"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Optional Clinical Trigger / Scenario */}
-                    {log.clinicalTrigger && (
-                      <div className="p-2 sm:p-2.5 rounded-xl bg-muted/20 border border-border/40 text-xs text-muted-foreground italic leading-relaxed">
-                        <span className="font-bold not-italic text-foreground/80 mr-1">Vignette Trigger:</span>
-                        {log.clinicalTrigger}
-                      </div>
-                    )}
-
-                    {/* Hero Golden Rule Text */}
-                    <div className="space-y-0.5">
-                      {log.title && (
-                        <h4 className="text-xs font-bold text-foreground">
-                          {log.title}
-                        </h4>
-                      )}
-                      <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed select-text">
-                        {log.keyTakeaway}
-                      </p>
-                    </div>
-
-                      {/* Bottom Metadata Line */}
-                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground pt-1 border-t border-border/30">
-                        {log.tags && log.tags.length > 0 && (
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {log.tags.map(tag => {
-                              const meta = getTagMeta(tag);
-                              return (
-                                <span 
-                                  key={tag} 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTagFilter(tagFilter === tag ? 'all' : tag);
-                                  }}
-                                  className={cn(
-                                    "flex items-center gap-0.5 px-1.5 py-0.2 rounded border transition-colors cursor-pointer hover:opacity-80",
-                                    meta.color
-                                  )}
-                                  title={`Filter by #${tag}`}
-                                >
-                                  {meta.icon && <span className="text-[9px]">{meta.icon}</span>}
-                                  <span>#{tag}</span>
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                      <span className="font-mono bg-muted/40 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[120px]">
-                        {log.source === 'GT' ? 'Grand Test' : log.source}
-                        {log.sourceExam ? ` • ${log.sourceExam}` : ''}
-                      </span>
-
-                      <span className={cn(
-                        "font-semibold px-1.5 py-0.2 rounded border",
-                        log.errorType === 'concept' && "border-rose-500/20 text-rose-400 bg-rose-500/10",
-                        log.errorType === 'misread' && "border-amber-500/20 text-amber-400 bg-amber-500/10",
-                        log.errorType === 'retrieval' && "border-sky-500/20 text-sky-400 bg-sky-500/10",
-                        log.errorType === 'fomo' && "border-purple-500/20 text-purple-400 bg-purple-500/10"
-                      )}>
-                        {log.errorType === 'concept' ? 'Knowledge Gap' : 
-                         log.errorType === 'misread' ? 'Execution Slip' : 
-                         log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
-                      </span>
-
-                      <span className="text-muted-foreground/60 ml-auto">
-                        {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 bg-card p-4 w-full">
-              <p className="text-xs font-semibold text-muted-foreground">
-                No takeaways matched your current filters in {currentSubjectNotebook.subjectName}.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetFilters}
-                className="rounded-xl text-xs font-semibold h-8"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 6. MODE B: UNIFIED RAPID STREAM */}
-      {activeView === 'stream' && !selectedSubjectId && (
-        <div className="space-y-3 w-full">
-          
-          {/* Universal Search & Multi-Filters */}
-          <div id="journal-control-panel" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-card p-2 sm:p-2.5 rounded-2xl border border-border/80 shadow-xs w-full">
-            
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-0">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                ref={searchInputRef}
-                id="input-search-mistakes"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search across all 19 subjects, rules, tags, drugs..."
-                className="pl-8.5 pr-14 h-8 text-xs rounded-xl bg-muted/20 border-border/70 placeholder:text-muted-foreground/60 text-foreground w-full"
-              />
-              {searchQuery ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              ) : (
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted/60 text-[10px] text-muted-foreground font-mono pointer-events-none">
-                  <Command className="w-2.5 h-2.5" />K
-                </div>
-              )}
-            </div>
-
-            {/* Dropdown Filters */}
-            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-              <select
-                id="select-error-type-filter"
-                value={typeFilter}
-                onChange={e => setTypeFilter(e.target.value)}
-                className="h-8 rounded-xl border border-border/70 bg-muted/20 px-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer flex-1 sm:flex-initial"
-              >
-                <option value="all">All Root Causes</option>
-                <option value="concept">Knowledge Gaps</option>
-                <option value="misread">Execution Slips</option>
-                <option value="retrieval">Retrieval Failures</option>
-                <option value="fomo">Overthinking</option>
-              </select>
-
-              <select
-                id="select-subject-filter"
-                value={filterSubjectId}
-                onChange={e => setFilterSubjectId(e.target.value)}
-                className="h-8 rounded-xl border border-border/70 bg-muted/20 px-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer max-w-[140px] truncate flex-1 sm:flex-initial"
-              >
-                <option value="all">All Subjects</option>
-                {subjects.map(s => (
-                  <option key={String(s.id)} value={String(s.id)}>{s.name}</option>
-                ))}
-              </select>
-
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="text-[11px] font-semibold text-primary hover:underline px-1 shrink-0 cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Grouped Subject Stream */}
-          {hierarchicalGroups.length > 0 ? (
-            <div id="mistakes-notebook-container" className="space-y-3 w-full">
-              {hierarchicalGroups.map(subjectGroup => {
-                const isCollapsed = !!collapsedSubjects[subjectGroup.subjectId];
-
-                return (
-                  <div 
-                    key={subjectGroup.subjectId} 
-                    id={`subject-section-${subjectGroup.subjectId}`}
-                    className="bg-card rounded-2xl border border-border/80 shadow-xs overflow-hidden transition-all w-full"
-                  >
-                    {/* Collapsible Subject Section Header */}
-                    <div className="w-full px-3.5 py-2.5 bg-muted/30 border-b border-border/60 flex items-center justify-between gap-2 text-left">
-                      <button
-                        type="button"
-                        onClick={() => toggleSubjectCollapse(subjectGroup.subjectId)}
-                        className="flex items-center gap-2 min-w-0 cursor-pointer flex-1"
-                      >
-                        <span className="font-extrabold text-xs sm:text-sm text-foreground tracking-tight uppercase truncate">
-                          {subjectGroup.subjectName}
-                        </span>
-                        <span className="text-[10px] font-mono font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded-full border border-border/40 shrink-0">
-                          {subjectGroup.totalCount}
-                        </span>
-                      </button>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedSubjectId(subjectGroup.subjectId);
-                            setActiveView('notebooks');
-                          }}
-                          className="text-[11px] font-bold text-primary hover:underline px-1 cursor-pointer hidden sm:inline-block"
-                        >
-                          Open Notebook ➔
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleSubjectCollapse(subjectGroup.subjectId)}
-                          className="p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
-                        >
-                          <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", isCollapsed && "-rotate-90")} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Subject Content (Systems & Rules) */}
-                    {!isCollapsed && (
-                      <div className="divide-y divide-border/40">
-                        {subjectGroup.systems.map(systemGroup => (
-                          <div key={systemGroup.systemId} className="p-3 sm:p-4 space-y-2.5">
-                            
-                            {/* System Header */}
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
-                              <span className="truncate">{systemGroup.systemName}</span>
-                              <span className="text-[10px] text-muted-foreground/60 font-mono shrink-0">
-                                ({systemGroup.logs.length})
-                              </span>
-                            </div>
-
-                            {/* List of Distilled Rules */}
-                            <div className="space-y-2 pl-1 sm:pl-2">
-                              {systemGroup.logs.map(log => {
-                                return (
-                                  <div 
-                                    key={String(log.id)} 
-                                    id={`mistake-row-${log.id}`}
-                                    className="group flex items-start justify-between gap-2 p-2 sm:p-2.5 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/40"
-                                  >
-                                    {/* Left Content */}
-                                    <div className="flex-1 space-y-1 min-w-0">
-                                      {log.clinicalTrigger && (
-                                        <p className="text-[11px] text-muted-foreground italic truncate">
-                                          Trigger: {log.clinicalTrigger}
-                                        </p>
-                                      )}
-
-                                      <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed select-text">
-                                        {log.keyTakeaway}
-                                      </p>
-
-                                      {/* Metadata Line */}
-                                      <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground">
-                                        {log.isVolatile && (
-                                          <span className="flex items-center gap-0.5 text-amber-500 font-bold bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30 shrink-0">
-                                            <Flame className="w-2.5 h-2.5" /> Volatile
-                                          </span>
-                                        )}
-
-                                        {log.tags && log.tags.length > 0 && (
-                                          <div className="flex items-center gap-1 flex-wrap">
-                                            {log.tags.map(tag => {
-                                              const meta = getTagMeta(tag);
-                                              return (
-                                                <span 
-                                                  key={tag} 
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setTagFilter(tagFilter === tag ? 'all' : tag);
-                                                  }}
-                                                  className={cn(
-                                                    "flex items-center gap-0.5 px-1.5 py-0.2 rounded border transition-colors cursor-pointer hover:opacity-80",
-                                                    meta.color
-                                                  )}
-                                                  title={`Filter by #${tag}`}
-                                                >
-                                                  {meta.icon && <span className="text-[9px]">{meta.icon}</span>}
-                                                  <span>#{tag}</span>
-                                                </span>
-                                              );
-                                            })}
-                                          </div>
-                                        )}
-
-                                        {log.topicId && (
-                                          <span className="font-semibold text-foreground/80 bg-muted/50 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[100px]">
-                                            {log.topicId}
-                                          </span>
-                                        )}
-
-                                        <span className="font-mono bg-muted/40 px-1.5 py-0.2 rounded border border-border/40 truncate max-w-[110px]">
-                                          {log.source === 'GT' ? 'Grand Test' : log.source}
-                                          {log.sourceExam ? ` • ${log.sourceExam}` : ''}
-                                        </span>
-
-                                        <span className={cn(
-                                          "font-semibold px-1.5 py-0.2 rounded border",
-                                          log.errorType === 'concept' && "border-rose-500/20 text-rose-400 bg-rose-500/10",
-                                          log.errorType === 'misread' && "border-amber-500/20 text-amber-400 bg-amber-500/10",
-                                          log.errorType === 'retrieval' && "border-sky-500/20 text-sky-400 bg-sky-500/10",
-                                          log.errorType === 'fomo' && "border-purple-500/20 text-purple-400 bg-purple-500/10"
-                                        )}>
-                                          {log.errorType === 'concept' ? 'Knowledge Gap' : 
-                                           log.errorType === 'misread' ? 'Execution Slip' : 
-                                           log.errorType === 'retrieval' ? 'Retrieval' : 'Overthinking'}
-                                        </span>
-
-                                        <span className="text-muted-foreground/60 ml-auto">
-                                          {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleToggleMastered(log)}
-                                        className={cn(
-                                          "p-1.5 rounded-lg transition-all cursor-pointer",
-                                          log.resolved
-                                            ? "text-emerald-500 bg-emerald-500/10"
-                                            : "text-muted-foreground/50 hover:text-foreground"
-                                        )}
-                                        title={log.resolved ? "Marked as Mastered" : "Mark Mastered"}
-                                      >
-                                        {log.resolved ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                                      </button>
-
-                                      <button
-                                        id={`btn-edit-mistake-stream-${log.id}`}
-                                        type="button"
-                                        onClick={() => handleEdit(log)}
-                                        className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all cursor-pointer"
-                                        title="Edit takeaway rule"
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </button>
-
-                                      <button
-                                        id={`btn-delete-mistake-${log.id}`}
-                                        type="button"
-                                        onClick={() => handleDelete(log)}
-                                        className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
-                                        title="Delete takeaway (with 5s undo)"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div id="mistakes-stream-empty-state" className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 bg-card p-4 w-full">
-              <p className="text-xs text-muted-foreground">
-                No takeaways matched your search filters.
-              </p>
-              <Button 
-                onClick={resetFilters}
-                variant="outline"
-                size="sm"
-                className="rounded-xl text-xs font-semibold h-8"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Express Takeaway Capture / Edit Modal */}
-      <QuickMistakeModal 
-        open={modalOpen} 
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) setEditingMistake(null);
-        }}
+      {/* ── Quick Capture Modal ─────────────────────────────────────── */}
+      <QuickMistakeModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
         defaultSubjectId={modalDefaultSubjectId}
-        defaultSystemId={modalDefaultSystemId}
-        defaultTags={modalDefaultTags}
         editingMistake={editingMistake}
-        onDeleteMistake={handleDelete}
-        onSaved={() => setEditingMistake(null)}
+        onDeleteMistake={(m) => {
+          if (m.id) {
+            deleteMistakeLog(m.id);
+            setModalOpen(false);
+          }
+        }}
       />
+    </div>
+  );
+}
+
+// ── Atomic High-Density Rule Row Component ─────────────────────────────────
+interface RuleCardRowProps {
+  rule: MistakeLog;
+  subjectName: string;
+  isCopied: boolean;
+  onCopy: () => void;
+  onEdit: () => void;
+  onToggleVolatile: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
+}
+
+function RuleCardRow({
+  rule,
+  subjectName,
+  isCopied,
+  onCopy,
+  onEdit,
+  onToggleVolatile,
+  onToggleArchive,
+  onDelete
+}: RuleCardRowProps) {
+  const ruleText = (rule.keyTakeaway || (rule as any).goldenTakeaway || (rule as any).questionTopic || '').trim();
+  const tags = rule.tags || (rule as any).coreLenses || [];
+
+  return (
+    <div className={cn(
+      "p-4 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group hover:bg-muted/30",
+      rule.isVolatile && "bg-amber-500/[0.03]"
+    )}>
+      {/* Rule Content */}
+      <div className="space-y-1.5 min-w-0 flex-1">
+        {/* Meta badges row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            {subjectName}
+          </span>
+
+          {rule.isVolatile && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              <Zap className="w-2.5 h-2.5 fill-amber-500" />
+              <span>Volatile</span>
+            </span>
+          )}
+
+          {rule.source && (
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/40">
+              {rule.source}
+            </span>
+          )}
+
+          {tags.map((t: string) => {
+            const meta = getTagMeta(t);
+            return (
+              <span 
+                key={t}
+                className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.2 rounded-full border font-semibold", meta.color)}
+              >
+                {meta.icon && <span>{meta.icon}</span>}
+                <span>#{t}</span>
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Primary Rule Takeaway */}
+        <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed selection:bg-primary/20">
+          {ruleText}
+        </p>
+      </div>
+
+      {/* Action Toolbar */}
+      <div className="flex items-center gap-1 shrink-0 self-end sm:self-center opacity-80 sm:opacity-40 group-hover:opacity-100 transition-opacity">
+        {/* Volatile Toggle Button */}
+        <button
+          type="button"
+          onClick={onToggleVolatile}
+          className={cn(
+            "p-1.5 rounded-lg border transition-all cursor-pointer",
+            rule.isVolatile
+              ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40"
+              : "bg-muted/40 border-border/60 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+          )}
+          title={rule.isVolatile ? "Remove volatile pin" : "Pin as Volatile Trap ⚡"}
+        >
+          <Zap className={cn("w-3.5 h-3.5", rule.isVolatile && "fill-amber-500")} />
+        </button>
+
+        {/* Copy Button */}
+        <button
+          type="button"
+          onClick={onCopy}
+          className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
+          title="Copy rule to clipboard"
+        >
+          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Edit Button */}
+        <button
+          type="button"
+          onClick={onEdit}
+          className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
+          title="Edit rule"
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Archive Toggle Button */}
+        <button
+          type="button"
+          onClick={onToggleArchive}
+          className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
+          title={rule.resolved ? "Restore to active ledger" : "Archive rule"}
+        >
+          {rule.resolved ? <ArchiveRestore className="w-3.5 h-3.5 text-emerald-500" /> : <Archive className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Delete Button */}
+        <button
+          type="button"
+          onClick={onDelete}
+          className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
+          title="Delete rule"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

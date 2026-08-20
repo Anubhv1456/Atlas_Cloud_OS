@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BookOpen, Filter, Target, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Filter, Target, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Subject, StudySystem, useOperationalMode } from '@/db';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { ALL_SUBJECTS } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
+import { isSubjectInProfScope, NMC_MBBS_PROFESSIONAL_YEARS } from '@/lib/curriculumScope';
 import { cn } from '@/lib/utils';
 
 interface SubjectsGridProps {
@@ -38,9 +40,23 @@ export function SubjectsGrid({
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
   const [showAllOverride, setShowAllOverride] = useState(false);
   const opMode = useOperationalMode();
+  const { profile } = useExamProfile();
+
+  const isMBBSProf = Boolean(
+    profile.targetExam && 
+    (profile.targetExam.toLowerCase().includes('mbbs') || profile.targetExam.toLowerCase().includes('professional exam'))
+  );
+
+  const activeYear = profile.currentYear || 'Final MBBS';
 
   const safeSubjects = Array.isArray(subjects) ? subjects : [];
   const safeSystems = Array.isArray(systems) ? systems : [];
+
+  // If in MBBS Professional mode and not overridden, strictly isolate subjects of that professional year
+  const profFilteredSubjects = useMemo(() => {
+    if (!isMBBSProf || showAllOverride) return safeSubjects;
+    return safeSubjects.filter(sub => isSubjectInProfScope(sub.name, profile.targetExam, activeYear));
+  }, [safeSubjects, isMBBSProf, showAllOverride, profile.targetExam, activeYear]);
 
   const isSprintActive = opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0;
 
@@ -48,7 +64,7 @@ export function SubjectsGrid({
   const sprintSubjectIdsSet = useMemo(() => {
     if (!isSprintActive) return new Set<string>();
     const set = new Set(opMode.targetSubjectIds.map(String));
-    safeSubjects.forEach(s => {
+    profFilteredSubjects.forEach(s => {
       if (s.ontologySubjectId && set.has(String(s.ontologySubjectId))) {
         set.add(String(s.id));
       }
@@ -61,15 +77,15 @@ export function SubjectsGrid({
       }
     });
     return set;
-  }, [isSprintActive, opMode.targetSubjectIds, safeSubjects]);
+  }, [isSprintActive, opMode.targetSubjectIds, profFilteredSubjects]);
 
   // Candidates considering sprint focus
   const candidateSubjects = useMemo(() => {
     if (isSprintActive && !showAllOverride && sprintSubjectIdsSet.size > 0) {
-      return safeSubjects.filter(sub => sprintSubjectIdsSet.has(String(sub.id)));
+      return profFilteredSubjects.filter(sub => sprintSubjectIdsSet.has(String(sub.id)));
     }
-    return safeSubjects;
-  }, [safeSubjects, isSprintActive, showAllOverride, sprintSubjectIdsSet]);
+    return profFilteredSubjects;
+  }, [profFilteredSubjects, isSprintActive, showAllOverride, sprintSubjectIdsSet]);
 
   const filteredSubjects = useMemo(() => {
     if (activeFilter === 'All') return candidateSubjects;
@@ -79,8 +95,52 @@ export function SubjectsGrid({
 
   return (
     <section id="subject-portfolio" className="flex-1">
+      {/* ── MBBS Professional Year Focus Banner ────────────────────────────── */}
+      {isMBBSProf && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/25 text-foreground mb-5 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
+                  {NMC_MBBS_PROFESSIONAL_YEARS[activeYear]?.name || activeYear} Syllabus
+                </span>
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                  University Exam Calibrated
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {showAllOverride
+                  ? `Showing all ${safeSubjects.length} subjects (MBBS Year filter paused)`
+                  : `Isolated strictly to your upcoming ${activeYear} university examination.`}
+              </p>
+            </div>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => setShowAllOverride(prev => !prev)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-500/30 bg-teal-500/15 hover:bg-teal-500/25 text-teal-600 dark:text-teal-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
+          >
+            {showAllOverride ? (
+              <>
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Isolate {activeYear} ({profFilteredSubjects.length})</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-3.5 h-3.5" />
+                <span>View All 19 Subjects ({safeSubjects.length})</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* ── Sprint Focus Banner ────────────────────────────────────────────── */}
-      {isSprintActive && (
+      {isSprintActive && !isMBBSProf && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-foreground mb-5 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 shrink-0">
@@ -88,7 +148,7 @@ export function SubjectsGrid({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-amber-400">Prof Sprint Focus Active</span>
+                <span className="text-xs font-bold text-amber-500 dark:text-amber-400">Active Exam Focus</span>
                 {opMode.targetDate && (
                   <span className="text-[11px] text-muted-foreground font-mono">
                     Target: {new Date(opMode.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -97,8 +157,8 @@ export function SubjectsGrid({
               </div>
               <p className="text-xs text-muted-foreground truncate mt-0.5">
                 {showAllOverride
-                  ? `Showing all ${safeSubjects.length} subjects (Sprint focus temporarily paused)`
-                  : `Hiding non-sprint subjects. Focused exclusively on ${sprintSubjectIdsSet.size} exam targets.`}
+                  ? `Showing all ${safeSubjects.length} subjects (Exam focus paused)`
+                  : `Focused exclusively on ${sprintSubjectIdsSet.size} priority exam subjects.`}
               </p>
             </div>
           </div>
@@ -106,7 +166,7 @@ export function SubjectsGrid({
           <button
             type="button"
             onClick={() => setShowAllOverride(prev => !prev)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             {showAllOverride ? (
               <>
@@ -126,31 +186,33 @@ export function SubjectsGrid({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5 text-teal-500" /> Subject Radar
+            <BookOpen className="w-3.5 h-3.5 text-teal-500" /> Subjects
           </h2>
           <span className="text-[10px] font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
-            {filteredSubjects.length} / {isSprintActive && !showAllOverride ? `${sprintSubjectIdsSet.size} Focused` : subjects.length}
+            {filteredSubjects.length} {isMBBSProf && !showAllOverride ? `in ${activeYear}` : `/ ${subjects.length}`}
           </span>
         </div>
         
         {/* Medical Phase / Year Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none no-scrollbar max-w-full">
-          <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1 hidden sm:block shrink-0" />
-          {(['All', 'Pre-Clinical', 'Para-Clinical', 'Clinical'] as FilterOption[]).map(filter => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer shrink-0",
-                activeFilter === filter 
-                  ? "bg-primary text-primary-foreground shadow-sm font-semibold" 
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
+        {(!isMBBSProf || showAllOverride) && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none no-scrollbar max-w-full">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1 hidden sm:block shrink-0" />
+            {(['All', 'Pre-Clinical', 'Para-Clinical', 'Clinical'] as FilterOption[]).map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer shrink-0",
+                  activeFilter === filter 
+                    ? "bg-primary text-primary-foreground shadow-sm font-semibold" 
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       
       {subjects.length === 0 ? (

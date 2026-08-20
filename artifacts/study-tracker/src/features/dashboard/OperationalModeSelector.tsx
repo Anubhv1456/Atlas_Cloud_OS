@@ -5,7 +5,7 @@ import { SprintSetupDrawer } from './SprintSetupDrawer';
 import { HolidaySetupDrawer } from './HolidaySetupDrawer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Zap, Target, Moon, Palmtree, Settings, X, Calendar, RefreshCw, Sparkles, CheckCircle2, ChevronRight, Sun } from 'lucide-react';
+import { Gauge, Target, Moon, Settings, X, Calendar, RefreshCw, Sparkles, CheckCircle2, ChevronRight, Sun, PauseCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -108,7 +108,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
     if (modeKey === 'standard') {
       try {
         await resetOperationalMode(10);
-        toast.success('⚡ Switched to Standard Mode', {
+        toast.success('Standard Mode Active', {
           description: 'Soft recalibration active — your backlog is smoothed over 10 days without debt anxiety.'
         });
       } catch (err) {
@@ -134,7 +134,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
             )}
           >
-            <Zap className="w-3.5 h-3.5 shrink-0" />
+            <Gauge className="w-3.5 h-3.5 shrink-0" />
             <span>Standard</span>
           </button>
 
@@ -182,8 +182,8 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
             )}
           >
-            <Palmtree className="w-3.5 h-3.5 shrink-0" />
-            <span>Holiday</span>
+            <Sun className="w-3.5 h-3.5 shrink-0" />
+            <span>Rest & Pause</span>
             {currentMode === 'holiday' && (
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
             )}
@@ -292,12 +292,12 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
         <div className="flex items-center justify-between p-3 sm:px-4 rounded-xl bg-amber-500/10 border border-amber-500/25 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-              <Palmtree className="w-4 h-4" />
+              <Sun className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs sm:text-sm font-bold text-foreground">
-                  Holiday / Rest Freeze Active
+                  Rest & Pause Active
                 </span>
                 <span className="text-muted-foreground text-xs">•</span>
                 <span className="text-xs font-medium text-amber-600 dark:text-amber-400">

@@ -1,5 +1,5 @@
 import { ProgressBar } from '@/components/ProgressBar';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useLocation, useSearch } from 'wouter';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import {
@@ -7,6 +7,7 @@ import {
   addSystem, updateSubject, deleteSubject, updateSystemsOrder,
   addPYQYear, addPYQYearBatch, updatePYQYear, deletePYQYear, togglePYQYear,
 } from '@/db';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 import { SystemCard } from '@/features/subjects/SystemCard';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { AddDialog } from '@/components/AddDialog';
@@ -608,6 +609,7 @@ const STAGES = [
 export default function SubjectDetail() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'systems' | 'pyq'>('systems');
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
   const {
     subjectId, subject, systems, pyqYears,
@@ -619,8 +621,29 @@ export default function SubjectDetail() {
     isSubjectMastered,
   } = useSubjectDetailLogic(id);
 
+  useEffect(() => {
+    if (!subject && id && !hasAttemptedLoad) {
+      setHasAttemptedLoad(true);
+      // If subject not loaded yet or cache is hydrating, trigger background universal curriculum verify
+      loadUniversalOntology().catch(() => {});
+    }
+  }, [subject, id, hasAttemptedLoad]);
+
   if (!subject && id) {
-    return <div className="p-8 text-center text-muted-foreground mt-20">Loading or subject not found.</div>;
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center space-y-4 max-w-md mx-auto">
+        <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">Loading Subject...</p>
+          <p className="text-xs text-muted-foreground">Preparing high-yield medical systems and curriculum telemetry.</p>
+        </div>
+        <Link href="/">
+          <Button variant="outline" size="sm" className="rounded-xl mt-2 cursor-pointer">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Return to Dashboard
+          </Button>
+        </Link>
+      </div>
+    );
   }
   if (!subject) return null;
 
@@ -635,10 +658,11 @@ export default function SubjectDetail() {
             </button>
           </Link>
           <div className="flex items-center gap-1.5 ml-auto">
-            <Link href="/mistakes">
+            <Link href={`/mistakes?subjectId=${encodeURIComponent(String(subject?.id || id))}&origin=subject_detail`}>
               <button
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/40"
-                title="View 20th Notebook rules"
+                id="btn-subject-mistakes-notebook"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted/80 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/40 active:scale-95"
+                title={`Open 20th Notebook for ${subject?.name || 'this subject'}`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-primary" />
                 <span className="hidden sm:inline">20th Notebook</span>

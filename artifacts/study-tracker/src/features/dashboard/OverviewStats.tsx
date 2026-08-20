@@ -1,4 +1,4 @@
-import { Flame, TrendingUp, Award, Clock } from 'lucide-react';
+import { Flame, TrendingUp, Award, Clock, BookOpen, AlertTriangle } from 'lucide-react';
 
 interface OverviewStatsProps {
   learningTopicsCount?: number;
@@ -63,7 +63,7 @@ export function OverviewStats({
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-purple-500 transition-colors">Learning</span>
             <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500 border border-purple-500/20">
-              <Award className="w-4 h-4" />
+              <BookOpen className="w-4 h-4" />
             </div>
           </div>
           <div>
@@ -77,7 +77,7 @@ export function OverviewStats({
         {/* Mastered Topics */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-emerald-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-emerald-500 transition-colors">Mastered</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-emerald-500 transition-colors">Solid</span>
             <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
               <Award className="w-4 h-4" />
             </div>
@@ -106,19 +106,19 @@ export function OverviewStats({
           </div>
         </div>
 
-        {/* Weak Topics */}
+        {/* Needs Focus Topics */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-destructive/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-destructive transition-colors">Weak</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-destructive transition-colors">Needs Focus</span>
             <div className="p-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
-              <Flame className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div>
             <div className="text-2xl font-extrabold font-mono tracking-tight text-foreground">
               {weakTopicsCount}
             </div>
-            <div className="text-[10px] text-muted-foreground mt-0.5">Need focus</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Decaying recall</div>
           </div>
         </div>
 

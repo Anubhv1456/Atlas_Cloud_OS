@@ -2,7 +2,9 @@
 import { db } from '@/db';
 import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval, isSoftRecalibrating, calculateKnapsackPriority } from '@/db';
 import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
-import { getSubjectWeightageInfo } from '@/lib/recommendation-engine';
+import { getSubjectWeightageInfo, getYearMultiplier } from '@/lib/recommendation-engine';
+import { getLocalExamProfile } from '@/lib/examProfile';
+import { isSubjectInProfScope, getAllowedSubjectsForProfile } from '@/lib/curriculumScope';
 import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE, HistoryEntry } from '@/db/types';
 import { getDaysSinceLastStudy } from '@/db/queries';
 
@@ -71,6 +73,20 @@ export interface NextActionRecommendation {
   priorityOverrideNotice?: string;
 }
 
+export interface SubjectInitiationOption {
+  subjectId: number | string;
+  subjectName: string;
+  phase: string;
+  weight: number;
+  tag: string;
+  systemCount: number;
+  estimatedHours: number;
+  reason: string;
+  rationaleType: 'exact_year' | 'high_yield_core' | 'foundational_rapid' | 'clinical_pillar';
+  firstSystemId?: number | string;
+  firstSystemName?: string;
+}
+
 export interface NextActionEngineResult {
   primary: NextActionRecommendation | null;
   fallback: NextActionRecommendation | null;
@@ -78,6 +94,7 @@ export interface NextActionEngineResult {
   totalCandidatesEvaluated: number;
   quickEligibleCount: number;
   isTriageMode: boolean;
+  isFreshState: boolean;
   hasAnyCurriculumSets: boolean;
   hasPendingSyllabus: boolean;
   operationalMode: OperationalModeRecord;
@@ -85,6 +102,7 @@ export interface NextActionEngineResult {
   circadianLabel: string;
   sessionsCompletedToday: number;
   minutesStudiedToday: number;
+  suggestedStarterSubjects?: SubjectInitiationOption[];
   recalibrationStatus?: {
     active: boolean;
     daysRemaining: number;
@@ -204,6 +222,7 @@ export async function getNextActionRecommendation(
       totalCandidatesEvaluated: 0,
       quickEligibleCount: 0,
       isTriageMode: false,
+      isFreshState: false,
       operationalMode,
       circadianPeriod: circadian.period,
       circadianLabel: circadian.label,
@@ -249,13 +268,29 @@ export async function getNextActionRecommendation(
   const isTriageMode = daysSinceLastStudy > 3 && !recalibrationStatus.active && !isClinicalDuty;
 
   const allDbSubjects = await db.subjects.filter(s => !s.deletedAt).toArray();
-  let subjects = [...allDbSubjects];
+  const profile = getLocalExamProfile();
+  const activeExam = targetExam || profile.targetExam;
+  const activeYear = profile.currentYear || 'Final MBBS';
+
+  // Apply strict MBBS Professional Exam filter if active
+  const isMBBSProf = activeExam.toLowerCase().includes('mbbs') || activeExam.toLowerCase().includes('professional exam');
+  
+  let subjects = isMBBSProf 
+    ? allDbSubjects.filter(s => isSubjectInProfScope(s.name, activeExam, activeYear))
+    : [...allDbSubjects];
+  
   let systems = await db.systems.filter(s => !s.deletedAt).toArray();
   
   const setTable = db.curriculumSets || db.revisionSets;
   let curriculumSets: CurriculumSet[] = setTable 
     ? await setTable.filter(s => !s.deletedAt).toArray() 
     : [];
+
+  if (isMBBSProf) {
+    const profSubjectIds = new Set(subjects.map(s => String(s.id)));
+    systems = systems.filter(sys => profSubjectIds.has(String(sys.subjectId)));
+    curriculumSets = curriculumSets.filter(set => profSubjectIds.has(String(set.subjectId)));
+  }
 
   const sprintSubjectIds = new Set((operationalMode.targetSubjectIds || []).map(String));
 
@@ -789,6 +824,98 @@ export async function getNextActionRecommendation(
       }
     : undefined;
 
+  // Compute top 3 recommended starter subjects when queue has no active items or user needs new subject direction
+  const eligibleStarterSubjects = isMBBSProf ? subjects : allDbSubjects;
+  
+  // Group systems and completion by subject
+  const unstartedOrLowProgressSubjects: SubjectInitiationOption[] = [];
+
+  for (const sub of eligibleStarterSubjects) {
+    const subSystems = systems.filter(s => String(s.subjectId) === String(sub.id));
+    const completedCount = subSystems.filter(s => s.contentCompleted).length;
+    const isUnstarted = completedCount === 0;
+    const isUnder25Percent = subSystems.length > 0 && (completedCount / subSystems.length) < 0.25;
+
+    if (isUnstarted || isUnder25Percent) {
+      const weightage = getSubjectWeightageInfo(sub.name, targetExam);
+      const yearMultiplier = getYearMultiplier(weightage.phase, activeYear);
+      const systemCount = subSystems.length || 6;
+      const estimatedHours = Math.round(systemCount * 2.5);
+
+      // Determine Rationale Type & Description
+      let rationaleType: SubjectInitiationOption['rationaleType'] = 'high_yield_core';
+      let reason = '';
+
+      if (yearMultiplier >= 2.5) {
+        rationaleType = 'exact_year';
+        reason = `Directly aligned with your ${activeYear} syllabus (${weightage.tag})`;
+      } else if (weightage.weight >= 90) {
+        rationaleType = 'high_yield_core';
+        reason = `High-yield exam pillar • ${weightage.tag}`;
+      } else if (systemCount <= 5) {
+        rationaleType = 'foundational_rapid';
+        reason = `Compact high-scoring subject (${systemCount} systems • ~${estimatedHours}h complete)`;
+      } else {
+        rationaleType = 'clinical_pillar';
+        reason = `${weightage.tag} • Core medical foundation`;
+      }
+
+      const initiationScore = (weightage.weight * 0.45) + (yearMultiplier * 30) + (isUnstarted ? 25 : 15);
+      const firstSys = subSystems.find(s => !s.contentCompleted) || subSystems[0];
+
+      unstartedOrLowProgressSubjects.push({
+        subjectId: sub.id!,
+        subjectName: sub.name,
+        phase: weightage.phase,
+        weight: Math.round(initiationScore),
+        tag: weightage.tag,
+        systemCount,
+        estimatedHours,
+        reason,
+        rationaleType,
+        firstSystemId: firstSys?.id,
+        firstSystemName: firstSys?.name
+      });
+    }
+  }
+
+  // Sort by initiation score descending and take top 3
+  let suggestedStarterSubjects = unstartedOrLowProgressSubjects
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 3);
+
+  // Robust fallback: if all subjects have some progress, still provide top 3 subjects
+  if (suggestedStarterSubjects.length === 0 && eligibleStarterSubjects.length > 0) {
+    suggestedStarterSubjects = eligibleStarterSubjects
+      .map(sub => {
+        const subSystems = systems.filter(s => String(s.subjectId) === String(sub.id));
+        const weightage = getSubjectWeightageInfo(sub.name, targetExam);
+        const yearMultiplier = getYearMultiplier(weightage.phase, activeYear);
+        const systemCount = subSystems.length || 6;
+        const firstSys = subSystems.find(s => !s.contentCompleted) || subSystems[0];
+        return {
+          subjectId: sub.id!,
+          subjectName: sub.name,
+          phase: weightage.phase,
+          weight: Math.round((weightage.weight * 0.45) + (yearMultiplier * 30)),
+          tag: weightage.tag,
+          systemCount,
+          estimatedHours: Math.round(systemCount * 2.5),
+          reason: `High-yield exam pillar • ${weightage.tag}`,
+          rationaleType: 'high_yield_core' as const,
+          firstSystemId: firstSys?.id,
+          firstSystemName: firstSys?.name
+        };
+      })
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 3);
+  }
+
+  // Detect fresh user / no progress state (e.g. fresh onboarding or cleared progress)
+  const isFreshState = historyEntries.length === 0 && 
+    !systems.some(s => s.contentCompleted || (s.revisionPassCount && s.revisionPassCount > 0)) &&
+    !curriculumSets.some(c => Boolean(c.lastRevisionDate) || (c.revisionCount && c.revisionCount > 0));
+
   return {
     hasAnyCurriculumSets,
     hasPendingSyllabus,
@@ -798,11 +925,13 @@ export async function getNextActionRecommendation(
     totalCandidatesEvaluated,
     quickEligibleCount,
     isTriageMode,
+    isFreshState,
     operationalMode,
     circadianPeriod: circadian.period,
     circadianLabel: circadian.label,
     sessionsCompletedToday,
     minutesStudiedToday,
+    suggestedStarterSubjects,
     recalibrationStatus: recalibrationStatus.active ? recalibrationStatus : undefined,
     activeSprintSummary
   };

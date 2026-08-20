@@ -205,22 +205,29 @@ export function calculateSystemBreakdown(
   systemMap: Map<number, StudySystem>,
   subjectMap: Map<number, Subject>
 ) {
-  const sysGroup = new Map<string, { totalPct: number; count: number; name: string }>();
+  const sysGroup = new Map<string, { totalPct: number; count: number; name: string; subjectId?: number | string; systemId?: number | string }>();
 
   filteredLogs.forEach(log => {
     let keyName = log.title;
+    let sId = log.subjectId;
+    let sysId = log.systemId;
+
     if (log.systemId && systemMap.has(log.systemId)) {
-      keyName = systemMap.get(log.systemId)!.name;
+      const foundSys = systemMap.get(log.systemId)!;
+      keyName = foundSys.name;
+      sId = foundSys.subjectId;
     } else if (log.subjectId && subjectMap.has(log.subjectId)) {
       keyName = subjectMap.get(log.subjectId)!.name;
     }
 
     if (!sysGroup.has(keyName)) {
-      sysGroup.set(keyName, { totalPct: 0, count: 0, name: keyName });
+      sysGroup.set(keyName, { totalPct: 0, count: 0, name: keyName, subjectId: sId, systemId: sysId });
     }
     const item = sysGroup.get(keyName)!;
     item.totalPct += log.percentage;
     item.count += 1;
+    if (!item.subjectId && sId) item.subjectId = sId;
+    if (!item.systemId && sysId) item.systemId = sysId;
   });
 
   return Array.from(sysGroup.values())
@@ -229,6 +236,8 @@ export function calculateSystemBreakdown(
       fullName: item.name,
       average: Math.round((item.totalPct / item.count) * 10) / 10,
       count: item.count,
+      subjectId: item.subjectId,
+      systemId: item.systemId,
     }))
     .sort((a, b) => b.average - a.average)
     .slice(0, 8); // Top 8 systems

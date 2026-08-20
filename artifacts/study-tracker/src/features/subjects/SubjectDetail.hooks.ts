@@ -153,8 +153,9 @@ export function useSubjectDetailLogic(id: string | undefined) {
   const [, setLocation] = useLocation();
 
   const subject  = useSubject(subjectId);
-  const rawSystems  = useSystemsBySubject(subjectId);
-  const pyqYears = usePYQsBySubject(subjectId);
+  const effectiveSubjectId = subject?.id ?? subjectId;
+  const rawSystems  = useSystemsBySubject(effectiveSubjectId);
+  const pyqYears = usePYQsBySubject(effectiveSubjectId);
 
   const systems = useMemo(() => {
     return [...rawSystems].sort((a, b) => (a.order ?? Number.MAX_VALUE) - (b.order ?? Number.MAX_VALUE));

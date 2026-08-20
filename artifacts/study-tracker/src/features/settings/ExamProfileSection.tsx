@@ -31,7 +31,7 @@ export function ExamProfileSection() {
             </div>
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Academic Calibration
+                Exam Target & Schedule
               </h3>
               <p className="text-sm sm:text-base font-bold text-foreground">
                 {isConfigured ? profile.targetExam : 'Configure Target Exam'}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { 
   getNextActionRecommendation, 
   NextActionEngineResult, 
@@ -76,19 +77,23 @@ export function NextActionCard({
   const [renderTimestamp, setRenderTimestamp] = useState<number>(Date.now());
   const [s10Speed, setS10Speed] = useState<number | null>(null);
   const [whySheetOpen, setWhySheetOpen] = useState(false);
+  const [starterOptionsRevealed, setStarterOptionsRevealed] = useState(false);
+
+  const { profile } = useExamProfile();
+  const activeExam = profile.targetExam || 'NEET PG';
 
   const result: NextActionEngineResult | null = useLiveQuery(async () => {
     try {
       return await getNextActionRecommendation({
         sessionBudget,
         skipIds,
-        targetExam: 'NEET PG'
+        targetExam: activeExam
       });
     } catch (err) {
       console.error('Error running NextActionEngine:', err);
       return null;
     }
-  }, [sessionBudget, skipIds]) || null;
+  }, [sessionBudget, skipIds, activeExam, profile.currentYear]) || null;
 
   const primary = result?.primary || null;
   const fallback = result?.fallback || null;
@@ -719,73 +724,134 @@ export function NextActionCard({
             </div>
           </div>
         ) : (
-          <div className="py-6 text-center space-y-3">
-            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 mb-1">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-foreground">
-              {result && !result.hasAnyCurriculumSets
-                ? "Welcome to Atlas"
-                : result && !result.hasPendingSyllabus
-                ? "Syllabus Completed"
-                : "All Clear & Up to Date!"
-              }
-            </h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-              {result && !result.hasAnyCurriculumSets 
-                ? "Let's get started by creating your first study block."
-                : sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (result?.totalCandidatesEvaluated || 0) > 0
-                ? `No Rapid Recall drills pending. You have ${(result?.totalCandidatesEvaluated || 0)} Deep Focus blocks due.`
-                : result && !result.hasPendingSyllabus
-                ? "You've conquered the entire syllabus! Take a well-deserved break, give a Grand Test (GT), or review your upcoming revision schedule."
-                : "You've completed all scheduled blocks for this filter. Create new study blocks for your pending syllabus to continue studying."
-              }
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
-              {sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (result?.totalCandidatesEvaluated || 0) > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSessionBudget('deep')}
-                  className="text-xs font-semibold border-primary/30 text-primary cursor-pointer w-full sm:w-auto"
-                >
-                  Switch to Deep Focus Block
-                </Button>
-              )}
-              
-              {result && !result.hasAnyCurriculumSets && (
-                <Button
-                  onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
-                  size="sm"
-                  className="text-xs font-semibold bg-primary text-primary-foreground cursor-pointer w-full sm:w-auto"
-                >
-                  Go to Subjects
-                </Button>
-              )}
-              
-              {result && result.hasAnyCurriculumSets && result.hasPendingSyllabus && (sessionBudget !== 'quick' || (result?.totalCandidatesEvaluated || 0) === 0) && (
-                <Button
-                  onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
-                  size="sm"
-                  className="text-xs font-semibold border-primary/30 text-primary cursor-pointer w-full sm:w-auto"
-                  variant="outline"
-                >
-                  Create New Blocks
-                </Button>
-              )}
+          <div className="py-4 sm:py-6 space-y-5 animate-in fade-in duration-300">
+            {!starterOptionsRevealed && result?.isFreshState ? (
+              /* ── Premium Welcome Initiation Stage for Fresh / Zero-Progress Users ── */
+              <div className="text-center max-w-xl mx-auto py-4 sm:py-6 space-y-4">
+                <div className="inline-flex p-3 sm:p-3.5 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 shadow-xs mb-1">
+                  <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-teal-500" />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 text-xs font-semibold">
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>Atlas Readiness Engine</span>
+                  </div>
 
-              {skipIds.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetSkips}
-                  className="text-xs text-muted-foreground hover:text-foreground cursor-pointer w-full sm:w-auto"
-                >
-                  Reset Skipped ({skipIds.length})
-                </Button>
-              )}
-            </div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
+                    Welcome to Atlas. Let’s start.
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                    Your curriculum is calibrated for <span className="font-semibold text-foreground">{profile.targetExam || 'your target exam'}</span>. Tap below to reveal the top 3 highest-yield foundational starting options selected specifically for you.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Button
+                    size="lg"
+                    onClick={() => setStarterOptionsRevealed(true)}
+                    className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 sm:px-8 py-3 rounded-2xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm active:scale-95 transition-all"
+                  >
+                    <span>Let’s Start — View Top 3 Options</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground cursor-pointer rounded-2xl"
+                  >
+                    Browse Full Curriculum
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* ── Top 3 Recommended Starter Options Pills ── */
+              <div className="py-4 sm:py-6 space-y-5 text-center max-w-xl mx-auto">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    <span>Recommended Starting Points</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground">
+                    Choose a subject to begin:
+                  </h3>
+                </div>
+
+                {/* 3 Starter Subject Interactive Pills */}
+                {result?.suggestedStarterSubjects && result.suggestedStarterSubjects.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    {result.suggestedStarterSubjects.map((option, idx) => {
+                      const isTopRecommendation = idx === 0;
+                      return (
+                        <button
+                          key={String(option.subjectId)}
+                          type="button"
+                          onClick={() => {
+                            if (option.firstSystemId) {
+                              setLocation(`/subjects/${option.subjectId}?highlight=${option.firstSystemId}`);
+                            } else {
+                              setLocation(`/subjects/${option.subjectId}`);
+                            }
+                          }}
+                          className={cn(
+                            "group relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 cursor-pointer active:scale-95 select-none",
+                            isTopRecommendation
+                              ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb,59,130,246),0.45)] hover:shadow-[0_0_25px_rgba(var(--primary-rgb,59,130,246),0.6)] ring-2 ring-primary/60 hover:scale-105"
+                              : "bg-muted/70 hover:bg-muted text-foreground border border-border/70 hover:border-primary/40 shadow-xs hover:text-primary"
+                          )}
+                        >
+                          <Folder className={cn(
+                            "w-4 h-4 transition-transform group-hover:scale-110",
+                            isTopRecommendation ? "text-primary-foreground" : "text-primary"
+                          )} />
+                          <span>{option.subjectName}</span>
+                          <ArrowRight className={cn(
+                            "w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5",
+                            isTopRecommendation ? "text-primary-foreground/90" : "text-muted-foreground group-hover:text-primary"
+                          )} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-4 border-t border-border/40">
+                  {sessionBudget === 'quick' && result?.quickEligibleCount === 0 && (result?.totalCandidatesEvaluated || 0) > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSessionBudget('deep')}
+                      className="text-xs font-semibold border-primary/30 text-primary cursor-pointer w-full sm:w-auto rounded-xl"
+                    >
+                      Switch to Deep Focus Block
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant="ghost"
+                    onClick={() => document.getElementById('subject-portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-foreground cursor-pointer w-full sm:w-auto"
+                  >
+                    Browse Full Curriculum
+                  </Button>
+
+                  {skipIds.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetSkips}
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer w-full sm:w-auto"
+                    >
+                      Reset Skipped ({skipIds.length})
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

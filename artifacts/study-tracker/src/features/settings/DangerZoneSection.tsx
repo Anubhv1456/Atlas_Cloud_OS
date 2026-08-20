@@ -36,7 +36,7 @@ export function DangerZoneSection() {
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Permanently Delete All Data?</DialogTitle>
             <DialogDescription className="text-center text-xs sm:text-sm text-muted-foreground pt-1.5 leading-relaxed">
-              This action cannot be undone. This will permanently delete all 19 subjects, organ systems, custom study blocks, score logs, SDSR revision intervals, operational modes, and smoothing quotas from both your local device and cloud vault.
+              This action cannot be undone. This will permanently delete all 19 subjects, curriculum units, study blocks, score logs, revision schedules, and 20th Notebook rules.
             </DialogDescription>
           </DialogHeader>
 
@@ -46,10 +46,10 @@ export function DangerZoneSection() {
               What will be permanently wiped:
             </div>
             <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-muted-foreground">
-              <li>All organ systems progress, completions, and mastery statuses</li>
+              <li>All curriculum unit progress, completions, and coverage statuses</li>
               <li>All custom study blocks, topic progress, and revision due dates</li>
-              <li>All operational modes, holiday states, and backlog smoothing quotas</li>
-              <li>All test scores, mistake recovery logs, and telemetry history</li>
+              <li>All exam goals, target dates, and daily study quotas</li>
+              <li>All test scores, 20th Notebook rules, and study activity logs</li>
             </ul>
           </div>
 

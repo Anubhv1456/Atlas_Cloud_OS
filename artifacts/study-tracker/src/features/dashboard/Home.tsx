@@ -50,7 +50,7 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
+import { HomeRadarSummaryCard } from '@/features/dashboard/HomeRadarSummaryCard';
 import { useHomeLogic } from './Home.hooks';
 
 export default function Home() {
@@ -99,9 +99,20 @@ export default function Home() {
             <img src="/emblem.svg" alt="Atlas Logo" className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5 flex-wrap min-w-0">
-                <span className="flex items-center gap-1.5 text-teal-500 text-[11px] font-semibold uppercase tracking-wider shrink-0">
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" /> NEET PG 2026 • Cohort Active
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setExamModalOpen(true)}
+                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-[11px] font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group"
+                  title="Click to recalibrate exam target"
+                >
+                  <Target className="w-3.5 h-3.5 shrink-0 text-teal-500 group-hover:scale-110 transition-transform" />
+                  <span>
+                    {profile.targetExam 
+                      ? `${profile.targetExam} ${profile.currentYear ? `• ${profile.currentYear}` : ''}`
+                      : 'Target: NEET-PG 2026'
+                    }
+                  </span>
+                </button>
                 {streak > 0 && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
                     <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d Streak
@@ -119,7 +130,7 @@ export default function Home() {
         </header>
 
         {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
-        <div className="mb-10">
+        <div className="mb-8">
           <NextActionCard
             customPrimarySubject={customPrimarySubject}
             customPrimarySystem={customPrimarySystem}
@@ -130,12 +141,10 @@ export default function Home() {
           />
         </div>
 
-        {/* ── Subjects Portfolio ─────────────────────────────────────────────── */}
-        <SubjectsGrid
-          subjects={subjects}
-          systems={systems}
-          handleSubjectDragEnd={handleSubjectDragEnd}
-        />
+        {/* ── Dedicated Subject Radar Entry Card ──────────────────────────────── */}
+        <div className="mb-6">
+          <HomeRadarSummaryCard />
+        </div>
       </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { normalizeName } from "@/lib/exam-presets";
 import { Link } from "wouter";
-import { ChevronRight, MoreVertical, PencilLine, Trash2, Merge, AlertTriangle } from "lucide-react";
+import { ChevronRight, MoreVertical, PencilLine, Trash2, Merge, AlertTriangle, BookOpen } from "lucide-react";
 import { Subject, StudySystem, db, updateSubject, deleteSubject, isRevisionDue } from "@/db";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -70,12 +70,29 @@ export function SubjectCard({
     [subject?.id]
   ) || [];
 
+  const subjectMistakes = useLiveQuery(
+    async () => {
+      if (!subject?.id) return [];
+      const logs = await db.mistakeLogs?.toArray() || [];
+      return logs.filter(m => !m.deletedAt && (
+        String(m.subjectId) === String(subject.id) ||
+        (subject.ontologySubjectId && String(m.subjectId) === String(subject.ontologySubjectId)) ||
+        (m.subjectId && typeof m.subjectId === 'string' && m.subjectId.toLowerCase() === subject.name.toLowerCase())
+      ));
+    },
+    [subject?.id, subject?.name, subject?.ontologySubjectId]
+  ) || [];
+
   const allSubjects = useLiveQuery(() => db.subjects.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
 
   const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
   const safeHistory = Array.isArray(history) ? history : [];
   const safePyqs = Array.isArray(pyqYears) ? pyqYears : [];
   const safeScores = Array.isArray(scoreLogs) ? scoreLogs : [];
+  const safeMistakes = Array.isArray(subjectMistakes) ? subjectMistakes : [];
+
+  const activeMistakesCount = safeMistakes.filter(m => !m.resolved).length;
+  const volatileMistakesCount = safeMistakes.filter(m => !m.resolved && m.isVolatile).length;
 
   const progressScore: SubjectProgressScore = evaluateSubjectProgress(
     subject,
@@ -175,7 +192,22 @@ export function SubjectCard({
             </div>
           </Link>
 
-          <div className="flex items-center gap-1 shrink-0 ml-1 relative z-20">
+          <div className="flex items-center gap-1.5 shrink-0 ml-1 relative z-20">
+            {activeMistakesCount > 0 && (
+              <Link
+                href={`/mistakes?subjectId=${encodeURIComponent(String(subject.id))}&origin=subject_card`}
+                onClick={(e) => e.stopPropagation()}
+                className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-xl bg-card border border-border/70 hover:border-primary/50 text-muted-foreground hover:text-foreground transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
+                title={`Open 20th Notebook for ${subject.name} (${activeMistakesCount} active rules)`}
+              >
+                <BookOpen className="w-3 h-3 text-primary" />
+                <span className="font-mono text-foreground font-semibold">{activeMistakesCount}</span>
+                {volatileMistakesCount > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" title={`${volatileMistakesCount} volatile`} />
+                )}
+              </Link>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors focus:outline-none shrink-0 cursor-pointer"
@@ -184,7 +216,21 @@ export function SubjectCard({
               >
                 <MoreVertical className="w-4 h-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 rounded-xl">
+              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/mistakes?subjectId=${encodeURIComponent(String(subject.id))}&origin=subject_card_menu`}
+                    className="flex items-center gap-2 py-2 cursor-pointer text-xs font-semibold"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-primary" />
+                    <span>20th Notebook</span>
+                    {activeMistakesCount > 0 && (
+                      <span className="ml-auto font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        {activeMistakesCount}
+                      </span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
                 {siblingDuplicateSubject && (
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -228,7 +274,7 @@ export function SubjectCard({
         <div className="mt-4 pt-4 border-t border-border/40">
           <div className="flex items-center justify-between text-xs mb-2">
             <span className="font-semibold text-muted-foreground">
-              Mastery
+              Coverage
             </span>
             <span className="font-mono font-bold text-foreground tabular-nums tracking-tight">
               {progress}%

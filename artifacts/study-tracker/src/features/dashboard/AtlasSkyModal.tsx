@@ -2,7 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { 
   X, ArrowRight, Brain, Target, Sparkles, Filter, 
-  RotateCcw, ShieldAlert, CheckCircle2, BookOpen, Share2 
+  RotateCcw, ShieldAlert, CheckCircle2, BookOpen, Share2, GraduationCap 
 } from 'lucide-react';
 import { Subject, StudySystem } from '@/db';
 import { CurriculumSet } from '@/db/types';
@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import { useLocation } from 'wouter';
 import { AtlasSkyShareModal } from './AtlasSkyShareModal';
+import { useExamProfile } from '@/hooks/useExamProfile';
+import { isSubjectInProfScope, NMC_MBBS_PROFESSIONAL_YEARS } from '@/lib/curriculumScope';
 
 interface AtlasSkyModalProps {
   open: boolean;
@@ -209,9 +211,16 @@ const CELESTIAL_SUBJECTS: CelestialSubject[] = CELESTIAL_CONFIG.map(item => {
 
 export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculumSets }: AtlasSkyModalProps) {
   const [, setLocation] = useLocation();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'prof_year' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
   const [selectedStarName, setSelectedStarName] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+
+  const { profile } = useExamProfile();
+  const isMBBSProf = Boolean(
+    profile.targetExam && 
+    (profile.targetExam.toLowerCase().includes('mbbs') || profile.targetExam.toLowerCase().includes('professional exam'))
+  );
+  const activeYear = profile.currentYear || 'Final MBBS';
 
   // Clear selected star when modal opens/closes
   useEffect(() => {
@@ -481,10 +490,17 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 
                 // Filter matching logic
                 let matchesFilter = true;
-                if (activeFilter === 'pre_clinical') matchesFilter = star.phase === 'pre_clinical';
-                else if (activeFilter === 'para_clinical') matchesFilter = star.phase === 'para_clinical';
-                else if (activeFilter === 'clinical') matchesFilter = star.phase === 'clinical';
-                else if (activeFilter === 'decay') matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
+                if (activeFilter === 'prof_year') {
+                  matchesFilter = isSubjectInProfScope(star.name, profile.targetExam, activeYear);
+                } else if (activeFilter === 'pre_clinical') {
+                  matchesFilter = star.phase === 'pre_clinical';
+                } else if (activeFilter === 'para_clinical') {
+                  matchesFilter = star.phase === 'para_clinical';
+                } else if (activeFilter === 'clinical') {
+                  matchesFilter = star.phase === 'clinical';
+                } else if (activeFilter === 'decay') {
+                  matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
+                }
 
                 // Color & glow styling based on retentive state
                 let dotColorClass = "bg-zinc-600 shadow-none";
@@ -622,6 +638,21 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
             {/* Medical Phase Filter Strip */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md">
+              {isMBBSProf && (
+                <button
+                  onClick={() => setActiveFilter(activeFilter === 'prof_year' ? 'all' : 'prof_year')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                    activeFilter === 'prof_year'
+                      ? "bg-teal-500 text-slate-950 shadow-md font-bold"
+                      : "bg-teal-500/15 text-teal-300 border border-teal-500/30 hover:bg-teal-500/25"
+                  )}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>{activeYear} Syllabus</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setActiveFilter('all')}
                 className={cn(

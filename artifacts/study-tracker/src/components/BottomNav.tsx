@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { Home, CalendarDays, BarChart3, Settings, Sparkles, Target, ShieldCheck, User, ShieldAlert, Database } from 'lucide-react';
+import { Home, Calendar, LayoutGrid, Settings, Sparkles, Target, ShieldCheck, User, HardDrive } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
@@ -28,22 +28,24 @@ export function BottomNav() {
   }, []);
 
   const links = [
-    { href: '/',          icon: Home,          label: 'Home',      shortcut: '1' },
-    { href: '/timeline',  icon: CalendarDays,  label: 'Timeline',  shortcut: '2' },
-    { href: '/mistakes',  icon: ShieldAlert,   label: 'Mistakes',  shortcut: 'M' },
-    { href: '/analytics', icon: BarChart3,     label: 'Analytics', shortcut: '3' },
-    { href: '/settings',  icon: Settings,      label: 'Settings',  shortcut: '4' },
+    { href: '/',          icon: Home,        label: 'Home',        shortcut: '1' },
+    { href: '/timeline',  icon: Calendar,    label: 'Schedule',    shortcut: '2' },
+    { href: '/radar',     icon: LayoutGrid,  label: 'Curriculum',  shortcut: '3' },
+    { href: '/settings',  icon: Settings,    label: 'Settings',    shortcut: '4' },
   ];
 
-  // Robust path matching supporting subroutes (e.g. /subjects/:id)
+  // Robust path matching supporting subroutes (e.g. /subjects/:id, /analytics)
   const isPathActive = useCallback((href: string) => {
     if (href === '/') {
       return location === '/' || location.startsWith('/subjects');
     }
+    if (href === '/radar') {
+      return location === '/radar' || location === '/analytics' || location.startsWith('/radar') || location.startsWith('/analytics');
+    }
     return location === href || location.startsWith(href + '/') || location.startsWith(href + '?');
   }, [location]);
 
-  // Keyboard shortcut listener (⌘1, ⌘2, ⌘M, ⌘3, ⌘4 or Alt+1...)
+  // Keyboard shortcut listener (⌘1, ⌘2, ⌘3, ⌘4 or Alt+1...)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -65,12 +67,9 @@ export function BottomNav() {
         } else if (key === '2') {
           e.preventDefault();
           setLocation('/timeline');
-        } else if (key === 'M') {
+        } else if (key === '3' || key === 'R') {
           e.preventDefault();
-          setLocation('/mistakes');
-        } else if (key === '3') {
-          e.preventDefault();
-          setLocation('/analytics');
+          setLocation('/radar');
         } else if (key === '4') {
           e.preventDefault();
           setLocation('/settings');
@@ -189,9 +188,9 @@ export function BottomNav() {
                 <span>Synced</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20">
-                <Database className="w-3 h-3" />
-                <span>Vault</span>
+              <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
+                <HardDrive className="w-3 h-3" />
+                <span>On Device</span>
               </div>
             )}
           </div>

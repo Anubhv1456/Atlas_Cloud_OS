@@ -188,25 +188,32 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
           <div className="space-y-5">
             <div className="space-y-2.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Current Academic Level
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  {targetExam === 'MBBS Professional Exams' ? 'MBBS Professional Phase / Year' : 'Current Academic Level'}
+                </Label>
+                {targetExam === 'MBBS Professional Exams' && (
+                  <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
+                    Isolates Active Prof Syllabus
+                  </span>
+                )}
+              </div>
               <Select value={currentYear} onValueChange={setCurrentYear}>
                 <SelectTrigger className="rounded-2xl h-11 px-4 border-border/60 focus:ring-primary/20">
                   <SelectValue placeholder="Select current year" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-border/60">
                   {[
-                    '1st Year MBBS',
-                    '2nd Year MBBS',
-                    '3rd Year MBBS',
-                    'Final MBBS',
-                    'Intern',
-                    'Postgraduate Resident',
-                    'Other'
+                    { value: '1st Year MBBS', label: '1st Professional (Phase I: Anatomy, Physio, Biochem)' },
+                    { value: '2nd Year MBBS', label: '2nd Professional (Phase II: Path, Micro, Pharma)' },
+                    { value: '3rd Year MBBS', label: '3rd Professional Part 1 (Phase III Part 1: FMT, PSM, Ophtha, ENT)' },
+                    { value: 'Final MBBS', label: 'Final Professional Part 2 (Phase III Part 2: Med, Surg, OBGY, Peds)' },
+                    { value: 'Intern', label: 'Intern / CRMI (All 19 Subjects)' },
+                    { value: 'Postgraduate Resident', label: 'Postgraduate Resident / Board Review' },
+                    { value: 'Other', label: 'Other Academic Year' }
                   ].map(yr => (
-                    <SelectItem key={yr} value={yr} className="rounded-xl">
-                      {yr}
+                    <SelectItem key={yr.value} value={yr.value} className="rounded-xl">
+                      {yr.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
