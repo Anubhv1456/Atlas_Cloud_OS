@@ -1,6 +1,7 @@
 import { HelpGuideModal } from '@/components/HelpGuideModal';
 import { AtlasSkyPreview } from './AtlasSkyPreview';
 import { NextActionCard } from '@/components/dashboard/NextActionCard';
+import { SearchWidget } from '@/components/ai';
 import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
 import { ALL_TOPICS, ALL_SUBJECTS } from '@/data/ontology';
 import { CurriculumSet } from '@/db/types';
@@ -52,6 +53,9 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
 
 import { HomeRadarSummaryCard } from '@/features/dashboard/HomeRadarSummaryCard';
 import { useHomeLogic } from './Home.hooks';
+import { AmbientAIWidget, ChatAssistantDrawer } from '@/components/ai';
+import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingCommandBar';
+import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 
 export default function Home() {
   const {
@@ -66,9 +70,12 @@ export default function Home() {
   } = useHomeLogic();
 
   const { profile, isConfigured } = useExamProfile();
+  const { settings } = useAISettings();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
   useEffect(() => {
@@ -91,22 +98,22 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-full bg-background px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-32 md:pb-12 max-w-6xl mx-auto w-full flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="min-h-dvh bg-background px-3.5 sm:px-6 lg:px-8 pt-5 sm:pt-8 pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 max-w-6xl mx-auto w-full flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="relative z-10 flex-1 flex flex-col w-full min-w-0">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <header className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
-          <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
-            <img src="/emblem.svg" alt="Atlas Logo" className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
+        <header className="mb-5 sm:mb-8 flex items-center justify-between gap-2.5 sm:gap-4 w-full min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+            <img src="/emblem.svg" alt="Atlas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-0.5 flex-wrap min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 min-w-0">
                 <button
                   type="button"
                   onClick={() => setExamModalOpen(true)}
-                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-[11px] font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group"
+                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group truncate max-w-[180px] sm:max-w-none"
                   title="Click to recalibrate exam target"
                 >
                   <Target className="w-3.5 h-3.5 shrink-0 text-teal-500 group-hover:scale-110 transition-transform" />
-                  <span>
+                  <span className="truncate">
                     {profile.targetExam 
                       ? `${profile.targetExam} ${profile.currentYear ? `• ${profile.currentYear}` : ''}`
                       : 'Target: NEET-PG 2026'
@@ -114,17 +121,17 @@ export default function Home() {
                   </span>
                 </button>
                 {streak > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
-                    <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d Streak
+                  <span className="hidden xs:inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                    <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight truncate">{greeting}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold text-foreground tracking-tight truncate">{greeting}</h1>
             </div>
           </div>
 
           {/* Action controls - Top Right Corner */}
-          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 shrink-0">
             <AtlasSkyPreview />
           </div>
         </header>
@@ -168,13 +175,24 @@ export default function Home() {
         }}
       />
 
-      
-
-      
-
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
+      {settings.isAiEnabled && (
+        <>
+          <HomeFloatingCommandBar
+            onOpenChat={(mode) => {
+              setChatDrawerMode(mode);
+              setChatDrawerOpen(true);
+            }}
+          />
+          <ChatAssistantDrawer
+            open={chatDrawerOpen}
+            onOpenChange={setChatDrawerOpen}
+            initialMode={chatDrawerMode}
+          />
+        </>
+      )}
     </>
   );
 }

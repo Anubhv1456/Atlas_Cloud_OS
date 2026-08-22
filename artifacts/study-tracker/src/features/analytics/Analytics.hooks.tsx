@@ -18,6 +18,7 @@ export function useAnalyticsLogic() {
 
   const { toast } = useToast();
   const scoreLogs = useLiveQuery(() => db.scoreLogs.orderBy('timestamp').toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
+  const mistakeLogs = useLiveQuery(() => db.mistakeLogs.toArray().then(res => res.filter(m => !m.deletedAt)), []) || [];
   const subjects = useLiveQuery(() => db.subjects.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.filter(s => !s.deletedAt).toArray(), []) || [];
@@ -192,7 +193,7 @@ export function useAnalyticsLogic() {
   };
 
   return {
-    scoreLogs, subjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
+    scoreLogs, mistakeLogs, subjects, systems, curriculumSets, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
     isModalOpen, setIsModalOpen,
     filteredLogs, 
     systemBreakdownData, handleDeleteLog, studyRecommendation,

@@ -37,6 +37,7 @@ import Timeline from '@/features/timeline/Timeline';
 import SubjectDetail from '@/features/subjects/SubjectDetail';
 import MistakeRecoveryQueue from '@/features/mistakes/MistakeRecoveryQueue';
 import SubjectRadarPage from '@/features/radar/SubjectRadarPage';
+import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';
@@ -162,14 +163,15 @@ function ProtectedApp() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full relative">
+    <div className="flex flex-col md:flex-row min-h-dvh w-full relative">
       <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
       <GlobalAnnouncements />
       <AutoSyncEngine />
+      <DynamicIslandCapsule />
       <BottomNav />
-      <div className="flex-1 w-full relative z-10 md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-screen">
+      <div className="flex-1 w-full relative z-10 md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-dvh">
         <OfflineLeaseBanner />
         <motion.main
           key={location}

@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Award, CheckCircle2, Trophy, TriangleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
+import { analyzeGtAutopsy, GtAutopsyReport } from './GtAutopsyService';
+import { GtAutopsyModal } from './GtAutopsyModal';
 
 interface ScoreLogModalProps {
   isOpen: boolean;
@@ -68,6 +70,8 @@ export function ScoreLogModal({
   const [dateStr, setDateStr] = useState<string>(getTodayLocalDateStr());
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autopsyReport, setAutopsyReport] = useState<GtAutopsyReport | null>(null);
+  const [isAutopsyOpen, setIsAutopsyOpen] = useState(false);
 
   // Sync initial props when opened
   useEffect(() => {
@@ -231,8 +235,23 @@ export function ScoreLogModal({
         description: `${logTitle}: ${scoreNum}/${totalNum} (${percentage}%)`,
       });
 
+      // If Grand Test or comprehensive test, perform immediate GT Autopsy
+      if (type === 'gt' || totalNum >= 100) {
+        try {
+          const priorScores = await db.scoreLogs.toArray();
+          const recentMistakes = await db.mistakeLogs.toArray();
+          const report = await analyzeGtAutopsy(logData, priorScores, recentMistakes);
+          setAutopsyReport(report);
+          setIsAutopsyOpen(true);
+        } catch (autopsyErr) {
+          console.error('Autopsy analysis error:', autopsyErr);
+        }
+      }
+
       if (onSuccess) onSuccess();
-      onClose();
+      if (type !== 'gt' && totalNum < 100) {
+        onClose();
+      }
     } catch (err) {
       console.error('Failed to log score:', err);
       toast({
@@ -246,6 +265,7 @@ export function ScoreLogModal({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[480px] bg-card border-border">
         <DialogHeader>
@@ -496,5 +516,17 @@ export function ScoreLogModal({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* GT Autopsy Breakdown Modal */}
+    <GtAutopsyModal
+      report={autopsyReport}
+      isOpen={isAutopsyOpen}
+      onClose={() => {
+        setIsAutopsyOpen(false);
+        setAutopsyReport(null);
+        onClose();
+      }}
+    />
+    </>
   );
 }

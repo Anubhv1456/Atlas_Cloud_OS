@@ -348,6 +348,10 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 >
                   Skip for now & explore
                 </Button>
+
+                <p className="text-[10px] text-muted-foreground/70 text-center leading-tight pt-1">
+                  ⚖️ <span className="font-semibold">Educational Aid:</span> Strictly for medical revision & exam preparation. Not for clinical patient diagnosis.
+                </p>
               </div>
             </motion.div>
           )}

@@ -13,6 +13,7 @@ import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { AddDialog } from '@/components/AddDialog';
 import { PYQYear } from '@/db';
 import { ScoreLogModal } from '@/features/analytics/ScoreLogModal';
+import { SubjectFrictionCapsule } from '@/components/ai';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Plus, Trash2, Edit2,
   LayoutList, Lock, Check, BookOpen, Award, LayoutGrid, Sparkles,
@@ -719,6 +720,12 @@ export default function SubjectDetail() {
             </div>
           </div>
         </div>
+
+        {/* Embedded Friction & Memory Decay Diagnostic Capsule */}
+        <SubjectFrictionCapsule
+          subjectId={Number(subject.id || subjectId)}
+          subjectName={subject.name}
+        />
 
         {/* Recommended Focus Banner or Subject Mastered State */}
         {recommendedFocus ? (

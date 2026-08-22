@@ -169,7 +169,7 @@ export default defineConfig({
     drop: ['console', 'debugger'],
   },
   build: {
-    outDir: path.resolve(import.meta.dirname, 'dist'),
+    outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,
     minify: 'esbuild',

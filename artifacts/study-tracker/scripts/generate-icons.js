@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,13 +7,6 @@ const __dirname = path.dirname(__filename);
 
 const publicDir = path.resolve(__dirname, '../public');
 const emblemSvgPath = path.join(publicDir, 'emblem.svg');
-
-if (!fs.existsSync(emblemSvgPath)) {
-  console.error('emblem.svg not found in public directory!');
-  process.exit(1);
-}
-
-const svgBuffer = fs.readFileSync(emblemSvgPath);
 
 const iconConfigs = [
   { name: 'pwa-512x512.png', width: 512, height: 512 },
@@ -34,27 +26,36 @@ const iconConfigs = [
 ];
 
 async function generateIcons() {
-  console.log('Generating high-density Truecolor PWA icons...');
-  
-  for (const config of iconConfigs) {
-    const outputPath = path.join(publicDir, config.name);
-    await sharp(svgBuffer)
-      .resize(config.width, config.height, {
-        fit: 'cover',
-        position: 'center'
-      })
-      .removeAlpha() // Ensures 100% opaque background, eliminating iPadOS black box bug!
-      .flatten({ background: '#14161a' })
-      .png({ palette: false, quality: 100, compressionLevel: 6 }) // Forces Truecolor RGB (PNG-24) required by WebKit
-      .toFile(outputPath);
-      
-    console.log(`Generated: ${config.name} (${config.width}x${config.height})`);
+  if (!fs.existsSync(emblemSvgPath)) {
+    console.warn('emblem.svg not found in public directory. Skipping icon generation.');
+    return;
   }
 
-  console.log('All PWA icons generated successfully as Truecolor RGB PNGs!');
+  try {
+    const sharpModule = await import('sharp');
+    const sharp = sharpModule.default || sharpModule;
+    const svgBuffer = fs.readFileSync(emblemSvgPath);
+
+    console.log('Generating high-density Truecolor PWA icons...');
+    for (const config of iconConfigs) {
+      const outputPath = path.join(publicDir, config.name);
+      await sharp(svgBuffer)
+        .resize(config.width, config.height, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .removeAlpha()
+        .flatten({ background: '#14161a' })
+        .png({ palette: false, quality: 100, compressionLevel: 6 })
+        .toFile(outputPath);
+    }
+    console.log('All PWA icons generated successfully as Truecolor RGB PNGs!');
+  } catch (err) {
+    console.warn('Sharp not available or failed; using existing pre-generated icons in public directory:', err?.message || err);
+  }
 }
 
 generateIcons().catch((err) => {
-  console.error('Error generating icons:', err);
-  process.exit(1);
+  console.warn('Icon generation notice:', err?.message || err);
 });
+

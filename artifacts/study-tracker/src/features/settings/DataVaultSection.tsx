@@ -208,13 +208,14 @@ export function DataVaultSection() {
             </h3>
             <p className="text-xs font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
               <HardDrive className="w-3 h-3 text-emerald-500" />
-              <span>Local IndexedDB Storage</span>
+              <span>Multi-Device Cloud Sync & Local Storage</span>
             </p>
           </div>
         </div>
 
-        <div className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
-          Sync Ready
+        <div className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0 flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>HLC Sync Safe</span>
         </div>
       </div>
 

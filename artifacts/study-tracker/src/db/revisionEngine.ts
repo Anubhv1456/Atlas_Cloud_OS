@@ -1,4 +1,7 @@
-import { StudySystem, SystemStatus, RevisionLog, CurriculumSet, OperationalModeRecord } from './types';
+import { StudySystem, SystemStatus, RevisionLog, CurriculumSet, OperationalModeRecord, HistoryEntry, ScoreLog, MistakeLog } from './types';
+import { db } from './schema';
+import { generateHLC } from '@/lib/hlc';
+import { recordSessionCompletion } from '@/lib/telemetry';
 
 // Constants
 export const REVISION_CONFIG = {
@@ -23,16 +26,37 @@ export function getSystemDecayFactor(sys: StudySystem): number {
   return sys.decayFactor ?? 1.0;
 }
 
-export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {
+/**
+ * Computes memory loss percentage (0-100%) factoring in elapsed days, stability interval,
+ * decay factor, and pending 20th notebook mistake traps (accelerates decay by 15% per active mistake, 30% if volatile).
+ */
+export function getSystemMemoryLoss(
+  sys: StudySystem, 
+  curriculumSets: CurriculumSet[] = [], 
+  now: Date = today(),
+  mistakes: MistakeLog[] = []
+): number {
   const safeSets = Array.isArray(curriculumSets) ? curriculumSets : [];
   if (!hasRevisionScheduled(sys, safeSets)) return 0;
+
+  // Calculate mistake penalty multiplier for this system/subject
+  const relevantMistakes = (mistakes || []).filter(
+    m => !m.resolved && !m.deletedAt && (
+      (m.systemId && String(m.systemId) === String(sys.id)) ||
+      (m.subjectId && String(m.subjectId) === String(sys.subjectId))
+    )
+  );
+  const volatileMistakes = relevantMistakes.filter(m => m.isVolatile).length;
+  const standardMistakes = relevantMistakes.length - volatileMistakes;
+  // Each standard mistake increases decay rate by 15%, volatile by 30% (capped at 2.5x accelerator)
+  const mistakePenaltyMultiplier = Math.min(2.5, 1.0 + (standardMistakes * 0.15) + (volatileMistakes * 0.30));
   
   const sets = safeSets.filter(s => s && s.systemId === sys.id && s.nextRevisionDate);
   if (sets.length === 0) {
     if (sys.nextRevisionDate) {
       const lastDate = sys.lastRevisionDate ? new Date(sys.lastRevisionDate) : new Date(sys.nextRevisionDate);
       const interval = sys.currentRevisionInterval || 1;
-      const decay = getSystemDecayFactor(sys);
+      const decay = getSystemDecayFactor(sys) * mistakePenaltyMultiplier;
       const diffTime = Math.max(0, now.getTime() - lastDate.getTime());
       const daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const loss = (daysElapsed / interval) * 100 * decay;
@@ -45,7 +69,16 @@ export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: Curriculum
   const losses = sets.map(set => {
     const lastDate = set.lastRevisionDate ? new Date(set.lastRevisionDate) : new Date(set.nextRevisionDate!);
     const interval = set.currentRevisionInterval || 1;
-    const decay = getSystemDecayFactor(sys);
+    
+    // Check for set-specific mistakes
+    const setMistakes = (mistakes || []).filter(
+      m => !m.resolved && !m.deletedAt && m.curriculumSetId && String(m.curriculumSetId) === String(set.id)
+    );
+    const setPenalty = setMistakes.length > 0
+      ? Math.min(2.5, 1.0 + (setMistakes.filter(m => !m.isVolatile).length * 0.15) + (setMistakes.filter(m => m.isVolatile).length * 0.30))
+      : mistakePenaltyMultiplier;
+
+    const decay = getSystemDecayFactor(sys) * setPenalty;
     
     // Memory Loss = (Days Elapsed / Interval) * Decay
     const diffTime = Math.max(0, now.getTime() - lastDate.getTime());
@@ -62,8 +95,13 @@ export function getSystemMemoryLoss(sys: StudySystem, curriculumSets: Curriculum
   return Math.min(100, Math.max(0, Math.round(blockLoss * 10) / 10));
 }
 
-export function getRetrievability(sys: StudySystem, curriculumSets: CurriculumSet[] = [], now: Date = today()): number {
-  return 100 - getSystemMemoryLoss(sys, curriculumSets, now);
+export function getRetrievability(
+  sys: StudySystem, 
+  curriculumSets: CurriculumSet[] = [], 
+  now: Date = today(),
+  mistakes: MistakeLog[] = []
+): number {
+  return 100 - getSystemMemoryLoss(sys, curriculumSets, now, mistakes);
 }
 
 export function getRetrievabilityHealth(retrievability: number): {
@@ -163,10 +201,15 @@ export function daysOverdue(sys: StudySystem, curriculumSets: CurriculumSet[] = 
   return maxOverdue;
 }
 
-export function calculateDecayScore(sys: StudySystem, curriculumSets: CurriculumSet[], now: Date = today()): number {
+export function calculateDecayScore(
+  sys: StudySystem, 
+  curriculumSets: CurriculumSet[], 
+  now: Date = today(),
+  mistakes: MistakeLog[] = []
+): number {
   if (!hasRevisionScheduled(sys, curriculumSets)) return 0;
   
-  const memoryLoss = getSystemMemoryLoss(sys, curriculumSets, now);
+  const memoryLoss = getSystemMemoryLoss(sys, curriculumSets, now, mistakes);
   
   if (isRevisionDue(sys, curriculumSets, now)) {
     return memoryLoss;
@@ -175,10 +218,15 @@ export function calculateDecayScore(sys: StudySystem, curriculumSets: Curriculum
   }
 }
 
-export function sortSystemsByRevisionPriority(systems: StudySystem[], curriculumSets: CurriculumSet[], now: Date = today()): StudySystem[] {
+export function sortSystemsByRevisionPriority(
+  systems: StudySystem[], 
+  curriculumSets: CurriculumSet[], 
+  now: Date = today(),
+  mistakes: MistakeLog[] = []
+): StudySystem[] {
   return [...systems].sort((a, b) => {
-    const scoreA = calculateDecayScore(a, curriculumSets, now);
-    const scoreB = calculateDecayScore(b, curriculumSets, now);
+    const scoreA = calculateDecayScore(a, curriculumSets, now, mistakes);
+    const scoreB = calculateDecayScore(b, curriculumSets, now, mistakes);
     if (scoreA !== scoreB) return scoreB - scoreA;
     
     // If scores are equal, sort by earliest due date across sets
@@ -428,5 +476,109 @@ export function isSoftRecalibrating(opMode?: OperationalModeRecord | null, now: 
   }
 
   return { active: false, daysRemaining: 0, progressRatio: 1 };
+}
+
+export interface RecordStudyBlockRevisionParams {
+  subjectId: number | string;
+  subjectName: string;
+  systemName: string;
+  durationMinutes: number;
+  confidenceLevel: 'LOW' | 'MED' | 'HIGH';
+  topicsStudied?: string;
+}
+
+export async function recordStudyBlockRevision(params: RecordStudyBlockRevisionParams): Promise<{
+  success: boolean;
+  historyId?: number | string;
+  scoreId?: number | string;
+  nextRevisionDate?: Date;
+  intervalDays?: number;
+}> {
+  const { subjectId, subjectName, systemName, durationMinutes, confidenceLevel, topicsStudied } = params;
+
+  // Map confidence level to SystemStatus
+  const status: SystemStatus = confidenceLevel === 'HIGH' ? 'Strong' : confidenceLevel === 'MED' ? 'Average' : 'Weak';
+  const now = today();
+
+  // Try to match system
+  const allSystems = await db.systems.where('subjectId').equals(subjectId).toArray().then(res => res.filter(s => !s.deletedAt));
+  const cleanSysName = (systemName || '').trim().toLowerCase();
+  const matchedSys = allSystems.find(s => 
+    s.name.toLowerCase() === cleanSysName || 
+    (cleanSysName && s.name.toLowerCase().includes(cleanSysName)) || 
+    (cleanSysName && cleanSysName.includes(s.name.toLowerCase()))
+  );
+
+  let targetSystemId: number | string = matchedSys?.id || 0;
+  let nextRevisionDate: Date | null = null;
+  let intervalDays: number = 7;
+
+  if (matchedSys && matchedSys.id !== undefined) {
+    const previousInterval = matchedSys.currentRevisionInterval ?? 12;
+    const decayFactor = matchedSys.decayFactor ?? 1.0;
+    const revSchedule = scheduleNextRevision(status, previousInterval, now, decayFactor, 1.0);
+    nextRevisionDate = revSchedule.nextRevisionDate;
+    intervalDays = revSchedule.currentRevisionInterval;
+
+    await db.systems.update(matchedSys.id, {
+      status,
+      lastRevisionDate: new Date(),
+      currentRevisionInterval: intervalDays,
+      nextRevisionDate,
+      revisionCount: (matchedSys.revisionCount || 0) + 1,
+      contentCompleted: true,
+      updatedAt: new Date(),
+      hlc: generateHLC(),
+    });
+  } else {
+    // If not found, compute first revision schedule
+    const firstSchedule = scheduleFirstRevision(status, now, 1.0);
+    nextRevisionDate = firstSchedule.nextRevisionDate;
+    intervalDays = firstSchedule.currentRevisionInterval;
+  }
+
+  const scorePercent = confidenceLevel === 'HIGH' ? 90 : confidenceLevel === 'MED' ? 70 : 45;
+
+  // 1. Log completion event to history
+  const historyEntry: Omit<HistoryEntry, 'id'> = {
+    subjectId,
+    subjectName: subjectName || 'General Medicine',
+    systemId: targetSystemId,
+    systemName: systemName || matchedSys?.name || 'Study Block',
+    taskKey: 'curriculum_set_revision',
+    taskLabel: `Studied ${systemName || subjectName} (${durationMinutes}m • ${confidenceLevel} recall)`,
+    completedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  };
+  const historyId = await db.history.add(historyEntry);
+
+  // 2. Log score
+  const scoreId = await db.scoreLogs.add({
+    title: `Study Log: ${systemName || subjectName}`,
+    score: scorePercent,
+    total: 100,
+    percentage: scorePercent,
+    type: 'study',
+    subjectId,
+    systemId: targetSystemId,
+    timestamp: new Date(),
+    notes: topicsStudied || undefined,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  });
+
+  // 3. Record session telemetry
+  recordSessionCompletion('study', Math.max(15, durationMinutes), true);
+
+  return {
+    success: true,
+    historyId,
+    scoreId,
+    nextRevisionDate: nextRevisionDate || undefined,
+    intervalDays,
+  };
 }
 

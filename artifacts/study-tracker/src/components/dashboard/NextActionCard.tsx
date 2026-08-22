@@ -40,7 +40,9 @@ import {
   Info,
   Layers,
   HelpCircle,
-  Activity
+  Activity,
+  Mic,
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -317,14 +319,14 @@ export function NextActionCard({
         )} />
 
         {/* ── Top Meta Bar ──────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 mb-4 border-b border-border/60">
-          <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/60 border border-border/80 shrink-0 shadow-xs mt-0.5 sm:mt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 mb-3.5 border-b border-border/60">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-muted/60 border border-border/80 shrink-0 shadow-xs">
               {cardConfig.icon}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap min-w-0 mb-0.5">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary truncate">
                   {cardConfig.headerLabel}
                 </span>
@@ -332,93 +334,85 @@ export function NextActionCard({
                 <Badge variant="outline" className={cn("text-[9px] uppercase px-2 py-0.5 font-mono shrink-0 font-bold", cardConfig.badgeBg)}>
                   {cardConfig.badgeText}
                 </Badge>
-
-                {/* Circadian Indicator */}
-                {result?.circadianLabel && (
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full border border-border/50">
-                    <Sun className="w-2.5 h-2.5 text-amber-500" />
-                    {result.circadianLabel}
-                  </span>
-                )}
               </div>
 
-              <p className="text-xs text-muted-foreground leading-relaxed truncate">
+              <p className="text-xs text-muted-foreground leading-normal line-clamp-1 sm:line-clamp-none mt-0.5">
                 {isCustomFocusPinned 
                   ? "Manually pinned for immediate review session"
                   : archetype === 'tactical_sprint'
-                  ? `Exclusively targeted to: ${sprintSubjectsText}`
+                  ? `Sprint Target: ${sprintSubjectsText}`
                   : archetype === 'clinical_duty'
-                  ? "High-yield volatile micro-actions calibrated for hospital shifts"
+                  ? "High-yield micro-actions calibrated for hospital shifts"
                   : archetype === 'remediation_clinic'
-                  ? `${primary?.mistakeCount || 0} unresolved clinical errors detected in recent test history`
+                  ? `${primary?.mistakeCount || 0} unresolved clinical errors detected`
                   : archetype === 'flow_momentum'
-                  ? `${result?.sessionsCompletedToday || 1} session(s) completed today (${result?.minutesStudiedToday || 0}m) • Flow state active`
+                  ? `${result?.sessionsCompletedToday || 1} session(s) completed today • Momentum active`
                   : archetype === 'soft_recalibration'
-                  ? `Smoothed pacing via Knapsack decay allocation (${result?.recalibrationStatus?.daysRemaining}d remaining)`
-                  : "Ranked #1 highest recall ROI by Ebbinghaus retention and exam yield"}
+                  ? `Backlog smoothed over ${result?.recalibrationStatus?.daysRemaining || 10} days`
+                  : "Ranked #1 highest recall ROI by Ebbinghaus retention"}
               </p>
             </div>
           </div>
 
           {/* Time Tuner & Action Controls */}
-          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto">
-            {/* Custom Focus Pin/Edit button (hidden during tactical sprint unless custom focus is already active) */}
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 shrink-0 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-border/40">
+            {/* Custom Focus Pin/Edit button */}
             {setFocusDialogType && (isCustomFocusPinned || archetype !== 'tactical_sprint') && (
               <button
                 type="button"
                 onClick={() => setFocusDialogType('primary')}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border/60 hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold border border-border/60 hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                 title={isCustomFocusPinned ? "Change pinned focus" : "Pin custom focus"}
               >
-                <Pencil className="w-3.5 h-3.5" />
-                <span>{isCustomFocusPinned ? "Change Focus" : "Pin Focus"}</span>
+                <Pencil className="w-3 h-3" />
+                <span>{isCustomFocusPinned ? "Change" : "Pin"}</span>
               </button>
             )}
 
             {/* 3-Way Cognitive Intent Tuner */}
             {result?.operationalMode?.mode !== 'holiday' && (
-              <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-xl border border-border/50 shrink-0 max-w-full overflow-x-auto no-scrollbar scrollbar-none">
+              <div className="flex items-center gap-0.5 p-0.5 bg-muted/60 rounded-xl border border-border/50 shrink-0">
                 <button
                   type="button"
                   onClick={() => setSessionBudget('quick')}
                   className={cn(
-                    "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
                     sessionBudget === 'quick'
                       ? "bg-background text-amber-500 shadow-xs border border-amber-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Filter Rapid Recall drills & volatile concepts"
+                  title="15m Rapid Recall drills & volatile concepts"
                 >
-                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>Rapid Recall</span>
+                  <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+                  <span>Rapid</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSessionBudget('standard')}
                   className={cn(
-                    "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
                     sessionBudget === 'standard'
                       ? "bg-background text-teal-400 shadow-xs border border-teal-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Standard organ systems & core PYQs"
+                  title="30-45m Standard Review"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                  <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
                   <span>Standard</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSessionBudget('deep')}
                   className={cn(
-                    "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
                     sessionBudget === 'deep'
                       ? "bg-background text-sky-400 shadow-xs border border-sky-500/30 font-bold"
                       : "text-muted-foreground hover:text-foreground"
                   )}
-                  title="Deep focus sessions for complex multi-step systems"
+                  title="60m+ Deep Focus"
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>Deep Focus</span>
+                  <BookOpen className="w-3 h-3 text-sky-400 shrink-0" />
+                  <span>Deep</span>
                 </button>
               </div>
             )}
@@ -531,99 +525,42 @@ export function NextActionCard({
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 min-w-0">
-              <div className="space-y-1.5 min-w-0 flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground font-medium min-w-0">
-                    <span className="flex items-center gap-1 text-foreground font-semibold truncate">
-                      <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
-                      {primary.subjectName}
-                    </span>
-                    {primary.systemName !== primary.title && (
-                      <>
-                        <span>•</span>
-                        <span className="truncate">{primary.systemName}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* User-Configured Cognitive Depth Badge with 1-Tap Category Switcher */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className={cn(
-                            "inline-flex items-center gap-1.5 text-[11px] font-mono font-bold px-2.5 py-1 rounded-full border shadow-2xs transition-all cursor-pointer hover:opacity-90 active:scale-95",
-                            primary.depth === 'rapid'
-                              ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                              : primary.depth === 'deep' || primary.isLengthy
-                              ? "bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20"
-                              : "bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/20"
-                          )}
-                          title="Click to categorize study depth for this block"
-                        >
-                          {primary.depth === 'rapid' ? (
-                            <Zap className="w-3 h-3 text-amber-500 shrink-0" />
-                          ) : primary.depth === 'deep' || primary.isLengthy ? (
-                            <BookOpen className="w-3 h-3 text-sky-400 shrink-0" />
-                          ) : (
-                            <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
-                          )}
-                          <span>
-                            {primary.depth === 'rapid' ? '⚡ Rapid Recall' : primary.depth === 'deep' || primary.isLengthy ? '🔬 Deep Focus' : '📖 Standard'}
-                          </span>
-                          <SlidersHorizontal className="w-2.5 h-2.5 opacity-60 ml-0.5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 space-y-0.5">
-                        <DropdownMenuItem 
-                          onClick={() => handleSkip('fast_recall')}
-                          className="cursor-pointer gap-2 py-2 text-xs font-semibold text-foreground rounded-lg"
-                        >
-                          <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-                          <span>Rapid Recall</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleSkip('standard')}
-                          className="cursor-pointer gap-2 py-2 text-xs font-semibold text-foreground rounded-lg"
-                        >
-                          <Sparkles className="w-4 h-4 text-teal-400 shrink-0" />
-                          <span>Standard</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleSkip('needs_deep_work')}
-                          className="cursor-pointer gap-2 py-2 text-xs font-semibold text-foreground rounded-lg"
-                        >
-                          <BookOpen className="w-4 h-4 text-sky-400 shrink-0" />
-                          <span>Deep Focus</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3.5 min-w-0">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium min-w-0">
+                  <span className="flex items-center gap-1 text-foreground font-semibold truncate">
+                    <Folder className="w-3.5 h-3.5 text-primary shrink-0" />
+                    {primary.subjectName}
+                  </span>
+                  {primary.systemName !== primary.title && (
+                    <>
+                      <span>•</span>
+                      <span className="truncate">{primary.systemName}</span>
+                    </>
+                  )}
                 </div>
 
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-snug break-words">
                   {primary.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+                <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   {primary.statusText}
                 </p>
               </div>
             </div>
 
-            {/* Rationale Badges & "Why This?" CDSS Trigger */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-5 pt-1 min-w-0">
+            {/* Rationale Badges & "Why This?" CDSS Trigger (Clean 1-2 Badges Max) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pt-0.5 min-w-0">
               <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
-                <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0">
-                  Why this now:
+                <span className="text-[11px] font-semibold text-muted-foreground mr-0.5 shrink-0">
+                  Why this:
                 </span>
-                {primary.rationaleBadges.map((badge, idx) => (
+                {primary.rationaleBadges.slice(0, 2).map((badge, idx) => (
                   <span
                     key={idx}
                     className={cn(
-                      "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-lg border shadow-2xs whitespace-normal break-words",
+                      "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-lg border shadow-2xs whitespace-nowrap shrink-0",
                       getBadgeClass(badge.variant)
                     )}
                   >
@@ -638,20 +575,20 @@ export function NextActionCard({
                 <button
                   type="button"
                   onClick={() => setWhySheetOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold px-2.5 py-1 rounded-lg border border-primary/30 text-primary bg-primary/5 hover:bg-primary/15 transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                  className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-lg border border-primary/30 text-primary bg-primary/5 hover:bg-primary/15 transition-colors cursor-pointer shrink-0"
                 >
                   <Sparkles className="w-3 h-3 text-primary" />
-                  <span>Why this? (Score {primary.whyBreakdown.priorityScore})</span>
+                  <span>Why this?</span>
                 </button>
               )}
             </div>
 
             {/* Action Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pt-3 border-t border-border/50">
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   onClick={() => handleStartRevision(primary)}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm flex-1 sm:flex-none"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-4 sm:px-5 py-2.5 rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-2 text-xs sm:text-sm flex-1 sm:flex-none"
                 >
                   <span>
                     {sessionBudget === 'quick' || primary.depth === 'rapid'
@@ -663,14 +600,16 @@ export function NextActionCard({
                   <ArrowRight className="w-4 h-4" />
                 </Button>
 
+
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl px-3.5 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5 shrink-0"
+                      className="border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl px-3 py-2.5 text-xs font-semibold cursor-pointer flex items-center gap-1.5 shrink-0"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Skip</span>
+                      <span className="text-xs">Skip</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-60 rounded-xl">

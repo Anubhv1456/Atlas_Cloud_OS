@@ -115,6 +115,76 @@ export interface MistakeLog {
   hlc?: string;
 }
 
+export interface ScoreLog {
+  id?: number | string;
+  title: string;
+  score: number;
+  total: number;
+  percentage: number;
+  type?: 'set' | 'exam' | 'custom' | 'study' | 'gt' | 'swt' | 'qbank';
+  subjectId?: number | string;
+  systemId?: number | string;
+  curriculumSetId?: string;
+  timestamp: Date | string;
+  notes?: string;
+  weakSubjects?: string[];
+  testName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+}
+
+export interface HistoryEntry {
+  id?: number;
+  subjectId: number | string;
+  subjectName: string;
+  systemId: number | string;
+  systemName: string;
+  taskKey: string;
+  taskLabel: string;
+  completedAt: Date | string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+}
+
+export interface PYQYear {
+  id?: number;
+  subjectId: number | string;
+  year: string;
+  completed: boolean;
+  completedAt?: Date | string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+}
+
+export interface TopicProgress {
+  id: string; // topicId
+  topicId: string;
+  systemId?: number | string;
+  subjectId?: number | string;
+  status: 'mastered' | 'weak' | 'unseen';
+  lastStudiedAt?: Date | string;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+  hlc?: string;
+}
+
+export interface RevisionLog {
+  id?: number | string;
+  systemId: number | string;
+  subjectId: number | string;
+  timestamp: Date;
+  status: SystemStatus;
+  interval: number;
+  decayFactor?: number;
+  hlc?: string;
+}
+
 export interface RecommendationSkip {
   id?: number;
   targetId: string;

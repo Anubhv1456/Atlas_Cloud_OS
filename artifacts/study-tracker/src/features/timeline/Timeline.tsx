@@ -188,7 +188,7 @@ export default function Timeline() {
   } = useTimelineLogic();
 
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-10 max-w-5xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className="min-h-dvh bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 max-w-5xl mx-auto flex flex-col relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
 
       <div className="relative z-10 flex-1 flex flex-col space-y-6">
         {/* ── Header ─────────────────────────────────────────────────────────── */}

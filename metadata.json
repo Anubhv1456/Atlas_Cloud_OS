@@ -2,7 +2,8 @@
   "name": "Atlas Cloud",
   "description": "Intelligent Medical Study Operating System for MBBS, NEET PG, and INICET entrance preparation featuring Adaptive Operational Modes, Active Recall, and Memory Decay Calibration",
   "requestFramePermissions": [
-    "web-share"
+    "web-share",
+    "microphone"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

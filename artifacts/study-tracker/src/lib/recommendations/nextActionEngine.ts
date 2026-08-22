@@ -7,6 +7,7 @@ import { getLocalExamProfile } from '@/lib/examProfile';
 import { isSubjectInProfScope, getAllowedSubjectsForProfile } from '@/lib/curriculumScope';
 import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE, HistoryEntry } from '@/db/types';
 import { getDaysSinceLastStudy } from '@/db/queries';
+import { calculateSubjectFriction, SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
 
 export type RecommendationArchetype = 
   | 'tactical_strike' 
@@ -90,6 +91,7 @@ export interface SubjectInitiationOption {
 export interface NextActionEngineResult {
   primary: NextActionRecommendation | null;
   fallback: NextActionRecommendation | null;
+  upcomingQueue?: NextActionRecommendation[];
   sessionBudget: SessionBudget;
   totalCandidatesEvaluated: number;
   quickEligibleCount: number;
@@ -335,6 +337,14 @@ export async function getNextActionRecommendation(
     }
   }
 
+  // 4b. Compute real-time Subject Friction & Memory Decay metrics across all subjects
+  const subjectFrictionMap = new Map<string, ReturnType<typeof calculateSubjectFriction>>();
+  for (const s of allDbSubjects) {
+    const subId = s.id !== undefined ? s.id : s.name;
+    const friction = calculateSubjectFriction(s.name, subId, activeMistakes, historyEntries, curriculumSets);
+    subjectFrictionMap.set(s.name, friction);
+  }
+
   const subjectMap = new Map<number, string>(subjects.map(s => [s.id!, s.name]));
   const systemMap = new Map<number, StudySystem>(systems.map(sys => [sys.id!, sys]));
 
@@ -439,6 +449,16 @@ export async function getNextActionRecommendation(
     // Weak topics boost
     if (weakTopicsInSet > 0) {
       actionIndex += Math.min(20, weakTopicsInSet * 5);
+    }
+
+    // ── Subject Memory Decay & Friction Boost ────────────────────────────────
+    const subFriction = subjectFrictionMap.get(subjectName);
+    if (subFriction && !isTacticalSprint) {
+      if (subFriction.decayUrgency === 'CRITICAL') {
+        actionIndex += Math.min(50, Math.round(subFriction.frictionScore * 0.7));
+      } else if (subFriction.decayUrgency === 'ELEVATED') {
+        actionIndex += Math.min(25, Math.round(subFriction.frictionScore * 0.4));
+      }
     }
 
     // ── Soft Recalibration Knapsack Scoring ─────────────────────────────────
@@ -646,6 +666,66 @@ export async function getNextActionRecommendation(
     });
   }
 
+  // 5b. Evaluate critically decaying subjects from Friction Engine if they don't have high-priority set candidates
+  if (!isTacticalSprint) {
+    for (const sub of subjects) {
+      const subFriction = subjectFrictionMap.get(sub.name);
+      if (subFriction && (subFriction.decayUrgency === 'CRITICAL' || subFriction.daysSinceReview >= 25)) {
+        const alreadyHasHighCandidate = rawCandidates.some(c => c.subjectName.toLowerCase() === sub.name.toLowerCase() && c.priorityScore >= 80);
+        if (!alreadyHasHighCandidate) {
+          const subSystems = systems.filter(sys => String(sys.subjectId) === String(sub.id));
+          const targetSys = subSystems.find(s => !s.contentCompleted) || subSystems[0];
+          const sysId = targetSys?.id || (typeof sub.id === 'number' ? sub.id : 1);
+          const sysName = targetSys?.name || subFriction.recommendedTopic || `${sub.name} Core`;
+          
+          const frictionScore = Math.min(130, Math.round(85 + subFriction.frictionScore * 0.75));
+          const candidateId = `friction_drill:${sub.id}:${sysId}`;
+          if (!localSkipIds.has(candidateId)) {
+            rawCandidates.push({
+              id: candidateId,
+              type: 'spotDrill',
+              title: `${sub.name} • High-Yield Core`,
+              subjectName: sub.name,
+              systemName: sysName,
+              subjectId: Number(sub.id),
+              systemId: Number(sysId),
+              depth: 'rapid',
+              isLengthy: false,
+              isQuickEligible: true,
+              priorityScore: frictionScore,
+              archetype: subFriction.unresolvedMistakes > 0 ? 'remediation_clinic' : 'tactical_strike',
+              rationaleBadges: [
+                { label: '🔥 Critical Decay', variant: 'destructive', iconType: 'alert' },
+                { label: `⚡ ${subFriction.daysSinceReview}d Unreviewed`, variant: 'amber', iconType: 'clock' }
+              ],
+              whyBreakdown: {
+                priorityScore: frictionScore,
+                subjectName: sub.name,
+                examWeightage: subFriction.examWeightage,
+                retrievabilityPercent: Math.max(10, Math.round(100 - (subFriction.daysSinceReview / (subFriction.subjectHalfLifeDays * 2)) * 100)),
+                memoryDecayPercent: Math.min(95, Math.round((subFriction.daysSinceReview / subFriction.subjectHalfLifeDays) * 35)),
+                activeMistakes: subFriction.unresolvedMistakes,
+                weakTopicsCount: 0,
+                revisionPass: 1,
+                depthLabel: 'Rapid Recall',
+                circadianAffinity: circadian.label,
+                formulaString: `Friction Priority (${frictionScore}) = [Decay (${subFriction.daysSinceReview}d / Half-Life ${subFriction.subjectHalfLifeDays}d)] × Weight (${subFriction.examWeightage})`,
+                rationaleNarrative: `${sub.name} has entered critical memory decay (${subFriction.daysSinceReview} days unreviewed). High-yield exam weightage (${subFriction.examWeightage}%) requires immediate rapid recall intervention.`
+              },
+              topicCount: 3,
+              weakCount: 0,
+              mistakeCount: subFriction.unresolvedMistakes,
+              inferredScore: 30,
+              daysOverdue: Math.max(0, subFriction.daysSinceReview - subFriction.subjectHalfLifeDays),
+              revisionCount: 0,
+              statusText: `${subFriction.daysSinceReview}d unreviewed • Critical Memory Decay`
+            });
+          }
+        }
+      }
+    }
+  }
+
   const totalCandidatesEvaluated = rawCandidates.length;
 
   // Rank all raw candidates by priorityScore descending
@@ -804,6 +884,7 @@ export async function getNextActionRecommendation(
   
   const primary = filteredCandidates[0] || null;
   const fallback = filteredCandidates[1] || (filteredCandidates.length > 1 ? filteredCandidates.find(c => c.id !== primary?.id) : null) || null;
+  const upcomingQueue = filteredCandidates.slice(1, 5);
 
   const hasAnyCurriculumSets = curriculumSets.length > 0;
   const totalSyllabusSystemCount = ALL_SYSTEMS.length;
@@ -921,6 +1002,7 @@ export async function getNextActionRecommendation(
     hasPendingSyllabus,
     primary,
     fallback,
+    upcomingQueue,
     sessionBudget,
     totalCandidatesEvaluated,
     quickEligibleCount,

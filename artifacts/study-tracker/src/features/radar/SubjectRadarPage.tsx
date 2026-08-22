@@ -37,7 +37,7 @@ export default function SubjectRadarPage() {
   };
 
   return (
-    <div className="min-h-full bg-background text-foreground px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-28 md:pb-12 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
+    <div className="min-h-dvh bg-background text-foreground px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
       {/* ── Curriculum Header ─────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">

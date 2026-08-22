@@ -15,16 +15,12 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
-const _ResizeObserver = window.ResizeObserver;
-window.ResizeObserver = class ResizeObserver extends _ResizeObserver {
-  constructor(callback: ResizeObserverCallback) {
-    super((entries, observer) => {
-      window.requestAnimationFrame(() => {
-        callback(entries, observer);
-      });
-    });
+// Suppress benign ResizeObserver notifications
+window.addEventListener('error', (e) => {
+  if (e.message && e.message.includes('ResizeObserver loop')) {
+    e.stopImmediatePropagation();
   }
-};
+});
 
 // Register PWA service worker with auto-update
 if ('serviceWorker' in navigator) {

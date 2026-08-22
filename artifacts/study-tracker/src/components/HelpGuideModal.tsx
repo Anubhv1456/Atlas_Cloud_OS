@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown, HelpCircle } from 'lucide-react';
+import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown, HelpCircle, ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -254,6 +254,45 @@ const CHAPTERS = [
           <h4 className="text-base font-bold text-foreground">How can I renew or maintain beta access?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
             As Atlas transitions to official releases, early cohort members will be seamlessly migrated to full production tiers.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'disclaimer',
+    title: 'Statutory Medical Disclaimer',
+    icon: ShieldAlert,
+    searchTerms: 'medical disclaimer legal clinical patient care doctor device liability terms education exam',
+    content: (
+      <div className="space-y-6">
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 space-y-1.5">
+          <h4 className="font-bold text-sm uppercase tracking-wider flex items-center gap-1.5">
+            <ShieldAlert className="w-4 h-4" /> Strictly an Educational Revision Aid
+          </h4>
+          <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 font-medium">
+            Atlas is designed exclusively for medical examination preparation (NEET PG, INI-CET, FMGE, USMLE, and MBBS). It is <strong>NOT</strong> a certified medical device and must never be used for patient diagnosis, clinical management, or direct healthcare decision-making.
+          </p>
+        </div>
+
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">1. Academic Context Only</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            All algorithms, memory decay models, high-yield mistake ledgers, drug of choice heuristics, and clinical quiz interactions are curated solely to assist medical students in passing licensing and competitive entrance exams.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">2. No Clinical Decision Support</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Medical knowledge, clinical guidelines, and drug protocols change continuously. While Atlas references established textbook and board-examination consensus, healthcare practitioners and students must always consult peer-reviewed primary literature, institutional protocols, and official pharmacopoeias for real-world patient care.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">3. Limitation of Liability</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Atlas and its developers assume no liability or responsibility for any clinical errors, diagnosis mistakes, or treatment decisions undertaken in real-world clinical settings.
           </p>
         </section>
       </div>

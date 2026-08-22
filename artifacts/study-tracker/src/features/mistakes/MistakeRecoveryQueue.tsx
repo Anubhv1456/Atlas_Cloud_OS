@@ -38,6 +38,8 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ALL_SUBJECTS } from '@/data/ontology';
 import { toast } from 'sonner';
+import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
 
 export function getTagMeta(tag: string) {
   const norm = tag.toLowerCase();
@@ -81,6 +83,8 @@ export default function MistakeRecoveryQueue() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMistake, setEditingMistake] = useState<MistakeLog | null>(null);
   const [modalDefaultSubjectId, setModalDefaultSubjectId] = useState<string | number | undefined>(undefined);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const { settings } = useAISettings();
 
   // Filters & View State
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,6 +278,20 @@ export default function MistakeRecoveryQueue() {
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {settings.isAiEnabled && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setVoiceModalOpen(true)}
+              className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 shadow-2xs"
+              title="Voice & AI Clinical Extraction (⌘K / V)"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">AI Dictate / Paste</span>
+              <span className="sm:hidden">AI</span>
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
@@ -727,6 +745,13 @@ export default function MistakeRecoveryQueue() {
           }
         }}
       />
+
+      {settings.isAiEnabled && (
+        <AIVoiceCaptureModal
+          open={voiceModalOpen}
+          onOpenChange={setVoiceModalOpen}
+        />
+      )}
     </div>
   );
 }

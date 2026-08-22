@@ -47,7 +47,7 @@ class SimpleEventEmitter {
   }
   setMaxListeners() {}
 }
-import { generateHLC } from '@/lib/hlc';
+import { generateHLC, updateHLC, resolveEntityConflict, compareHLC } from '@/lib/hlc';
 import * as T from './types';
 
 export const dbEvents = new SimpleEventEmitter();
@@ -72,7 +72,7 @@ function sanitizeForFirestore(obj: any, preserveNullOrUndefinedKeys: boolean = f
   return obj;
 }
 
-class FirestoreTable<T> {
+class FirestoreTable<T extends Record<string, any>> {
   private cache: Map<string, T> = new Map();
   private unsubscribe: (() => void) | null = null;
   private readyResolve!: () => void;
@@ -91,6 +91,7 @@ class FirestoreTable<T> {
     this.unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        let hasChanges = false;
         snapshot.docChanges().forEach((change) => {
           const data = change.doc.data();
           // Parse date objects properly
@@ -99,19 +100,38 @@ class FirestoreTable<T> {
               data[key] = data[key].toDate();
             }
           }
+
+          const docId = String(change.doc.id);
+          const incoming = { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T;
+
+          // Track remote HLC logical clock
+          if (incoming.hlc) {
+            updateHLC(incoming.hlc);
+          }
           
           if (change.type === "added" || change.type === "modified") {
-            this.cache.set(change.doc.id, { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T);
+            const existing = this.cache.get(docId);
+            if (existing) {
+              // Perform CRDT / HLC-aware conflict resolution to avoid overwriting newer local edits
+              const merged = resolveEntityConflict(existing, incoming);
+              this.cache.set(docId, merged as T);
+            } else {
+              this.cache.set(docId, incoming);
+            }
+            hasChanges = true;
           }
           if (change.type === "removed") {
-            this.cache.delete(change.doc.id);
+            this.cache.delete(docId);
+            hasChanges = true;
           }
         });
         if (!this.isInitialLoadDone) {
           this.isInitialLoadDone = true;
           this.readyResolve();
         }
-        dbEvents.emit('change', this.name);
+        if (hasChanges) {
+          dbEvents.emit('change', this.name);
+        }
       },
       (error) => {
         console.warn(`[FirestoreTable:${this.name}] Snapshot listener operating in offline/cache mode:`, error);
@@ -154,11 +174,21 @@ class FirestoreTable<T> {
 
   async add(item: any): Promise<string | number> {
     const id = (item as any).id || generateHLC();
-    const cleanPayload = sanitizeForFirestore({
+    const existing = this.cache.get(String(id));
+    const hlc = (item as any).hlc || generateHLC();
+    
+    let resolvedItem = {
       ...item,
       id: isNaN(Number(id)) ? id : Number(id),
-      hlc: (item as any).hlc || generateHLC(),
-    });
+      hlc,
+      updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
+    };
+
+    if (existing) {
+      resolvedItem = resolveEntityConflict(existing, resolvedItem);
+    }
+
+    const cleanPayload = sanitizeForFirestore(resolvedItem);
 
     // Optimistic cache update
     this.cache.set(String(id), cleanPayload as T);
@@ -166,18 +196,28 @@ class FirestoreTable<T> {
 
     if (auth.currentUser) {
       const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
-      await setDoc(docRef, cleanPayload);
+      await setDoc(docRef, cleanPayload, { merge: true });
     }
     return id;
   }
 
   async put(item: T): Promise<string | number> {
     const id = (item as any).id || generateHLC();
-    const cleanPayload = sanitizeForFirestore({
+    const existing = this.cache.get(String(id));
+    const hlc = (item as any).hlc || generateHLC();
+
+    let resolvedItem = {
       ...item,
       id: isNaN(Number(id)) ? id : Number(id),
-      hlc: (item as any).hlc || generateHLC(),
-    });
+      hlc,
+      updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
+    };
+
+    if (existing) {
+      resolvedItem = resolveEntityConflict(existing, resolvedItem);
+    }
+
+    const cleanPayload = sanitizeForFirestore(resolvedItem);
 
     // Optimistic cache update
     this.cache.set(String(id), cleanPayload as T);
@@ -192,25 +232,34 @@ class FirestoreTable<T> {
 
   async bulkAdd(items: T[]) {
     if (!items.length) return;
+    const resolvedItems: T[] = [];
+
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
-      const cleanPayload = sanitizeForFirestore({
+      const existing = this.cache.get(String(id));
+      let resolved = {
         ...item,
         id: isNaN(Number(id)) ? id : Number(id),
         hlc: (item as any).hlc || generateHLC(),
-      });
+        updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
+      };
+      if (existing) {
+        resolved = resolveEntityConflict(existing, resolved);
+      }
+      const cleanPayload = sanitizeForFirestore(resolved);
       this.cache.set(String(id), cleanPayload as T);
+      resolvedItems.push(cleanPayload);
     });
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    for (let i = 0; i < items.length; i += 400) {
+    for (let i = 0; i < resolvedItems.length; i += 400) {
       const batch = writeBatch(firestoreDb);
-      const chunk = items.slice(i, i + 400);
+      const chunk = resolvedItems.slice(i, i + 400);
       chunk.forEach(item => {
-        const id = (item as any).id || generateHLC();
+        const id = (item as any).id;
         const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
-        batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }));
+        batch.set(docRef, item, { merge: true });
       });
       await batch.commit();
     }
@@ -218,25 +267,34 @@ class FirestoreTable<T> {
 
   async bulkPut(items: T[]) {
     if (!items.length) return;
+    const resolvedItems: T[] = [];
+
     items.forEach(item => {
       const id = (item as any).id || generateHLC();
-      const cleanPayload = sanitizeForFirestore({
+      const existing = this.cache.get(String(id));
+      let resolved = {
         ...item,
         id: isNaN(Number(id)) ? id : Number(id),
         hlc: (item as any).hlc || generateHLC(),
-      });
+        updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
+      };
+      if (existing) {
+        resolved = resolveEntityConflict(existing, resolved);
+      }
+      const cleanPayload = sanitizeForFirestore(resolved);
       this.cache.set(String(id), cleanPayload as T);
+      resolvedItems.push(cleanPayload);
     });
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    for (let i = 0; i < items.length; i += 400) {
+    for (let i = 0; i < resolvedItems.length; i += 400) {
       const batch = writeBatch(firestoreDb);
-      const chunk = items.slice(i, i + 400);
+      const chunk = resolvedItems.slice(i, i + 400);
       chunk.forEach(item => {
-        const id = (item as any).id || generateHLC();
+        const id = (item as any).id;
         const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
-        batch.set(docRef, sanitizeForFirestore({ ...item, id, hlc: (item as any).hlc || generateHLC() }), { merge: true });
+        batch.set(docRef, item, { merge: true });
       });
       await batch.commit();
     }
@@ -244,9 +302,11 @@ class FirestoreTable<T> {
 
   async update(id: string | number, changes: Partial<T>) {
     const existing = this.cache.get(String(id));
+    const nowHlc = (changes as any).hlc || generateHLC();
     const cleanChanges = sanitizeForFirestore({
       ...changes,
-      hlc: (changes as any).hlc || generateHLC(),
+      hlc: nowHlc,
+      updatedAt: changes.updatedAt ? (changes.updatedAt instanceof Date ? changes.updatedAt : new Date(changes.updatedAt)) : new Date(),
     }, true);
 
     if (existing) {
@@ -254,7 +314,9 @@ class FirestoreTable<T> {
       for (const k of Object.keys(cleanChanges)) {
         (merged as any)[k] = cleanChanges[k];
       }
-      this.cache.set(String(id), merged as T);
+      // Apply conflict-aware safeguard
+      const resolved = resolveEntityConflict(existing, merged);
+      this.cache.set(String(id), resolved as T);
       dbEvents.emit('change', this.name);
     }
 
