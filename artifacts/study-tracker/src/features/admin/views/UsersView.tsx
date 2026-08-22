@@ -28,6 +28,36 @@ export const DURATION_PRESETS = [
   { label: 'Lifetime / Permanent Access', value: null, tag: 'Lifetime', desc: 'Permanent unrestricted access' },
 ];
 
+const formatTimestamp = (val: any, pattern = 'MMM d, yyyy • p', fallback = 'N/A'): string => {
+  if (!val) return fallback;
+  try {
+    let dateObj: Date | null = null;
+    if (typeof val?.toDate === 'function') {
+      dateObj = val.toDate();
+    } else if (typeof val?.toMillis === 'function') {
+      dateObj = new Date(val.toMillis());
+    } else if (typeof val?.seconds === 'number') {
+      dateObj = new Date(val.seconds * 1000);
+    } else if (val instanceof Date) {
+      dateObj = val;
+    } else if (typeof val === 'number') {
+      dateObj = new Date(val);
+    } else if (typeof val === 'string') {
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) {
+        dateObj = parsed;
+      }
+    }
+
+    if (dateObj && !isNaN(dateObj.getTime())) {
+      return format(dateObj, pattern);
+    }
+  } catch (e) {
+    console.warn('[UsersView] Failed to format timestamp:', val, e);
+  }
+  return fallback;
+};
+
 export function UsersView() {
   const { user: currentAuthUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
@@ -792,7 +822,7 @@ export function UsersView() {
 
                             {u.betaAccessExpiresAt && !u.vaultActivationRequired && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
                               <div className="text-[10px] text-muted-foreground">
-                                Expires {format(u.betaAccessExpiresAt.toDate ? u.betaAccessExpiresAt.toDate() : new Date(u.betaAccessExpiresAt), 'MMM d, yyyy')}
+                                Expires {formatTimestamp(u.betaAccessExpiresAt, 'MMM d, yyyy', '')}
                               </div>
                             )}
                           </div>
@@ -1312,18 +1342,14 @@ export function UsersView() {
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-muted-foreground">Export Timestamp</span>
                   <span className="text-foreground">
-                    {inspectingUser.vaultImportProvenance?.exportTimestamp 
-                      ? format(new Date(inspectingUser.vaultImportProvenance.exportTimestamp), 'MMM d, yyyy • p')
-                      : 'N/A'}
+                    {formatTimestamp(inspectingUser.vaultImportProvenance?.exportTimestamp, 'MMM d, yyyy • p', 'N/A')}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-muted-foreground">Import Timestamp</span>
                   <span className="text-foreground">
-                    {inspectingUser.vaultImportProvenance?.importedAt 
-                      ? format(new Date(inspectingUser.vaultImportProvenance.importedAt), 'MMM d, yyyy • p')
-                      : 'Recently'}
+                    {formatTimestamp(inspectingUser.vaultImportProvenance?.importedAt, 'MMM d, yyyy • p', 'Recently')}
                   </span>
                 </div>
               </div>

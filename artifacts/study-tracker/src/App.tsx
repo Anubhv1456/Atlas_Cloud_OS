@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
+import { AudioPermissionBanner } from '@/components/AudioPermissionBanner';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
@@ -172,6 +173,7 @@ function ProtectedApp() {
       <DynamicIslandCapsule />
       <BottomNav />
       <div className="flex-1 w-full relative z-10 md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-dvh">
+        <AudioPermissionBanner />
         <OfflineLeaseBanner />
         <motion.main
           key={location}
