@@ -214,7 +214,7 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
   }, [submitSpeechTurn]);
 
   // Start Voice Recording (Push-to-Talk or Hands-Free)
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
@@ -228,6 +228,25 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
     });
 
     isRecordingRef.current = true;
+
+    // Proactively request mic stream on user gesture to force native PWA / browser permission dialog
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        tempStream.getTracks().forEach((track) => track.stop());
+      } catch (micErr: any) {
+        console.warn('[VoiceSession] getUserMedia mic permission denied or blocked:', micErr);
+        isRecordingRef.current = false;
+        speechCoordinator.releaseLock('drawer-voice');
+        setSessionState((prev) => ({
+          ...prev,
+          isActive: false,
+          isListening: false,
+          errorMessage: 'Microphone permission blocked. Go to Settings > Device Permissions to unblock audio.',
+        }));
+        return;
+      }
+    }
 
     // Unlock speech synth
     if (typeof window !== 'undefined' && window.speechSynthesis) {

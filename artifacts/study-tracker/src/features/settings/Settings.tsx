@@ -4,6 +4,7 @@ import {
   ExamProfileSection,
   SystemPreferencesCard,
   AIAssistantSection,
+  PermissionsDiagnosticsSection,
   DataVaultSection,
   PWASection,
   FaqSection,
@@ -44,6 +45,11 @@ export default function Settings() {
         {/* 4. Clinical AI & Voice Assistant (Optional Free BYOK) */}
         <section>
           <AIAssistantSection />
+        </section>
+
+        {/* 4B. Device Permissions & Audio Diagnostics */}
+        <section>
+          <PermissionsDiagnosticsSection />
         </section>
 
         {/* 5. Storage & Backup */}

@@ -191,8 +191,15 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
         }
       );
       dspSessionRef.current = dspSession;
-    } catch (err) {
-      console.warn('[useVoiceInput] DSP initialization failed, falling back to standard audio stream:', err);
+    } catch (err: any) {
+      console.warn('[useVoiceInput] DSP initialization failed:', err);
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setError('Microphone permission blocked. Please grant microphone access in Settings > Device Permissions.');
+        shouldListenRef.current = false;
+        setIsListening(false);
+        speechCoordinator.releaseLock('command-bar');
+        return;
+      }
     }
 
     // 2. Initialize Speech Recognition with Injected Medical Grammar

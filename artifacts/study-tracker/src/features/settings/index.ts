@@ -16,4 +16,5 @@ export * from './AboutSection';
 export * from './DataExportSection';
 export * from './SystemPreferencesCard';
 export * from './AIAssistantSection';
+export * from './PermissionsDiagnosticsSection';
 export * from './DataVaultSection';
