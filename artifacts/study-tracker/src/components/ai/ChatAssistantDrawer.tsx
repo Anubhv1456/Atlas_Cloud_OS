@@ -356,6 +356,24 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     }
   };
 
+  // Sync assistant open status to document and window event for BottomNav auto-hiding
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.assistantOpen = open ? 'true' : 'false';
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('atlas-assistant-toggle', { detail: { open } }));
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.dataset.assistantOpen = 'false';
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atlas-assistant-toggle', { detail: { open: false } }));
+      }
+    };
+  }, [open]);
+
   // Clear conversation history
   const handleClearHistory = () => {
     setMessages([
@@ -381,25 +399,25 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-auto">
-        {/* Backdrop overlay */}
+        {/* Full-Screen Opaque Backdrop overlay */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={() => onOpenChange(false)}
-          className="fixed inset-0 bg-background/80 backdrop-blur-md"
+          className="fixed inset-0 bg-background/95 sm:bg-background/80 backdrop-blur-xl"
         />
 
-        {/* Floating Modal / Drawer Container */}
+        {/* Full-Screen Native Sheet on Mobile / Centered Modal on Desktop */}
         <motion.div
-          initial={{ opacity: 0, y: 60, scale: 0.98 }}
+          initial={{ opacity: 0, y: 40, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 60, scale: 0.98 }}
+          exit={{ opacity: 0, y: 40, scale: 0.98 }}
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
           className={cn(
-            "relative w-full max-w-2xl h-[88vh] sm:h-[82vh] flex flex-col rounded-t-3xl sm:rounded-2xl border shadow-2xl overflow-hidden",
-            "bg-card/95 dark:bg-card/90 border-border/80 dark:border-border/60 backdrop-blur-xl"
+            "relative w-full max-w-2xl h-[100dvh] sm:h-[84vh] flex flex-col rounded-none sm:rounded-2xl border-0 sm:border shadow-2xl overflow-hidden",
+            "bg-card/98 dark:bg-card/95 border-border/80 dark:border-border/60 backdrop-blur-2xl"
           )}
         >
           {/* Header Bar with Live Exam Context Badge & Segmented Control */}
@@ -509,18 +527,18 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
           {activeTab === 'voice' ? (
             /* Apple-Standard Voice Co-Pilot Dedicated Screen */
-            <div className="flex-1 flex flex-col items-center justify-between p-5 sm:p-7 space-y-4 overflow-y-auto bg-gradient-to-b from-background via-card/50 to-background relative select-none">
+            <div className="flex-1 flex flex-col items-center justify-between p-3 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom,16px))] space-y-2 sm:space-y-4 overflow-y-auto bg-gradient-to-b from-background via-card/50 to-background relative select-none">
               
               {/* Ambient Radial Reactive Glow Backdrop */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
                 <motion.div
                   animate={{
                     scale: ambientSession.isListening
-                      ? [1, 1.25, 1.05]
+                      ? [1, 1.2, 1.05]
                       : ambientSession.isThinking
-                      ? [1, 1.15, 1]
+                      ? [1, 1.12, 1]
                       : ambientSession.isSpeakingAI
-                      ? [1, 1.2, 1]
+                      ? [1, 1.15, 1]
                       : [0.9, 1, 0.9],
                     opacity: ambientSession.isListening
                       ? 0.35
@@ -532,7 +550,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   }}
                   transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
                   className={cn(
-                    "w-80 h-80 rounded-full blur-3xl transition-colors duration-700",
+                    "w-64 h-64 sm:w-80 sm:h-80 rounded-full blur-3xl transition-colors duration-700",
                     ambientSession.isListening
                       ? "bg-emerald-500"
                       : ambientSession.isThinking
@@ -545,7 +563,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               </div>
 
               {/* Top Mode Switcher (Push-to-Talk vs Hands-Free) */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border/40 backdrop-blur-md z-10 shadow-2xs">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border/40 backdrop-blur-md z-10 shadow-2xs shrink-0">
                 <button
                   type="button"
                   onClick={() => handleVoiceInputModeChange('push-to-talk')}
@@ -593,10 +611,10 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               </AnimatePresence>
 
               {/* Interactive Orb & Visualizer */}
-              <div className="flex-1 flex flex-col items-center justify-center space-y-4 w-full max-w-lg my-auto relative z-10">
+              <div className="flex-1 flex flex-col items-center justify-center space-y-2.5 sm:space-y-4 w-full max-w-lg my-auto relative z-10">
                 
                 {/* Interactive 3-Ring Resonance Orb */}
-                <div className="relative flex items-center justify-center my-2">
+                <div className="relative flex items-center justify-center my-1 sm:my-2">
                   {(ambientSession.isListening || ambientSession.isSpeakingAI) && (
                     <>
                       <motion.div
@@ -604,8 +622,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           "absolute rounded-full pointer-events-none",
                           ambientSession.isListening ? "bg-emerald-500/15" : "bg-sky-500/15"
                         )}
-                        initial={{ width: 140, height: 140, opacity: 0.8 }}
-                        animate={{ width: [140, 240], height: [140, 240], opacity: [0.8, 0] }}
+                        initial={{ width: 110, height: 110, opacity: 0.8 }}
+                        animate={{ width: [110, 190], height: [110, 190], opacity: [0.8, 0] }}
                         transition={{ repeat: Infinity, duration: 2.2, ease: "easeOut" }}
                       />
                       <motion.div
@@ -613,8 +631,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           "absolute rounded-full pointer-events-none",
                           ambientSession.isListening ? "bg-emerald-500/10" : "bg-sky-500/10"
                         )}
-                        initial={{ width: 140, height: 140, opacity: 0.5 }}
-                        animate={{ width: [140, 200], height: [140, 200], opacity: [0.5, 0] }}
+                        initial={{ width: 110, height: 110, opacity: 0.5 }}
+                        animate={{ width: [110, 160], height: [110, 160], opacity: [0.5, 0] }}
                         transition={{ repeat: Infinity, duration: 2.2, delay: 0.5, ease: "easeOut" }}
                       />
                       <motion.div
@@ -622,8 +640,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           "absolute rounded-full pointer-events-none",
                           ambientSession.isListening ? "bg-emerald-500/15" : "bg-sky-500/15"
                         )}
-                        initial={{ width: 140, height: 140, opacity: 0.7 }}
-                        animate={{ width: [140, 260], height: [140, 260], opacity: [0.7, 0] }}
+                        initial={{ width: 110, height: 110, opacity: 0.7 }}
+                        animate={{ width: [110, 210], height: [110, 210], opacity: [0.7, 0] }}
                         transition={{ repeat: Infinity, duration: 2.2, delay: 1.0, ease: "easeOut" }}
                       />
                     </>
@@ -662,7 +680,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     }
                     style={{ touchAction: 'none' }}
                     className={cn(
-                      "relative w-32 h-32 sm:w-36 sm:h-36 rounded-full flex flex-col items-center justify-center border transition-all duration-300 cursor-pointer shadow-2xl backdrop-blur-md active:scale-95 select-none",
+                      "relative w-28 h-28 sm:w-36 sm:h-36 rounded-full flex flex-col items-center justify-center border transition-all duration-300 cursor-pointer shadow-2xl backdrop-blur-md active:scale-95 select-none",
                       ambientSession.isListening
                         ? "bg-emerald-500/15 border-emerald-500/50 shadow-emerald-500/25 text-emerald-400 ring-4 ring-emerald-500/20"
                         : ambientSession.isThinking
@@ -673,15 +691,15 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     )}
                   >
                     {ambientSession.isListening ? (
-                      <Mic className="w-12 h-12 sm:w-14 sm:h-14 animate-pulse" />
+                      <Mic className="w-10 h-10 sm:w-14 sm:h-14 animate-pulse" />
                     ) : ambientSession.isThinking ? (
-                      <Sparkles className="w-12 h-12 sm:w-14 sm:h-14 animate-spin" />
+                      <Sparkles className="w-10 h-10 sm:w-14 sm:h-14 animate-spin" />
                     ) : ambientSession.isSpeakingAI ? (
-                      <Volume2 className="w-12 h-12 sm:w-14 sm:h-14 animate-pulse" />
+                      <Volume2 className="w-10 h-10 sm:w-14 sm:h-14 animate-pulse" />
                     ) : (
-                      <Mic className="w-12 h-12 sm:w-14 sm:h-14" />
+                      <Mic className="w-10 h-10 sm:w-14 sm:h-14" />
                     )}
-                    <span className="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-70">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest mt-0.5 sm:mt-1 opacity-70">
                       {ambientSession.isListening ? "Listening" : ambientSession.isThinking ? "Thinking" : ambientSession.isSpeakingAI ? "Speaking" : voiceInputMode === 'hands-free' ? "Tap to Start" : "Hold Orb"}
                     </span>
                   </motion.div>
@@ -693,16 +711,17 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   isThinking={ambientSession.isThinking}
                   isSpeakingAI={ambientSession.isSpeakingAI}
                   energyLevel={ambientSession.energyLevel}
+                  className="h-8 sm:h-10 max-w-xs shrink-0"
                 />
 
                 {/* Kinetic Transcript Card with Frosted Glass Hierarchy */}
-                <div className="w-full space-y-2.5">
+                <div className="w-full space-y-1.5 sm:space-y-2.5">
                   <div className="flex items-center justify-center gap-2">
                     <div className={cn(
                       "w-2 h-2 rounded-full",
                       ambientSession.isListening ? "bg-emerald-400 animate-ping" : ambientSession.isThinking ? "bg-amber-400 animate-spin" : ambientSession.isSpeakingAI ? "bg-sky-400 animate-pulse" : "bg-muted-foreground/40"
                     )} />
-                    <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                    <span className="text-[11px] sm:text-xs uppercase tracking-wider font-semibold text-muted-foreground">
                       {ambientSession.isListening
                         ? "Listening... (English / Hindi / Hinglish)"
                         : ambientSession.isThinking
@@ -713,7 +732,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     </span>
                   </div>
                   
-                  <div className="text-sm sm:text-base font-medium text-foreground min-h-[72px] max-h-36 overflow-y-auto px-5 py-3.5 rounded-2xl bg-card/80 dark:bg-card/60 border border-border/60 backdrop-blur-md shadow-xs flex items-center justify-center text-center transition-all leading-relaxed">
+                  <div className="text-xs sm:text-sm font-medium text-foreground min-h-[52px] max-h-24 sm:min-h-[72px] sm:max-h-36 overflow-y-auto px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-2xl bg-card/80 dark:bg-card/60 border border-border/60 backdrop-blur-md shadow-xs flex items-center justify-center text-center transition-all leading-relaxed">
                     {ambientSession.liveTranscript ? (
                       <span className="text-foreground font-semibold italic">
                         "{ambientSession.liveTranscript}"
@@ -730,8 +749,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   </div>
                 </div>
 
-                {/* Quick Voice Suggestion Pills */}
-                <div className="w-full flex flex-wrap items-center justify-center gap-2 pt-1">
+                {/* Quick Voice Suggestion Pills - Horizontal Scrollable Row */}
+                <div className="w-full flex flex-nowrap items-center justify-start sm:justify-center gap-1.5 overflow-x-auto scrollbar-none px-1 py-1 shrink-0">
                   {[ 
                     { label: "📝 Add 20th Notebook Rule", query: "Add 20th notebook pearl: Drug of choice for Trigeminal Neuralgia is Carbamazepine" },
                     { label: "🧠 Quiz me on Cranial Nerves", query: "Quiz me on Cranial Nerves clinical high-yields" },
@@ -741,7 +760,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => ambientSession.submitSpeechTurn(chip.query)} 
-                      className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-95 shadow-2xs"
+                      className="whitespace-nowrap shrink-0 px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-95 shadow-2xs"
                     >
                       {chip.label}
                     </button>
@@ -750,7 +769,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               </div>
 
               {/* Apple-Style Tactile Bottom Control Bar */}
-              <div className="w-full max-w-md flex flex-col items-center justify-center pb-1 z-10 gap-1.5">
+              <div className="w-full max-w-md flex flex-col items-center justify-center shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] z-10 gap-1 sm:gap-1.5">
                 <button
                   type="button"
                   onPointerDown={
@@ -777,7 +796,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   }
                   style={{ touchAction: 'none' }}
                   className={cn(
-                    "w-full py-4 px-6 rounded-2xl font-bold text-sm sm:text-base shadow-xl flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]",
+                    "w-full h-11 sm:h-13 py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]",
                     ambientSession.isListening
                       ? "bg-emerald-600 text-white shadow-emerald-600/30 ring-4 ring-emerald-500/25 animate-pulse"
                       : ambientSession.isThinking
@@ -785,7 +804,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       : "bg-primary text-primary-foreground shadow-primary/25 hover:bg-primary/90"
                   )}
                 >
-                  <Mic className="w-5 h-5" />
+                  <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>
                     {ambientSession.isListening
                       ? voiceInputMode === 'hands-free' ? "Listening... Tap to Stop" : "Listening... Release to Send"
@@ -796,7 +815,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       : "Hold to Talk (Push-to-Talk)"}
                   </span>
                 </button>
-                <p className="text-[10px] text-muted-foreground/60 text-center select-none pt-0.5">
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 text-center select-none pt-0.5">
                   ⚖️ Educational revision tool for medical exam prep. Not for clinical patient management.
                 </p>
               </div>
@@ -926,16 +945,16 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           )}
 
           {/* Unified Multi-Modal Input Bar */}
-          <div className="p-5 border-t border-border/40 bg-card">
-            <div className="flex items-center gap-3 p-2 rounded-2xl bg-muted/30 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+          <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-border/40 bg-card shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-muted/30 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
               {/* 1-Tap Paste Clinical Stem Button */}
               <button
                 type="button"
                 onClick={handlePasteClinicalStem}
                 title="1-Tap Paste Clinical Stem / Q-Bank Explanation from Clipboard"
-                className="p-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-card transition-colors shrink-0 cursor-pointer"
+                className="p-2.5 sm:p-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-card transition-colors shrink-0 cursor-pointer"
               >
-                <Clipboard className="w-5 h-5" />
+                <Clipboard className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Text Input Area */}
@@ -946,7 +965,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 onKeyDown={handleKeyDown}
                 rows={1}
                 placeholder="Ask Atlas..."
-                className="flex-1 max-h-32 min-h-[44px] py-3 px-2 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none resize-none leading-relaxed"
+                className="flex-1 max-h-28 sm:max-h-32 min-h-[40px] sm:min-h-[44px] py-2.5 sm:py-3 px-2 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none resize-none leading-relaxed"
               />
 
               {/* Hold-to-Talk / Tap Audio Dictation Button */}
@@ -966,7 +985,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   }
                 }}
                 className={cn(
-                  "p-3 rounded-xl transition-all shrink-0 cursor-pointer select-none active:scale-95",
+                  "p-2.5 sm:p-3 rounded-xl transition-all shrink-0 cursor-pointer select-none active:scale-95",
                   isListening
                     ? "bg-rose-500 text-white shadow-md animate-pulse"
                     : "text-muted-foreground hover:text-foreground hover:bg-card"
@@ -974,9 +993,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 title={isListening ? "Release or tap to stop recording" : "Hold or tap to speak"}
               >
                 {isListening ? (
-                  <MicOff className="w-5 h-5" />
+                  <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />
                 ) : (
-                  <Mic className="w-5 h-5" />
+                  <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
               </button>
 
@@ -986,16 +1005,16 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 disabled={!inputVal.trim() || isLoading}
                 onClick={() => handleSendMessage()}
                 className={cn(
-                  "p-3 rounded-xl transition-all shrink-0 cursor-pointer",
+                  "p-2.5 sm:p-3 rounded-xl transition-all shrink-0 cursor-pointer",
                   inputVal.trim() && !isLoading
                     ? "bg-primary text-primary-foreground shadow-sm hover:opacity-90 active:scale-95"
                     : "bg-card text-muted-foreground/50 opacity-60 cursor-not-allowed border border-border/40"
                 )}
               >
-                <ArrowUp className="w-5 h-5" />
+                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
-            <p className="text-[10px] text-muted-foreground/60 text-center pb-2 px-4 select-none">
+            <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 text-center pb-1 pt-1.5 px-4 select-none">
               ⚖️ Educational revision assistant for medical exam prep. Not for clinical diagnosis or patient care.
             </p>
           </div>

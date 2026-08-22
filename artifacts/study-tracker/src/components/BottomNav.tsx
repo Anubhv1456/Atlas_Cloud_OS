@@ -7,7 +7,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { useState, useEffect, useCallback } from 'react';
 
-export function BottomNav() {
+export interface BottomNavProps {
+  isAssistantOpen?: boolean;
+}
+
+export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavProps = {}) {
   const [location, setLocation] = useLocation();
   const { profile, isConfigured } = useExamProfile();
   const { user } = useAuth();
@@ -15,6 +19,27 @@ export function BottomNav() {
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [isAssistantOpenState, setIsAssistantOpenState] = useState(
+    typeof document !== 'undefined' ? document.body?.dataset?.assistantOpen === 'true' : false
+  );
+
+  const isAssistantOpen = propIsAssistantOpen ?? isAssistantOpenState;
+
+  useEffect(() => {
+    const handleAssistantToggle = (e: Event) => {
+      const customEvent = e as CustomEvent<{ open?: boolean }>;
+      if (typeof customEvent.detail?.open === 'boolean') {
+        setIsAssistantOpenState(customEvent.detail.open);
+      } else {
+        setIsAssistantOpenState(document.body?.dataset?.assistantOpen === 'true');
+      }
+    };
+
+    window.addEventListener('atlas-assistant-toggle', handleAssistantToggle);
+    return () => {
+      window.removeEventListener('atlas-assistant-toggle', handleAssistantToggle);
+    };
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -199,7 +224,12 @@ export function BottomNav() {
 
       {/* ── MOBILE FLOATING DOCK (Visible on small screens < md) ────────────── */}
       <div 
-        className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/80 bg-background/85 dark:bg-card/90 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.2)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.55)] px-2 py-1.5 flex items-center justify-around transition-all duration-300 pointer-events-auto select-none"
+        className={cn(
+          "md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/80 bg-background/85 dark:bg-card/90 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.2)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.55)] px-2 py-1.5 flex items-center justify-around transition-all duration-300 select-none",
+          isAssistantOpen
+            ? "translate-y-28 opacity-0 pointer-events-none"
+            : "translate-y-0 opacity-100 pointer-events-auto"
+        )}
         style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="relative w-full flex items-center justify-around gap-1 h-full">
