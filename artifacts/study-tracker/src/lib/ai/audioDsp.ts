@@ -46,15 +46,27 @@ export class AcousticDspEngine {
     const silenceDurationMs = options.silenceDurationMs ?? 1600;
     const minSpeechDurationMs = options.minSpeechDurationMs ?? 350;
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: 1,
-        sampleRate: 16000,
-      },
-    });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+    } catch (err: any) {
+      if (
+        err?.name === 'OverconstrainedError' ||
+        err?.name === 'ConstraintNotSatisfiedError' ||
+        err?.name === 'TypeError'
+      ) {
+        console.warn('[AudioDSP] Detailed constraints rejected, falling back to basic audio stream:', err);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } else {
+        throw err;
+      }
+    }
 
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioContextClass();

@@ -45,14 +45,27 @@ export class VoiceWorkletController {
   public async start(callbacks: VoiceWorkletCallbacks): Promise<void> {
     if (this.isRunning) return;
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: 1,
-      },
-    });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+    } catch (err: any) {
+      if (
+        err?.name === 'OverconstrainedError' ||
+        err?.name === 'ConstraintNotSatisfiedError' ||
+        err?.name === 'TypeError'
+      ) {
+        console.warn('[VoiceWorklet] Detailed constraints rejected, falling back to basic audio stream:', err);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } else {
+        throw err;
+      }
+    }
 
     this.mediaStream = stream;
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;

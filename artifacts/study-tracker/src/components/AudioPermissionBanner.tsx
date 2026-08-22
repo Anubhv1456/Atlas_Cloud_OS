@@ -64,13 +64,26 @@ export function AudioPermissionBanner() {
     try {
       setIsRequesting(true);
       // Trigger native OS/browser permission prompt
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (err: any) {
+        if (
+          err?.name === 'OverconstrainedError' ||
+          err?.name === 'ConstraintNotSatisfiedError' ||
+          err?.name === 'TypeError'
+        ) {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } else {
+          throw err;
+        }
+      }
 
       // Stop stream immediately after acquiring permission
       stream.getTracks().forEach((track) => track.stop());
