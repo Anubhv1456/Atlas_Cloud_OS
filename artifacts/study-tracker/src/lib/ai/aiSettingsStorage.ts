@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type SupportedGeminiModel = 'gemini-2.5-flash' | 'gemini-3.1-flash-lite' | 'gemini-2.5-flash-lite';
+export type SupportedGeminiModel = 'gemini-2.5-flash' | 'gemini-2.5-flash-lite';
 
 export interface ModelOption {
   id: SupportedGeminiModel;
@@ -16,27 +16,18 @@ export const AVAILABLE_GEMINI_MODELS: ModelOption[] = [
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
-    badge: 'Recommended',
+    badge: 'Balanced',
     tagline: 'Standard Fast & Intelligent',
-    description: 'High accuracy for medical taxonomy, structured clinical action extraction, and diagnostic feedback.',
+    description: 'Gold standard accuracy for medical taxonomy, structured clinical action extraction, and diagnostic feedback.',
     rpm: 10,
     rpd: 250,
   },
   {
-    id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash-Lite',
-    badge: 'High Speed',
-    tagline: 'Ultra-low Latency & Quota',
-    description: 'Instant response times for rapid voice logging, active recall drills, and high daily request limits.',
-    rpm: 15,
-    rpd: 1000,
-  },
-  {
     id: 'gemini-2.5-flash-lite',
     name: 'Gemini 2.5 Flash-Lite',
-    badge: 'High Quota',
-    tagline: 'High Daily Request Capacity',
-    description: 'Lightweight model with maximum daily request headroom on Google AI Studio Free Tier.',
+    badge: 'Fast & High Quota',
+    tagline: 'Ultra-low Latency & 1,000 RPD',
+    description: 'High-throughput model with rapid response times tailored for voice commands, quick drills, and maximum daily request limits.',
     rpm: 15,
     rpd: 1000,
   },
@@ -79,7 +70,7 @@ export function getAISettings(): AISettings {
     const isAiEnabled = storedEnabled !== null ? storedEnabled === 'true' : true;
     const geminiApiKey = localStorage.getItem(STORAGE_KEY_API_KEY) || '';
     const storedModel = localStorage.getItem(STORAGE_KEY_MODEL) as SupportedGeminiModel;
-    const selectedModel = (['gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'].includes(storedModel))
+    const selectedModel = (['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(storedModel))
       ? storedModel
       : 'gemini-2.5-flash';
 

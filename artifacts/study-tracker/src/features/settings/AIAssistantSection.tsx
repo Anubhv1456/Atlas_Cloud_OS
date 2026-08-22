@@ -104,7 +104,7 @@ export function AIAssistantSection() {
 
   const handleModelSelect = (modelId: SupportedGeminiModel) => {
     updateSettings({ selectedModel: modelId });
-    toast.success(modelId === 'gemini-3.1-flash-lite' ? 'Set to Fast mode' : 'Set to Balanced mode');
+    toast.success(modelId === 'gemini-2.5-flash-lite' ? 'Set to Fast mode' : 'Set to Balanced mode');
     if (settings.geminiApiKey) {
       testKey(settings.geminiApiKey, modelId);
     }
@@ -234,7 +234,7 @@ export function AIAssistantSection() {
                 Intelligence Mode
               </label>
               <span className="text-[11px] text-muted-foreground font-mono">
-                {settings.selectedModel === 'gemini-3.1-flash-lite' ? '3.1 Flash-Lite' : '2.5 Flash'}
+                {settings.selectedModel === 'gemini-2.5-flash-lite' ? '2.5 Flash-Lite (1000 RPD)' : '2.5 Flash (250 RPD)'}
               </span>
             </div>
 
@@ -244,7 +244,7 @@ export function AIAssistantSection() {
                 onClick={() => handleModelSelect('gemini-2.5-flash')}
                 className={cn(
                   "p-2.5 rounded-lg text-left transition-all duration-150 cursor-pointer flex flex-col justify-between",
-                  settings.selectedModel !== 'gemini-3.1-flash-lite'
+                  settings.selectedModel !== 'gemini-2.5-flash-lite'
                     ? "bg-background text-foreground shadow-xs border border-border/80 font-bold"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
                 )}
@@ -262,10 +262,10 @@ export function AIAssistantSection() {
 
               <button
                 type="button"
-                onClick={() => handleModelSelect('gemini-3.1-flash-lite')}
+                onClick={() => handleModelSelect('gemini-2.5-flash-lite')}
                 className={cn(
                   "p-2.5 rounded-lg text-left transition-all duration-150 cursor-pointer flex flex-col justify-between",
-                  settings.selectedModel === 'gemini-3.1-flash-lite'
+                  settings.selectedModel === 'gemini-2.5-flash-lite'
                     ? "bg-background text-foreground shadow-xs border border-border/80 font-bold"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
                 )}
@@ -273,11 +273,11 @@ export function AIAssistantSection() {
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-xs font-bold">Fast</span>
                   <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    Instant
+                    Instant • 1k/day
                   </span>
                 </div>
                 <p className="text-[11px] opacity-75 font-normal mt-0.5">
-                  Rapid voice logging & fast recall drills
+                  Rapid voice logging & high-quota drills
                 </p>
               </button>
             </div>

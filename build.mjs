@@ -11,6 +11,13 @@ const trackerDist = path.resolve(trackerDir, 'dist');
 console.log('[Atlas Build] Building study-tracker client application with Vite...');
 execSync('npm run build --workspace=artifacts/study-tracker', { stdio: 'inherit' });
 
+try {
+  console.log('[Atlas Build] Building api-server bundle...');
+  execSync('npm run build --workspace=artifacts/api-server', { stdio: 'inherit' });
+} catch (e) {
+  console.warn('[Atlas Build] Warning: api-server build failed or skipped:', e.message);
+}
+
 // Ensure root dist exists and contains valid build files
 if (!fs.existsSync(rootDist)) {
   fs.mkdirSync(rootDist, { recursive: true });

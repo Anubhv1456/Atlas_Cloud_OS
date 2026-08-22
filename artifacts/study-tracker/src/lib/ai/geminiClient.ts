@@ -237,7 +237,7 @@ export async function executeCognitiveCompiler(
       return {
         delta: { ...cached, latencyMs: performance.now() - startTime },
         action,
-        modelUsed: (options.modelOverride || 'gemini-3.1-flash-lite') as SupportedGeminiModel,
+        modelUsed: (options.modelOverride || 'gemini-2.5-flash-lite') as SupportedGeminiModel,
         latencyMs: performance.now() - startTime,
         source: 'HYBRID',
       };
@@ -263,7 +263,7 @@ export async function executeCognitiveCompiler(
 
   // If circuit breaker is tripped on primary model, fallback immediately
   if (isCircuitTripped()) {
-    activeModel = activeModel === 'gemini-3.1-flash-lite' ? 'gemini-2.5-flash' : 'gemini-3.1-flash-lite';
+    activeModel = activeModel === 'gemini-2.5-flash-lite' ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
   }
 
   const systemInstruction = await getSerializedSystemPromptContext();
@@ -288,7 +288,7 @@ export async function executeCognitiveCompiler(
     if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429')) {
       try {
         const fallbackModel: SupportedGeminiModel =
-          activeModel === 'gemini-3.1-flash-lite' ? 'gemini-2.5-flash' : 'gemini-3.1-flash-lite';
+          activeModel === 'gemini-2.5-flash-lite' ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
         
         saveAISettings({ selectedModel: fallbackModel });
         activeModel = fallbackModel;
