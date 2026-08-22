@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { injectMedicalGrammar } from '@/lib/ai/medicalSpeechGrammar';
 import { acousticDsp, AudioDspSession } from '@/lib/ai/audioDsp';
 import { cleanSpeechTranscript, combineConfirmedAndInterim } from '@/lib/ai/cleanSpeechTranscript';
@@ -194,7 +195,11 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
     } catch (err: any) {
       console.warn('[useVoiceInput] DSP initialization failed:', err);
       if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-        setError('Microphone permission blocked. Please grant microphone access in Settings > Device Permissions.');
+        const msg = 'Microphone permission blocked by browser/PWA.';
+        setError(msg);
+        toast.error('Microphone access denied', {
+          description: 'Enable microphone permission in Chrome settings or App Info.',
+        });
         shouldListenRef.current = false;
         setIsListening(false);
         speechCoordinator.releaseLock('command-bar');
