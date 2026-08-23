@@ -33,6 +33,7 @@ import {
   SlidersHorizontal,
   ChevronsUp,
   ChevronsDown,
+  ChevronDown,
   Palmtree,
   Sun,
   Flame,
@@ -80,6 +81,7 @@ export function NextActionCard({
   const [s10Speed, setS10Speed] = useState<number | null>(null);
   const [whySheetOpen, setWhySheetOpen] = useState(false);
   const [starterOptionsRevealed, setStarterOptionsRevealed] = useState(false);
+  const [isBudgetExpanded, setIsBudgetExpanded] = useState(false);
 
   const { profile } = useExamProfile();
   const activeExam = profile.targetExam || 'NEET PG';
@@ -369,52 +371,108 @@ export function NextActionCard({
               </button>
             )}
 
-            {/* 3-Way Cognitive Intent Tuner */}
+            {/* Collapsible Cognitive Intent Tuner */}
             {result?.operationalMode?.mode !== 'holiday' && (
-              <div className="flex items-center gap-0.5 p-0.5 bg-muted/60 rounded-xl border border-border/50 shrink-0">
+              !isBudgetExpanded ? (
+                /* Collapsed Single Active Pill */
                 <button
                   type="button"
-                  onClick={() => setSessionBudget('quick')}
+                  onClick={() => setIsBudgetExpanded(true)}
                   className={cn(
-                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
-                    sessionBudget === 'quick'
-                      ? "bg-background text-amber-500 shadow-xs border border-amber-500/30 font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 border shadow-2xs group",
+                    sessionBudget === 'quick' && "bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20",
+                    sessionBudget === 'standard' && "bg-teal-500/10 text-teal-400 border-teal-500/30 hover:bg-teal-500/20",
+                    sessionBudget === 'deep' && "bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20"
                   )}
-                  title="15m Rapid Recall drills & volatile concepts"
+                  title="Tap to switch study mode (Rapid / Standard / Deep)"
                 >
-                  <Zap className="w-3 h-3 text-amber-500 shrink-0" />
-                  <span>Rapid</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionBudget('standard')}
-                  className={cn(
-                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
-                    sessionBudget === 'standard'
-                      ? "bg-background text-teal-400 shadow-xs border border-teal-500/30 font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                  {sessionBudget === 'quick' && (
+                    <>
+                      <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span>Rapid</span>
+                    </>
                   )}
-                  title="30-45m Standard Review"
-                >
-                  <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
-                  <span>Standard</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionBudget('deep')}
-                  className={cn(
-                    "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
-                    sessionBudget === 'deep'
-                      ? "bg-background text-sky-400 shadow-xs border border-sky-500/30 font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                  {sessionBudget === 'standard' && (
+                    <>
+                      <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
+                      <span>Standard</span>
+                    </>
                   )}
-                  title="60m+ Deep Focus"
-                >
-                  <BookOpen className="w-3 h-3 text-sky-400 shrink-0" />
-                  <span>Deep</span>
+                  {sessionBudget === 'deep' && (
+                    <>
+                      <BookOpen className="w-3 h-3 text-sky-400 shrink-0" />
+                      <span>Deep</span>
+                    </>
+                  )}
+                  <ChevronDown className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity ml-0.5 shrink-0" />
                 </button>
-              </div>
+              ) : (
+                /* Expanded 3-Option Tuner */
+                <div className="flex items-center gap-0.5 p-0.5 bg-muted/90 rounded-xl border border-border/70 shrink-0 animate-in fade-in zoom-in-95 duration-150 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSessionBudget('quick');
+                      setIsBudgetExpanded(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                      sessionBudget === 'quick'
+                        ? "bg-background text-amber-500 shadow-xs border border-amber-500/30 font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title="15m Rapid Recall drills & volatile concepts"
+                  >
+                    <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+                    <span>Rapid</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSessionBudget('standard');
+                      setIsBudgetExpanded(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                      sessionBudget === 'standard'
+                        ? "bg-background text-teal-400 shadow-xs border border-teal-500/30 font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title="30-45m Standard Review"
+                  >
+                    <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
+                    <span>Standard</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSessionBudget('deep');
+                      setIsBudgetExpanded(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0",
+                      sessionBudget === 'deep'
+                        ? "bg-background text-sky-400 shadow-xs border border-sky-500/30 font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title="60m+ Deep Focus"
+                  >
+                    <BookOpen className="w-3 h-3 text-sky-400 shrink-0" />
+                    <span>Deep</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBudgetExpanded(false)}
+                    className="p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors shrink-0 ml-0.5 cursor-pointer"
+                    title="Close"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -550,17 +608,28 @@ export function NextActionCard({
               </div>
             </div>
 
-            {/* Rationale Badges & "Why This?" CDSS Trigger (Clean 1-2 Badges Max) */}
+            {/* Rationale Badges (Clickable to view full CDSS score breakdown) */}
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pt-0.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
-                <span className="text-[11px] font-semibold text-muted-foreground mr-0.5 shrink-0">
+              <div 
+                className={cn(
+                  "flex flex-wrap items-center gap-1.5 min-w-0 flex-1",
+                  primary.whyBreakdown && "cursor-pointer group"
+                )}
+                onClick={() => {
+                  if (primary.whyBreakdown) {
+                    setWhySheetOpen(true);
+                  }
+                }}
+                title={primary.whyBreakdown ? "Tap to view CDSS mathematical score breakdown" : undefined}
+              >
+                <span className="text-[11px] font-semibold text-muted-foreground mr-0.5 shrink-0 flex items-center gap-1 group-hover:text-primary transition-colors">
                   Why this:
                 </span>
                 {primary.rationaleBadges.slice(0, 2).map((badge, idx) => (
                   <span
                     key={idx}
                     className={cn(
-                      "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-lg border shadow-2xs whitespace-nowrap shrink-0",
+                      "inline-flex items-center text-[10px] font-bold tracking-wide px-2.5 py-0.5 rounded-lg border shadow-2xs whitespace-nowrap shrink-0 group-hover:border-primary/40 transition-colors",
                       getBadgeClass(badge.variant)
                     )}
                   >
@@ -568,19 +637,12 @@ export function NextActionCard({
                     {badge.label}
                   </span>
                 ))}
+                {primary.whyBreakdown && (
+                  <span className="text-[10px] text-primary/80 font-mono font-medium group-hover:underline ml-0.5 hidden xs:inline">
+                    (details)
+                  </span>
+                )}
               </div>
-
-              {/* Single-Tap CDSS Mathematical Transparency Button */}
-              {primary.whyBreakdown && (
-                <button
-                  type="button"
-                  onClick={() => setWhySheetOpen(true)}
-                  className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-lg border border-primary/30 text-primary bg-primary/5 hover:bg-primary/15 transition-colors cursor-pointer shrink-0"
-                >
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  <span>Why this?</span>
-                </button>
-              )}
             </div>
 
             {/* Action Row */}
