@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Key, 
-  Cpu, 
   ShieldCheck, 
   Eye, 
   EyeOff, 
@@ -15,10 +14,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  useAISettings, 
-  SupportedGeminiModel 
-} from '@/lib/ai/aiSettingsStorage';
+import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -79,7 +75,7 @@ export function AIAssistantSection() {
     }
 
     try {
-      const result = await testKey(keyToTest, settings.selectedModel);
+      const result = await testKey(keyToTest);
       if (result.success) {
         toast.success(result.message);
       } else {
@@ -99,14 +95,6 @@ export function AIAssistantSection() {
       toast.success('Intelligence & Voice enabled');
     } else {
       toast.info('Intelligence & Voice disabled');
-    }
-  };
-
-  const handleModelSelect = (modelId: SupportedGeminiModel) => {
-    updateSettings({ selectedModel: modelId });
-    toast.success(modelId === 'gemini-2.5-flash-lite' ? 'Set to Fast mode' : 'Set to Balanced mode');
-    if (settings.geminiApiKey) {
-      testKey(settings.geminiApiKey, modelId);
     }
   };
 
@@ -223,63 +211,6 @@ export function AIAssistantSection() {
                   {isConnected ? 'Verified' : 'Test'}
                 </Button>
               ) : null}
-            </div>
-          </div>
-
-          {/* iOS Segmented Control: Model Selection */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between px-0.5">
-              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-muted-foreground" />
-                Intelligence Mode
-              </label>
-              <span className="text-[11px] text-muted-foreground font-mono">
-                {settings.selectedModel === 'gemini-2.5-flash-lite' ? '2.5 Flash-Lite (1000 RPD)' : '2.5 Flash (250 RPD)'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/40 border border-border/60 rounded-xl">
-              <button
-                type="button"
-                onClick={() => handleModelSelect('gemini-2.5-flash')}
-                className={cn(
-                  "p-2.5 rounded-lg text-left transition-all duration-150 cursor-pointer flex flex-col justify-between",
-                  settings.selectedModel !== 'gemini-2.5-flash-lite'
-                    ? "bg-background text-foreground shadow-xs border border-border/80 font-bold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
-                )}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-bold">Balanced</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                    Recommended
-                  </span>
-                </div>
-                <p className="text-[11px] opacity-75 font-normal mt-0.5">
-                  Complex medical reasoning & clinical quizzes
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleModelSelect('gemini-2.5-flash-lite')}
-                className={cn(
-                  "p-2.5 rounded-lg text-left transition-all duration-150 cursor-pointer flex flex-col justify-between",
-                  settings.selectedModel === 'gemini-2.5-flash-lite'
-                    ? "bg-background text-foreground shadow-xs border border-border/80 font-bold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/40 font-medium"
-                )}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-bold">Fast</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    Instant • 1k/day
-                  </span>
-                </div>
-                <p className="text-[11px] opacity-75 font-normal mt-0.5">
-                  Rapid voice logging & high-quota drills
-                </p>
-              </button>
             </div>
           </div>
 

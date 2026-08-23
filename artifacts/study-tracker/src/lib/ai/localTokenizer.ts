@@ -173,16 +173,17 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
   }
 
   // -------------------------------------------------------------
-  // PATTERN 1: Study Block Duration (e.g. "45m pharma", "studied 1.5h biochem", "2 hrs micro", "pharmacology 45 min")
+  // PATTERN 1: Study Block Duration (English & Hinglish)
+  // E.g. "45m pharma", "studied 1.5h biochem", "2 hrs micro", "pharmacology 45 min", "2 ghante pharma padha", "1.5 ghanta biochem revise kiya"
   // -------------------------------------------------------------
-  const studyRegex = /(?:studied|study|revised|revise|did|read|logged)?\s*(\d+(?:\.\d+)?)\s*(mins?|minutes?|m|hrs?|hours?|h)\s*(?:of|in)?\s*([a-zA-Z0-9\s,&/-]+)?/i;
+  const studyRegex = /(?:studied|study|revised|revise|did|read|logged|padha|padhi|padhai\s+ki|revise\s+kiya)?\s*(\d+(?:\.\d+)?)\s*(mins?|minutes?|m|hrs?|hours?|h|ghante?|ghanta|gante?|ganta)\s*(?:of|in|ki|ka)?\s*([a-zA-Z0-9\s,&/-]+)?/i;
   const studyMatch = input.match(studyRegex);
 
-  // Secondary reverse pattern: "Pharma 45 mins", "Biochem 2 hrs"
-  const reverseStudyRegex = /^([a-zA-Z\s,&/-]+?)\s+(\d+(?:\.\d+)?)\s*(mins?|minutes?|m|hrs?|hours?|h)\b/i;
+  // Secondary reverse pattern: "Pharma 45 mins", "Biochem 2 hrs", "Biochem 2 ghante"
+  const reverseStudyRegex = /^([a-zA-Z\s,&/-]+?)\s+(\d+(?:\.\d+)?)\s*(mins?|minutes?|m|hrs?|hours?|h|ghante?|ghanta|gante?|ganta)\b/i;
   const reverseMatch = input.match(reverseStudyRegex);
 
-  const matchedPattern = studyMatch && (studyMatch[2] || input.toLowerCase().includes('min') || input.toLowerCase().includes('hr'))
+  const matchedPattern = studyMatch && (studyMatch[2] || input.toLowerCase().includes('min') || input.toLowerCase().includes('hr') || input.toLowerCase().includes('ghant'))
     ? { rawVal: parseFloat(studyMatch[1]), unit: studyMatch[2]?.toLowerCase() || 'm', subjectCandidate: studyMatch[3] || input }
     : reverseMatch
     ? { rawVal: parseFloat(reverseMatch[2]), unit: reverseMatch[3]?.toLowerCase() || 'm', subjectCandidate: reverseMatch[1] }
@@ -190,18 +191,23 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
 
   if (matchedPattern) {
     const { rawVal, unit, subjectCandidate } = matchedPattern;
-    const durationMinutes = unit.startsWith('h') ? Math.round(rawVal * 60) : Math.round(rawVal);
+    const isHours = unit.startsWith('h') || unit.startsWith('gh') || unit.startsWith('ga');
+    const durationMinutes = isHours ? Math.round(rawVal * 60) : Math.round(rawVal);
 
     if (durationMinutes > 0 && durationMinutes <= 900) {
       const resolved = fastLookupSubject(subjectCandidate);
 
       // Determine confidence level if mentioned
       let confidenceLevel: ConfidenceLevel = 'MEDIUM';
-      if (/high|easy|confident|strong|solid/i.test(input)) confidenceLevel = 'HIGH';
-      if (/low|weak|struggled|difficult|poor/i.test(input)) confidenceLevel = 'LOW';
+      if (/high|easy|confident|strong|solid|badhiya|aasan/i.test(input)) confidenceLevel = 'HIGH';
+      if (/low|weak|struggled|difficult|poor|hard|mushkil/i.test(input)) confidenceLevel = 'LOW';
 
       // Clean topic extract
-      const topicExtract = input.replace(studyRegex, '').replace(reverseStudyRegex, '').trim() || resolved.name;
+      const topicExtract = input
+        .replace(studyRegex, '')
+        .replace(reverseStudyRegex, '')
+        .replace(/\b(padha|padhi|padhai\s+ki|revise\s+kiya|khatam\s+kiya|done|completed)\b/gi, '')
+        .trim() || resolved.name;
 
       const delta: CognitiveDelta = {
         intent: 'ACTION_LOG_STUDY',

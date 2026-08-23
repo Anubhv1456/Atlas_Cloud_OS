@@ -17,6 +17,19 @@ const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_CACHE_ENTRIES = 150;
 
 /**
+ * Normalizes prompt text (lowercasing, trimming whitespace, stripping trailing punctuation)
+ * to maximize cache hit ratios across similar queries.
+ */
+export function normalizePromptForCache(prompt: string): string {
+  return prompt
+    .toLowerCase()
+    .trim()
+    .replace(/[?!.,;:]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Fast synchronous string hash (MurmurHash3-like 64-bit variant)
  */
 export function fastContentHash(str: string): string {

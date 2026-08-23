@@ -113,7 +113,7 @@ export async function parseMedicalIntent(userInput: string): Promise<IntentParse
   }
 
   try {
-    const result = await executeCognitiveCompiler(cleanInput);
+    const result = await executeCognitiveCompiler(cleanInput, [], { cognitiveLoad: 'routine' });
 
     if (result.action) {
       return {
@@ -154,9 +154,9 @@ export async function parseIntentWithGemini(
   userInput: string,
   _contextSnapshot?: any,
   _apiKey?: string,
-  modelOverride?: SupportedGeminiModel
+  _modelOverride?: SupportedGeminiModel
 ): Promise<ParsedAtlasAction> {
-  const result = await executeCognitiveCompiler(userInput, [], { modelOverride });
+  const result = await executeCognitiveCompiler(userInput, [], { cognitiveLoad: 'routine' });
   if (result.action) {
     return result.action;
   }

@@ -107,6 +107,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
     try {
       const result = await executeCognitiveCompiler(cleanText, [], {
         bypassLocalTokenizer: false,
+        cognitiveLoad: 'routine',
       });
 
       setCompiledDelta(result.delta);

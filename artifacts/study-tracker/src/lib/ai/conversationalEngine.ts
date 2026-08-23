@@ -33,7 +33,7 @@ export async function sendChatMessageToGemini(
   const result = await executeCognitiveCompiler(
     newMessage,
     conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-    { bypassLocalTokenizer: false }
+    { bypassLocalTokenizer: false, cognitiveLoad: 'routine' }
   );
 
   return {

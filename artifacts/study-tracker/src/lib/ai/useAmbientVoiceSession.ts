@@ -136,7 +136,9 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
         content: item.text,
       }));
 
-      const result = await executeCognitiveCompiler(correctedText, history);
+      const result = await executeCognitiveCompiler(correctedText, history, {
+        cognitiveLoad: 'routine'
+      });
       const replyText = result.delta.executiveSummary || 'Action noted and ready for confirmation.';
 
       conversationHistoryRef.current.push({ role: 'user', text: correctedText });

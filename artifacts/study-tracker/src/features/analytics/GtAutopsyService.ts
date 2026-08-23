@@ -1,6 +1,5 @@
 import { ScoreLog, MistakeLog } from '@/db';
 import { SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
-import { executeCognitiveCompiler } from '@/lib/ai/geminiClient';
 
 export interface ClusterPerformance {
   cluster: 'Pre-Clinical' | 'Para-Clinical' | 'Clinical';

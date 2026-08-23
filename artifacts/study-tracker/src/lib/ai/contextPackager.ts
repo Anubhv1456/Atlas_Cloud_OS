@@ -355,64 +355,74 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
 /**
  * Minifies the LiveAtlasContext into a high-density, token-efficient system instruction block.
  */
-export function formatContextForSystemPrompt(ctx: LiveAtlasContext): string {
+export function formatContextForSystemPrompt(ctx: LiveAtlasContext, isRoutine = false): string {
+  if (isRoutine) {
+    return `[ATLAS CONTEXT] Exam: ${ctx.exam.targetExam} (${ctx.exam.daysRemaining !== null ? ctx.exam.daysRemaining + 'd' : 'Unset'}) | Streak: ${ctx.exam.currentStreakDays}d | Today: ${ctx.exam.todayLoggedMinutes}m`;
+  }
+
   const lines: string[] = [];
 
-  lines.push('=== REAL-TIME 360° CLINICAL KNOWLEDGE GRAPH ===');
-  lines.push(`Target Exam: ${ctx.exam.targetExam} | Days Remaining: ${ctx.exam.daysRemaining !== null ? ctx.exam.daysRemaining + ' days' : 'Unset'} | Mode: ${ctx.exam.operationalMode} | Streak: ${ctx.exam.currentStreakDays}d | Today Logged: ${ctx.exam.todayLoggedMinutes} mins`);
-  lines.push(`Curriculum Progress: ${ctx.curriculum.overallProgressPercent}% (${ctx.curriculum.completedUnits}/${ctx.curriculum.totalUnits} units) | Pacing Status: ${ctx.circadianPacing.status}`);
+  lines.push(`[ATLAS 360° GRAPH] Exam: ${ctx.exam.targetExam} (${ctx.exam.daysRemaining !== null ? ctx.exam.daysRemaining + 'd' : 'Unset'}) | Mode: ${ctx.exam.operationalMode} | Streak: ${ctx.exam.currentStreakDays}d | Today: ${ctx.exam.todayLoggedMinutes}m | Overall: ${ctx.curriculum.overallProgressPercent}% | Pacing: ${ctx.circadianPacing.status}`);
 
-  // Top Decaying & High Friction Subjects
+  // Top 3 Decaying & High Friction Subjects
   const decayingSubs = ctx.curriculum.subjectBreakdown
-    .filter(s => s.retrievabilityScore < 80 || s.activeMistakesCount > 0)
-    .slice(0, 5);
+    .filter((s) => s.retrievabilityScore < 80 || s.activeMistakesCount > 0)
+    .slice(0, 3);
   if (decayingSubs.length > 0) {
-    lines.push('\n--- HIGH-FRICTION & ACCELERATED MEMORY DECAY SUBJECTS ---');
-    decayingSubs.forEach(s => {
-      lines.push(`• ${s.name}: Retrievability ${s.retrievabilityScore}% (Loss: ${s.memoryLossPercent}%, Half-life: ${s.halfLifeDays}d, Active Traps: ${s.activeMistakesCount}${s.isHighYield ? ', [High-Yield]' : ''})`);
-    });
+    lines.push(
+      `Decaying Subjects: ` +
+        decayingSubs
+          .map((s) => `${s.name} (${s.retrievabilityScore}% retrievable, ${s.activeMistakesCount} active traps)`)
+          .join('; ')
+    );
   }
 
-  // Top Due / Urgent Decay Units
+  // Top 3 Due / Urgent Decay Units
   if (ctx.urgentDecayQueue.length > 0) {
-    lines.push('\n--- URGENT CLINICAL REVISION / DECAY QUEUE (Due Now) ---');
-    ctx.urgentDecayQueue.slice(0, 5).forEach((d, idx) => {
-      lines.push(`${idx + 1}. [${d.subjectName}] ${d.systemName} (Retrievability: ${d.retrievability}%, Overdue: ${d.daysOverdue}d, Rev Pass: ${d.revisionCount}${d.status ? ', Status: ' + d.status : ''})`);
-    });
+    lines.push(
+      `Urgent Review Due: ` +
+        ctx.urgentDecayQueue
+          .slice(0, 3)
+          .map((d) => `[${d.subjectName}] ${d.systemName} (${d.retrievability}%, ${d.daysOverdue}d overdue)`)
+          .join('; ')
+    );
   }
 
-  // 20th Notebook Volatile Rules & Traps
+  // Top 3 20th Notebook Volatile Rules & Traps
   if (ctx.notebookPearls.recentPearls.length > 0) {
-    lines.push('\n--- 20TH NOTEBOOK RECENT ACTIVE TRAPS & VOLATILE PEARLS ---');
-    ctx.notebookPearls.recentPearls.slice(0, 5).forEach((p, idx) => {
-      lines.push(`${idx + 1}. [${p.subjectName} - ${p.systemName}] ${p.ruleText} (${p.isVolatile ? '⚠️ Volatile' : p.errorType})`);
-    });
+    lines.push(
+      `Recent 20th NB Traps: ` +
+        ctx.notebookPearls.recentPearls
+          .slice(0, 3)
+          .map((p) => `[${p.subjectName}] ${p.ruleText}`)
+          .join(' | ')
+    );
   }
 
-  // Recent Test Scores & Weak Areas
+  // Latest Test Score
   if (ctx.recentScores.length > 0) {
     const latest = ctx.recentScores[0];
-    lines.push(`\nLatest Test Score: ${latest.testName} -> ${latest.score}/${latest.totalMarks} (${latest.percent}%) [${latest.date}]`);
-    if (latest.weakAreas.length > 0) {
-      lines.push(`Diagnosed Weak Subject Areas: ${latest.weakAreas.join(', ')}`);
-    }
+    lines.push(
+      `Latest Test: ${latest.testName} (${latest.score}/${latest.totalMarks}, ${latest.percent}%)${
+        latest.weakAreas.length > 0 ? ' Weak: ' + latest.weakAreas.slice(0, 3).join(', ') : ''
+      }`
+    );
   }
 
-  lines.push('================================================');
   return lines.join('\n');
 }
 
 /**
  * Convenience helper to get the fully serialized system prompt context string directly.
  */
-export async function getSerializedSystemPromptContext(): Promise<string> {
+export async function getSerializedSystemPromptContext(isRoutine = false): Promise<string> {
   try {
     const ctx = await getLiveAtlasContext();
-    const formatted = formatContextForSystemPrompt(ctx);
-    return buildAtlasMentorSystemPrompt(formatted);
+    const formatted = formatContextForSystemPrompt(ctx, isRoutine);
+    return buildAtlasMentorSystemPrompt(formatted, isRoutine);
   } catch (err) {
     console.error('[ContextPackager] Error packaging context:', err);
-    return buildAtlasMentorSystemPrompt('=== ATLAS CLINICAL STATE: Offline / Default Mode ===');
+    return buildAtlasMentorSystemPrompt('ATLAS STATE: Default Offline Mode', isRoutine);
   }
 }
 

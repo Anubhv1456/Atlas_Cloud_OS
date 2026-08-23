@@ -160,6 +160,58 @@ export type ParsedAtlasAction =
   | ActionClinicalQuery;
 
 /**
+ * Compact Gemini response schema for Routine / Low-latency commands.
+ * Strips verbose psychometric analysis fields to reduce token output by >60%.
+ */
+export const ROUTINE_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    intent: {
+      type: 'STRING',
+      enum: [
+        'ACTION_ADD_MISTAKE',
+        'ACTION_LOG_STUDY',
+        'ACTION_RECORD_SCORE',
+        'CLINICAL_QUERY',
+        'NONE',
+      ],
+    },
+    targetSubjectName: {
+      type: 'STRING',
+    },
+    executiveSummary: {
+      type: 'STRING',
+    },
+    studyDelta: {
+      type: 'OBJECT',
+      properties: {
+        subjectName: { type: 'STRING' },
+        durationMinutes: { type: 'INTEGER' },
+        confidenceLevel: { type: 'STRING', enum: ['LOW', 'MED', 'HIGH'] },
+        topicsStudied: { type: 'STRING' },
+      },
+    },
+    scoreDelta: {
+      type: 'OBJECT',
+      properties: {
+        testName: { type: 'STRING' },
+        score: { type: 'NUMBER' },
+        totalMarks: { type: 'NUMBER' },
+      },
+    },
+    distillation: {
+      type: 'OBJECT',
+      properties: {
+        twentyNotebookRule: { type: 'STRING' },
+        tag: { type: 'STRING' },
+        clinicalTrigger: { type: 'STRING' },
+      },
+    },
+  },
+  required: ['intent', 'targetSubjectName', 'executiveSummary'],
+};
+
+/**
  * Gemini response schema definition enforcing strict structured outputs
  */
 export const GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA = {

@@ -94,7 +94,7 @@ export const ClipboardWatcher: React.FC = () => {
       const prompt = `Analyze this clinical Q-Bank explanation or question stem and extract the high-yield 20th notebook takeaway rule:
 ${copiedSnippet}`;
 
-      const res = await executeCognitiveCompiler(prompt, [], { bypassLocalTokenizer: false });
+      const res = await executeCognitiveCompiler(prompt, [], { bypassLocalTokenizer: false, cognitiveLoad: 'clinical' });
       setCompiledResult(res);
     } catch (err: any) {
       console.error('[ClipboardWatcher] Distillation failed:', err);

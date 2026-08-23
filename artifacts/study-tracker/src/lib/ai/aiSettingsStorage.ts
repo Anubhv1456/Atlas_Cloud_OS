@@ -1,44 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type SupportedGeminiModel = 'gemini-2.5-flash' | 'gemini-2.5-flash-lite';
-
-export interface ModelOption {
-  id: SupportedGeminiModel;
-  name: string;
-  badge: string;
-  tagline: string;
-  description: string;
-  rpm: number;
-  rpd: number;
-}
-
-export const AVAILABLE_GEMINI_MODELS: ModelOption[] = [
-  {
-    id: 'gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
-    badge: 'Balanced',
-    tagline: 'Standard Fast & Intelligent',
-    description: 'Gold standard accuracy for medical taxonomy, structured clinical action extraction, and diagnostic feedback.',
-    rpm: 10,
-    rpd: 250,
-  },
-  {
-    id: 'gemini-2.5-flash-lite',
-    name: 'Gemini 2.5 Flash-Lite',
-    badge: 'Fast & High Quota',
-    tagline: 'Ultra-low Latency & 1,000 RPD',
-    description: 'High-throughput model with rapid response times tailored for voice commands, quick drills, and maximum daily request limits.',
-    rpm: 15,
-    rpd: 1000,
-  },
-];
+export type SupportedGeminiModel = 'gemini-3.7-flash' | 'gemini-3.1-flash-lite' | 'gemini-3.1-pro-preview';
 
 export type AIValidationStatus = 'unconfigured' | 'valid' | 'invalid' | 'rate_limited' | 'error';
 
 export interface AISettings {
   isAiEnabled: boolean;
   geminiApiKey: string;
-  selectedModel: SupportedGeminiModel;
   lastValidatedAt: number | null;
   validationStatus: AIValidationStatus;
   validationMessage: string;
@@ -46,7 +14,6 @@ export interface AISettings {
 
 const STORAGE_KEY_AI_ENABLED = 'atlas_ai_enabled';
 const STORAGE_KEY_API_KEY = 'atlas_gemini_api_key';
-const STORAGE_KEY_MODEL = 'atlas_ai_selected_model';
 const STORAGE_KEY_LAST_VALIDATED = 'atlas_ai_last_validated';
 const STORAGE_KEY_STATUS = 'atlas_ai_validation_status';
 const STORAGE_KEY_MESSAGE = 'atlas_ai_validation_message';
@@ -54,7 +21,6 @@ const STORAGE_KEY_MESSAGE = 'atlas_ai_validation_message';
 export const DEFAULT_AI_SETTINGS: AISettings = {
   isAiEnabled: true,
   geminiApiKey: '',
-  selectedModel: 'gemini-2.5-flash',
   lastValidatedAt: null,
   validationStatus: 'unconfigured',
   validationMessage: '',
@@ -69,10 +35,6 @@ export function getAISettings(): AISettings {
     const storedEnabled = localStorage.getItem(STORAGE_KEY_AI_ENABLED);
     const isAiEnabled = storedEnabled !== null ? storedEnabled === 'true' : true;
     const geminiApiKey = localStorage.getItem(STORAGE_KEY_API_KEY) || '';
-    const storedModel = localStorage.getItem(STORAGE_KEY_MODEL) as SupportedGeminiModel;
-    const selectedModel = (['gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(storedModel))
-      ? storedModel
-      : 'gemini-2.5-flash';
 
     const lastValidatedAtStr = localStorage.getItem(STORAGE_KEY_LAST_VALIDATED);
     const lastValidatedAt = lastValidatedAtStr ? parseInt(lastValidatedAtStr, 10) : null;
@@ -82,7 +44,6 @@ export function getAISettings(): AISettings {
     return {
       isAiEnabled,
       geminiApiKey,
-      selectedModel,
       lastValidatedAt,
       validationStatus,
       validationMessage,
@@ -102,7 +63,6 @@ export function saveAISettings(partial: Partial<AISettings>): AISettings {
 
     localStorage.setItem(STORAGE_KEY_AI_ENABLED, updated.isAiEnabled ? 'true' : 'false');
     localStorage.setItem(STORAGE_KEY_API_KEY, updated.geminiApiKey || '');
-    localStorage.setItem(STORAGE_KEY_MODEL, updated.selectedModel || 'gemini-2.5-flash');
 
     if (updated.lastValidatedAt !== null) {
       localStorage.setItem(STORAGE_KEY_LAST_VALIDATED, updated.lastValidatedAt.toString());
@@ -127,7 +87,6 @@ export function clearAISettings(): void {
   try {
     localStorage.removeItem(STORAGE_KEY_AI_ENABLED);
     localStorage.removeItem(STORAGE_KEY_API_KEY);
-    localStorage.removeItem(STORAGE_KEY_MODEL);
     localStorage.removeItem(STORAGE_KEY_LAST_VALIDATED);
     localStorage.removeItem(STORAGE_KEY_STATUS);
     localStorage.removeItem(STORAGE_KEY_MESSAGE);
@@ -151,7 +110,7 @@ export interface KeyValidationResult {
  */
 export async function validateGeminiKey(
   apiKey: string,
-  model: SupportedGeminiModel = 'gemini-2.5-flash'
+  model: SupportedGeminiModel = 'gemini-3.1-flash-lite'
 ): Promise<KeyValidationResult> {
   const cleanKey = apiKey.trim();
 
@@ -267,7 +226,7 @@ export async function validateGeminiKey(
       return {
         success: false,
         status: 'error',
-        message: `Model "${model}" endpoint unavailable or retired. Try Gemini 2.0 Flash.`,
+        message: `Model "${model}" endpoint unavailable or retired. Try Gemini 3.7 Flash.`,
         model,
       };
     }
@@ -326,7 +285,7 @@ export function useAISettings() {
 
   const testKey = useCallback(async (keyOverride?: string, modelOverride?: SupportedGeminiModel) => {
     const keyToTest = keyOverride !== undefined ? keyOverride : settings.geminiApiKey;
-    const modelToTest = modelOverride !== undefined ? modelOverride : settings.selectedModel;
+    const modelToTest = modelOverride !== undefined ? modelOverride : 'gemini-3.1-flash-lite';
 
     setIsValidating(true);
     try {
@@ -342,7 +301,7 @@ export function useAISettings() {
     } finally {
       setIsValidating(false);
     }
-  }, [settings.geminiApiKey, settings.selectedModel]);
+  }, [settings.geminiApiKey]);
 
   return {
     settings,

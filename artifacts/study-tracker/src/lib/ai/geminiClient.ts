@@ -5,17 +5,20 @@ import {
   CognitiveDeltaSchema,
   ParsedAtlasAction,
   GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA,
+  ROUTINE_COGNITIVE_DELTA_RESPONSE_SCHEMA,
 } from './types';
 import { tokenizeMedicalInput, TokenizerMatchResult } from './localTokenizer';
 import { resolveSubject } from './intentParser';
 import { rateLimiter } from './rateLimiter';
-import { fastContentHash, getCachedAIResponse, setCachedAIResponse } from './aiCache';
+import { fastContentHash, normalizePromptForCache, getCachedAIResponse, setCachedAIResponse } from './aiCache';
 import { executeLocalMedicalCognitiveEngine } from './atlasLocalCognitiveEngine';
+
+export type CognitiveLoad = 'routine' | 'clinical' | 'analytical';
 
 export interface GeminiClientOptions {
   bypassLocalTokenizer?: boolean;
   bypassCache?: boolean;
-  modelOverride?: SupportedGeminiModel;
+  cognitiveLoad?: CognitiveLoad;
   maxRetries?: number;
 }
 
@@ -67,18 +70,15 @@ function isCircuitTripped(): boolean {
 }
 
 /**
- * Sleep helper for exponential backoff with jitter
- */
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms + Math.random() * 200));
-
-/**
- * Execute raw Gemini API call with rate limiter & dual-auth header fallback
+ * Execute raw Gemini API call with rate limiter, token cap & tailored schema
  */
 async function callGeminiApi(
   model: SupportedGeminiModel,
   apiKey: string,
   systemInstruction: string,
   contents: Array<{ role: string; parts: Array<{ text: string }> }>,
+  schema: any = GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA,
+  maxOutputTokens = 800,
   maxRetries = 3
 ): Promise<any> {
   const cleanKey = apiKey.trim();
@@ -94,9 +94,9 @@ async function callGeminiApi(
       generationConfig: {
         temperature: 0.2,
         topP: 0.95,
-        maxOutputTokens: 1024,
+        maxOutputTokens,
         responseMimeType: 'application/json',
-        responseSchema: GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA,
+        responseSchema: schema,
       },
     };
 
@@ -199,8 +199,8 @@ export async function convertDeltaToAction(
 
 /**
  * Primary Unified Execution Function for Atlas Clinical AI
- * Tier A: Instant Local Tokenizer (<5ms)
- * Tier B: Resilient Gemini Cloud Compiler with fallback & backoff
+ * Tier A: Instant Local Tokenizer (<5ms, 0 Tokens)
+ * Tier B: Resilient & Token-Optimized Gemini Cloud Compiler
  */
 export async function executeCognitiveCompiler(
   userInput: string,
@@ -211,7 +211,7 @@ export async function executeCognitiveCompiler(
   const input = userInput.trim();
 
   // -------------------------------------------------------------
-  // TIER A: Instant Local Tokenizer Check (<5ms)
+  // TIER A: Instant Local Tokenizer Check (<5ms, 0 Tokens)
   // -------------------------------------------------------------
   if (!options.bypassLocalTokenizer) {
     const localMatch: TokenizerMatchResult = tokenizeMedicalInput(input);
@@ -229,7 +229,21 @@ export async function executeCognitiveCompiler(
   // -------------------------------------------------------------
   // TIER B: Resilient Cloud Gemini Compiler
   // -------------------------------------------------------------
-  const cacheKey = fastContentHash(`${input}_${options.modelOverride || 'default'}`);
+  const cognitiveLoad = options.cognitiveLoad || 'clinical';
+  const isRoutine = cognitiveLoad === 'routine';
+  let activeModel: SupportedGeminiModel;
+  
+  if (isRoutine) {
+    activeModel = 'gemini-3.1-flash-lite';
+  } else if (cognitiveLoad === 'analytical') {
+    activeModel = 'gemini-3.1-pro-preview';
+  } else {
+    activeModel = 'gemini-3.7-flash';
+  }
+
+  // Normalized prompt hashing for superior cache reuse
+  const normalizedPrompt = normalizePromptForCache(input);
+  const cacheKey = fastContentHash(`${normalizedPrompt}_${activeModel}`);
   if (!options.bypassCache) {
     const cached = getCachedAIResponse<CognitiveDelta>(cacheKey);
     if (cached) {
@@ -237,7 +251,7 @@ export async function executeCognitiveCompiler(
       return {
         delta: { ...cached, latencyMs: performance.now() - startTime },
         action,
-        modelUsed: (options.modelOverride || 'gemini-2.5-flash-lite') as SupportedGeminiModel,
+        modelUsed: activeModel,
         latencyMs: performance.now() - startTime,
         source: 'HYBRID',
       };
@@ -259,20 +273,38 @@ export async function executeCognitiveCompiler(
     };
   }
 
-  let activeModel: SupportedGeminiModel = options.modelOverride || settings.selectedModel;
-
   // If circuit breaker is tripped on primary model, fallback immediately
   if (isCircuitTripped()) {
-    activeModel = activeModel === 'gemini-2.5-flash-lite' ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
+    activeModel = 'gemini-3.1-flash-lite';
   }
 
-  const systemInstruction = await getSerializedSystemPromptContext();
+  // Dynamic context packager: generates ultra-compact system instructions for routine load
+  const systemInstruction = await getSerializedSystemPromptContext(isRoutine);
 
-  // Build message history (sliding window capped at 4 turns to conserve tokens)
-  const contents = conversationHistory.slice(-4).map((msg) => ({
-    role: msg.role === 'user' ? 'user' : 'model',
-    parts: [{ text: msg.content }],
-  }));
+  // Response schema & output token limits tailored to workload
+  const responseSchema = isRoutine
+    ? ROUTINE_COGNITIVE_DELTA_RESPONSE_SCHEMA
+    : GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA;
+  const maxOutputTokens = isRoutine ? 256 : 800;
+
+  // Build message history: sliding window (2 turns for routine, 4 turns for clinical)
+  // Strip large JSON / markdown code from prior assistant turns to prevent token bloat
+  const historyTurns = isRoutine ? -2 : -4;
+  const contents = conversationHistory.slice(historyTurns).map((msg) => {
+    let cleanText = msg.content;
+    if (msg.role === 'assistant') {
+      try {
+        const parsed = JSON.parse(msg.content);
+        if (parsed.executiveSummary) cleanText = parsed.executiveSummary;
+      } catch {
+        cleanText = cleanText.replace(/```json[\s\S]*?```/g, '').trim() || msg.content;
+      }
+    }
+    return {
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: cleanText }],
+    };
+  });
 
   contents.push({
     role: 'user',
@@ -282,15 +314,20 @@ export async function executeCognitiveCompiler(
   let rawData: any;
 
   try {
-    rawData = await callGeminiApi(activeModel, apiKey, systemInstruction, contents, options.maxRetries ?? 2);
+    rawData = await callGeminiApi(
+      activeModel,
+      apiKey,
+      systemInstruction,
+      contents,
+      responseSchema,
+      maxOutputTokens,
+      options.maxRetries ?? 2
+    );
   } catch (err: any) {
     // If Model not found (404) or persistent rate limit, execute fallback switch
-    if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429')) {
+    if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429') || err.message?.includes('503')) {
       try {
-        const fallbackModel: SupportedGeminiModel =
-          activeModel === 'gemini-2.5-flash-lite' ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
-        
-        saveAISettings({ selectedModel: fallbackModel });
+        const fallbackModel: SupportedGeminiModel = 'gemini-3.1-flash-lite';
         activeModel = fallbackModel;
 
         rawData = await callGeminiApi(
@@ -298,6 +335,8 @@ export async function executeCognitiveCompiler(
           apiKey,
           systemInstruction,
           contents,
+          responseSchema,
+          maxOutputTokens,
           1
         );
       } catch (fallbackErr) {
