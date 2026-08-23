@@ -175,7 +175,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   const speakText = useCallback((text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis || isMuted) return;
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
       const spokenText = text
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/\*(.*?)\*/g, '$1')
@@ -205,7 +207,10 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
         if (naturalVoice) utterance.voice = naturalVoice;
       }
 
-      window.speechSynthesis.speak(utterance);
+      setTimeout(() => {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.speak(utterance);
+      }, 50);
     } catch (err) {
       console.warn('[ChatAssistantDrawer] TTS failed:', err);
     }

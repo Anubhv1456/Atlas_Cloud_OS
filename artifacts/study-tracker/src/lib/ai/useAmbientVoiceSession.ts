@@ -114,7 +114,10 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
       setSessionState((prev) => ({ ...prev, isSpeakingAI: false }));
     };
 
-    window.speechSynthesis.speak(utterance);
+    setTimeout(() => {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    }, 50);
   }, []);
 
   // Process speech turn
