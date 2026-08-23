@@ -24,8 +24,8 @@ export function MistakesNotebookCard() {
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const { settings } = useAISettings();
 
-  const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray()) || [];
-  const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
+  const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray(), []) || [];
+  const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
 
   const subjectMap = useMemo(() => new Map(subjects.map(s => [String(s.id), s])), [subjects]);
 

@@ -285,7 +285,9 @@ export function AtlasSkyShareModal({
               {/* Subject Celestial Star Nodes */}
               {mappedStars.map(star => {
                 const isCompleted = star.state === 'completed';
-                const isRevising = star.state === 'revising' || star.state === 'in_progress' || star.state === 'strong';
+                const isSupernova = star.state === 'revising';
+                const isProgress = star.state === 'in_progress' || star.state === 'strong';
+                const isDarkMatter = star.state === 'not_started';
                 const isUpperHemisphere = star.y < 48;
 
                 return (
@@ -300,9 +302,11 @@ export function AtlasSkyShareModal({
                         "rounded-full transition-all duration-300 flex items-center justify-center",
                         isCompleted
                           ? "w-2.5 h-2.5 bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.9)] ring-2 ring-amber-400/40"
-                          : isRevising
-                            ? "w-2 h-2 bg-teal-400 shadow-[0_0_6px_rgba(45,212,191,0.7)]"
-                            : "w-1.5 h-1.5 bg-zinc-600/60"
+                          : isSupernova
+                            ? "w-2.5 h-2.5 bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,1)] ring-2 ring-amber-400 animate-pulse"
+                            : isProgress
+                              ? "w-2 h-2 bg-teal-400 shadow-[0_0_6px_rgba(45,212,191,0.7)]"
+                              : "w-1.5 h-1.5 bg-zinc-800 border border-zinc-700/40 opacity-40"
                       )}
                     />
 
@@ -313,9 +317,11 @@ export function AtlasSkyShareModal({
                         isUpperHemisphere ? "-top-3.5" : "top-2.5",
                         isCompleted
                           ? "text-amber-300 font-bold"
-                          : isRevising
-                            ? "text-zinc-200"
-                            : "text-zinc-500/70"
+                          : isSupernova
+                            ? "text-amber-400 font-bold"
+                            : isProgress
+                              ? "text-zinc-200"
+                              : "text-zinc-600 opacity-60"
                       )}
                     >
                       {star.shortName || star.name}
@@ -323,6 +329,22 @@ export function AtlasSkyShareModal({
                   </div>
                 );
               })}
+            </div>
+
+            {/* SHARED LEGEND */}
+            <div className="relative z-10 flex items-center justify-center gap-4 py-1.5 mb-2 border-t border-white/5 opacity-80">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-zinc-800 border border-zinc-700/50" />
+                <span className="text-[7px] text-zinc-500 uppercase tracking-tighter">Dark Matter</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.8)]" />
+                <span className="text-[7px] text-amber-500/80 uppercase tracking-tighter">Supernova</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span className="text-[7px] text-amber-400/80 uppercase tracking-tighter">Mastered</span>
+              </div>
             </div>
 
             {/* CARD FOOTER BRANDING */}

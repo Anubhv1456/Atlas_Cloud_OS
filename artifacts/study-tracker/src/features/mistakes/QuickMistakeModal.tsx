@@ -76,7 +76,7 @@ export function QuickMistakeModal({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Database subjects
-  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
+  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
   
   // Normalized 19 Subjects List
   const subjectOptions = useMemo(() => {
@@ -113,7 +113,8 @@ export function QuickMistakeModal({
         textareaRef.current?.focus();
       }, 80);
     }
-  }, [open, editingMistake, defaultSubjectId, defaultTags, subjectOptions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editingMistake]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 

@@ -9,7 +9,7 @@ export function AtlasSkyPreview() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const subjects = useLiveQuery(() => db.subjects.toArray()) || [];
-  const systems = useLiveQuery(() => db.systems.toArray()) || [];
+  const systems = useLiveQuery(() => db.systems.toArray(), []) || [];
   const curriculumSets = useLiveQuery(() => (db.curriculumSets || db.revisionSets)?.toArray()) || [];
   
   const overallProgress = Math.round(calculateOverallProgress(subjects, systems, curriculumSets));

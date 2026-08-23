@@ -108,8 +108,8 @@ export default function MistakeRecoveryQueue() {
   }, [searchStr]);
 
   // Database queries
-  const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray()) || [];
-  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray()) || [];
+  const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray(), []) || [];
+  const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
 
   const subjectMap = useMemo(() => {
     const map = new Map<string, string>();

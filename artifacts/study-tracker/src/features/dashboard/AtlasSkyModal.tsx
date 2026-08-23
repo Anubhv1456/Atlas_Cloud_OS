@@ -503,19 +503,21 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 }
 
                 // Color & glow styling based on retentive state
-                let dotColorClass = "bg-zinc-600 shadow-none";
+                let dotColorClass = "bg-zinc-800/40 border border-zinc-700/30 shadow-none";
                 let pulseRingClass = "";
+                let isDarkMatter = star.state === 'not_started';
                 
                 if (star.state === 'completed') {
-                  dotColorClass = "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]";
+                  dotColorClass = "bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.9)] border-amber-300/50";
                   pulseRingClass = "border-amber-400/40 animate-ping";
                 } else if (star.state === 'revising') {
-                  dotColorClass = "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]";
-                  pulseRingClass = "border-amber-500/50 animate-pulse";
+                  // "Supernova" Alert Styling - Intense, unstable amber glow
+                  dotColorClass = "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,1)] border-amber-400";
+                  pulseRingClass = "border-amber-500/60 animate-pulse scale-150";
                 } else if (star.state === 'strong') {
-                  dotColorClass = "bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.8)]";
+                  dotColorClass = "bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.8)] border-teal-300/50";
                 } else if (star.state === 'in_progress') {
-                  dotColorClass = "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]";
+                  dotColorClass = "bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.7)] border-sky-300/50";
                 }
 
                 // Smart label position: Upper hemisphere = label above; Lower hemisphere = label below
@@ -526,8 +528,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     key={star.name}
                     style={{ left: `${star.x}%`, top: `${star.y}%` }}
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 cursor-pointer group p-2",
-                      matchesFilter ? "opacity-100 z-30" : "opacity-20 z-10 hover:opacity-80"
+                      "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 cursor-pointer group p-2",
+                      matchesFilter ? "opacity-100 z-30" : "opacity-10 z-10 hover:opacity-80"
                     )}
                     onClick={() => setSelectedStarName(isSelected ? null : star.name)}
                   >
@@ -546,16 +548,18 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
                       {/* Main Star Node Dot */}
                       <div className={cn(
-                        "w-2.5 h-2.5 rounded-full transition-transform duration-200 group-hover:scale-150",
+                        "w-2.5 h-2.5 rounded-full transition-all duration-500 border-0.5",
+                        isDarkMatter && "w-2 h-2 opacity-40 group-hover:opacity-100 group-hover:scale-125 group-hover:bg-zinc-700",
+                        !isDarkMatter && "group-hover:scale-150",
                         dotColorClass,
                         isSelected && "scale-150 ring-2 ring-white"
                       )} />
 
                       {/* Smart Radial Label Text */}
                       <span className={cn(
-                        "absolute left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-200 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
+                        "absolute left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
                         isUpperHemisphere ? "-top-4" : "top-3.5",
-                        isSelected ? "text-teal-300 font-bold scale-105" : "text-zinc-400 group-hover:text-zinc-100"
+                        isSelected ? "text-teal-300 font-bold scale-105" : (isDarkMatter ? "text-zinc-600 opacity-0 group-hover:opacity-100 group-hover:text-zinc-400" : "text-zinc-400 group-hover:text-zinc-100")
                       )}>
                         {star.shortName || star.name}
                       </span>
@@ -635,6 +639,22 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+            {/* Legend Indicators */}
+            <div className="flex items-center justify-center gap-6 py-1 px-4 rounded-xl bg-white/[0.01] border border-white/[0.05] w-fit mx-auto">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-800 border border-zinc-700/50 opacity-60" />
+                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter font-medium">Dark Matter (Unstarted)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
+                <span className="text-[10px] text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                <span className="text-[10px] text-amber-400/80 uppercase tracking-tighter font-semibold">Mastered Constellation</span>
+              </div>
+            </div>
 
             {/* Medical Phase Filter Strip */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md">

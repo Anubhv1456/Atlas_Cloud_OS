@@ -9,6 +9,7 @@
     "scripts"
   ],
   "scripts": {
+    "start": "node artifacts/api-server/dist/index.mjs",
     "dev": "npm run dev --workspace=artifacts/study-tracker -- --port 3000 --host 0.0.0.0",
     "dev:study-tracker": "npm run dev --workspace=artifacts/study-tracker -- --port 3000 --host 0.0.0.0",
     "dev:mockup": "npm run dev --workspace=artifacts/mockup-sandbox",

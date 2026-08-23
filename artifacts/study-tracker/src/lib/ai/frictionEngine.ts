@@ -161,7 +161,7 @@ export function calculateSubjectFriction(
 export function useClinicalFrictionEngine() {
   const subjects = useLiveQuery(() => db.subjects.toArray().then((s) => s.filter((x) => !x.deletedAt))) || [];
   const mistakes = useLiveQuery(() => db.mistakeLogs.toArray().then((m) => m.filter((x) => !x.deletedAt))) || [];
-  const history = useLiveQuery(() => db.history.toArray()) || [];
+  const history = useLiveQuery(() => db.history.toArray(), []) || [];
   const curriculumSets = useLiveQuery(() => db.curriculumSets.toArray().then((c) => c.filter((x) => !x.deletedAt))) || [];
 
   // Compute metrics for each subject

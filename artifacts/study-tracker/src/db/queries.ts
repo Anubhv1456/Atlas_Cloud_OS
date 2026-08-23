@@ -122,7 +122,7 @@ export function useEarliestHistoryDate(): Date | null {
 
 /** All systems that have a revision due today or overdue. */
 export function useRevisionsDue(): StudySystem[] {
-  const systems = useLiveQuery(() => db.systems.toArray()) ?? [];
+  const systems = useLiveQuery(() => db.systems.toArray(), []) ?? [];
   const now = today();
   return systems.filter(s => isRevisionDue(s, [], now));
 }
