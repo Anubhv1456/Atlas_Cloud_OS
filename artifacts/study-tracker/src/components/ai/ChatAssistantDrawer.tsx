@@ -278,6 +278,15 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     const text = (textToSend || inputVal).trim();
     if (!text || isLoading) return;
 
+    // Synchronously unlock Web Speech Synthesis for iOS Safari on user action
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        const silentUtterance = new SpeechSynthesisUtterance('');
+        silentUtterance.volume = 0;
+        window.speechSynthesis.speak(silentUtterance);
+      } catch (err) {}
+    }
+
     // Stop voice if recording
     if (isListening) {
       stopListening();
@@ -331,6 +340,14 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
       stopListening();
       setIsVoiceActive(false);
     } else {
+      // Synchronously unlock Web Speech Synthesis for iOS Safari on user tap
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          const silentUtterance = new SpeechSynthesisUtterance('');
+          silentUtterance.volume = 0;
+          window.speechSynthesis.speak(silentUtterance);
+        } catch (err) {}
+      }
       setIsVoiceActive(true);
       startListening();
     }
@@ -338,6 +355,14 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
   // 1-Tap Paste Clinical Stem from Clipboard
   const handlePasteClinicalStem = async () => {
+    // Synchronously unlock Web Speech Synthesis for iOS Safari on user tap
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        const silentUtterance = new SpeechSynthesisUtterance('');
+        silentUtterance.volume = 0;
+        window.speechSynthesis.speak(silentUtterance);
+      } catch (err) {}
+    }
     try {
       const clipText = await navigator.clipboard.readText();
       if (!clipText || !clipText.trim()) {

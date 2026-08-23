@@ -231,6 +231,14 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
 
     isRecordingRef.current = true;
 
+    // Unlock speech synth SYNCHRONOUSLY to satisfy iOS Safari gesture requirements
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        const silentUtterance = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(silentUtterance);
+      } catch {}
+    }
+
     // Proactively request mic stream on user gesture to force native PWA / browser permission dialog
     if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
@@ -248,14 +256,6 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
         }));
         return;
       }
-    }
-
-    // Unlock speech synth
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        const silentUtterance = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(silentUtterance);
-      } catch {}
     }
 
     bargeInController.triggerBargeIn();
