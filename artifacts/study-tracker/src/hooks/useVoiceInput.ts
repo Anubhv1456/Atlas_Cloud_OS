@@ -186,6 +186,41 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       recognition.onstart = () => {
         setIsListening(true);
         setError(null);
+        
+        // Initialize High-Pass DSP & Real-Time RMS VAD asynchronously (non-blocking) ONLY AFTER WebKit secures mic access
+        acousticDsp.startAudioPipeline(
+          {
+            onSpeechStart: () => setIsSpeaking(true),
+            onSpeechEnd: () => {
+              setIsSpeaking(false);
+              if (overrideOptions?.onSpeechAutoEnd) {
+                overrideOptions.onSpeechAutoEnd();
+              } else if (defaultOptions.onSpeechAutoEnd) {
+                defaultOptions.onSpeechAutoEnd();
+              }
+            },
+            onEnergyLevel: (rmsDb, normalized) => {
+              setEnergyLevel(normalized);
+              if (overrideOptions?.onEnergyLevel) {
+                overrideOptions.onEnergyLevel(rmsDb, normalized);
+              } else if (defaultOptions.onEnergyLevel) {
+                defaultOptions.onEnergyLevel(rmsDb, normalized);
+              }
+            },
+          },
+          {
+            silenceThresholdDb: -38,
+            silenceDurationMs: 1600,
+          }
+        ).then((dspSession) => {
+          dspSessionRef.current = dspSession;
+          if (recognitionRef.current) {
+            speechCoordinator.registerActiveStream('command-bar', recognitionRef.current, dspSessionRef.current);
+          }
+        }).catch((err: any) => {
+          console.warn('[useVoiceInput] DSP initialization failed:', err);
+          // Don't fully abort STT if just DSP fails, but log it
+        });
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -268,49 +303,6 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       setIsListening(false);
       shouldListenRef.current = false;
     }
-
-    // 2. Initialize High-Pass DSP & Real-Time RMS VAD asynchronously (non-blocking)
-    acousticDsp.startAudioPipeline(
-      {
-        onSpeechStart: () => setIsSpeaking(true),
-        onSpeechEnd: () => {
-          setIsSpeaking(false);
-          if (overrideOptions?.onSpeechAutoEnd) {
-            overrideOptions.onSpeechAutoEnd();
-          } else if (defaultOptions.onSpeechAutoEnd) {
-            defaultOptions.onSpeechAutoEnd();
-          }
-        },
-        onEnergyLevel: (rmsDb, normalized) => {
-          setEnergyLevel(normalized);
-          if (overrideOptions?.onEnergyLevel) {
-            overrideOptions.onEnergyLevel(rmsDb, normalized);
-          } else if (defaultOptions.onEnergyLevel) {
-            defaultOptions.onEnergyLevel(rmsDb, normalized);
-          }
-        },
-      },
-      {
-        silenceThresholdDb: -38,
-        silenceDurationMs: 1600,
-      }
-    ).then((dspSession) => {
-      dspSessionRef.current = dspSession;
-      if (recognitionRef.current) {
-        speechCoordinator.registerActiveStream('command-bar', recognitionRef.current, dspSessionRef.current);
-      }
-    }).catch((err: any) => {
-      console.warn('[useVoiceInput] DSP initialization failed:', err);
-      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-        setError('Microphone permission blocked by browser/PWA.');
-        toast.error('Microphone access denied', {
-          description: 'Enable microphone permission in Chrome/Safari settings or App Info.',
-        });
-        shouldListenRef.current = false;
-        setIsListening(false);
-        speechCoordinator.releaseLock('command-bar');
-      }
-    });
   }, [isSupported, defaultOptions]);
 
   // Clean up on unmount
