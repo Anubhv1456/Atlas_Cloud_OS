@@ -241,6 +241,9 @@
     max-width: 100%;
     overflow-x: clip;
   }
+  html, body {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply font-sans antialiased bg-background text-foreground transition-colors duration-500 min-h-screen;
     padding-top: env(safe-area-inset-top, 0px);

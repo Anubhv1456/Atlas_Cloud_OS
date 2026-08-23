@@ -129,12 +129,11 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
     setInterimTranscript('');
   }, []);
 
-  const startListening = useCallback(async (overrideOptions?: UseVoiceInputOptions) => {
+  const startListening = useCallback((overrideOptions?: UseVoiceInputOptions) => {
     if (!isSupported) {
       setError('Voice recognition is not supported in this browser. You can type or paste your notes directly.');
       return;
     }
-
     setError(null);
     shouldListenRef.current = true;
 
@@ -152,7 +151,6 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       }
       recognitionRef.current = null;
     }
-
     if (dspSessionRef.current) {
       try {
         dspSessionRef.current.stop();
@@ -162,52 +160,7 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       dspSessionRef.current = null;
     }
 
-    // 1. Initialize High-Pass DSP & Real-Time RMS VAD
-    try {
-      const dspSession = await acousticDsp.startAudioPipeline(
-        {
-          onSpeechStart: () => {
-            setIsSpeaking(true);
-          },
-          onSpeechEnd: () => {
-            setIsSpeaking(false);
-            if (overrideOptions?.onSpeechAutoEnd) {
-              overrideOptions.onSpeechAutoEnd();
-            } else if (defaultOptions.onSpeechAutoEnd) {
-              defaultOptions.onSpeechAutoEnd();
-            }
-          },
-          onEnergyLevel: (rmsDb, normalized) => {
-            setEnergyLevel(normalized);
-            if (overrideOptions?.onEnergyLevel) {
-              overrideOptions.onEnergyLevel(rmsDb, normalized);
-            } else if (defaultOptions.onEnergyLevel) {
-              defaultOptions.onEnergyLevel(rmsDb, normalized);
-            }
-          },
-        },
-        {
-          silenceThresholdDb: -38,
-          silenceDurationMs: 1600,
-        }
-      );
-      dspSessionRef.current = dspSession;
-    } catch (err: any) {
-      console.warn('[useVoiceInput] DSP initialization failed:', err);
-      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-        const msg = 'Microphone permission blocked by browser/PWA.';
-        setError(msg);
-        toast.error('Microphone access denied', {
-          description: 'Enable microphone permission in Chrome settings or App Info.',
-        });
-        shouldListenRef.current = false;
-        setIsListening(false);
-        speechCoordinator.releaseLock('command-bar');
-        return;
-      }
-    }
-
-    // 2. Initialize Speech Recognition with Injected Medical Grammar
+    // 1. Initialize Speech Recognition SYNCHRONOUSLY for iOS Safari (requires same-tick execution from user gesture)
     try {
       const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognitionConstructor) {
@@ -238,7 +191,6 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let currentInterim = '';
         let newFinal = '';
-
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           const res = event.results[i];
           const text = res[0]?.transcript || '';
@@ -277,13 +229,7 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         const errType = event.error;
-        if (errType === 'no-speech') {
-          return;
-        }
-
-        if (errType === 'aborted') {
-          return;
-        }
+        if (errType === 'no-speech' || errType === 'aborted') return;
 
         if (errType === 'not-allowed' || errType === 'service-not-allowed') {
           setError('Microphone access was denied. Please allow mic permissions in your browser.');
@@ -291,14 +237,12 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
           setIsListening(false);
           return;
         }
-
         if (errType === 'network') {
           setError('Speech recognition network error. Please check your internet connection.');
           shouldListenRef.current = false;
           setIsListening(false);
           return;
         }
-
         setError(`Microphone error: ${errType}`);
       };
 
@@ -318,13 +262,55 @@ export function useVoiceInput(defaultOptions: UseVoiceInputOptions = {}): UseVoi
       };
 
       recognition.start();
-      speechCoordinator.registerActiveStream('command-bar', recognition, dspSessionRef.current);
     } catch (err: any) {
       console.error('[useVoiceInput] Error starting speech recognition:', err);
       setError('Unable to activate microphone. Please check your device audio settings.');
       setIsListening(false);
       shouldListenRef.current = false;
     }
+
+    // 2. Initialize High-Pass DSP & Real-Time RMS VAD asynchronously (non-blocking)
+    acousticDsp.startAudioPipeline(
+      {
+        onSpeechStart: () => setIsSpeaking(true),
+        onSpeechEnd: () => {
+          setIsSpeaking(false);
+          if (overrideOptions?.onSpeechAutoEnd) {
+            overrideOptions.onSpeechAutoEnd();
+          } else if (defaultOptions.onSpeechAutoEnd) {
+            defaultOptions.onSpeechAutoEnd();
+          }
+        },
+        onEnergyLevel: (rmsDb, normalized) => {
+          setEnergyLevel(normalized);
+          if (overrideOptions?.onEnergyLevel) {
+            overrideOptions.onEnergyLevel(rmsDb, normalized);
+          } else if (defaultOptions.onEnergyLevel) {
+            defaultOptions.onEnergyLevel(rmsDb, normalized);
+          }
+        },
+      },
+      {
+        silenceThresholdDb: -38,
+        silenceDurationMs: 1600,
+      }
+    ).then((dspSession) => {
+      dspSessionRef.current = dspSession;
+      if (recognitionRef.current) {
+        speechCoordinator.registerActiveStream('command-bar', recognitionRef.current, dspSessionRef.current);
+      }
+    }).catch((err: any) => {
+      console.warn('[useVoiceInput] DSP initialization failed:', err);
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setError('Microphone permission blocked by browser/PWA.');
+        toast.error('Microphone access denied', {
+          description: 'Enable microphone permission in Chrome/Safari settings or App Info.',
+        });
+        shouldListenRef.current = false;
+        setIsListening(false);
+        speechCoordinator.releaseLock('command-bar');
+      }
+    });
   }, [isSupported, defaultOptions]);
 
   // Clean up on unmount
