@@ -428,30 +428,20 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-auto">
-        {/* Full-Screen Opaque Backdrop overlay */}
+      <div className="fixed inset-0 z-50 flex justify-end p-0 sm:p-4 pointer-events-none">
+        {/* Apple iPadOS Slide-Over Panel on Desktop / Sheet on Mobile */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={() => onOpenChange(false)}
-          className="fixed inset-0 bg-background/95 sm:bg-background/80 backdrop-blur-xl"
-        />
-
-        {/* Full-Screen Native Sheet on Mobile / Centered Modal on Desktop */}
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.98 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+          initial={{ opacity: 0, x: '100%' }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: '100%' }}
+          transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className={cn(
-            "relative w-full max-w-2xl h-[100dvh] sm:h-[84vh] flex flex-col rounded-none sm:rounded-2xl border-0 sm:border shadow-2xl overflow-hidden",
-            "bg-card/98 dark:bg-card/95 border-border/80 dark:border-border/60 backdrop-blur-2xl"
+            "relative w-full sm:w-[420px] h-[100dvh] sm:h-full flex flex-col rounded-none sm:rounded-3xl border-0 sm:border shadow-2xl overflow-hidden pointer-events-auto",
+            "bg-zinc-900/70 border-white/10 backdrop-blur-3xl"
           )}
         >
           {/* Header Bar with Live Exam Context Badge & Segmented Control */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-border/40 bg-card">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-white/10 bg-black/20">
             <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-primary/20">
@@ -975,8 +965,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           )}
 
           {/* Unified Multi-Modal Input Bar */}
-          <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-border/40 bg-card shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-muted/30 border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+          <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-white/10 bg-black/20 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-black/40 border border-white/10 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
               {/* 1-Tap Paste Clinical Stem Button */}
               <button
                 type="button"
