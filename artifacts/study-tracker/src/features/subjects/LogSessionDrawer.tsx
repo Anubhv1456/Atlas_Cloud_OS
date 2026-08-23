@@ -108,7 +108,10 @@ export function LogSessionDialog({ isOpen, onOpenChange, system, subjectId, topi
           </div>
         </DialogHeader>
         
-        <div className="flex-1 px-6">
+        <div 
+          className="flex-1 px-6 overflow-y-auto max-h-[50vh] overscroll-y-contain touch-pan-y scrollbar-thin"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+        >
           <div className="py-4 space-y-1">
             {filteredTopics.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground text-sm">

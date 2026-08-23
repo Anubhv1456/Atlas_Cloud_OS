@@ -304,7 +304,10 @@ export function CurriculumSetScoreModal({
           </form>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 pt-4">
-            <div className="space-y-1 max-h-[250px] overflow-y-auto pr-1 flex-1">
+            <div 
+              className="space-y-1 max-h-[280px] sm:max-h-[350px] overflow-y-auto overscroll-y-contain pr-1 flex-1 touch-pan-y scrollbar-thin"
+              style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+            >
               {setTopics.map((t) => (
                 <label
                   key={t.id}

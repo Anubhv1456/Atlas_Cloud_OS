@@ -906,7 +906,6 @@ export default function SubjectDetail() {
                             id={`system-card-${system.id}`}
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            {...provided.dragHandleProps}
                             className={cn(snapshot.isDragging && "opacity-80 z-50")}
                             style={provided.draggableProps.style}
                           >

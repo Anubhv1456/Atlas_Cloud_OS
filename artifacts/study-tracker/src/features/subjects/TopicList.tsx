@@ -16,7 +16,8 @@ import {
   Check, 
   X, 
   RotateCcw, 
-  MoreHorizontal
+  MoreHorizontal,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateHLC } from '@/lib/hlc';
@@ -101,6 +102,13 @@ export function TopicList({
   // Quick add state
   const [isAddingTopic, setIsAddingTopic] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
+
+  // Search filter state for fast navigation
+  const [topicSearch, setTopicSearch] = useState('');
+
+  const filteredTopics = topics.filter(t => 
+    !topicSearch.trim() || t.name.toLowerCase().includes(topicSearch.trim().toLowerCase())
+  );
 
   const topicProgresses = useLiveQuery(
     () => {
@@ -279,8 +287,42 @@ export function TopicList({
         </div>
       )}
 
+      {/* Quick Search / Filter Bar */}
+      {topics.length > 4 && (
+        <div className="px-3 py-1.5 border-b border-border/30 bg-muted/10 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+            <input
+              type="text"
+              value={topicSearch}
+              onChange={(e) => setTopicSearch(e.target.value)}
+              placeholder={`Filter ${topics.length} topics...`}
+              className="w-full pl-8 pr-7 py-1 text-xs bg-background/80 hover:bg-background border border-border/50 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground transition-all placeholder:text-muted-foreground/50"
+            />
+            {topicSearch && (
+              <button
+                type="button"
+                onClick={() => setTopicSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
+                title="Clear filter"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          {topicSearch && (
+            <span className="text-[10px] font-mono text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-md border border-border/40">
+              {filteredTopics.length}/{topics.length}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Topics Scrollable List */}
-      <div className="flex flex-col divide-y divide-border/25 max-h-[420px] overflow-y-auto p-1">
+      <div 
+        className="flex flex-col divide-y divide-border/25 max-h-[360px] sm:max-h-[480px] overflow-y-auto overscroll-y-contain p-1 touch-pan-y scrollbar-thin select-text"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+      >
         {topics.length === 0 ? (
           <div className="p-6 text-center text-xs text-muted-foreground">
             No topics configured for this system.
@@ -298,8 +340,21 @@ export function TopicList({
               </div>
             )}
           </div>
+        ) : filteredTopics.length === 0 ? (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            No topics match &quot;<span className="text-foreground font-medium">{topicSearch}</span>&quot;
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setTopicSearch('')}
+                className="text-primary hover:underline text-xs font-medium cursor-pointer"
+              >
+                Clear Search Filter
+              </button>
+            </div>
+          </div>
         ) : (
-          topics.map(topic => {
+          filteredTopics.map(topic => {
             const p = getProgress(topic.id);
             const isWeak = p.isWeak;
             const sets = revisionSets.filter(rs => rs.topicIds.includes(topic.id));
@@ -470,6 +525,14 @@ export function TopicList({
           })
         )}
       </div>
+
+      {/* Scroll Footer Indicator */}
+      {topics.length > 5 && !topicSearch && (
+        <div className="px-3 py-1.5 bg-muted/20 border-t border-border/30 flex items-center justify-between text-[10px] text-muted-foreground/80 font-medium shrink-0">
+          <span>Scroll or search to view all {topics.length} topics</span>
+          <span className="font-mono text-[9px] bg-muted/60 px-1.5 py-0.5 rounded border border-border/30">{topics.length} items</span>
+        </div>
+      )}
 
       {/* Rename Topic Modal */}
       {renameTopicTarget && (

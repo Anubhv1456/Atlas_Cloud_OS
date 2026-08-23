@@ -119,7 +119,10 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          className="flex-1 overflow-y-auto overscroll-y-contain touch-pan-y scrollbar-thin"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+        >
           {loading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
               <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />

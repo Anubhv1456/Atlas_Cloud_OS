@@ -192,7 +192,10 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                 placeholder="Search topics..."
                 className="text-xs mb-2"
               />
-              <div className="flex-1 overflow-y-auto space-y-1 max-h-[250px] pr-1">
+              <div 
+                className="flex-1 overflow-y-auto space-y-1 max-h-[300px] sm:max-h-[360px] overscroll-y-contain pr-1 touch-pan-y scrollbar-thin"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+              >
                 {filteredTopics.map(t => (
                   <label key={t.id} className="flex items-start gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer">
                     <input
