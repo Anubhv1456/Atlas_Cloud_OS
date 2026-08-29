@@ -23,7 +23,6 @@ export interface AmbientVoiceSessionState {
 
 export interface UseAmbientVoiceSessionOptions {
   autoSpeakResponse?: boolean;
-  mode?: 'push-to-talk' | 'hands-free';
   silenceDebounceMs?: number;
   onDeltaReceived?: (delta: CognitiveDelta, action?: ParsedAtlasAction | null) => void;
 }
@@ -31,7 +30,6 @@ export interface UseAmbientVoiceSessionOptions {
 /**
  * Enterprise Medical Voice Session Hook
  * - Instant Push-to-Talk transcript locking (zero delay)
- * - 800ms Auto-VAD trailing silence debouncer for Hands-Free mode
  * - Strict index-based isFinal token accumulator
  * - Audio Stream Concurrency Singleton lock coordination
  */
@@ -218,7 +216,7 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
     }
   }, [submitSpeechTurn]);
 
-  // Start Voice Recording (Push-to-Talk or Hands-Free)
+  // Start Voice Recording (Push-to-Talk)
   const startRecording = useCallback(async () => {
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
@@ -341,18 +339,7 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
             energyLevel: 0.85,
           }));
 
-          // Step 2.2: Hands-Free Auto-VAD 800ms trailing silence timer
-          if (optionsRef.current.mode === 'hands-free' && combinedTranscript.length > 2) {
-            if (silenceTimerRef.current) {
-              clearTimeout(silenceTimerRef.current);
-            }
-            silenceTimerRef.current = setTimeout(() => {
-              silenceTimerRef.current = null;
-              if (isRecordingRef.current) {
-                stopAndSubmitRecording();
-              }
-            }, silenceThresholdMs);
-          }
+
         };
 
         recognition.onerror = (e: any) => {
@@ -363,13 +350,7 @@ export function useAmbientVoiceSession(options: UseAmbientVoiceSessionOptions = 
         };
 
         recognition.onend = () => {
-          if (isRecordingRef.current && optionsRef.current.mode === 'hands-free') {
-            try {
-              recognition.start();
-            } catch {}
-          } else {
-            isRecordingRef.current = false;
-          }
+          isRecordingRef.current = false;
         };
 
         recognition.start();

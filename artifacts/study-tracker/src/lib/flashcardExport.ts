@@ -1,4 +1,4 @@
-export interface AnkiCard {
+export interface Flashcard {
   front: string;
   back: string;
   tags: string;
@@ -14,7 +14,7 @@ function getPreferredModel(): string {
 }
 
 
-async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetries = 3): Promise<AnkiCard[]> {
+async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetries = 3): Promise<Flashcard[]> {
   let apiKey = localStorage.getItem('atlas_gemini_api_key') || "";
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is missing. Please add it to your project settings.");
@@ -23,14 +23,15 @@ async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetri
   let activeModel = getPreferredModel();
   let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
-  const systemInstruction = `You are an elite medical educator creating Anki flashcards. You must output strictly valid JSON containing an array of objects with 'front' and 'back' keys. You must wrap medical keywords in HTML <b> tags.`;
-  const userPrompt = `Format Instructions:\n${prompt || "Format these as Q&A or cloze deletions for optimal active recall studying."}\n\nMistakes Data:\n${JSON.stringify(mistakes, null, 2)}`;
+  const systemInstruction = `You are an elite medical educator creating smart flashcards. You must wrap medical keywords in HTML <b> tags.`;
+  const userPrompt = `Format Instructions:\n${prompt || "Format these as Q&A or cloze deletions for optimal active recall studying."}\n\nMistakes Data:\n${JSON.stringify(mistakes.map(m => ({ question: m.question || m.title || '', answer: m.correctAnswer || m.answer || '', concept: m.concept || m.subject || '' })))}`;
 
   const payload = {
     system_instruction: { parts: [{ text: systemInstruction }] },
     contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
     generationConfig: { 
       response_mime_type: 'application/json',
+      response_schema: { type: 'ARRAY', items: { type: 'OBJECT', properties: { front: { type: 'STRING' }, back: { type: 'STRING' }, tags: { type: 'STRING' } }, required: ['front', 'back'] } },
       temperature: 0.2
     }
   };
@@ -67,14 +68,14 @@ async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetri
   return [];
 }
 
-export async function generateAnkiDeck(
+export async function generateFlashcardDeck(
   mistakes: any[],
   prompt: string,
   formatType: string,
   onProgress?: (current: number, total: number) => void
-): Promise<{ cards: AnkiCard[], failed: number }> {
+): Promise<{ cards: Flashcard[], failed: number }> {
   const batchSize = 10;
-  const totalCards: AnkiCard[] = [];
+  const totalCards: Flashcard[] = [];
   let failed = 0;
 
   for (let i = 0; i < mistakes.length; i += batchSize) {
@@ -86,7 +87,7 @@ export async function generateAnkiDeck(
         totalCards.push(...cards);
       }
     } catch (e: any) {
-      console.error("Failed to generate Anki cards for batch", e);
+      console.error("Failed to generate flashcards for batch", e);
       if (e.message && (e.message.includes("GEMINI_API_KEY") || e.message.includes("API key"))) throw e;
       failed += batch.length;
     }
@@ -99,20 +100,20 @@ export async function generateAnkiDeck(
   return { cards: totalCards, failed };
 }
 
-export async function generateAnkiPreview(mistake: any, prompt: string, formatType: string): Promise<AnkiCard | null> {
+export async function generateFlashcardPreview(mistake: any, prompt: string, formatType: string): Promise<Flashcard | null> {
   try {
     const cards = await generateCardsFromGemini([mistake], prompt, 1);
     if (cards && cards.length > 0) {
       return cards[0];
     }
   } catch (e: any) {
-    console.error("Failed to generate Anki preview", e);
+    console.error("Failed to generate flashcard preview", e);
     throw e;
   }
   return null;
 }
 
-export function downloadAnkiTSV(cards: AnkiCard[], filename: string = "Atlas_AI_Anki_Deck.txt", customTags: string = "", targetDeck: string = "") {
+export function downloadFlashcardTSV(cards: Flashcard[], filename: string = "Atlas_Smart_Deck.txt", customTags: string = "", targetDeck: string = "") {
   if (cards.length === 0) return;
 
   const rows = cards.map(c => {

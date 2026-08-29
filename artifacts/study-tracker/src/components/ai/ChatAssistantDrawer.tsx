@@ -157,7 +157,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   }, [setupStep, dynamicPromptPills]);
 
   const [activeTab, setActiveTab] = useState<'text' | 'voice'>(initialMode === 'voice' ? 'voice' : 'text');
-  const [voiceInputMode, setVoiceInputMode] = useState<'push-to-talk' | 'hands-free'>('push-to-talk');
+
   const [inputVal, setInputVal] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [liveContext, setLiveContext] = useState<LiveAtlasContext | null>(null);
@@ -193,8 +193,6 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
   const ambientSession = useAmbientVoiceSession({
     autoSpeakResponse: !isMuted,
-    mode: voiceInputMode,
-    silenceDebounceMs: 800,
     onDeltaReceived: handleDeltaReceived
   });
 
@@ -276,15 +274,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     }
   }, [open]);
 
-  // Flush speech session cleanly whenever voice input mode switches
-  const handleVoiceInputModeChange = useCallback((newMode: 'push-to-talk' | 'hands-free') => {
-    if (newMode !== voiceInputMode) {
-      if (ambientSession.isListening) {
-        ambientSession.stopSession();
-      }
-      setVoiceInputMode(newMode);
-    }
-  }, [voiceInputMode, ambientSession]);
+
 
   // Handle initial mode trigger (voice vs text focus) and clean tear-down
   useEffect(() => {
@@ -701,29 +691,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 />
               </div>
 
-              {/* Top Mode Switcher (Push-to-Talk vs Hands-Free) */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border/40 backdrop-blur-md z-10 shadow-2xs shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleVoiceInputModeChange('push-to-talk')}
-                  className={cn(
-                    "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                    voiceInputMode === 'push-to-talk' ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Hold to Talk
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleVoiceInputModeChange('hands-free')}
-                  className={cn(
-                    "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                    voiceInputMode === 'hands-free' ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Hands-Free (Auto-VAD)
-                </button>
-              </div>
+
 
               {/* Apple-Style Floating Intelligence Capsule (HUD Overlay in Upper Negative Space) */}
               <AnimatePresence>
@@ -795,28 +763,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                         : 1 
                     }}
                     transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-                    onPointerDown={
-                      voiceInputMode === 'push-to-talk'
-                        ? ambientSession.startRecording
-                        : undefined
-                    }
-                    onPointerUp={
-                      voiceInputMode === 'push-to-talk'
-                        ? ambientSession.stopAndSubmitRecording
-                        : undefined
-                    }
-                    onPointerCancel={
-                      voiceInputMode === 'push-to-talk'
-                        ? ambientSession.stopAndSubmitRecording
-                        : undefined
-                    }
-                    onClick={
-                      voiceInputMode === 'hands-free'
-                        ? ambientSession.isListening
-                          ? ambientSession.stopAndSubmitRecording
-                          : ambientSession.startRecording
-                        : undefined
-                    }
+                    onPointerDown={ambientSession.startRecording}
+                    onPointerUp={ambientSession.stopAndSubmitRecording}
+                    onPointerCancel={ambientSession.stopAndSubmitRecording}
                     style={{ touchAction: 'none' }}
                     className={cn(
                       "relative w-28 h-28 sm:w-36 sm:h-36 rounded-full flex flex-col items-center justify-center border transition-all duration-300 cursor-pointer shadow-2xl backdrop-blur-md active:scale-95 select-none",
@@ -839,7 +788,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       <Mic className="w-10 h-10 sm:w-14 sm:h-14" />
                     )}
                     <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest mt-0.5 sm:mt-1 opacity-70">
-                      {ambientSession.isListening ? "Listening" : ambientSession.isThinking ? "Thinking" : ambientSession.isSpeakingAI ? "Speaking" : voiceInputMode === 'hands-free' ? "Tap to Start" : "Hold Orb"}
+                      {ambientSession.isListening ? "Listening" : ambientSession.isThinking ? "Thinking" : ambientSession.isSpeakingAI ? "Speaking" : "Hold Orb"}
                     </span>
                   </motion.div>
                 </div>
@@ -911,28 +860,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               <div className="w-full max-w-md flex flex-col items-center justify-center shrink-0 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] z-10 gap-1 sm:gap-1.5">
                 <button
                   type="button"
-                  onPointerDown={
-                    voiceInputMode === 'push-to-talk'
-                      ? ambientSession.startRecording
-                      : undefined
-                  }
-                  onPointerUp={
-                    voiceInputMode === 'push-to-talk'
-                      ? ambientSession.stopAndSubmitRecording
-                      : undefined
-                  }
-                  onPointerCancel={
-                    voiceInputMode === 'push-to-talk'
-                      ? ambientSession.stopAndSubmitRecording
-                      : undefined
-                  }
-                  onClick={
-                    voiceInputMode === 'hands-free'
-                      ? ambientSession.isListening
-                        ? ambientSession.stopAndSubmitRecording
-                        : ambientSession.startRecording
-                      : undefined
-                  }
+                  onPointerDown={ambientSession.startRecording}
+                  onPointerUp={ambientSession.stopAndSubmitRecording}
+                  onPointerCancel={ambientSession.stopAndSubmitRecording}
                   style={{ touchAction: 'none' }}
                   className={cn(
                     "w-full h-11 sm:h-13 py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]",
@@ -946,11 +876,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>
                     {ambientSession.isListening
-                      ? voiceInputMode === 'hands-free' ? "Listening... Tap to Stop" : "Listening... Release to Send"
+                      ? "Listening... Release to Send"
                       : ambientSession.isThinking
                       ? "Analyzing Reasoning..."
-                      : voiceInputMode === 'hands-free'
-                      ? "Tap to Talk (Hands-Free)"
                       : "Hold to Talk (Push-to-Talk)"}
                   </span>
                 </button>

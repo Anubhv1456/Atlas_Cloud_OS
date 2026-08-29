@@ -439,7 +439,7 @@ export function PermissionsDiagnosticsSection() {
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Powers hands-free voice commands and instant clinical transcription.
+            Powers voice copilot commands and instant clinical transcription.
           </p>
 
           <Button

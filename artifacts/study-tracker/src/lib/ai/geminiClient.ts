@@ -157,7 +157,7 @@ export async function convertDeltaToAction(
     const ruleCandidate = (d?.twentyNotebookRule || d?.hingeConcept || delta.executiveSummary || fallbackInput || '').trim();
 
     // Guard against empty strings, punctuation only, or single words compiled erroneously
-    const cleanRule = ruleCandidate.replace(/^[\s.:,-]+|[\s.:,-]+$/g, '').trim();
+    const cleanRule = ruleCandidate.replace(/^\s.:,-+|\s.:,-+$/g, '').trim();
     if (!cleanRule || cleanRule.length < 4 || cleanRule.split(/\s+/).length < 2) {
       return null;
     }
@@ -292,7 +292,7 @@ export async function executeCognitiveCompiler(
         const parsed = JSON.parse(msg.content);
         if (parsed.executiveSummary) cleanText = parsed.executiveSummary;
       } catch {
-        cleanText = cleanText.replace(/```json[\s\S]*?```/g, '').trim() || msg.content;
+        cleanText = cleanText.replace(/```json\s\S*?```/g, '').trim() || msg.content;
       }
     }
     return {
@@ -336,7 +336,7 @@ export async function executeCognitiveCompiler(
           1
         );
       } catch (fallbackErr) {
-        console.warn('[GeminiClient] Cloud fallback failed, executing local cognitive compiler:', fallbackErr);
+        console.warn('GeminiClient Cloud fallback failed, executing local cognitive compiler:', fallbackErr);
         const localResult = await executeLocalMedicalCognitiveEngine(input, conversationHistory);
         return {
           delta: localResult.delta,
@@ -347,7 +347,7 @@ export async function executeCognitiveCompiler(
         };
       }
     } else {
-      console.warn('[GeminiClient] Cloud API failed, executing local cognitive compiler:', err);
+      console.warn('GeminiClient Cloud API failed, executing local cognitive compiler:', err);
       const localResult = await executeLocalMedicalCognitiveEngine(input, conversationHistory);
       return {
         delta: localResult.delta,
@@ -429,15 +429,15 @@ export async function generateClinicalSyllabus(
 ): Promise<any> {
   const systemInstruction = `You are an expert medical curriculum designer. 
 Generate a comprehensive but highly-curated syllabus for the ${targetExam} focusing on ${focusAreas}.
-The output must STRICTLY be a JSON array of KnowledgeNodes.
-Each KnowledgeNode MUST map its 'subjectIds' to one or more of these 19 Anchor Hubs:
-['Anatomy', 'Physiology', 'Biochemistry', 'Pathology', 'Pharmacology', 'Microbiology', 'Forensic Medicine', 'Preventive & Social Medicine', 'ENT', 'Ophthalmology', 'General Medicine', 'General Surgery', 'Obstetrics & Gynecology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Psychiatry', 'Radiology', 'Anesthesiology']
 
-Format exactly as:
-[
-  { "id": "uuid-here", "name": "Topic Name", "type": "Concept", "subjectIds": ["Pathology", "General Medicine"], "tags": ["#HighYield"] }
-]
-Do not return anything except the JSON array.`;
+Each KnowledgeNode MUST map its 'subjectIds' to one or more of these 19 Anchor Hubs:
+'Anatomy', 'Physiology', 'Biochemistry', 'Pathology', 'Pharmacology', 'Microbiology', 'Forensic Medicine', 'Preventive & Social Medicine', 'ENT', 'Ophthalmology', 'General Medicine', 'General Surgery', 'Obstetrics & Gynecology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Psychiatry', 'Radiology', 'Anesthesiology'
+
+
+
+  { "id": "uuid-here", "name": "Topic Name", "type": "Concept", "subjectIds": "Pathology", "General Medicine", "tags": "#HighYield" }
+
+`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash:generateContent?key=${apiKey}`, {

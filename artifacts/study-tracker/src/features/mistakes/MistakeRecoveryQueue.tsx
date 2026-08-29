@@ -41,7 +41,7 @@ import { ALL_SUBJECTS } from '@/data/ontology';
 import { toast } from 'sonner';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
-import { AnkiExportModal } from '@/components/AnkiExportModal';
+import { FlashcardStudioModal } from '@/components/FlashcardStudioModal';
 
 export function getTagMeta(tag: string) {
   const norm = tag.toLowerCase();
@@ -83,7 +83,7 @@ export default function MistakeRecoveryQueue() {
   const [, setLocation] = useLocation();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [ankiModalOpen, setAnkiModalOpen] = useState(false);
+  const [flashcardModalOpen, setFlashcardModalOpen] = useState(false);
   const [editingMistake, setEditingMistake] = useState<MistakeLog | null>(null);
   const [modalDefaultSubjectId, setModalDefaultSubjectId] = useState<string | number | undefined>(undefined);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -308,13 +308,13 @@ export default function MistakeRecoveryQueue() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setAnkiModalOpen(true)}
+            onClick={() => setFlashcardModalOpen(true)}
             className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-primary/30 text-purple-600 dark:text-primary hover:bg-purple-50 dark:hover:bg-primary/10 shadow-2xs"
-            title="Export to Anki"
+            title="Export Flashcards"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AI Anki Export</span>
-            <span className="sm:hidden">Anki</span>
+            <span className="hidden sm:inline">Flashcard Studio</span>
+            <span className="sm:hidden">Cards</span>
           </Button>
 
           <Button
@@ -772,9 +772,9 @@ export default function MistakeRecoveryQueue() {
         />
       )}
 
-      <AnkiExportModal
-        isOpen={ankiModalOpen}
-        onClose={() => setAnkiModalOpen(false)}
+      <FlashcardStudioModal
+        isOpen={flashcardModalOpen}
+        onClose={() => setFlashcardModalOpen(false)}
         allMistakes={rawMistakes.filter(m => !m.deletedAt)}
         visibleMistakes={filteredMistakes}
         selectedMistakes={Array.from(selectedIds).map(id => rawMistakes.find(m => m.id === id)).filter(Boolean)} // For pass 1, we pass empty. Pass 2 will implement selection.

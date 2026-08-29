@@ -103,11 +103,11 @@ export function SystemPreferencesCard() {
         </div>
         <div className="flex flex-wrap gap-2">
           {[
-            { id: 'atlas', label: 'Atlas (Default)', desc: 'Clarity', ringColor: 'ring-[#26a69a]', bgClass: 'bg-[#26a69a]' },
-            { id: 'deep-space', label: 'Deep Space', desc: 'Focus', ringColor: 'ring-[#828df8]', bgClass: 'bg-[#828df8]' },
-            { id: 'system-blue', label: 'System Blue', desc: 'Flow', ringColor: 'ring-[#3b82f6]', bgClass: 'bg-[#3b82f6]' },
-            { id: 'graphite', label: 'Graphite', desc: 'Minimal', ringColor: 'ring-[#9ca3af]', bgClass: 'bg-[#4b5563]' },
-            { id: 'amber', label: 'Amber', desc: 'Recall', ringColor: 'ring-[#f59e0b]', bgClass: 'bg-[#f59e0b]' }
+            { id: 'atlas', label: 'Atlas (Default)', desc: 'Clarity', ringColor: 'ring-emerald-500', bgClass: 'bg-emerald-500' },
+            { id: 'deep-space', label: 'Deep Space', desc: 'Focus', ringColor: 'ring-indigo-500', bgClass: 'bg-indigo-500' },
+            { id: 'system-blue', label: 'System Blue', desc: 'Flow', ringColor: 'ring-sky-500', bgClass: 'bg-sky-500' },
+            { id: 'graphite', label: 'Graphite', desc: 'Minimal', ringColor: 'ring-zinc-400 dark:ring-zinc-300', bgClass: 'bg-zinc-600 dark:bg-zinc-400' },
+            { id: 'amber', label: 'Amber', desc: 'Recall', ringColor: 'ring-amber-500', bgClass: 'bg-amber-500' }
           ].map((theme) => {
             const isActive = accent === theme.id; 
             return (

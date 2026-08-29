@@ -3,14 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, CheckCircle2, Download, RefreshCcw, FileBox, GripVertical } from 'lucide-react';
-import { generateAnkiDeck, downloadAnkiTSV, generateAnkiPreview, AnkiCard } from '@/lib/ankiExport';
+import { generateFlashcardDeck, downloadFlashcardTSV, generateFlashcardPreview, Flashcard } from '@/lib/flashcardExport';
 import { db } from '@/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Settings2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
-interface AnkiExportModalProps {
+interface FlashcardStudioModalProps {
   isOpen: boolean;
   onClose: () => void;
   allMistakes: any[];
@@ -27,7 +27,7 @@ const PRESETS = [
   { id: 'qa', type: 'strict_qa', label: 'Strict Q&A', desc: 'Keep answers under 5 words.', prompt: 'Strict Q&A format. Keep answers under 5 words.' }
 ];
 
-export function AnkiExportModal({ isOpen, onClose, allMistakes, visibleMistakes, selectedMistakes = [], onMarkExported }: AnkiExportModalProps) {
+export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMistakes, selectedMistakes = [], onMarkExported }: FlashcardStudioModalProps) {
   const [scope, setScope] = useState<'smart' | 'visible' | 'all' | 'selected'>(
     selectedMistakes.length > 0 ? 'selected' : 'smart'
   );
@@ -35,8 +35,8 @@ export function AnkiExportModal({ isOpen, onClose, allMistakes, visibleMistakes,
   const [prompt, setPrompt] = useState("");
   const [formatType, setFormatType] = useState("custom");
   const [isCustom, setIsCustom] = useState(false);
-  const [previewCard, setPreviewCard] = useState<AnkiCard | null>(null);
-  const [generatedCards, setGeneratedCards] = useState<AnkiCard[]>([]);
+  const [previewCard, setPreviewCard] = useState<Flashcard | null>(null);
+  const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
   const subjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
   const [exportSubjectId, setExportSubjectId] = useState<string>('all');
   const [targetDeck, setTargetDeck] = useState<string>("");
@@ -101,7 +101,7 @@ export function AnkiExportModal({ isOpen, onClose, allMistakes, visibleMistakes,
     if (targetMistakes.length === 0) return;
     setStep('preview_loading');
     try {
-      const card = await generateAnkiPreview(targetMistakes[0], currentPrompt, currentFormatType);
+      const card = await generateFlashcardPreview(targetMistakes[0], currentPrompt, currentFormatType);
       if (card) {
         setPreviewCard(card);
         setStep('preview_ready');
@@ -120,7 +120,7 @@ export function AnkiExportModal({ isOpen, onClose, allMistakes, visibleMistakes,
     setProgress({ current: 0, total: targetMistakes.length });
     
     try {
-      const result = await generateAnkiDeck(targetMistakes, prompt, formatType, (current, total) => {
+      const result = await generateFlashcardDeck(targetMistakes, prompt, formatType, (current, total) => {
         setProgress({ current, total });
       });
       
@@ -169,7 +169,7 @@ return (
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <Sparkles className="w-5 h-5 text-primary" />
-            Atlas Intelligence Anki Engine
+            Atlas Flashcard Studio
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Transform your logged mistakes into highly optimized active-recall flashcards using AI.
@@ -266,7 +266,7 @@ return (
                     ) : (
                       <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
                         <div className="text-muted-foreground text-[10px] mb-2 leading-tight">
-                          <span className="font-semibold text-primary">💡 Format Advice:</span> The AI will follow your exact instructions. If you want fill-in-the-blank cards, explicitly tell the AI to use Anki's syntax (e.g., <code className="text-emerald-400">{"{{c1::hidden text}}"}</code>) instead of standard brackets like <code className="text-rose-400">[...]</code>.
+                          <span className="font-semibold text-primary">💡 Format Advice:</span> The AI will follow your exact instructions. If you want fill-in-the-blank cards, explicitly tell the AI to use flashcard cloze syntax (e.g., <code className="text-emerald-400">{"{{c1::hidden text}}"}</code>) instead of standard brackets like <code className="text-rose-400">[...]</code>.
                         </div>
                         <Textarea 
                           placeholder="e.g., Format these as clinical vignettes..."
@@ -443,7 +443,7 @@ return (
                   onClick={async () => {
                     const subjectName = exportSubjectId !== 'all' ? subjects.find(s => String(s.id) === String(exportSubjectId))?.name || "AI" : "AI";
                     const filename = `Atlas_${subjectName.replace(/\s+/g, '_')}_Deck.txt`;
-                    downloadAnkiTSV(generatedCards, filename, customTags, targetDeck);
+                    downloadFlashcardTSV(generatedCards, filename, customTags, targetDeck);
                     if (onMarkExported && generatedCards.length > 0) {
                       const ids = targetMistakes.map(m => m.id).filter(id => id !== undefined);
                       await onMarkExported(ids as (string|number)[]);
@@ -464,7 +464,7 @@ return (
                 </div>
 
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest pt-2">
-                  {targetDeck.trim() ? "Import into Anki. Map Field 3 to Tags and Field 4 to Deck." : "Double-click the downloaded file to instantly open in Anki"}
+                  {targetDeck.trim() ? "Import into any flashcard app. Map Field 3 to Tags and Field 4 to Deck." : "Double-click the downloaded file to instantly open in your flashcard app"}
                 </p>
 
                 <div className="absolute top-4 right-4">

@@ -172,7 +172,7 @@ export function AudioPermissionBanner() {
               <p className="text-muted-foreground text-[11px] leading-tight mt-0.5">
                 {micState === 'denied'
                   ? 'Chrome blocked microphone access. Unblock in site settings to enable voice commands.'
-                  : 'Grant microphone permission to register Atlas in Chrome settings and enable hands-free study mode.'}
+                  : 'Grant microphone permission to register Atlas in Chrome settings and enable voice copilot commands.'}
               </p>
             </div>
           </div>
