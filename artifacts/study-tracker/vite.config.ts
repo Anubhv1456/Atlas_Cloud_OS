@@ -166,9 +166,11 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   esbuild: {
+    
     drop: ['console', 'debugger'],
   },
   build: {
+    chunkSizeWarningLimit: 2000,
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,

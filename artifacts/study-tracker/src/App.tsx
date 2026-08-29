@@ -54,9 +54,13 @@ const initTheme = () => {
       } else {
         document.documentElement.classList.remove('dark');
       }
+      
+      const savedMode = localStorage.getItem('atlas_theme_mode') || 'atlas';
+      document.documentElement.setAttribute('data-theme', savedMode);
     } catch (e) {
       console.warn('localStorage access denied, fallback to dark theme', e);
       document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'atlas');
     }
   }
 };

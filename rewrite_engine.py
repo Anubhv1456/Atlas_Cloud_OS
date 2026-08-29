@@ -1,73 +1,14 @@
-import React from 'react';
-import { useLiveQuery } from '@/db';
-import { db, Subject, CurriculumUnit, MistakeLog, ScoreLog, HistoryEntry } from '@/db';
-import { STANDARD_MEDICAL_SUBJECTS } from './intentParser';
+import sys
 
-export interface SubjectFrictionMetric {
-  subjectId: string | number;
-  subjectName: string;
-  frictionScore: number;
-  examWeightage: number; // Estimated marks in 200/300 question mock
-  mistakeCount: number;
-  unresolvedMistakes: number;
-  daysSinceReview: number;
-  decayUrgency: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'STABLE' | 'FRESH' | 'MASTERED';
-  subjectHalfLifeDays: number;
-  cluster: 'Pre-Clinical' | 'Para-Clinical' | 'Clinical';
-  recommendedTopic?: string;
-  recommendedActionText: string;
-  hasStarted: boolean;
-}
+path = 'artifacts/study-tracker/src/lib/ai/frictionEngine.ts'
+with open(path, 'r') as f:
+    content = f.read()
 
-export interface DailyAgendaPulse {
-  id: string;
-  subjectName: string;
-  topicName: string;
-  urgency: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'FRESH' | 'MASTERED';
-  ctaText: string;
-  reason: string;
-  estimatedMinutes: number;
-  actionType: 'ACTIVE_RECALL' | 'PEARL_AUDIT' | 'WEAK_SPRINT';
-  actionPayload: {
-    subjectId: string | number;
-    subjectName: string;
-    systemName: string;
-  };
-}
+import re
+# We want to replace everything from "export function calculateSubjectFriction" to the end of the file.
+start_idx = content.find("export function calculateSubjectFriction")
 
-/**
- * Standard NEET PG / INI-CET Subject Weightage (out of 200 questions) and Memory Decay Half-Lives (in days)
- */
-export const SUBJECT_METRICS_PROFILE: Record<
-  string,
-  { weight: number; halfLifeDays: number; cluster: 'Pre-Clinical' | 'Para-Clinical' | 'Clinical'; volatileTopics: string[] }
-> = {
-  Anatomy: { weight: 17, halfLifeDays: 14, cluster: 'Pre-Clinical', volatileTopics: ['Brachial Plexus & Nerve Injuries', 'Perineum & Pelvic Diaphragm', 'Embryology & Pharyngeal Arches'] },
-  Physiology: { weight: 17, halfLifeDays: 16, cluster: 'Pre-Clinical', volatileTopics: ['Renal Clearance & Acid-Base', 'Cardiac Action Potential & Murmurs', 'Respiratory Compliance & Dead Space'] },
-  Biochemistry: { weight: 16, halfLifeDays: 8, cluster: 'Pre-Clinical', volatileTopics: ['Inborn Errors of Metabolism', 'Enzyme Kinetics & Inhibitors', 'Vitamin Deficiencies & Cofactors'] }, // Fast decay
-  Pharmacology: { weight: 20, halfLifeDays: 9, cluster: 'Para-Clinical', volatileTopics: ['Antimicrobial DOC & Mechanisms', 'Antiarrhythmics Class I-IV', 'Chemotherapy Adverse Effects & Antidotes'] }, // Volatile drug classes
-  Pathology: { weight: 25, halfLifeDays: 15, cluster: 'Para-Clinical', volatileTopics: ['Glomerulonephritis & Electron Microscopy', 'Hematologic Malignancies & Translocations', 'Vasculitis & Autoantibodies'] },
-  Microbiology: { weight: 20, halfLifeDays: 10, cluster: 'Para-Clinical', volatileTopics: ['Culture Media & Bacterial Toxins', 'Viral Hepatitis Serology & PCR', 'Systemic Mycology & Dimorphic Fungi'] }, // Volatile bugs/media
-  'Forensic Medicine & Toxicology': { weight: 10, halfLifeDays: 12, cluster: 'Para-Clinical', volatileTopics: ['Poisoning Antidotes & SLUDGE', 'Post-Mortem Intervals & Rigor Mortis', 'IPC Sections & Medical Jurisprudence'] },
-  'Community Medicine (PSM)': { weight: 25, halfLifeDays: 11, cluster: 'Para-Clinical', volatileTopics: ['Biostatistics & Screening Tests (Sens/Spec)', 'National Health Programs & Vaccines (NIS)', 'Epidemiological Study Designs & Bias'] },
-  Ophthalmology: { weight: 10, halfLifeDays: 14, cluster: 'Clinical', volatileTopics: ['Glaucoma Medical & Surgical Protocol', 'Retinopathy & Fundus Findings', 'Neuro-Ophthalmology & Pupil Defects'] },
-  'Otorhinolaryngology (ENT)': { weight: 10, halfLifeDays: 14, cluster: 'Clinical', volatileTopics: ['Audiology (Rinne/Weber interpretation)', 'Stridor & Pediatric Airway Emergencies', 'Sinus Anatomy & FESS Landmarks'] },
-  'General Medicine': { weight: 35, halfLifeDays: 20, cluster: 'Clinical', volatileTopics: ['ECG STEMI Localization & Arrhythmias', 'Diabetic Ketoacidosis & Hyperosmolar Protocol', 'Secondary Hypertension & Endocrine Workup'] },
-  'General Surgery': { weight: 30, halfLifeDays: 18, cluster: 'Clinical', volatileTopics: ['Acute Abdomen & Appendicitis Mimics', 'Thyroid Malignancies & Lymph Node Stations', 'Trauma ATLS Protocol & Shock Classifications'] },
-  'Obstetrics & Gynecology': { weight: 25, halfLifeDays: 16, cluster: 'Clinical', volatileTopics: ['PPH Management & Uterotonic Steps', 'Preeclampsia & Eclampsia Magnesium Protocol', 'CTG Patterns & Fetal Distress Algorithm'] },
-  Pediatrics: { weight: 10, halfLifeDays: 15, cluster: 'Clinical', volatileTopics: ['Developmental Milestones & Red Flags', 'Cyanotic Congenital Heart Diseases', 'Inborn Errors & Neonatal Jaundice Nomogram'] },
-  Orthopedics: { weight: 8, halfLifeDays: 18, cluster: 'Clinical', volatileTopics: ['Pediatric Fractures & Salter-Harris', 'Nerve Palsies in Upper Limb Trauma', 'Bone Tumors & X-Ray Signs'] },
-  Dermatology: { weight: 6, halfLifeDays: 14, cluster: 'Clinical', volatileTopics: ['Vesiculobullous Disorders (Pemphigus vs BP)', 'STD Diagnostic Ulcers & Syndromic Management', 'Papulosquamous Lesions & Auspitz Sign'] },
-  Psychiatry: { weight: 6, halfLifeDays: 21, cluster: 'Clinical', volatileTopics: ['Schizophrenia & Mood Disorder Criteria', 'Antipsychotic Adverse Effects (EPS/NMS)', 'Substance Dependence & Withdrawal Scales'] },
-  Radiology: { weight: 6, halfLifeDays: 14, cluster: 'Clinical', volatileTopics: ['Chest X-Ray Classic Signs & Cavities', 'HRCT Thorax Patterns (UIP vs NSIP)', 'MRI Brain Stroke Sequences & Ischemic Penumbra'] },
-  Anesthesiology: { weight: 6, halfLifeDays: 12, cluster: 'Clinical', volatileTopics: ['Difficult Airway Algorithm & Mallampati', 'Local Anesthetic Toxicity (LAST) & Lipid Rescue', 'Inhalational Anesthetic Partition Coefficients'] },
-};
-
-/**
- * Calculates Clinical Friction Score for a given subject based on the formula:
- * Friction = (Exam Weightage / Total Marks) * (1 + Mistakes / 5) * e^(DaysElapsed / (HalfLife * Stability))
- */
-export function calculateSubjectFriction(
+new_code = """export function calculateSubjectFriction(
   subjectName: string,
   subjectId: string | number,
   mistakes: MistakeLog[],
@@ -116,14 +57,6 @@ export function calculateSubjectFriction(
   const completionRatio = subjectSets.length > 0 ? completedSets / subjectSets.length : 0.0;
   const isMastered = subjectSets.length > 0 && completionRatio === 1.0;
   
-  const overdueSets = subjectSets.filter(c => {
-    const d = c.nextRevisionDate || c.qbankNextRevisionDate;
-    if (!d) return false;
-    const revTime = new Date(d).getTime();
-    return !isNaN(revTime) && revTime < now;
-  });
-  const hasOverdueSets = overdueSets.length > 0;
-
   const stabilityFactor = Math.max(0.7, Math.min(1.5, 0.8 + completionRatio * 0.7));
 
   const weightFactor = profile.weight / 200;
@@ -137,9 +70,9 @@ export function calculateSubjectFriction(
   let decayUrgency: 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'STABLE' | 'FRESH' | 'MASTERED' = 'STABLE';
   if (!hasStarted) {
     decayUrgency = 'FRESH';
-  } else if (isMastered && daysSinceReview < profile.halfLifeDays && !hasOverdueSets) {
+  } else if (isMastered && daysSinceReview < profile.halfLifeDays) {
     decayUrgency = 'MASTERED';
-  } else if (hasOverdueSets || frictionScore >= 45 || daysSinceReview > (profile.halfLifeDays * 2)) {
+  } else if (frictionScore >= 45 || daysSinceReview > (profile.halfLifeDays * 2)) {
     decayUrgency = 'CRITICAL';
   } else if (frictionScore >= 25 || daysSinceReview > profile.halfLifeDays) {
     decayUrgency = 'ELEVATED';
@@ -183,8 +116,6 @@ export function useClinicalFrictionEngine() {
   const mistakes = useLiveQuery(() => db.mistakeLogs.toArray().then((m) => m.filter((x) => !x.deletedAt))) || [];
   const history = useLiveQuery(() => db.history.toArray(), []) || [];
   const curriculumSets = useLiveQuery(() => db.curriculumSets.toArray().then((c) => c.filter((x) => !x.deletedAt))) || [];
-  const operationalModes = useLiveQuery(() => db.operationalModes.toArray(), []) || [];
-
 
   const metrics: SubjectFrictionMetric[] = React.useMemo(() => {
     if (!subjects.length) return [];
@@ -220,19 +151,7 @@ export function useClinicalFrictionEngine() {
       });
     });
 
-    const currentMode = operationalModes.find(m => m.id === 'current');
-    const isHoliday = currentMode?.mode === 'holiday';
-    const isSprint = currentMode?.mode === 'tactical_sprint';
-    const sprintIds = new Set((currentMode?.targetSubjectIds || []).map(String));
-
-    if (isHoliday) return [];
-
-    let filteredSubjects = subjects;
-    if (isSprint && sprintIds.size > 0) {
-      filteredSubjects = subjects.filter(s => sprintIds.has(String(s.id)) || sprintIds.has(String(s.ontologySubjectId)));
-    }
-
-    const calculated = filteredSubjects.map((sub) => {
+    const calculated = subjects.map((sub) => {
       const subId = sub.id !== undefined ? sub.id : sub.name;
       const sIdStr = String(subId);
       return calculateSubjectFriction(
@@ -245,7 +164,7 @@ export function useClinicalFrictionEngine() {
     });
 
     return calculated.sort((a, b) => b.frictionScore - a.frictionScore);
-  }, [subjects, mistakes, history, curriculumSets, operationalModes]);
+  }, [subjects, mistakes, history, curriculumSets]);
 
   const topDailyPulses: DailyAgendaPulse[] = React.useMemo(() => {
     if (!metrics.length) return [];
@@ -314,3 +233,8 @@ export function useClinicalFrictionEngine() {
     elevatedCount: metrics.filter((m) => m.decayUrgency === 'ELEVATED').length,
   };
 }
+"""
+
+with open(path, 'w') as f:
+    f.write(content[:start_idx] + new_code)
+print("done rewriting friction engine")

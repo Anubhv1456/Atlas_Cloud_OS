@@ -122,7 +122,7 @@ export default function AcceptInvitation() {
         ))}
       </div>
 
-      <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.15] pointer-events-none mix-blend-overlay z-0" />
+      <div className="absolute inset-0 opacity-[0.15] pointer-events-none mix-blend-overlay z-0" />
       
       <motion.div 
         initial={{ opacity: 0, y: 16 }}

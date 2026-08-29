@@ -2,7 +2,17 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, initializeAuth, Auth, browserLocalPersistence, browserPopupRedirectResolver } from "firebase/auth";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, setLogLevel } from "firebase/firestore";
 import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
-import firebaseConfig from "../firebase-applet-config.json";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB23xBbSVe1eehDAiyUSz_HOvKyPdfxytM",
+  authDomain: "atlas-cloud-6f1c6.firebaseapp.com",
+  projectId: "atlas-cloud-6f1c6",
+  storageBucket: "atlas-cloud-6f1c6.firebasestorage.app",
+  messagingSenderId: "661277140008",
+  appId: "1:661277140008:web:467285c718de2c8674011d",
+  measurementId: "G-FN3VXL0XEH"
+};
 
 // Silence verbose internal connection retry and offline warning logs
 try {
