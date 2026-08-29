@@ -4,7 +4,51 @@ export interface AnkiCard {
   tags: string;
 }
 
+
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+let cachedOptimalModel = "";
+
+async function getOptimalModel(apiKey: string): Promise<string> {
+  if (cachedOptimalModel) return cachedOptimalModel;
+  
+  // Start with the generic unversioned alias which auto-routes to the best flash
+  let modelToTry = "gemini-flash";
+  
+  try {
+    // If we want to be absolutely sure, we could just use gemini-flash, but
+    // to fulfill the "dynamic discovery engine" requirement, we'll implement a fallback
+    // inside the actual API call loop if it fails.
+    cachedOptimalModel = modelToTry;
+    return modelToTry;
+  } catch (e) {
+    return "gemini-1.5-flash"; // Ultimate fallback
+  }
+}
+
+async function discoverModels(apiKey: string): Promise<string> {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+    if (res.ok) {
+      const data = await res.json();
+      const models = data.models || [];
+      // Filter for flash models that support generateContent
+      const flashModels = models
+        .filter((m: any) => m.name.includes("flash") && m.supportedGenerationMethods.includes("generateContent"))
+        .map((m: any) => m.name.replace("models/", ""));
+      
+      if (flashModels.length > 0) {
+        // Sort descending to get the newest (e.g., 2.0 or 1.5)
+        flashModels.sort().reverse();
+        return flashModels[0];
+      }
+    }
+  } catch (e) {
+    console.warn("Model discovery failed, using fallback", e);
+  }
+  return "gemini-flash";
+}
+
 
 async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetries = 3): Promise<AnkiCard[]> {
   let apiKey = localStorage.getItem('atlas_gemini_api_key') || "";
@@ -12,7 +56,8 @@ async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetri
     throw new Error("GEMINI_API_KEY environment variable is missing. Please add it to your project settings.");
   }
   const cleanKey = apiKey.trim();
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cleanKey)}`;
+  let activeModel = cachedOptimalModel || "gemini-flash";
+  let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
   const systemInstruction = `You are an elite medical educator creating Anki flashcards. You must output strictly valid JSON containing an array of objects with 'front' and 'back' keys. You must wrap medical keywords in HTML <b> tags.`;
   const userPrompt = `Format Instructions:\n${prompt || "Format these as Q&A or cloze deletions for optimal active recall studying."}\n\nMistakes Data:\n${JSON.stringify(mistakes, null, 2)}`;
@@ -28,6 +73,7 @@ async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetri
 
   for (let i = 0; i < maxRetries; i++) {
     try {
+      endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${encodeURIComponent(cleanKey)}`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,7 +81,17 @@ async function generateCardsFromGemini(mistakes: any[], prompt: string, maxRetri
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API error: ${response.statusText}`);
+        const errMsg = errorData.error?.message || `API error: ${response.statusText}`;
+        
+        // If the model is not found or no longer available, trigger discovery
+        if (response.status === 404 || errMsg.includes("no longer available") || errMsg.includes("is not found")) {
+            console.warn(`Model ${activeModel} failed. Discovering new model...`);
+            activeModel = await discoverModels(cleanKey);
+            cachedOptimalModel = activeModel;
+            throw new Error(`Model unavailable. Retrying with ${activeModel}...`);
+        }
+        
+        throw new Error(errMsg);
       }
       const data = await response.json();
       const outputText = data.candidates?.[0]?.content?.parts?.[0]?.text;
