@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import { SettingsRow } from './SettingsLayout';
 import { HelpGuideModal } from '@/components/HelpGuideModal';
 
 export function FaqSection() {
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOpenManual = () => setModalOpen(true);
     window.addEventListener('open-masterclass', handleOpenManual);
     window.addEventListener('open-user-manual', handleOpenManual);
@@ -22,8 +22,10 @@ export function FaqSection() {
     <>
       <SettingsRow
         icon={BookOpen}
+        iconBg="bg-blue-500/10"
+        iconColor="text-blue-500"
         label="User Manual and FAQs"
-        control={<ChevronRight className="w-4 h-4 text-muted-foreground" />}
+        chevron
         onClick={() => setModalOpen(true)}
       />
 
@@ -31,4 +33,3 @@ export function FaqSection() {
     </>
   );
 }
-

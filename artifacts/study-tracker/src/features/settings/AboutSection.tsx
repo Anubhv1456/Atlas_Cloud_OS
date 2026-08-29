@@ -11,25 +11,32 @@ export function AboutSection() {
     <>
       <SettingsRow
         icon={AlertTriangle}
+        iconBg="bg-amber-500/10"
+        iconColor="text-amber-500"
         label="Medical & Educational Disclaimer"
-        control={<span className="text-xs font-semibold text-primary">View Terms</span>}
+        value="View Terms"
+        chevron
         onClick={() => setIsDisclaimerOpen(true)}
       />
       <SettingsRow
         icon={ShieldCheck}
+        iconBg="bg-emerald-500/10"
+        iconColor="text-emerald-500"
         label="Privacy Policy"
-        control={<ExternalLink className="w-4 h-4 text-muted-foreground" />}
+        control={<ExternalLink className="w-4 h-4 text-muted-foreground/60" />}
         onClick={() => window.open('/privacy', '_blank')}
       />
       <SettingsRow
         icon={FileText}
+        iconBg="bg-blue-500/10"
+        iconColor="text-blue-500"
         label="Terms of Service"
-        control={<ExternalLink className="w-4 h-4 text-muted-foreground" />}
+        control={<ExternalLink className="w-4 h-4 text-muted-foreground/60" />}
         onClick={() => window.open('/terms', '_blank')}
       />
 
       <Dialog open={isDisclaimerOpen} onOpenChange={setIsDisclaimerOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-card border-border/80 shadow-2xl">
+        <DialogContent className="sm:max-w-lg rounded-3xl p-6 bg-card border-border/80 shadow-2xl">
           <DialogHeader className="space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
               <ShieldAlert className="w-5 h-5" />
@@ -90,4 +97,3 @@ export function AboutSection() {
     </>
   );
 }
-

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, ChevronRight, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +29,10 @@ export function FeedbackSection() {
     <>
       <SettingsRow
         icon={MessageSquare}
+        iconBg="bg-teal-500/10"
+        iconColor="text-teal-500"
         label="Send Feedback"
-        control={<ChevronRight className="w-4 h-4 text-muted-foreground" />}
+        chevron
         onClick={() => setModalOpen(true)}
       />
 

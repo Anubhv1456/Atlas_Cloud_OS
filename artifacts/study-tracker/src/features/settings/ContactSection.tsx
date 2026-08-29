@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, ChevronRight } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { SettingsRow } from './SettingsLayout';
 
@@ -9,8 +9,10 @@ export function ContactSection() {
   return (
     <SettingsRow
       icon={Mail}
+      iconBg="bg-sky-500/10"
+      iconColor="text-sky-500"
       label="Contact & Support Desk"
-      control={<ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      chevron
       onClick={() => setLocation('/contact')}
     />
   );

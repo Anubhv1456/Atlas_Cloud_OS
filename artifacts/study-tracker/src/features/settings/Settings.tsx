@@ -14,64 +14,77 @@ import {
   AboutSection,
   DangerZoneSection,
 } from '.';
-import { SettingsBlock } from './SettingsLayout';
+import { SettingsSection, SettingsRow } from './SettingsLayout';
+import { useAuth } from '@/hooks/useAuth';
+import { LogOut } from 'lucide-react';
 
 export default function Settings() {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="w-full flex-1 min-h-dvh bg-background px-4 sm:px-6 lg:px-8 pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-16 max-w-3xl mx-auto flex flex-col relative animate-in fade-in duration-200">
-      <header className="mb-6 border-b border-border/40 pb-4">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Settings</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-          Manage your student profile, exam target, preferences, AI assistant, and data backup.
-        </p>
+    <div className="w-full flex-1 min-h-dvh bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-16 max-w-2xl mx-auto flex flex-col relative animate-in fade-in duration-200 space-y-6">
+      {/* ── Apple-Grade Large Title Header ───────────────────────────────── */}
+      <header className="px-1 pt-2">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+          Settings
+        </h1>
       </header>
 
-      <div className="space-y-6 flex-1">
-        {/* 1. Student Profile */}
-        <section>
-          <AccountSection />
-        </section>
+      {/* ── Section 1: Apple Profile & Medical Identity ─────────────────── */}
+      <SettingsSection>
+        <AccountSection />
+      </SettingsSection>
 
-        {/* 2. Exam Target & Schedule */}
-        <section>
-          <ExamProfileSection />
-        </section>
+      {/* ── Section 2: Study Plan & Pacing ───────────────────────────────── */}
+      <SettingsSection title="Academic Target & Regimen">
+        <ExamProfileSection />
+      </SettingsSection>
 
-        {/* 3. System Preferences */}
-        <section>
-          <SystemPreferencesCard />
-        </section>
+      {/* ── Section 3: General System Preferences ─────────────────────────── */}
+      <SettingsSection title="General">
+        <SystemPreferencesCard />
+      </SettingsSection>
 
-        {/* 4. Clinical AI & Voice Assistant (Optional Free BYOK) */}
-        <section>
-          <AIAssistantSection />
-        </section>
+      {/* ── Section 4: Intelligence & Hardware ───────────────────────────── */}
+      <SettingsSection title="Intelligence & Diagnostics">
+        <AIAssistantSection />
+        <PermissionsDiagnosticsSection />
+      </SettingsSection>
 
-        {/* 4B. Device Permissions & Audio Diagnostics */}
-        <section>
-          <PermissionsDiagnosticsSection />
-        </section>
+      {/* ── Section 5: Data Vault & Sync ─────────────────────────────────── */}
+      <SettingsSection title="Storage & Backup">
+        <DataVaultSection />
+      </SettingsSection>
 
-        {/* 5. Storage & Backup */}
-        <section>
-          <DataVaultSection />
-        </section>
+      {/* ── Section 6: Community & Support ───────────────────────────────── */}
+      <SettingsSection title="Community & Support">
+        <ReferralSection />
+        <PWASection />
+        <FaqSection />
+        <FeedbackSection />
+        <ContactSection />
+        <AboutSection />
+      </SettingsSection>
 
-        {/* 5. Study Circle, Support & Legal */}
-        <SettingsBlock title="Study Circle & Support">
-          <ReferralSection />
-          <PWASection />
-          <FaqSection />
-          <FeedbackSection />
-          <ContactSection />
-          <AboutSection />
-        </SettingsBlock>
+      {/* ── Section 7: Account Actions & Reset ────────────────────────────── */}
+      <SettingsSection title="Account & Reset">
+        {user && (
+          <SettingsRow
+            icon={LogOut}
+            iconBg="bg-rose-500/10"
+            iconColor="text-rose-500"
+            label="Sign Out of Atlas"
+            destructive
+            onClick={logout}
+          />
+        )}
+        <DangerZoneSection />
+      </SettingsSection>
 
-        {/* 6. Reset Options */}
-        <SettingsBlock title="Reset Options">
-          <DangerZoneSection />
-        </SettingsBlock>
-      </div>
+      {/* ── Footer Attribution ────────────────────────────────────────────── */}
+      <footer className="text-center text-[11px] text-muted-foreground/60 py-4 select-none">
+        Atlas Medical Operating System • Version 1.0
+      </footer>
     </div>
   );
 }

@@ -156,7 +156,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
             ) : null}
           </button>
 
-          {/* Clinical Duty (30m) Pill */}
+          {/* Clinical Duty Pill */}
           <button
             type="button"
             onClick={() => handleSelectMode('clinical_duty')}
@@ -168,7 +168,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
             )}
           >
             <Moon className="w-3.5 h-3.5 shrink-0" />
-            <span>Clinical Duty (30m)</span>
+            <span>Clinical Duty</span>
           </button>
 
           {/* Holiday / Rest Freeze Pill */}
