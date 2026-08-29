@@ -117,7 +117,7 @@ export function saveAISettings(partial: Partial<AISettings>): AISettings {
       localStorage.setItem(STORAGE_KEY_LAST_TOAST, updated.lastPreferenceToastShownAt.toString());
     } else {
       localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
-    localStorage.removeItem(STORAGE_KEY_PREFERRED_MODEL);
+    
     }
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: updated }));
@@ -143,6 +143,7 @@ export function clearAISettings(): void {
     localStorage.removeItem(STORAGE_KEY_REJECTED_HY);
     localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
     localStorage.removeItem(STORAGE_KEY_PREFERRED_MODEL);
+    
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: DEFAULT_AI_SETTINGS }));
   } catch (err) {

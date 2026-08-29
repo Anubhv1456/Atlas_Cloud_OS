@@ -9,6 +9,9 @@ import {
   CheckCircle2, 
   RefreshCw, 
   ClipboardPaste,
+  Zap,
+  Scale,
+  Brain,
   Check
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -233,40 +236,67 @@ export function AIAssistantSection() {
           {/* Model Selection Configuration */}
           {isConnected && (
             <div className="bg-muted/20 border border-border/60 rounded-xl p-3.5 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col">
                 <div>
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
                     Cognitive Engine
                   </label>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Select a model manually</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Select your preferred AI model architecture</p>
                 </div>
-                <Select 
-                  value={settings.preferredModel || ''} 
-                  onValueChange={(val: string) => updateSettings({ preferredModel: val })}
-                  disabled={isFetchingModels || availableModels.length === 0}
-                >
-                  <SelectTrigger className="w-[180px] h-9 text-[11px] border-border/60 bg-background/80 flex justify-between">
-                    <SelectValue placeholder={isFetchingModels ? "Fetching directory..." : "Select a model..."} />
-                  </SelectTrigger>
-                  <SelectContent className="text-[11px] max-h-[250px]">
-                    {availableModels.map(m => (
-                      <SelectItem key={m.name} value={m.name}>
-                        <div className="flex items-center justify-between w-full gap-2">
-                          <span className="truncate">{m.name}</span>
-                          <span className={cn(
-                            "text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 flex items-center",
-                            m.category === 'Fast' ? 'bg-amber-500/10 text-amber-500' :
-                            m.category === 'Reasoning' ? 'bg-purple-500/10 text-purple-400' :
-                            'bg-emerald-500/10 text-emerald-400'
-                          )}>
-                            {m.category === 'Fast' ? '⚡ Fast' : m.category === 'Reasoning' ? '🧠 Heavy' : '⚖️ Balanced'}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                  <button
+                    onClick={() => updateSettings({ preferredModel: 'gemini-3.1-flash-lite' })}
+                    className={cn(
+                      "flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer",
+                      settings.preferredModel === 'gemini-3.1-flash-lite'
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border/60 bg-background/50 hover:bg-muted/50 hover:border-border"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5 w-full">
+                      <Zap className={cn("w-4 h-4", settings.preferredModel === 'gemini-3.1-flash-lite' ? "text-amber-500" : "text-muted-foreground")} />
+                      <span className="text-[11px] font-bold">Fast</span>
+                      {settings.preferredModel === 'gemini-3.1-flash-lite' && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground line-clamp-2">Optimized for speed and simple queries (Flash Lite)</span>
+                  </button>
+
+                  <button
+                    onClick={() => updateSettings({ preferredModel: 'gemini-3.7-flash' })}
+                    className={cn(
+                      "flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer",
+                      settings.preferredModel === 'gemini-3.7-flash'
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border/60 bg-background/50 hover:bg-muted/50 hover:border-border"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5 w-full">
+                      <Scale className={cn("w-4 h-4", settings.preferredModel === 'gemini-3.7-flash' ? "text-emerald-500" : "text-muted-foreground")} />
+                      <span className="text-[11px] font-bold">Balanced</span>
+                      {settings.preferredModel === 'gemini-3.7-flash' && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground line-clamp-2">The default, great for standard generation (Flash)</span>
+                  </button>
+
+                  <button
+                    onClick={() => updateSettings({ preferredModel: 'gemini-3.1-pro-preview' })}
+                    className={cn(
+                      "flex flex-col items-start p-3 rounded-lg border text-left transition-all cursor-pointer",
+                      settings.preferredModel === 'gemini-3.1-pro-preview'
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border/60 bg-background/50 hover:bg-muted/50 hover:border-border"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5 w-full">
+                      <Brain className={cn("w-4 h-4", settings.preferredModel === 'gemini-3.1-pro-preview' ? "text-purple-500" : "text-muted-foreground")} />
+                      <span className="text-[11px] font-bold">Reasoning</span>
+                      {settings.preferredModel === 'gemini-3.1-pro-preview' && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground line-clamp-2">Deep reasoning for complex vignettes (Pro)</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
