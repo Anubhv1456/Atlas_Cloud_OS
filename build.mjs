@@ -44,9 +44,17 @@ if (!fs.existsSync(trackerIndex) || fs.statSync(trackerIndex).size === 0) {
 const files = fs.readdirSync(rootDist);
 console.log(`[Atlas Build Success] Verified ${files.length} production assets in root dist:`, files.slice(0, 10).join(', '));
 
-const serverSrc = path.join(__dirname, 'artifacts/api-server/dist/index.mjs');
-const serverDest = path.join(__dirname, 'dist/server.mjs');
-if (fs.existsSync(serverSrc)) {
-  fs.copyFileSync(serverSrc, serverDest);
-  console.log(`[Atlas Build] Copied server bundle to ${serverDest}`);
+const apiServerDist = path.join(__dirname, 'artifacts/api-server/dist');
+if (fs.existsSync(apiServerDist)) {
+  const distFiles = fs.readdirSync(apiServerDist);
+  for (const file of distFiles) {
+    if (file.endsWith('.mjs')) {
+      const src = path.join(apiServerDist, file);
+      // Rename index.mjs to server.mjs for the main bundle
+      const destName = file === 'index.mjs' ? 'server.mjs' : file;
+      const dest = path.join(__dirname, 'dist', destName);
+      fs.copyFileSync(src, dest);
+      console.log(`[Atlas Build] Copied ${file} to ${dest}`);
+    }
+  }
 }

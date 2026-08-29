@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -37,7 +38,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 app.get("/healthz", (req, res) => res.json({ status: "ok" }));
 
-const distPath = path.resolve(__dirname, "../../..", "dist");
+let distPath = path.resolve(__dirname, "../../..", "dist");
+if (fs.existsSync(path.resolve(__dirname, "index.html"))) {
+  distPath = __dirname;
+}
 
 app.use(express.static(distPath));
 app.use((req, res) => {

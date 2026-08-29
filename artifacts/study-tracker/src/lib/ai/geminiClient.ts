@@ -231,15 +231,11 @@ export async function executeCognitiveCompiler(
   // -------------------------------------------------------------
   const cognitiveLoad = options.cognitiveLoad || 'clinical';
   const isRoutine = cognitiveLoad === 'routine';
-  let activeModel: SupportedGeminiModel;
-  
-  if (isRoutine) {
-    activeModel = 'gemini-3.1-flash-lite';
-  } else if (cognitiveLoad === 'analytical') {
-    activeModel = 'gemini-3.1-pro-preview';
-  } else {
-    activeModel = 'gemini-3.7-flash';
+  const settings = getAISettings();
+  if (!settings.preferredModel) {
+    throw new Error("No AI model selected. Please visit Settings to select an active model.");
   }
+  let activeModel: any = settings.preferredModel;
 
   // Normalized prompt hashing for superior cache reuse
   const normalizedPrompt = normalizePromptForCache(input);
@@ -258,7 +254,6 @@ export async function executeCognitiveCompiler(
     }
   }
 
-  const settings = getAISettings();
   const apiKey = settings.geminiApiKey || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '') || '';
 
   // If no cloud API key configured or AI turned off, seamlessly route to Atlas Local Cognitive Engine
@@ -328,7 +323,7 @@ export async function executeCognitiveCompiler(
     if (err.message?.includes('403') || err.message?.includes('400') || err.message?.includes('API_KEY_INVALID')) { throw new Error('API Key invalid or quota exceeded. Please check your AI Studio settings.'); }
     if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429') || err.message?.includes('503')) {
       try {
-        const fallbackModel: SupportedGeminiModel = 'gemini-3.1-flash-lite';
+        const fallbackModel: any = 'gemini-flash';
         activeModel = fallbackModel;
 
         rawData = await callGeminiApi(

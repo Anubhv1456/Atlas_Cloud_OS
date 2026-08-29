@@ -17,6 +17,7 @@ export interface AISettings {
   lastPreferenceToastShownAt: number | null;
   isAiEnabled: boolean;
   geminiApiKey: string;
+  preferredModel?: string;
   lastValidatedAt: number | null;
   validationStatus: AIValidationStatus;
   validationMessage: string;
@@ -32,10 +33,12 @@ const STORAGE_KEY_CLINICAL_DEPTH = 'atlas_ai_clinical_depth';
 const STORAGE_KEY_PERSONALIZATION_DONE = 'atlas_ai_personalization_done';
 const STORAGE_KEY_REJECTED_HY = 'atlas_ai_rejected_high_yield';
 const STORAGE_KEY_LAST_TOAST = 'atlas_ai_last_toast_time';
+const STORAGE_KEY_PREFERRED_MODEL = 'atlas_ai_preferred_model';
 
 export const DEFAULT_AI_SETTINGS: AISettings = {
   isAiEnabled: true,
   geminiApiKey: '',
+  preferredModel: '',
   lastValidatedAt: null,
   validationStatus: 'unconfigured',
   validationMessage: '',
@@ -66,6 +69,7 @@ export function getAISettings(): AISettings {
     const hasRejectedHighYieldMode = localStorage.getItem(STORAGE_KEY_REJECTED_HY) === 'true';
     const lastToastStr = localStorage.getItem(STORAGE_KEY_LAST_TOAST);
     const lastPreferenceToastShownAt = lastToastStr ? parseInt(lastToastStr, 10) : null;
+    const preferredModel = localStorage.getItem(STORAGE_KEY_PREFERRED_MODEL) || '';
 
     return {
       mentorshipStyle,
@@ -73,6 +77,7 @@ export function getAISettings(): AISettings {
       hasCompletedAIPersonalization,
       hasRejectedHighYieldMode,
       lastPreferenceToastShownAt,
+      preferredModel,
       isAiEnabled,
       geminiApiKey,
       lastValidatedAt,
@@ -107,10 +112,12 @@ export function saveAISettings(partial: Partial<AISettings>): AISettings {
     localStorage.setItem(STORAGE_KEY_CLINICAL_DEPTH, updated.clinicalDepth);
     localStorage.setItem(STORAGE_KEY_PERSONALIZATION_DONE, updated.hasCompletedAIPersonalization ? 'true' : 'false');
     localStorage.setItem(STORAGE_KEY_REJECTED_HY, updated.hasRejectedHighYieldMode ? 'true' : 'false');
+    localStorage.setItem(STORAGE_KEY_PREFERRED_MODEL, updated.preferredModel || '');
     if (updated.lastPreferenceToastShownAt !== null) {
       localStorage.setItem(STORAGE_KEY_LAST_TOAST, updated.lastPreferenceToastShownAt.toString());
     } else {
       localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
+    localStorage.removeItem(STORAGE_KEY_PREFERRED_MODEL);
     }
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: updated }));
@@ -135,6 +142,7 @@ export function clearAISettings(): void {
     localStorage.removeItem(STORAGE_KEY_PERSONALIZATION_DONE);
     localStorage.removeItem(STORAGE_KEY_REJECTED_HY);
     localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
+    localStorage.removeItem(STORAGE_KEY_PREFERRED_MODEL);
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: DEFAULT_AI_SETTINGS }));
   } catch (err) {
@@ -383,4 +391,48 @@ export function useAISettings() {
     isValidating,
     isReady: settings.isAiEnabled && settings.validationStatus === 'valid' && !!settings.geminiApiKey,
   };
+}
+
+export interface DynamicModelInfo {
+  name: string;
+  displayName: string;
+  description: string;
+  category: 'Fast' | 'Balanced' | 'Reasoning';
+}
+
+export async function fetchAvailableModels(apiKey: string): Promise<DynamicModelInfo[]> {
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+    if (!res.ok) throw new Error("Failed to fetch models");
+    const data = await res.json();
+    const models = data.models || [];
+    
+    // Filter for models that support generateContent
+    const validModels = models.filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"));
+    
+    return validModels.map((m: any) => {
+      const rawName = m.name.replace("models/", "");
+      const lowerName = rawName.toLowerCase();
+      
+      let category: 'Fast' | 'Balanced' | 'Reasoning' = 'Balanced';
+      if (lowerName.includes('flash') || lowerName.includes('lite')) {
+        category = 'Fast';
+      } else if (lowerName.includes('thinking') || lowerName.includes('ultra') || lowerName.includes('omni')) {
+        category = 'Reasoning';
+      } else if (lowerName.includes('pro')) {
+        category = 'Balanced';
+      }
+      
+      return {
+        name: rawName,
+        displayName: m.displayName || rawName,
+        description: m.description || "",
+        category
+      };
+    }).sort((a, b) => b.name.localeCompare(a.name));
+  } catch (err) {
+    console.error("Model fetch error:", err);
+    return [];
+  }
 }
