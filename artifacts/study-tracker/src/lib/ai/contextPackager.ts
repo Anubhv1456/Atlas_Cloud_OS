@@ -4,6 +4,7 @@ import { ALL_SUBJECTS } from '@/data/ontology';
 import { isRevisionDue, today, getSystemMemoryLoss, getRetrievability } from '@/db/revisionEngine';
 import { generateCognitiveProfile, CognitiveDiagnosticProfile } from '@/lib/ai/diagnosticService';
 import { SUBJECT_METRICS_PROFILE, calculateSubjectFriction } from './frictionEngine';
+import { getAISettings } from './aiSettingsStorage';
 import { buildAtlasMentorSystemPrompt } from './mentorPrompt';
 
 export { generateCognitiveProfile };
@@ -417,9 +418,10 @@ export function formatContextForSystemPrompt(ctx: LiveAtlasContext, isRoutine = 
  */
 export async function getSerializedSystemPromptContext(isRoutine = false): Promise<string> {
   try {
+    const settings = getAISettings();
     const ctx = await getLiveAtlasContext();
     const formatted = formatContextForSystemPrompt(ctx, isRoutine);
-    return buildAtlasMentorSystemPrompt(formatted, isRoutine);
+    return buildAtlasMentorSystemPrompt(formatted, isRoutine, settings.mentorshipStyle, settings.clinicalDepth);
   } catch (err) {
     console.error('[ContextPackager] Error packaging context:', err);
     return buildAtlasMentorSystemPrompt('ATLAS STATE: Default Offline Mode', isRoutine);

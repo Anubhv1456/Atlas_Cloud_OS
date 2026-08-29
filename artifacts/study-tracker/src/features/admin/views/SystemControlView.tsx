@@ -205,8 +205,8 @@ export function SystemControlView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-xl">
-              <ShieldCheck className="w-5 h-5 text-purple-400" />
+            <div className="p-2 bg-primary/10 border border-purple-500/20 rounded-xl">
+              <ShieldCheck className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
@@ -224,7 +224,7 @@ export function SystemControlView() {
           disabled={loading}
           className="px-3.5 py-2 rounded-xl border border-border/60 bg-card hover:bg-muted text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 self-start md:self-auto"
         >
-          <RefreshCw className={cn("w-3.5 h-3.5 text-purple-400", loading && "animate-spin")} />
+          <RefreshCw className={cn("w-3.5 h-3.5 text-primary", loading && "animate-spin")} />
           <span>Reload Config</span>
         </button>
       </div>
@@ -314,7 +314,7 @@ export function SystemControlView() {
                 <button
                   onClick={handleSaveFlags}
                   disabled={savingFlags}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all"
+                  className="px-5 py-2 bg-purple-500 hover:bg-primary text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all"
                 >
                   {savingFlags ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Switches
@@ -390,7 +390,7 @@ export function SystemControlView() {
                 </div>
                 <button
                   onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2"
+                  className="px-4 py-2 bg-purple-500 hover:bg-primary text-white font-bold rounded-xl text-xs flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" /> Draft Broadcast
                 </button>
@@ -439,7 +439,7 @@ export function SystemControlView() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Details for medical candidates..."
-                        className="w-full bg-background border border-border/60 rounded-xl p-3 text-xs focus:ring-2 focus:ring-purple-500/50 min-h-[80px]"
+                        className="w-full bg-background border border-border/60 rounded-xl p-3 text-xs focus:ring-2 focus:ring-primary/50 min-h-[80px]"
                         required
                       />
                     </div>
@@ -455,7 +455,7 @@ export function SystemControlView() {
                       <button
                         type="submit"
                         disabled={submittingAnnouncement}
-                        className="px-5 py-2 bg-purple-500 text-white font-bold rounded-xl text-xs hover:bg-purple-600"
+                        className="px-5 py-2 bg-purple-500 text-white font-bold rounded-xl text-xs hover:bg-primary"
                       >
                         Publish Broadcast
                       </button>
@@ -485,7 +485,7 @@ export function SystemControlView() {
                         "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 self-end md:self-auto",
                         a.active
                           ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                          : "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30"
+                          : "bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30"
                       )}
                     >
                       {a.active ? 'Deactivate' : 'Reactivate'}
@@ -693,8 +693,8 @@ export function SystemControlView() {
               {/* SECTION 2: PLAN PRICING & DURATION */}
               <div className="space-y-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
-                    <CreditCard className="w-3.5 h-3.5 text-purple-400" />
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                    <CreditCard className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-foreground">2. Membership Pricing & Access Details</h4>
@@ -978,7 +978,7 @@ export function SystemControlView() {
                 <button
                   type="submit"
                   disabled={savingSocials}
-                  className="px-5 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all"
+                  className="px-5 py-2 bg-purple-500 hover:bg-primary text-white font-bold rounded-xl text-xs flex items-center gap-2 transition-all"
                 >
                   {savingSocials ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Handles
@@ -990,7 +990,7 @@ export function SystemControlView() {
                   <div key={key} className="p-4 rounded-xl border border-border/60 bg-background/50 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-xs flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-purple-400" /> {label}
+                        <Icon className="w-4 h-4 text-primary" /> {label}
                       </span>
                       <Switch
                         checked={socials[key]?.enabled ?? false}

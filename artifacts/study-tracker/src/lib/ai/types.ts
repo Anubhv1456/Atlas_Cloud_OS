@@ -106,6 +106,10 @@ export const CognitiveDeltaSchema = z.object({
   distillation: ClinicalDistillationSchema.optional(),
   studyDelta: StudyDeltaSchema.optional(),
   scoreDelta: ScoreDeltaSchema.optional(),
+  detectedPreferenceShift: z.object({
+    suggestedSetting: z.string(),
+    reason: z.string()
+  }).optional(),
   source: z.enum(['LOCAL_TOKENIZER', 'GEMINI_CLOUD', 'HYBRID']).default('GEMINI_CLOUD'),
   latencyMs: z.number().optional(),
 });
@@ -207,6 +211,13 @@ export const ROUTINE_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
         clinicalTrigger: { type: 'STRING' },
       },
     },
+    detectedPreferenceShift: {
+      type: 'OBJECT',
+      properties: {
+        suggestedSetting: { type: 'STRING' },
+        reason: { type: 'STRING' }
+      }
+    }
   },
   required: ['intent', 'targetSubjectName', 'executiveSummary'],
 };
@@ -309,6 +320,13 @@ export const GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
         notes: { type: 'STRING' },
       },
     },
+    detectedPreferenceShift: {
+      type: 'OBJECT',
+      properties: {
+        suggestedSetting: { type: 'STRING' },
+        reason: { type: 'STRING' }
+      }
+    }
   },
   required: ['intent', 'targetSubjectName', 'executiveSummary'],
 };

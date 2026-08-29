@@ -7,7 +7,7 @@ export interface UIPreference {
   order?: number;
   focus?: 'primary' | 'secondary' | null;
   focusUpdatedAt?: Date | null;
-  customTopics?: { id: string; name: string; deleted?: boolean }[]; // kept for TS type compatibility only
+  customTopics?: { id: string; name: string; deleted?: boolean }[];
   updatedAt: Date;
   hlc?: string;
 }
@@ -33,8 +33,10 @@ export type SystemStatus = 'Strong' | 'Average' | 'Weak';
 export interface CurriculumUnit {
   id?: number | string;
   subjectId?: number | string;
+  subjectIds?: (number | string)[];
   systemId?: number | string;
   name: string;
+  tags?: string[];
   topicIds?: string[];
   color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray';
   order?: number;
@@ -94,6 +96,7 @@ export type RevisionSet = CurriculumUnit;
 export interface MistakeLog {
   id?: number | string;
   subjectId?: number | string;
+  subjectIds?: (number | string)[];
   systemId: number | string;
   curriculumSetId?: string;
   topicId?: string;
@@ -111,6 +114,7 @@ export interface MistakeLog {
   resolved: boolean;
   createdAt: Date;
   updatedAt?: Date;
+  ankiExportedAt?: number;
   deletedAt?: Date | null;
   hlc?: string;
 }
@@ -123,6 +127,7 @@ export interface ScoreLog {
   percentage: number;
   type?: 'set' | 'exam' | 'custom' | 'study' | 'gt' | 'swt' | 'qbank';
   subjectId?: number | string;
+  subjectIds?: (number | string)[];
   systemId?: number | string;
   curriculumSetId?: string;
   timestamp: Date | string;
@@ -131,6 +136,7 @@ export interface ScoreLog {
   testName?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  ankiExportedAt?: number;
   deletedAt?: Date | null;
   hlc?: string;
 }
@@ -146,6 +152,7 @@ export interface HistoryEntry {
   completedAt: Date | string;
   createdAt?: Date;
   updatedAt?: Date;
+  ankiExportedAt?: number;
   deletedAt?: Date | null;
   hlc?: string;
 }
@@ -158,6 +165,7 @@ export interface PYQYear {
   completedAt?: Date | string | null;
   createdAt?: Date;
   updatedAt?: Date;
+  ankiExportedAt?: number;
   deletedAt?: Date | null;
   hlc?: string;
 }
@@ -167,9 +175,11 @@ export interface TopicProgress {
   topicId: string;
   systemId?: number | string;
   subjectId?: number | string;
+  subjectIds?: (number | string)[];
   status: 'mastered' | 'weak' | 'unseen';
   lastStudiedAt?: Date | string;
   updatedAt?: Date;
+  ankiExportedAt?: number;
   deletedAt?: Date | null;
   hlc?: string;
 }

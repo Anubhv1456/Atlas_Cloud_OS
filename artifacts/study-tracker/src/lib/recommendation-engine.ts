@@ -165,6 +165,26 @@ export function computeIntelligentRecommendation(
     if (systemSets.length > 0) {
       for (const set of systemSets) {
         let score = weightage.weight * yearMult;
+      
+      // Smart Clinical Tags (System level)
+      if (sys.tags && sys.tags.includes('#HighYield')) {
+        score += 25;
+        reasons.push('• Core Clinical Integration Hub (#HighYield)');
+      }
+      if (sys.tags && sys.tags.includes('#Volatile')) {
+        score += 15;
+        reasons.push('• Identified as #Volatile cluster');
+      }
+        
+        // Smart Clinical Tags
+        if (set.tags && set.tags.includes('#HighYield')) {
+          score += 25;
+          reasons.push('• Identified as #HighYield');
+        }
+        if (set.tags && set.tags.includes('#Volatile')) {
+          score += 15;
+          reasons.push('• Identified as #Volatile (requires spaced repetition)');
+        }
         const reasons: string[] = [];
 
         if (yearMult > 2.0) {

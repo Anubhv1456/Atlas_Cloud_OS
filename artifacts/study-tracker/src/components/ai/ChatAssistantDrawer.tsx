@@ -27,7 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useAmbientVoiceSession } from '@/lib/ai/useAmbientVoiceSession';
-import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+import { useAISettings, saveAISettings } from '@/lib/ai/aiSettingsStorage';
 import { 
   ChatMessage, 
   sendChatMessageToGemini 
@@ -123,6 +123,38 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
     return pills.slice(0, 5);
   }, [metrics, topDailyPulses]);
+
+  const [setupStep, setSetupStep] = useState<0 | 1 | 2>(0);
+
+  useEffect(() => {
+    if (open && settings.validationStatus === 'valid' && !settings.hasCompletedAIPersonalization && setupStep === 0) {
+      setSetupStep(1);
+      setMessages([
+        {
+          id: `setup-1-${Date.now()}`,
+          role: 'assistant',
+          content: "✨ **API Key Verified!** Welcome to Atlas Clinical AI.\n\nBefore we begin, how would you prefer me to instruct you?\n\nChoose a **Mentorship Style** below:",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+    }
+  }, [open, settings.validationStatus, settings.hasCompletedAIPersonalization, setupStep]);
+
+  const promptPillsToRender = React.useMemo(() => {
+    if (setupStep === 1) {
+      return [
+        { label: '🤔 Socratic (Challenge me)', text: 'I prefer a Socratic mentorship style.' },
+        { label: '🎯 Direct (Answers only)', text: 'I prefer a Direct mentorship style.' }
+      ];
+    }
+    if (setupStep === 2) {
+      return [
+        { label: '⚡ High-Yield (Bottom-line)', text: 'I prefer High-Yield clinical depth.' },
+        { label: '📚 Comprehensive (Deep-dive)', text: 'I prefer Comprehensive clinical depth.' }
+      ];
+    }
+    return dynamicPromptPills;
+  }, [setupStep, dynamicPromptPills]);
 
   const [activeTab, setActiveTab] = useState<'text' | 'voice'>(initialMode === 'voice' ? 'voice' : 'text');
   const [voiceInputMode, setVoiceInputMode] = useState<'push-to-talk' | 'hands-free'>('push-to-talk');
@@ -278,6 +310,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     }
   }, [messages, isLoading, interimTranscript]);
 
+  const [rejectedShifts, setRejectedShifts] = useState<Set<string>>(new Set());
+
   // Send message handler
   const handleSendMessage = useCallback(async (textToSend?: string) => {
     const text = (textToSend || inputVal).trim();
@@ -309,6 +343,40 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     setMessages((prev) => [...prev, userMessage]);
     setInputVal('');
     resetTranscript();
+
+    if (setupStep === 1) {
+       const isDirect = text.toLowerCase().includes('direct');
+       saveAISettings({ mentorshipStyle: isDirect ? 'direct' : 'socratic' });
+       
+       setTimeout(() => {
+         setMessages(prev => [...prev, {
+           id: `setup-2-${Date.now()}`,
+           role: 'assistant',
+           content: "Got it! Next:\n\n**Clinical Depth:** High-Yield (Brief, bottom-line facts) or Comprehensive (Deep pathophysiology)?",
+           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+         }]);
+         setSetupStep(2);
+       }, 400);
+       return;
+    } else if (setupStep === 2) {
+       const isComp = text.toLowerCase().includes('comprehensive');
+       saveAISettings({ 
+         clinicalDepth: isComp ? 'comprehensive' : 'high-yield',
+         hasCompletedAIPersonalization: true 
+       });
+       
+       setTimeout(() => {
+         setMessages(prev => [...prev, {
+           id: `setup-done-${Date.now()}`,
+           role: 'assistant',
+           content: "✨ Your Atlas AI Persona is ready! We've customized your experience. You can always change this in Settings.\n\nWhat would you like to log or review today?",
+           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+         }]);
+         setSetupStep(0);
+       }, 400);
+       return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -325,6 +393,57 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
       setMessages((prev) => [...prev, assistantMessage]);
       speakText(response.replyMessage);
+
+      // Handle Automagic Preference Shift
+      if (response.preferenceShift) {
+        const { suggestedSetting, reason } = response.preferenceShift;
+        
+        // Anti-Spam: Check cooldown (e.g. don't show more than once per hour)
+        const ONE_HOUR = 60 * 60 * 1000;
+        const now = Date.now();
+        const lastToastTime = settings.lastPreferenceToastShownAt || 0;
+        
+        // Check if explicitly rejected
+        const isHighYieldShift = suggestedSetting.toLowerCase().includes('high-yield');
+        const isRejected = isHighYieldShift && settings.hasRejectedHighYieldMode;
+        
+        if (!isRejected && !rejectedShifts.has(suggestedSetting) && (now - lastToastTime > ONE_HOUR)) {
+          saveAISettings({ lastPreferenceToastShownAt: now });
+          
+          toast.message('AI Preference Detected', {
+            description: reason,
+            action: {
+              label: `Switch`,
+              onClick: () => {
+                if (suggestedSetting.toLowerCase().includes('high-yield')) {
+                  saveAISettings({ clinicalDepth: 'high-yield' });
+                  toast.success('Switched to High-Yield Mode');
+                } else if (suggestedSetting.toLowerCase().includes('comprehensive')) {
+                  saveAISettings({ clinicalDepth: 'comprehensive' });
+                  toast.success('Switched to Comprehensive Mode');
+                } else if (suggestedSetting.toLowerCase().includes('direct')) {
+                  saveAISettings({ mentorshipStyle: 'direct' });
+                  toast.success('Switched to Direct Style');
+                } else if (suggestedSetting.toLowerCase().includes('socratic')) {
+                  saveAISettings({ mentorshipStyle: 'socratic' });
+                  toast.success('Switched to Socratic Style');
+                }
+              }
+            },
+            cancel: {
+              label: 'Dismiss',
+              onClick: () => {
+                setRejectedShifts(prev => new Set(prev).add(suggestedSetting));
+                if (isHighYieldShift) {
+                  saveAISettings({ hasRejectedHighYieldMode: true });
+                }
+              }
+            },
+            duration: 10000
+          });
+        }
+      }
+
     } catch (err: any) {
       console.error('[ChatAssistantDrawer] Error:', err);
       const errorMessage: ChatMessage = {
@@ -932,7 +1051,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
           {/* Quick Discovery Prompt Chips */}
           <div className="px-4 py-2 border-t border-border/40 bg-muted/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            {dynamicPromptPills.map((pill, idx) => (
+            {promptPillsToRender.map((pill, idx) => (
               <button
                 key={idx}
                 type="button"

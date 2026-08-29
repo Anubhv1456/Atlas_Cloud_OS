@@ -203,6 +203,8 @@ function ProtectedApp() {
   );
 }
 
+import { GlobalQuickEntry } from '@/components/ui/GlobalQuickEntry';
+
 function App() {
   useEffect(() => {
     let hasRun = false;
@@ -285,6 +287,7 @@ function App() {
               <ProtectedApp />
             </WouterRouter>
           </ErrorBoundary>
+          <GlobalQuickEntry />
           <Toaster />
           <SonnerToaster position="top-center" richColors />
         </TooltipProvider>

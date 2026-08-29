@@ -5,3 +5,4 @@ export * from './queries';
 export * from './mutations';
 export * from './timeline';
 export * from './revisionEngine';
+export * from './firestore-hooks';

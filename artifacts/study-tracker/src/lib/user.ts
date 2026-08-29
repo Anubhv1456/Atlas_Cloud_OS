@@ -32,3 +32,28 @@ export async function getUserAlias(userId: string): Promise<string> {
     return fallbackAlias;
   }
 }
+
+export async function getAISettingsFromFirebase(userId: string) {
+  if (!firestoreDb || !userId) return null;
+  try {
+    const userRef = doc(firestoreDb, `users/${userId}`);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      return data.aiSettings || null;
+    }
+  } catch (e) {
+    console.warn('Could not fetch AI settings from Firestore:', e);
+  }
+  return null;
+}
+
+export async function saveAISettingsToFirebase(userId: string, settings: any) {
+  if (!firestoreDb || !userId) return;
+  try {
+    const userRef = doc(firestoreDb, `users/${userId}`);
+    await setDoc(userRef, { aiSettings: settings }, { merge: true });
+  } catch (e) {
+    console.warn('Could not save AI settings to Firestore:', e);
+  }
+}

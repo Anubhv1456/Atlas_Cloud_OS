@@ -84,7 +84,7 @@ const HomeDashboardUI = () => (
       </div>
 
       <div className="bg-[#111318] border border-white/5 rounded-lg p-1.5 sm:p-2.5 flex flex-col justify-between relative overflow-hidden">
-         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
+         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
         <div className="flex items-center justify-between text-[7px] sm:text-[9px] font-medium text-slate-400 uppercase tracking-wider relative z-10">
           <span>REVISIONS DUE</span>
         </div>

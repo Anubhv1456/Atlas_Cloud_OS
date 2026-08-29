@@ -325,6 +325,7 @@ export async function executeCognitiveCompiler(
     );
   } catch (err: any) {
     // If Model not found (404) or persistent rate limit, execute fallback switch
+    if (err.message?.includes('403') || err.message?.includes('400') || err.message?.includes('API_KEY_INVALID')) { throw new Error('API Key invalid or quota exceeded. Please check your AI Studio settings.'); }
     if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429') || err.message?.includes('503')) {
       try {
         const fallbackModel: SupportedGeminiModel = 'gemini-3.1-flash-lite';
@@ -424,4 +425,41 @@ export async function executeCognitiveCompiler(
     latencyMs: performance.now() - startTime,
     source: 'GEMINI_CLOUD',
   };
+}
+
+export async function generateClinicalSyllabus(
+  targetExam: string,
+  focusAreas: string,
+  apiKey: string
+): Promise<any> {
+  const systemInstruction = `You are an expert medical curriculum designer. 
+Generate a comprehensive but highly-curated syllabus for the ${targetExam} focusing on ${focusAreas}.
+The output must STRICTLY be a JSON array of KnowledgeNodes.
+Each KnowledgeNode MUST map its 'subjectIds' to one or more of these 19 Anchor Hubs:
+['Anatomy', 'Physiology', 'Biochemistry', 'Pathology', 'Pharmacology', 'Microbiology', 'Forensic Medicine', 'Preventive & Social Medicine', 'ENT', 'Ophthalmology', 'General Medicine', 'General Surgery', 'Obstetrics & Gynecology', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Psychiatry', 'Radiology', 'Anesthesiology']
+
+Format exactly as:
+[
+  { "id": "uuid-here", "name": "Topic Name", "type": "Concept", "subjectIds": ["Pathology", "General Medicine"], "tags": ["#HighYield"] }
+]
+Do not return anything except the JSON array.`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: "Generate the syllabus now." }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      })
+    });
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Invalid generation");
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Failed to generate syllabus", err);
+    throw err;
+  }
 }

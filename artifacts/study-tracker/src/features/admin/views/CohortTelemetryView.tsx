@@ -164,7 +164,7 @@ export function CohortTelemetryView() {
         <div className="p-5 rounded-2xl border border-border/60 bg-card/60 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mistake Drill Clear</span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-purple-500/20">
               <Brain className="w-4 h-4" />
             </div>
           </div>
@@ -172,7 +172,7 @@ export function CohortTelemetryView() {
             <div className="text-3xl font-extrabold text-foreground tracking-tight">
               {drillsTotal > 0 ? `${drillResolutionPct}%` : '0%'}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-purple-400">
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-primary">
               <Activity className="w-3.5 h-3.5" />
               <span>{drillsTotal > 0 ? `${drillsCleared} of ${drillsTotal} items mastered` : 'No Recall Drills Yet'}</span>
             </div>
@@ -307,7 +307,7 @@ export function CohortTelemetryView() {
             </div>
           ) : (
             <div className="py-8 px-4 rounded-xl border border-dashed border-border/60 text-center space-y-2">
-              <Brain className="w-6 h-6 text-purple-400 mx-auto opacity-70" />
+              <Brain className="w-6 h-6 text-primary mx-auto opacity-70" />
               <p className="text-xs font-semibold text-foreground">No Knowledge Gaps Detected Yet</p>
               <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
                 As students log mistakes or fail active recall drills in their 20th Notebook, high-yield retrieval failure clusters will automatically populate here in real time.
@@ -316,7 +316,7 @@ export function CohortTelemetryView() {
           )}
 
           <div className="p-3.5 rounded-xl bg-muted/20 border border-border/40 text-xs text-muted-foreground leading-relaxed flex items-start gap-2.5">
-            <Brain className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+            <Brain className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <span>
               <strong>Clinical Insight</strong>: Topics with repeated retrieval failures automatically receive boosted priority multipliers in Atlas's spaced repetition scheduler.
             </span>
@@ -352,8 +352,8 @@ export function CohortTelemetryView() {
               <p className="text-[10px] text-muted-foreground">Rushed reading / missed 'EXCEPT'</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-500/5 space-y-1">
-              <span className="text-[10px] font-bold uppercase text-purple-400">Overthinking (FOMO)</span>
+            <div className="p-4 rounded-xl border border-purple-500/20 bg-primary/5 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-primary">Overthinking (FOMO)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.fomo || 0}</div>
               <p className="text-[10px] text-muted-foreground">Second-guessed the right answer</p>
             </div>
@@ -411,7 +411,7 @@ export function CohortTelemetryView() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-foreground flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-purple-400" />
+                  <Zap className="w-3.5 h-3.5 text-primary" />
                   <span>Live Telemetry Channel</span>
                 </span>
                 <span className="text-muted-foreground font-mono">Active (100% Buffer Efficiency)</span>

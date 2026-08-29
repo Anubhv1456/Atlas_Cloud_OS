@@ -61,8 +61,8 @@ export function OverviewStats({
         {/* Learning Topics */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-purple-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-purple-500 transition-colors">Learning</span>
-            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500 border border-purple-500/20">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">Learning</span>
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-purple-500/20">
               <BookOpen className="w-4 h-4" />
             </div>
           </div>

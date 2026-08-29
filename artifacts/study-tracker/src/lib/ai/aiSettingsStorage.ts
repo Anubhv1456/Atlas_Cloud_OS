@@ -1,10 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { getAISettingsFromFirebase, saveAISettingsToFirebase } from '@/lib/user';
 
 export type SupportedGeminiModel = 'gemini-3.7-flash' | 'gemini-3.1-flash-lite' | 'gemini-3.1-pro-preview';
 
 export type AIValidationStatus = 'unconfigured' | 'valid' | 'invalid' | 'rate_limited' | 'error';
 
+export type MentorshipStyle = 'socratic' | 'direct';
+export type ClinicalDepth = 'high-yield' | 'comprehensive';
+
 export interface AISettings {
+  mentorshipStyle: MentorshipStyle;
+  clinicalDepth: ClinicalDepth;
+  hasCompletedAIPersonalization: boolean;
+  hasRejectedHighYieldMode: boolean;
+  lastPreferenceToastShownAt: number | null;
   isAiEnabled: boolean;
   geminiApiKey: string;
   lastValidatedAt: number | null;
@@ -17,6 +27,11 @@ const STORAGE_KEY_API_KEY = 'atlas_gemini_api_key';
 const STORAGE_KEY_LAST_VALIDATED = 'atlas_ai_last_validated';
 const STORAGE_KEY_STATUS = 'atlas_ai_validation_status';
 const STORAGE_KEY_MESSAGE = 'atlas_ai_validation_message';
+const STORAGE_KEY_MENTORSHIP = 'atlas_ai_mentorship_style';
+const STORAGE_KEY_CLINICAL_DEPTH = 'atlas_ai_clinical_depth';
+const STORAGE_KEY_PERSONALIZATION_DONE = 'atlas_ai_personalization_done';
+const STORAGE_KEY_REJECTED_HY = 'atlas_ai_rejected_high_yield';
+const STORAGE_KEY_LAST_TOAST = 'atlas_ai_last_toast_time';
 
 export const DEFAULT_AI_SETTINGS: AISettings = {
   isAiEnabled: true,
@@ -24,6 +39,11 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
   lastValidatedAt: null,
   validationStatus: 'unconfigured',
   validationMessage: '',
+  mentorshipStyle: 'socratic',
+  clinicalDepth: 'high-yield',
+  hasCompletedAIPersonalization: false,
+  hasRejectedHighYieldMode: false,
+  lastPreferenceToastShownAt: null,
 };
 
 const AI_SETTINGS_CHANGE_EVENT = 'atlas_ai_settings_changed';
@@ -40,8 +60,19 @@ export function getAISettings(): AISettings {
     const lastValidatedAt = lastValidatedAtStr ? parseInt(lastValidatedAtStr, 10) : null;
     const validationStatus = (localStorage.getItem(STORAGE_KEY_STATUS) as AIValidationStatus) || (geminiApiKey ? 'valid' : 'unconfigured');
     const validationMessage = localStorage.getItem(STORAGE_KEY_MESSAGE) || '';
+    const mentorshipStyle = (localStorage.getItem(STORAGE_KEY_MENTORSHIP) as MentorshipStyle) || 'socratic';
+    const clinicalDepth = (localStorage.getItem(STORAGE_KEY_CLINICAL_DEPTH) as ClinicalDepth) || 'high-yield';
+    const hasCompletedAIPersonalization = localStorage.getItem(STORAGE_KEY_PERSONALIZATION_DONE) === 'true';
+    const hasRejectedHighYieldMode = localStorage.getItem(STORAGE_KEY_REJECTED_HY) === 'true';
+    const lastToastStr = localStorage.getItem(STORAGE_KEY_LAST_TOAST);
+    const lastPreferenceToastShownAt = lastToastStr ? parseInt(lastToastStr, 10) : null;
 
     return {
+      mentorshipStyle,
+      clinicalDepth,
+      hasCompletedAIPersonalization,
+      hasRejectedHighYieldMode,
+      lastPreferenceToastShownAt,
       isAiEnabled,
       geminiApiKey,
       lastValidatedAt,
@@ -72,6 +103,15 @@ export function saveAISettings(partial: Partial<AISettings>): AISettings {
 
     localStorage.setItem(STORAGE_KEY_STATUS, updated.validationStatus);
     localStorage.setItem(STORAGE_KEY_MESSAGE, updated.validationMessage || '');
+    localStorage.setItem(STORAGE_KEY_MENTORSHIP, updated.mentorshipStyle);
+    localStorage.setItem(STORAGE_KEY_CLINICAL_DEPTH, updated.clinicalDepth);
+    localStorage.setItem(STORAGE_KEY_PERSONALIZATION_DONE, updated.hasCompletedAIPersonalization ? 'true' : 'false');
+    localStorage.setItem(STORAGE_KEY_REJECTED_HY, updated.hasRejectedHighYieldMode ? 'true' : 'false');
+    if (updated.lastPreferenceToastShownAt !== null) {
+      localStorage.setItem(STORAGE_KEY_LAST_TOAST, updated.lastPreferenceToastShownAt.toString());
+    } else {
+      localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
+    }
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: updated }));
     return updated;
@@ -90,6 +130,11 @@ export function clearAISettings(): void {
     localStorage.removeItem(STORAGE_KEY_LAST_VALIDATED);
     localStorage.removeItem(STORAGE_KEY_STATUS);
     localStorage.removeItem(STORAGE_KEY_MESSAGE);
+    localStorage.removeItem(STORAGE_KEY_MENTORSHIP);
+    localStorage.removeItem(STORAGE_KEY_CLINICAL_DEPTH);
+    localStorage.removeItem(STORAGE_KEY_PERSONALIZATION_DONE);
+    localStorage.removeItem(STORAGE_KEY_REJECTED_HY);
+    localStorage.removeItem(STORAGE_KEY_LAST_TOAST);
 
     window.dispatchEvent(new CustomEvent(AI_SETTINGS_CHANGE_EVENT, { detail: DEFAULT_AI_SETTINGS }));
   } catch (err) {
@@ -262,6 +307,31 @@ export async function validateGeminiKey(
 export function useAISettings() {
   const [settings, setSettings] = useState<AISettings>(getAISettings);
   const [isValidating, setIsValidating] = useState(false);
+  const { user } = useAuth();
+  
+  // Cross-device Firebase Hydration
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    
+    getAISettingsFromFirebase(user.uid).then(cloudSettings => {
+      if (isMounted && cloudSettings && cloudSettings.geminiApiKey) {
+        // Only override local if local doesn't have a valid key, or cloud has been updated more recently
+        const local = getAISettings();
+        if (!local.geminiApiKey || (cloudSettings.lastValidatedAt && (!local.lastValidatedAt || cloudSettings.lastValidatedAt > local.lastValidatedAt))) {
+           saveAISettings(cloudSettings);
+        } else if (local.geminiApiKey && local.geminiApiKey !== cloudSettings.geminiApiKey) {
+           // We have a local key but cloud is different, push local to cloud to ensure sync
+           saveAISettingsToFirebase(user.uid, local);
+        }
+      } else if (isMounted && !cloudSettings && getAISettings().geminiApiKey) {
+        // Push to cloud if it doesn't exist
+        saveAISettingsToFirebase(user.uid, getAISettings());
+      }
+    });
+    
+    return () => { isMounted = false; };
+  }, [user]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -280,8 +350,11 @@ export function useAISettings() {
   const updateSettings = useCallback((partial: Partial<AISettings>) => {
     const updated = saveAISettings(partial);
     setSettings(updated);
+    if (user) {
+      saveAISettingsToFirebase(user.uid, updated);
+    }
     return updated;
-  }, []);
+  }, [user]);
 
   const testKey = useCallback(async (keyOverride?: string, modelOverride?: SupportedGeminiModel) => {
     const keyToTest = keyOverride !== undefined ? keyOverride : settings.geminiApiKey;

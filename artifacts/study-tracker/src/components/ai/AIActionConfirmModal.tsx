@@ -141,7 +141,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
       case 'ACTION_CLINICAL_QUERY':
         title = 'Clinical Coaching Insight';
         badgeText = 'Atlas AI';
-        icon = <Brain className="w-5 h-5 text-purple-500" />;
+        icon = <Brain className="w-5 h-5 text-primary" />;
         break;
     }
 

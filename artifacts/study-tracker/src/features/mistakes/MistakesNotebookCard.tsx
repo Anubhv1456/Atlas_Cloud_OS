@@ -96,18 +96,6 @@ export function MistakesNotebookCard() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            {settings.isAiEnabled && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setVoiceModalOpen(true)}
-                className="rounded-xl font-bold text-xs h-8 px-2.5 gap-1 cursor-pointer border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10"
-                title="Dictate clinical pearl or mistake"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Voice Pearl</span>
-              </Button>
-            )}
 
             <Button
               size="sm"

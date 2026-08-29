@@ -177,7 +177,7 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: { "firebase-core": ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/analytics"], "ontology-data": ["./src/data/ontology.ts"],
           'recharts': ['recharts'],
           'framer-motion': ['framer-motion'],
           'lucide': ['lucide-react'],
@@ -197,6 +197,12 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
     fs: { strict: true },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      }
+    }
   },
   preview: {
     port,

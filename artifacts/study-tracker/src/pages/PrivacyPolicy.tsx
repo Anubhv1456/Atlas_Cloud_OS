@@ -370,7 +370,7 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-purple-600 dark:text-primary flex items-center justify-center border border-purple-500/20">
                     <Lock className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">2. Zero Commercial Data Sales</h3>

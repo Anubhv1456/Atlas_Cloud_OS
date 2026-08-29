@@ -29,6 +29,7 @@ export async function sendChatMessageToGemini(
   modelUsed: SupportedGeminiModel | 'LOCAL_TOKENIZER';
   source?: 'LOCAL_TOKENIZER' | 'GEMINI_CLOUD' | 'HYBRID';
   latencyMs?: number;
+  preferenceShift?: string;
 }> {
   const result = await executeCognitiveCompiler(
     newMessage,
@@ -42,5 +43,6 @@ export async function sendChatMessageToGemini(
     modelUsed: result.modelUsed,
     source: result.source,
     latencyMs: result.latencyMs,
+    preferenceShift: result.delta.detectedPreferenceShift,
   };
 }

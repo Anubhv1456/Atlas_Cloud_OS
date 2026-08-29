@@ -11,6 +11,9 @@ import { calculateSubjectProgress, calculateOverallProgress } from '@/lib/progre
 import { motion, AnimatePresence } from 'framer-motion';
 import { AtlasNorthStar } from '@/components/AtlasNorthStar';
 import { useLocation } from 'wouter';
+import { useClinicalFrictionEngine } from '@/lib/ai/frictionEngine';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { AtlasSkyShareModal } from './AtlasSkyShareModal';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { isSubjectInProfScope, NMC_MBBS_PROFESSIONAL_YEARS } from '@/lib/curriculumScope';
@@ -214,6 +217,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
   const [activeFilter, setActiveFilter] = useState<'all' | 'prof_year' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
   const [selectedStarName, setSelectedStarName] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { metrics } = useClinicalFrictionEngine();
 
   const { profile } = useExamProfile();
   const isMBBSProf = Boolean(
@@ -249,6 +254,9 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       let strongSystemsCount = 0;
       let weakSystemsCount = 0;
       let completedAtTime = 0;
+      const metric = metrics.find(m => m.subjectName === star.name || aliasMap[m.subjectName] === star.name);
+      const frictionScore = metric?.frictionScore || 0;
+      const decayUrgency = metric?.decayUrgency || 'STABLE';
 
       if (dbSubject) {
         dbSubjectId = dbSubject.id;
@@ -289,7 +297,9 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
         totalSystemsCount,
         strongSystemsCount,
         weakSystemsCount,
-        completedAtTime
+        completedAtTime,
+        frictionScore,
+        decayUrgency
       };
     });
 
@@ -346,7 +356,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-transparent to-transparent pointer-events-none z-0" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-teal-500/[0.02] rounded-full blur-[150px] pointer-events-none z-0" />
 
-          {/* TOP HUD HEADER BAR */}
+                    {/* TOP HUD HEADER BAR */}
           <div className="z-30 flex items-center justify-between gap-4 w-full max-w-7xl mx-auto">
             
             {/* Title & Luminosity HUD Indicator */}
@@ -365,6 +375,17 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                   Astronomical Map of Medical Retention • 19 MBBS Subjects
                 </p>
               </div>
+            </div>
+
+            {/* Spotlight Search / Filter Bar */}
+            <div className="hidden md:flex relative w-64 lg:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input 
+                placeholder="Query graph (e.g. #Volatile, Pharma)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/[0.03] border-white/10 text-white placeholder:text-zinc-500 focus-visible:ring-teal-500/50 pl-9 rounded-full h-9 text-xs"
+              />
             </div>
 
             {/* Top Right Action Controls */}
@@ -425,57 +446,62 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               <circle cx="50" cy="50" r="31" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.25" strokeDasharray="1.5 2" />
               <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.25" strokeDasharray="2 3" />
 
+              
               {/* Chronological Golden Constellation Lines connecting 100% completed subjects in order of completion */}
-              {completedChronologicalChain.map((currStar, index) => {
-                if (index === 0) return null;
-                const prevStar = completedChronologicalChain[index - 1];
-
-                const isFiltered = activeFilter === 'all' 
-                  || currStar.phase === activeFilter 
-                  || prevStar.phase === activeFilter;
-
-                return (
-                  <g key={`constellation-line-${prevStar.name}-${currStar.name}`}>
-                    {/* Outer ambient ethereal glow */}
-                    <line 
-                      x1={prevStar.x}
-                      y1={prevStar.y}
-                      x2={currStar.x}
-                      y2={currStar.y}
-                      stroke={isFiltered ? "rgba(251, 191, 36, 0.35)" : "rgba(251, 191, 36, 0.08)"}
-                      strokeWidth="0.65"
-                      filter="url(#goldenConstellationGlow)"
-                    />
-                    {/* Refined core starlight vector beam */}
-                    <line 
-                      x1={prevStar.x}
-                      y1={prevStar.y}
-                      x2={currStar.x}
-                      y2={currStar.y}
-                      stroke={isFiltered ? "url(#starlightGoldGrad)" : "rgba(251, 191, 36, 0.2)"}
-                      strokeWidth="0.26"
-                      strokeLinecap="round"
-                    />
-                    {/* Animated white starlight dash pulse */}
-                    {isFiltered && (
-                      <line 
-                        x1={prevStar.x}
-                        y1={prevStar.y}
-                        x2={currStar.x}
-                        y2={currStar.y}
-                        stroke="#FFFFFF"
-                        strokeWidth="0.28"
-                        strokeDasharray="1 3.5"
-                        strokeOpacity="0.6"
-                        className="animate-pulse"
-                      />
-                    )}
-                    {/* Endpoint Joint Halos */}
-                    <circle cx={prevStar.x} cy={prevStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
-                    <circle cx={currStar.x} cy={currStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
-                  </g>
-                );
-              })}
+              {(()=>{
+                 // If there's a search query, draw constellation lines between all matched stars
+                 let renderChain = completedChronologicalChain;
+                 if (searchQuery.trim().length > 0) {
+                    const q = searchQuery.toLowerCase();
+                    renderChain = mappedStars.filter(star => {
+                        if (q.includes('#volatile') || q.includes('#rescue')) return star.decayUrgency === 'CRITICAL' || star.decayUrgency === 'ELEVATED';
+                        if (q.includes('#highyield')) return star.state !== 'not_started';
+                        return star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                    });
+                 }
+                 return renderChain.map((currStar, index) => {
+                    if (index === 0) return null;
+                    const prevStar = renderChain[index - 1];
+                    const isFiltered = true;
+                    return (
+                      <g key={`constellation-line-${prevStar.name}-${currStar.name}`}>
+                        <line 
+                          x1={prevStar.x}
+                          y1={prevStar.y}
+                          x2={currStar.x}
+                          y2={currStar.y}
+                          stroke={isFiltered ? "rgba(251, 191, 36, 0.35)" : "rgba(251, 191, 36, 0.08)"}
+                          strokeWidth="0.65"
+                          filter="url(#goldenConstellationGlow)"
+                        />
+                        <line 
+                          x1={prevStar.x}
+                          y1={prevStar.y}
+                          x2={currStar.x}
+                          y2={currStar.y}
+                          stroke={isFiltered ? "url(#starlightGoldGrad)" : "rgba(251, 191, 36, 0.2)"}
+                          strokeWidth="0.26"
+                          strokeLinecap="round"
+                        />
+                        {searchQuery.trim().length > 0 && (
+                          <line 
+                            x1={prevStar.x}
+                            y1={prevStar.y}
+                            x2={currStar.x}
+                            y2={currStar.y}
+                            stroke="#FFFFFF"
+                            strokeWidth="0.28"
+                            strokeDasharray="1 3.5"
+                            strokeOpacity="0.6"
+                            className="animate-pulse"
+                          />
+                        )}
+                        <circle cx={prevStar.x} cy={prevStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
+                        <circle cx={currStar.x} cy={currStar.y} r="0.75" fill="url(#starlightJointHalo)" opacity={isFiltered ? 0.9 : 0.2} />
+                      </g>
+                    );
+                 });
+              })()}
             </svg>
 
             {/* Central North Star (Readiness Anchor) */}
@@ -490,17 +516,37 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 
                 // Filter matching logic
                 let matchesFilter = true;
-                if (activeFilter === 'prof_year') {
-                  matchesFilter = isSubjectInProfScope(star.name, profile.targetExam, activeYear);
-                } else if (activeFilter === 'pre_clinical') {
-                  matchesFilter = star.phase === 'pre_clinical';
-                } else if (activeFilter === 'para_clinical') {
-                  matchesFilter = star.phase === 'para_clinical';
-                } else if (activeFilter === 'clinical') {
-                  matchesFilter = star.phase === 'clinical';
-                } else if (activeFilter === 'decay') {
-                  matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
+                if (searchQuery.trim().length > 0) {
+                  const q = searchQuery.toLowerCase();
+                  // N-to-N Graph Search logic
+                  if (q.includes('#volatile') || q.includes('#rescue')) {
+                    matchesFilter = star.decayUrgency === 'CRITICAL' || star.decayUrgency === 'ELEVATED';
+                  } else if (q.includes('#highyield')) {
+                    matchesFilter = star.state !== 'not_started';
+                  } else {
+                    matchesFilter = star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                  }
+                } else {
+                  if (activeFilter === 'prof_year') {
+                    matchesFilter = isSubjectInProfScope(star.name, profile.targetExam, activeYear);
+                  } else if (activeFilter === 'pre_clinical') {
+                    matchesFilter = star.phase === 'pre_clinical';
+                  } else if (activeFilter === 'para_clinical') {
+                    matchesFilter = star.phase === 'para_clinical';
+                  } else if (activeFilter === 'clinical') {
+                    matchesFilter = star.phase === 'clinical';
+                  } else if (activeFilter === 'decay') {
+                    matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
+                  }
                 }
+
+                // SDSR Decay Opacity
+                // Mastered topics glow brightly (opacity 1.0). As memory decays (high friction), stars visibly dim (down to 0.25).
+                let decayOpacity = 1;
+                if (star.state !== 'not_started') {
+                  decayOpacity = Math.max(0.25, 1 - (star.frictionScore / 100));
+                }
+
 
                 // Color & glow styling based on retentive state
                 let dotColorClass = "bg-zinc-800/40 border border-zinc-700/30 shadow-none";
@@ -526,10 +572,10 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 return (
                   <div
                     key={star.name}
-                    style={{ left: `${star.x}%`, top: `${star.y}%` }}
+                    style={{ left: `${star.x}%`, top: `${star.y}%`, opacity: matchesFilter ? decayOpacity : 0.05 }}
                     className={cn(
                       "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 cursor-pointer group p-2",
-                      matchesFilter ? "opacity-100 z-30" : "opacity-10 z-10 hover:opacity-80"
+                      matchesFilter ? "z-30" : "z-10 hover:opacity-80"
                     )}
                     onClick={() => setSelectedStarName(isSelected ? null : star.name)}
                   >

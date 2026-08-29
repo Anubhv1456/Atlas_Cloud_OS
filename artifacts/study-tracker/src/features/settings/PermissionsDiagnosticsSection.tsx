@@ -491,7 +491,7 @@ export function PermissionsDiagnosticsSection() {
         <div className="p-4 rounded-xl bg-muted/40 border border-border/60 flex flex-col justify-between space-y-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <div className="p-2 rounded-lg bg-primary/10 text-purple-600 dark:text-primary">
                 <HardDrive className="w-4 h-4" />
               </div>
               <div>
@@ -502,7 +502,7 @@ export function PermissionsDiagnosticsSection() {
 
             <div className="flex gap-1">
               {storagePersisted && (
-                <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/20">
+                <Badge variant="outline" className="text-[10px] bg-primary/10 text-purple-600 border-purple-500/20">
                   Persisted
                 </Badge>
               )}

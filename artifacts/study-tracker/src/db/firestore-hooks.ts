@@ -1,18 +1,11 @@
 import { useState, useEffect } from 'react';
-import { auth, firestoreDb as firestore } from '@/lib/firebase';
-import { collection, onSnapshot, query, getDocs } from 'firebase/firestore';
+import { dbEvents } from './schema';
 
 export function useLiveQuery<T>(queryFn: () => Promise<T>, deps: any[] = []): T | undefined {
   const [data, setData] = useState<T | undefined>(undefined);
 
   useEffect(() => {
-    let unsubscribe = () => {};
     let isMounted = true;
-
-    if (!auth.currentUser) {
-       // if not logged in, we can't listen to user-specific collections easily unless queryFn works offline?
-       // but wait, the queryFn just fetches from the "db" object.
-    }
 
     const run = async () => {
        try {
@@ -20,8 +13,22 @@ export function useLiveQuery<T>(queryFn: () => Promise<T>, deps: any[] = []): T 
          if (isMounted) setData(result);
        } catch(e) { console.error(e); }
     };
+    
+    // Initial fetch
     run();
-    return () => { isMounted = false; unsubscribe(); };
+
+    // Re-fetch on any db change
+    const handleChange = () => {
+      run();
+    };
+
+    dbEvents.on('change', handleChange);
+
+    return () => { 
+      isMounted = false; 
+      dbEvents.off('change', handleChange); 
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return data;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/db';
 import { db, HistoryEntry, ScoreLog } from '@/db';
 import { getLocalExamProfile, ExamProfile } from '@/lib/examProfile';
 

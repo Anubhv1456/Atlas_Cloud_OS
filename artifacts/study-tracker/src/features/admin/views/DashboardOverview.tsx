@@ -44,7 +44,7 @@ export function DashboardOverview() {
 
           <div className="p-6 rounded-2xl border border-border/50 bg-card">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-purple-500/10 rounded-lg"><MessageSquare className="w-5 h-5 text-purple-500" /></div>
+              <div className="p-2 bg-primary/10 rounded-lg"><MessageSquare className="w-5 h-5 text-primary" /></div>
               <h3 className="font-medium">Pending Markers</h3>
             </div>
             <p className="text-3xl font-bold">{stats.pendingMarkers}</p>

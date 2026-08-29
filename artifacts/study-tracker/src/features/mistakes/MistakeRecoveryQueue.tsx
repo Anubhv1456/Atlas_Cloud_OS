@@ -7,7 +7,8 @@ import {
   deleteMistakeLog, 
   restoreMistakeLog, 
   resolveMistake, 
-  toggleMistakeVolatile 
+  toggleMistakeVolatile,
+  markMistakesAsAnkiExported
 } from '@/db/mutations';
 import { QuickMistakeModal, HIGH_YIELD_CLINICAL_LENSES } from './QuickMistakeModal';
 import { 
@@ -40,6 +41,7 @@ import { ALL_SUBJECTS } from '@/data/ontology';
 import { toast } from 'sonner';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
+import { AnkiExportModal } from '@/components/AnkiExportModal';
 
 export function getTagMeta(tag: string) {
   const norm = tag.toLowerCase();
@@ -50,7 +52,7 @@ export function getTagMeta(tag: string) {
     return { icon: '🔍', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25' };
   }
   if (norm === 'histopath' || norm === 'biopsy' || norm.includes('pathology')) {
-    return { icon: '🔬', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25' };
+    return { icon: '🔬', color: 'bg-primary/10 text-purple-600 dark:text-primary border-purple-500/25' };
   }
   if (norm === 'imaging' || norm.includes('radiology') || norm === 'x-ray' || norm === 'ct') {
     return { icon: '🩻', color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25' };
@@ -81,6 +83,7 @@ export default function MistakeRecoveryQueue() {
   const [, setLocation] = useLocation();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [ankiModalOpen, setAnkiModalOpen] = useState(false);
   const [editingMistake, setEditingMistake] = useState<MistakeLog | null>(null);
   const [modalDefaultSubjectId, setModalDefaultSubjectId] = useState<string | number | undefined>(undefined);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -93,6 +96,8 @@ export default function MistakeRecoveryQueue() {
   const [statusFilter, setStatusFilter] = useState<'active' | 'archived' | 'all'>('active');
   const [viewLayout, setViewLayout] = useState<'grouped' | 'stream'>('grouped');
   const [copiedId, setCopiedId] = useState<string | number | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   // Sync initial subject from query string if available (e.g. ?subjectId=...)
@@ -108,6 +113,15 @@ export default function MistakeRecoveryQueue() {
   }, [searchStr]);
 
   // Database queries
+  const toggleSelection = (id: string | number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray(), []) || [];
   const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
 
@@ -278,19 +292,6 @@ export default function MistakeRecoveryQueue() {
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          {settings.isAiEnabled && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setVoiceModalOpen(true)}
-              className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 shadow-2xs"
-              title="Voice & AI Clinical Extraction (⌘K / V)"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">AI Dictate / Paste</span>
-              <span className="sm:hidden">AI</span>
-            </Button>
-          )}
 
           <Button
             size="sm"
@@ -302,6 +303,18 @@ export default function MistakeRecoveryQueue() {
             <Share2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export Sheet</span>
             <span className="sm:hidden">Export</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setAnkiModalOpen(true)}
+            className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-primary/30 text-purple-600 dark:text-primary hover:bg-purple-50 dark:hover:bg-primary/10 shadow-2xs"
+            title="Export to Anki"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI Anki Export</span>
+            <span className="sm:hidden">Anki</span>
           </Button>
 
           <Button
@@ -691,6 +704,9 @@ export default function MistakeRecoveryQueue() {
                         rule={rule}
                         subjectName={group.subjectName}
                         isCopied={copiedId === rule.id}
+                        selectionMode={selectionMode}
+                        isSelected={rule.id !== undefined && selectedIds.has(rule.id)}
+                        onToggleSelection={() => rule.id !== undefined && toggleSelection(rule.id)}
                         onCopy={() => handleCopyRule(rule)}
                         onEdit={() => {
                           setEditingMistake(rule);
@@ -718,6 +734,9 @@ export default function MistakeRecoveryQueue() {
                 rule={rule}
                 subjectName={subName}
                 isCopied={copiedId === rule.id}
+                selectionMode={selectionMode}
+                isSelected={rule.id !== undefined && selectedIds.has(rule.id)}
+                onToggleSelection={() => rule.id !== undefined && toggleSelection(rule.id)}
                 onCopy={() => handleCopyRule(rule)}
                 onEdit={() => {
                   setEditingMistake(rule);
@@ -752,12 +771,27 @@ export default function MistakeRecoveryQueue() {
           onOpenChange={setVoiceModalOpen}
         />
       )}
+
+      <AnkiExportModal
+        isOpen={ankiModalOpen}
+        onClose={() => setAnkiModalOpen(false)}
+        allMistakes={rawMistakes.filter(m => !m.deletedAt)}
+        visibleMistakes={filteredMistakes}
+        selectedMistakes={Array.from(selectedIds).map(id => rawMistakes.find(m => m.id === id)).filter(Boolean)} // For pass 1, we pass empty. Pass 2 will implement selection.
+        onMarkExported={async (ids) => {
+          await markMistakesAsAnkiExported(ids);
+          toast.success(`Marked ${ids.length} rules as exported.`);
+        }}
+      />
     </div>
   );
 }
 
 // ── Atomic High-Density Rule Row Component ─────────────────────────────────
 interface RuleCardRowProps {
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
   rule: MistakeLog;
   subjectName: string;
   isCopied: boolean;

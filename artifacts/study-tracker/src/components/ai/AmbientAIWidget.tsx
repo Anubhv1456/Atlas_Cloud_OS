@@ -45,7 +45,7 @@ const QUICK_NAV_ITEMS = [
   { label: 'Memory Decay Radar', path: '/radar', icon: Zap, color: 'text-primary bg-primary/10' },
   { label: 'Mock Test Analytics', path: '/analytics', icon: Trophy, color: 'text-indigo-500 bg-indigo-500/10' },
   { label: 'Study Timeline & Sprints', path: '/timeline', icon: Calendar, color: 'text-teal-500 bg-teal-500/10' },
-  { label: 'Configure AI Assistant & API Key', path: '/settings', icon: SettingsIcon, color: 'text-purple-500 bg-purple-500/10' },
+  { label: 'Configure AI Assistant & API Key', path: '/settings', icon: SettingsIcon, color: 'text-primary bg-primary/10' },
 ];
 
 export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({

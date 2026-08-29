@@ -104,6 +104,12 @@ class FirestoreTable<T extends Record<string, any>> {
           const docId = String(change.doc.id);
           const incoming = { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T;
 
+          
+          // --- MIGRATION LOGIC FOR N:N CLINICAL GRAPH ---
+          if (incoming.subjectId && !incoming.subjectIds) {
+            incoming.subjectIds = [incoming.subjectId];
+          }
+
           // Track remote HLC logical clock
           if (incoming.hlc) {
             updateHLC(incoming.hlc);

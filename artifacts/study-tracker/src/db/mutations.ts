@@ -958,3 +958,11 @@ export async function resetOperationalMode(recalibrationDays: number = 10): Prom
   return resetRecord;
 }
 
+
+export async function markMistakesAsAnkiExported(ids: (string | number)[]) {
+  if (!db.mistakeLogs || ids.length === 0) return;
+  const now = Date.now();
+  for (const id of ids) {
+    await db.mistakeLogs.update(id, { ankiExportedAt: now });
+  }
+}

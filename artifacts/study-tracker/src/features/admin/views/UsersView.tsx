@@ -481,8 +481,8 @@ export function UsersView() {
           </button>
 
           {hiddenAdminCount > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[11px] font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
-              <Shield className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-purple-500/20 text-purple-300 text-[11px] font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
+              <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>{hiddenAdminCount} Admin profile{hiddenAdminCount > 1 ? 's' : ''} hidden</span>
             </div>
           )}
@@ -1385,7 +1385,7 @@ export function UsersView() {
 
                 <div className="p-2.5 rounded-xl bg-background border border-border/60">
                   <div className="text-[10px] text-muted-foreground uppercase">Subjects in Vault</div>
-                  <div className="text-base font-bold text-purple-400 font-mono mt-0.5">
+                  <div className="text-base font-bold text-primary font-mono mt-0.5">
                     {inspectingUser.vaultImportProvenance?.metrics?.subjectCount || 19}
                   </div>
                 </div>

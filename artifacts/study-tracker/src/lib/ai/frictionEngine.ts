@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/db';
 import { db, Subject, CurriculumUnit, MistakeLog, ScoreLog, HistoryEntry } from '@/db';
 import { STANDARD_MEDICAL_SUBJECTS } from './intentParser';
 
@@ -16,6 +16,7 @@ export interface SubjectFrictionMetric {
   cluster: 'Pre-Clinical' | 'Para-Clinical' | 'Clinical';
   recommendedTopic?: string;
   recommendedActionText: string;
+  hasStarted: boolean;
 }
 
 export interface DailyAgendaPulse {
@@ -79,9 +80,10 @@ export function calculateSubjectFriction(
   };
 
   // 1. Calculate days since last active engagement
-  const relevantHistory = history.filter(
-    (h) => h.subjectId === subjectId || String(h.subjectId) === String(subjectId)
-  );
+  const relevantHistory = history.filter((h) => {
+    const ids = h.subjectIds || (h.subjectId !== undefined ? [h.subjectId] : []);
+    return ids.some(id => String(id) === String(subjectId));
+  });
 
   let lastActivityDate = 0;
   relevantHistory.forEach((h) => {
@@ -95,19 +97,22 @@ export function calculateSubjectFriction(
     : 30; // Default to 30 days if unreviewed
 
   // 2. Count mistakes and unresolved 20th notebook pearls
-  const subjectMistakes = mistakes.filter(
-    (m) => m.subjectId === subjectId || String(m.subjectId) === String(subjectId)
-  );
+  const subjectMistakes = mistakes.filter((m) => {
+    const ids = m.subjectIds || (m.subjectId !== undefined ? [m.subjectId] : []);
+    return ids.some(id => String(id) === String(subjectId));
+  });
   const unresolvedMistakes = subjectMistakes.filter((m) => !m.resolved).length;
   const volatileMistakes = subjectMistakes.filter((m) => m.isVolatile).length;
 
   // 3. Curriculum completion ratio as stability factor
-  const subjectSets = curriculumSets.filter(
-    (c) => c.subjectId === subjectId || String(c.subjectId) === String(subjectId)
-  );
+  const subjectSets = curriculumSets.filter((c) => {
+    const ids = c.subjectIds || (c.subjectId !== undefined ? [c.subjectId] : []);
+    return ids.some(id => String(id) === String(subjectId));
+  });
   const completedSets = subjectSets.filter((c) => c.contentCompleted || c.qbankCompleted).length;
   const completionRatio = subjectSets.length > 0 ? completedSets / subjectSets.length : 0.5;
   const stabilityFactor = Math.max(0.7, Math.min(1.5, 0.8 + completionRatio * 0.7));
+  const hasStarted = relevantHistory.length > 0 || subjectMistakes.length > 0 || subjectSets.length > 0;
 
   // 4. Mathematical Friction Formulation
   const weightFactor = profile.weight / 200; // Normalized exam weight
@@ -152,41 +157,79 @@ export function calculateSubjectFriction(
     cluster: profile.cluster,
     recommendedTopic,
     recommendedActionText,
+    hasStarted,
   };
 }
 
 /**
  * React Hook that computes real-time Subject Friction Metrics & Top 3 Daily Agenda Pulses
  */
+
 export function useClinicalFrictionEngine() {
   const subjects = useLiveQuery(() => db.subjects.toArray().then((s) => s.filter((x) => !x.deletedAt))) || [];
   const mistakes = useLiveQuery(() => db.mistakeLogs.toArray().then((m) => m.filter((x) => !x.deletedAt))) || [];
   const history = useLiveQuery(() => db.history.toArray(), []) || [];
   const curriculumSets = useLiveQuery(() => db.curriculumSets.toArray().then((c) => c.filter((x) => !x.deletedAt))) || [];
 
-  // Compute metrics for each subject
   const metrics: SubjectFrictionMetric[] = React.useMemo(() => {
     if (!subjects.length) return [];
+    
+    // One highly efficient loop to group by subjectId
+    const mistakesBySub = new Map();
+    const historyBySub = new Map();
+    const curriculumBySub = new Map();
+    
+    mistakes.forEach(m => {
+      const ids = m.subjectIds || (m.subjectId !== undefined ? [m.subjectId] : []);
+      ids.forEach(rawId => {
+        const id = String(rawId);
+        if (!mistakesBySub.has(id)) mistakesBySub.set(id, []);
+        mistakesBySub.get(id).push(m);
+      });
+    });
+    
+    history.forEach(h => {
+      const ids = h.subjectIds || (h.subjectId !== undefined ? [h.subjectId] : []);
+      ids.forEach(rawId => {
+        const id = String(rawId);
+        if (!historyBySub.has(id)) historyBySub.set(id, []);
+        historyBySub.get(id).push(h);
+      });
+    });
+    
+    curriculumSets.forEach(c => {
+      const ids = c.subjectIds || (c.subjectId !== undefined ? [c.subjectId] : []);
+      ids.forEach(rawId => {
+        const id = String(rawId);
+        if (!curriculumBySub.has(id)) curriculumBySub.set(id, []);
+        curriculumBySub.get(id).push(c);
+      });
+    });
 
     const calculated = subjects.map((sub) => {
       const subId = sub.id !== undefined ? sub.id : sub.name;
-      return calculateSubjectFriction(sub.name, subId, mistakes, history, curriculumSets);
+      const sIdStr = String(subId);
+      return calculateSubjectFriction(
+        sub.name, 
+        subId, 
+        mistakesBySub.get(sIdStr) || [], 
+        historyBySub.get(sIdStr) || [], 
+        curriculumBySub.get(sIdStr) || []
+      );
     });
 
-    // Sort descending by highest friction score
     return calculated.sort((a, b) => b.frictionScore - a.frictionScore);
   }, [subjects, mistakes, history, curriculumSets]);
 
-  // Generate Top 3 Calibrated Daily Agenda Pulses
   const topDailyPulses: DailyAgendaPulse[] = React.useMemo(() => {
     if (!metrics.length) return [];
-
-    const topThree = metrics.slice(0, 3);
-
+    const startedMetrics = metrics.filter(m => m.hasStarted);
+    // If there are pending revisions in started subjects, don't show unstarted ones.
+    const eligibleMetrics = startedMetrics.length > 0 ? startedMetrics : metrics;
+    const topThree = eligibleMetrics.slice(0, 3);
     return topThree.map((m, idx) => {
       let actionType: 'ACTIVE_RECALL' | 'PEARL_AUDIT' | 'WEAK_SPRINT' = 'ACTIVE_RECALL';
       let estimatedMinutes = 30;
-
       if (m.unresolvedMistakes >= 3) {
         actionType = 'PEARL_AUDIT';
         estimatedMinutes = 20;
@@ -194,7 +237,6 @@ export function useClinicalFrictionEngine() {
         actionType = 'WEAK_SPRINT';
         estimatedMinutes = 45;
       }
-
       return {
         id: `pulse-${m.subjectId}-${idx}`,
         subjectName: m.subjectName,

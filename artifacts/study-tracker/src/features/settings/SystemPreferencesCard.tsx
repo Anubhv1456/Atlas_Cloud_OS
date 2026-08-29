@@ -7,7 +7,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
 export function SystemPreferencesCard() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, accent, changeAccent } = useTheme();
   const { notifSettings, permissionStatus, isPwa, toggleNotif, testNotification } = useNotifications();
 
   const isAlertsActive = notifSettings.notifyRevisions && notifSettings.enabled && permissionStatus !== 'denied';
@@ -93,6 +93,48 @@ export function SystemPreferencesCard() {
         </div>
       </div>
 
+      
+
+      {/* Cognitive Modes Preference Tile */}
+      <div className="p-3.5 rounded-xl border border-border/60 bg-muted/20 flex flex-col gap-4">
+        <div>
+          <p className="text-xs font-bold text-foreground">Cognitive Mode</p>
+          <p className="text-[11px] text-muted-foreground">Select your environmental focus tint</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'atlas', label: 'Atlas (Default)', desc: 'Clarity', ringColor: 'ring-[#26a69a]', bgClass: 'bg-[#26a69a]' },
+            { id: 'deep-space', label: 'Deep Space', desc: 'Focus', ringColor: 'ring-[#828df8]', bgClass: 'bg-[#828df8]' },
+            { id: 'system-blue', label: 'System Blue', desc: 'Flow', ringColor: 'ring-[#3b82f6]', bgClass: 'bg-[#3b82f6]' },
+            { id: 'graphite', label: 'Graphite', desc: 'Minimal', ringColor: 'ring-[#9ca3af]', bgClass: 'bg-[#4b5563]' },
+            { id: 'amber', label: 'Amber', desc: 'Recall', ringColor: 'ring-[#f59e0b]', bgClass: 'bg-[#f59e0b]' }
+          ].map((theme) => {
+            const isActive = accent === theme.id; 
+            return (
+              <button
+                key={theme.id}
+                onClick={() => changeAccent(theme.id as any)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all cursor-pointer border text-left",
+                  isActive 
+                    ? `border-primary bg-primary/10 shadow-sm ${theme.ringColor} ring-1 ring-offset-0` 
+                    : "border-border/60 bg-background/50 hover:bg-muted/80 hover:border-border"
+                )}
+              >
+                <div className={cn("w-3.5 h-3.5 rounded-full flex shrink-0 items-center justify-center", theme.bgClass)}>
+                  {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                </div>
+                <div className="flex flex-col">
+                  <span className={cn("text-[11px] font-semibold", isActive ? "text-primary" : "text-foreground")}>
+                    {theme.label}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      
       {/* Quick Test / Permission Status Footer */}
       {permissionStatus === 'denied' && (
         <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">

@@ -149,8 +149,8 @@ export function SupportMessagesView() {
           </div>
         </div>
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs">
-          <div className="text-xs text-muted-foreground font-medium text-purple-400">Feedback & Ideas</div>
-          <div className="text-2xl font-bold mt-1 text-purple-400">
+          <div className="text-xs text-muted-foreground font-medium text-primary">Feedback & Ideas</div>
+          <div className="text-2xl font-bold mt-1 text-primary">
             {messages.filter(m => ['Beta Feedback', 'Feature Request'].includes(m.category)).length}
           </div>
         </div>

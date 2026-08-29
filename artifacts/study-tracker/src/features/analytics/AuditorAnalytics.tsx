@@ -1,13 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAnalyticsLogic } from './Analytics.hooks';
-import { Activity, Sparkles, Target, BarChart3, TrendingUp, AlertCircle, Brain } from 'lucide-react';
+import { Activity, Sparkles, Target, BarChart3, TrendingUp, AlertCircle, Brain, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { generateCognitiveProfile } from '@/lib/ai/contextPackager';
+import { toast } from 'sonner';
+import { useLocation } from 'wouter';
+import { db } from '@/db';
 
 export default function AuditorAnalytics() {
   const { mistakeLogs, subjects, curriculumSets } = useAnalyticsLogic();
-  
-  // Synthesize data for Auditor view
+  const [, setLocation] = useLocation();
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
+
+  const handleGenerateRescueBlock = async (subjectId: string | number) => {
+    setIsGenerating(String(subjectId));
+    try {
+      const setId = "rescue_" + Date.now();
+      await db.curriculumSets.add({
+        id: setId,
+        name: 'Rescue Block: SDSR Intervention',
+        subjectId: subjectId,
+        systemId: 0,
+        color: 'amber',
+        depth: 'rapid',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: ['#Rescue', '#Volatile']
+      });
+      toast.success("Rescue Block Generated", {
+        description: "A temporary SDSR-driven intervention has been created."
+      });
+      setLocation('/subjects/' + subjectId);
+    } catch (err) {
+      toast.error("Failed to generate rescue block.");
+    } finally {
+      setIsGenerating(null);
+    }
+  };
+
   const profile = React.useMemo(() => {
     return generateCognitiveProfile(mistakeLogs, subjects, curriculumSets);
   }, [mistakeLogs, subjects, curriculumSets]);
@@ -55,11 +86,26 @@ export default function AuditorAnalytics() {
               </div>
               <h3 className="font-bold text-lg">High Friction Modules</h3>
            </div>
-           <div className="space-y-2">
+           <div className="space-y-3">
              {profile.highFrictionModules.map(m => (
-               <div key={m.subjectId} className="flex justify-between items-center text-sm">
-                 <span className="font-medium">{m.subjectName}</span>
-                 <Badge variant="destructive">{m.mistakeCount} mistakes</Badge>
+               <div key={m.subjectId} className="flex justify-between items-center text-sm p-3 bg-muted/40 rounded-xl border border-border/60">
+                 <div className="flex flex-col gap-1">
+                   <span className="font-semibold">{m.subjectName}</span>
+                   <div className="flex gap-2 items-center">
+                     <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">{m.mistakeCount} Critical Logs</Badge>
+                     <span className="text-xs text-muted-foreground font-mono">Decay detected</span>
+                   </div>
+                 </div>
+                 <Button 
+                   size="sm" 
+                   variant="outline" 
+                   onClick={() => handleGenerateRescueBlock(m.subjectId)}
+                   disabled={isGenerating === String(m.subjectId)}
+                   className="shrink-0 font-bold border-amber-500/30 text-amber-600 hover:bg-amber-500/10 transition-colors rounded-full"
+                 >
+                   {isGenerating === String(m.subjectId) ? <Sparkles className="w-3.5 h-3.5 animate-pulse" /> : <Play className="w-3.5 h-3.5 mr-1" />}
+                   Rescue
+                 </Button>
                </div>
              ))}
              {profile.highFrictionModules.length === 0 && (

@@ -601,7 +601,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-500" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                     Continuous Calibration
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-snug">

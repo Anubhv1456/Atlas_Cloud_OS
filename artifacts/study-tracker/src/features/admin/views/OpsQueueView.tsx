@@ -234,13 +234,13 @@ export function OpsQueueView() {
           className={cn(
             "p-4 rounded-2xl border transition-all cursor-pointer",
             activeQueue === 'support'
-              ? "bg-purple-500/10 border-purple-500/40 ring-1 ring-purple-500/20"
+              ? "bg-primary/10 border-purple-500/40 ring-1 ring-primary/20"
               : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Unread Support</span>
-            <Inbox className="w-4 h-4 text-purple-400" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">Unread Support</span>
+            <Inbox className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-bold mt-2 text-purple-300">{unreadSupport.length}</div>
           <p className="text-[11px] text-muted-foreground mt-1">Student tickets awaiting response</p>
@@ -302,7 +302,7 @@ export function OpsQueueView() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Inbox className="w-3.5 h-3.5 text-purple-400" />
+            <Inbox className="w-3.5 h-3.5 text-primary" />
             Support Tickets {unreadSupport.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-purple-500 text-white text-[10px] font-bold">{unreadSupport.length}</span>}
           </button>
 
@@ -425,7 +425,7 @@ export function OpsQueueView() {
 
                   {/* Unread Support Tickets Section */}
                   {unreadSupport.length > 0 && (
-                    <div className="bg-card border border-purple-500/30 rounded-2xl p-5 space-y-4">
+                    <div className="bg-card border border-primary/30 rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-border/50">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />
@@ -435,7 +435,7 @@ export function OpsQueueView() {
                         </div>
                         <button
                           onClick={() => { setActiveQueue('support'); setSupportFilter('unread'); }}
-                          className="text-xs text-purple-400 hover:underline flex items-center gap-1 font-semibold"
+                          className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
                         >
                           View Support Inbox <ChevronRight className="w-3.5 h-3.5" />
                         </button>
@@ -446,7 +446,7 @@ export function OpsQueueView() {
                           <div key={m.id} className="p-4 rounded-xl border border-border/60 bg-background/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-300">
+                                <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
                                   {m.category}
                                 </Badge>
                                 <span className="font-semibold text-sm">{m.subject}</span>
@@ -468,7 +468,7 @@ export function OpsQueueView() {
                               </button>
                               <button
                                 onClick={() => handleMessageStatus(m.id, 'read')}
-                                className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-xs font-semibold"
+                                className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
                               >
                                 Mark Read
                               </button>
@@ -647,7 +647,7 @@ export function OpsQueueView() {
                     className={cn(
                       "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all",
                       supportFilter === tab
-                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                        ? "bg-purple-500/20 text-purple-300 border border-primary/30"
                         : "text-muted-foreground hover:bg-muted/50"
                     )}
                   >
@@ -670,7 +670,7 @@ export function OpsQueueView() {
                     <div key={m.id} className="p-4 rounded-xl border border-border/60 bg-card flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-300">
+                          <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
                             {m.category}
                           </Badge>
                           <span className="font-bold text-sm">{m.subject}</span>
@@ -689,7 +689,7 @@ export function OpsQueueView() {
                         {m.status === 'unread' ? (
                           <button
                             onClick={() => handleMessageStatus(m.id, 'read')}
-                            className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-xs font-semibold"
+                            className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
                           >
                             Mark Read
                           </button>
@@ -864,7 +864,7 @@ export function OpsQueueView() {
           <div className="bg-card border border-purple-500/40 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-start justify-between">
               <div>
-                <Badge variant="outline" className="text-[10px] border-purple-500/30 text-purple-300">
+                <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
                   {selectedMessage.category}
                 </Badge>
                 <h3 className="font-bold text-lg mt-1">{selectedMessage.subject}</h3>
@@ -885,7 +885,7 @@ export function OpsQueueView() {
             <div className="flex items-center justify-between pt-2">
               <a
                 href={`mailto:${selectedMessage.email}?subject=Re: Atlas Support - ${encodeURIComponent(selectedMessage.subject)}`}
-                className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-primary text-white text-xs font-bold flex items-center gap-1.5"
               >
                 <Mail className="w-3.5 h-3.5" /> Reply via Email
               </a>

@@ -11,7 +11,7 @@ import {
   BookOpen, 
   ArrowRight
 } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/db';
 import { db } from '@/db';
 import { calculateSubjectFriction, SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
 import { cn } from '@/lib/utils';
@@ -33,19 +33,19 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
   const mistakes = useLiveQuery(
     () => db.mistakeLogs.where('subjectId').equals(subjectId).toArray(),
     [subjectId],
-    []
+
   );
 
   const history = useLiveQuery(
     () => db.history.where('subjectId').equals(subjectId).toArray(),
     [subjectId],
-    []
+
   );
 
   const curriculumSets = useLiveQuery(
     () => db.curriculumSets.where('subjectId').equals(subjectId).toArray(),
     [subjectId],
-    []
+
   );
 
   // Calculate friction metric with the mathematical formulation

@@ -43,3 +43,10 @@ if (!fs.existsSync(trackerIndex) || fs.statSync(trackerIndex).size === 0) {
 
 const files = fs.readdirSync(rootDist);
 console.log(`[Atlas Build Success] Verified ${files.length} production assets in root dist:`, files.slice(0, 10).join(', '));
+
+const serverSrc = path.join(__dirname, 'artifacts/api-server/dist/index.mjs');
+const serverDest = path.join(__dirname, 'dist/server.mjs');
+if (fs.existsSync(serverSrc)) {
+  fs.copyFileSync(serverSrc, serverDest);
+  console.log(`[Atlas Build] Copied server bundle to ${serverDest}`);
+}
