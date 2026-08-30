@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark, .dark *));
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -160,15 +160,15 @@
   --elevate-1: rgba(255, 255, 255, 0.03);
   --elevate-2: rgba(255, 255, 255, 0.06);
 
-  /* Pro OLED Obsidian True Black Foundation */
-  --background: 0 0% 0%;
+  /* Sophisticated Obsidian Deep Charcoal Foundation */
+  --background: 240 6% 8%;
   --foreground: 240 5% 96%;
   --border: 240 5% 15%;
   
-  /* Layer 2: Deep Obsidian Card Surface (#121215) */
-  --card: 240 7% 7.5%;
+  /* Layer 2: Deep Obsidian Card Surface */
+  --card: 240 6% 11%;
   --card-foreground: 240 5% 96%;
-  --card-border: 240 5% 15%;
+  --card-border: 240 5% 16%;
   
   --sidebar: 240 7% 7.5%;
   --sidebar-foreground: 240 2% 65%;

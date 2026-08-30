@@ -47,6 +47,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 import { useAnalyticsLogic } from './Analytics.hooks';
 import { Activity, Globe, Lightbulb } from 'lucide-react';
@@ -56,7 +57,7 @@ import { MistakesNotebookCard } from '@/features/mistakes/MistakesNotebookCard';
 export default function ManualAnalytics() {
 
   const {
-    scoreLogs, subjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
+    scoreLogs, subjects, scoredSubjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
     isModalOpen, setIsModalOpen,
     filteredLogs,
     systemBreakdownData, handleDeleteLog, studyRecommendation,
@@ -65,16 +66,37 @@ export default function ManualAnalytics() {
     selectedSystemId, setSelectedSystemId, availableSystems
   } = useAnalyticsLogic();
   
-    const { flags } = useFeatureFlags();
+  const { flags } = useFeatureFlags();
+
+  React.useEffect(() => {
+    const handleOpenModal = () => setIsModalOpen(true);
+    window.addEventListener('open-score-log-modal', handleOpenModal);
+    return () => window.removeEventListener('open-score-log-modal', handleOpenModal);
+  }, [setIsModalOpen]);
+
+  const activeSubjectName = useMemo(() => {
+    if (selectedSubjectId === 'all') return null;
+    if (selectedSubjectId === 'gt') return 'Grand Tests (Mocks)';
+    const sub = subjectMap.get(selectedSubjectId as any) || subjectMap.get(Number(selectedSubjectId) as any);
+    return sub?.name || 'Selected Subject';
+  }, [selectedSubjectId, subjectMap]);
   
   return (
     <div className="min-h-full bg-background text-foreground px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Diagnostics Apex - Readiness Metric */}
-      <div className="pt-2 pb-10">
+      <div className="pt-2 pb-6 border-b border-border/40 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-muted-foreground uppercase tracking-widest text-[11px] font-bold">
-            <Activity className="w-3.5 h-3.5" />
-            Global Readiness Index
+            <Activity className="w-3.5 h-3.5 text-primary" />
+            {activeSubjectName ? `${activeSubjectName} Retention Index` : 'Global Readiness Index'}
+            {activeSubjectName && (
+              <button
+                onClick={() => setSelectedSubjectId('all')}
+                className="text-[10px] lowercase font-normal px-2 py-0.5 rounded-full bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+              >
+                (reset to all)
+              </button>
+            )}
           </div>
           <div className="flex items-baseline gap-4 mt-1">
             <h1 className="text-7xl sm:text-8xl font-light tracking-tighter text-foreground">
@@ -86,18 +108,30 @@ export default function ManualAnalytics() {
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-3 max-w-md leading-relaxed">
-            Your living memory diagnostic. This index decays automatically over time and strengthens when you log high-yield revisions.
+          <p className="text-xs text-muted-foreground mt-2 max-w-md leading-relaxed">
+            {activeSubjectName 
+              ? `Real-time cognitive retention for ${activeSubjectName}, calculated from spaced test marks and memory decay.`
+              : 'Your living medical memory diagnostic. Decays exponentially over time and strengthens when you log high-yield revisions.'}
           </p>
         </div>
         
-        <div className="mt-8">
-           <Button
+        <div className="flex items-center gap-3">
+          {activeSubjectName && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedSubjectId('all')}
+              className="rounded-full text-xs font-semibold"
+            >
+              Show All Subjects
+            </Button>
+          )}
+          <Button
             onClick={() => setIsModalOpen(true)}
             className="rounded-full px-6 font-semibold shadow-sm text-xs bg-foreground text-background hover:bg-foreground/90 transition-all"
           >
             <Plus className="w-3.5 h-3.5 mr-2" />
-            Log Score
+            {activeSubjectName ? `Log ${activeSubjectName} Score` : 'Log Score'}
           </Button>
         </div>
       </div>
@@ -147,27 +181,77 @@ export default function ManualAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend Line Chart (Spans 2 cols) */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                The Forgetting Curve
-              </h2>
+                <h2 className="text-base font-bold text-foreground">
+                  The Forgetting Curve & Projection
+                </h2>
+                <Badge variant="secondary" className="text-[10px] font-mono py-0 h-4 bg-primary/10 text-primary border-0">
+                  {activeSubjectName ? `${activeSubjectName} Horizon` : 'Ebbinghaus Engine'}
+                </Badge>
+              </div>
               <p className="text-muted-foreground text-xs mt-0.5">
-                Showing {chartData.length} entries ({densityLimit === 'all' ? 'All entries' : `Last ${densityLimit}`})
+                {activeSubjectName 
+                  ? `Decay rate calibrated for ${activeSubjectName} memory stability.` 
+                  : 'Select a subject to isolate its memory curve and filter the entire analytics dashboard.'}
               </p>
             </div>
 
-            <Badge variant="outline" className="text-[11px] font-mono border-primary/30 text-primary w-fit">
-              Clinical Threshold: 75%
-            </Badge>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                Clinical Threshold: 75%
+              </Badge>
+            </div>
           </div>
+
+          {/* Interactive Subject Selector Pill Bar */}
+          {scoredSubjects.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-1 scrollbar-none">
+              <button
+                onClick={() => setSelectedSubjectId('all')}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer",
+                  selectedSubjectId === 'all'
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : "bg-muted/40 hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border/40"
+                )}
+              >
+                All Curriculum ({scoredSubjects.length})
+              </button>
+
+              {scoredSubjects.map(sub => {
+                const isSelected = String(selectedSubjectId) === String(sub.id);
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => setSelectedSubjectId(isSelected ? 'all' : String(sub.id))}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 shrink-0 cursor-pointer",
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/30 hover:bg-muted/70 text-muted-foreground hover:text-foreground border-border/40"
+                    )}
+                  >
+                    <span>{sub.name}</span>
+                    <span className={cn(
+                      "text-[10px] font-mono font-normal px-1 py-0.2 rounded",
+                      isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                      {sub.avgScore}%
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {chartData.length === 0 ? (
             <EmptyStateGraphic
               icon={BarChart3}
-              title="Unlock study Report"
-              description="Log your revision results or PYQ test marks to unlock beautiful retention graphs and progress curves."
+              title="No Score Data for this Subject"
+              description="Log a test or revision score for this subject to generate its personalized forgetting curve."
               action={
                 <Button onClick={() => setIsModalOpen(true)} size="sm" className="text-xs gap-1.5 rounded-xl shadow-xs">
                   <Plus className="w-3.5 h-3.5" /> Log First Score
@@ -178,46 +262,94 @@ export default function ManualAnalytics() {
           ) : (
             <div className="h-72 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
                   <defs>
+                    {/* Apple Health Multi-Stop Dynamic Gradient */}
                     <linearGradient id="scoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                      <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/20" />
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/30" />
                   
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-muted-foreground/60"
+                    className="text-muted-foreground/70 font-medium"
                   />
-                  <YAxis hide domain={[0, 100]} />
+                  <YAxis 
+                    domain={[0, 100]} 
+                    axisLine={false} 
+                    tickLine={false}
+                    ticks={[25, 50, 75, 100]}
+                    tick={{ fontSize: 9, fill: 'currentColor' }}
+                    className="text-muted-foreground/40 font-mono"
+                    width={28}
+                  />
+                  
+                  {/* Clinical 75% Mastery Safety Line */}
+                  <ReferenceLine 
+                    y={75} 
+                    stroke="rgba(16, 185, 129, 0.4)" 
+                    strokeDasharray="4 4" 
+                    label={{ 
+                      value: '75% Target', 
+                      position: 'insideTopRight', 
+                      fill: 'rgba(16, 185, 129, 0.7)', 
+                      fontSize: 9,
+                      fontWeight: 600
+                    }} 
+                  />
                   
                   <Tooltip
                     wrapperStyle={{ outline: 'none', zIndex: 50 }}
                     allowEscapeViewBox={{ x: false, y: false }}
-                    cursor={{ stroke: 'currentColor', strokeWidth: 1, strokeOpacity: 0.1, strokeDasharray: '3 3' }}
+                    cursor={{ stroke: 'currentColor', strokeWidth: 1, strokeOpacity: 0.15, strokeDasharray: '3 3' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
+                        const isForecast = data.isProjected;
                         return (
-                          <div className="bg-background/95 backdrop-blur-xl border border-border/40 p-3 rounded-2xl shadow-xl text-xs space-y-1.5 max-w-[240px]">
+                          <div className="bg-background/95 backdrop-blur-xl border border-border/60 p-3.5 rounded-2xl shadow-xl text-xs space-y-2 max-w-[260px]">
                             <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2">
                               <span className="font-bold text-foreground truncate">{data.title}</span>
+                              {isForecast ? (
+                                <Badge className="text-[9px] px-1.5 py-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                                  Forecast
+                                </Badge>
+                              ) : data.isRealPoint ? (
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
+                                  {data.type}
+                                </Badge>
+                              ) : null}
                             </div>
-                            <div className="flex flex-col gap-1 pt-1">
-                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Retention</span>
-                              <span className="font-mono font-bold text-2xl tracking-tighter text-primary leading-none">
-                                {data.percentage}%
-                              </span>
+
+                            <div className="flex items-baseline justify-between pt-0.5">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">
+                                  {isForecast ? 'Forecasted Retention' : 'Memory Retention'}
+                                </span>
+                                <span className={cn(
+                                  "font-mono font-bold text-2xl tracking-tighter leading-none",
+                                  data.percentage >= 75 ? "text-emerald-500" : data.percentage >= 60 ? "text-amber-500" : "text-rose-500"
+                                )}>
+                                  {data.percentage}%
+                                </span>
+                              </div>
+                              {data.scoreStr && (
+                                <span className="text-[11px] font-mono text-muted-foreground">
+                                  Raw: {data.scoreStr}
+                                </span>
+                              )}
                             </div>
-                            <div className="text-[10px] text-muted-foreground pt-1 flex items-center justify-between">
-                               <span>{data.fullDate}</span>
-                               <span className="opacity-70">{data.type}</span>
+
+                            <div className="text-[10px] text-muted-foreground pt-1 flex items-center justify-between border-t border-border/30">
+                              <span>{data.fullDate}</span>
+                              {data.subjectName && <span className="font-medium text-foreground/80 truncate max-w-[120px]">{data.subjectName}</span>}
                             </div>
                           </div>
                         );
@@ -227,13 +359,44 @@ export default function ManualAnalytics() {
                   />
                   
                   <Area
-                    type="monotoneX"
+                    type="monotone"
                     dataKey="percentage"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2.5}
                     fill="url(#scoreAreaGrad)"
-                    dot={false}
-                    activeDot={{ r: 6, fill: '#3b82f6', stroke: 'var(--background)', strokeWidth: 3 }}
+                    dot={(props: any) => {
+                      const { cx, cy, payload } = props;
+                      if (payload.isRealPoint) {
+                        return (
+                          <circle
+                            key={`dot-${payload.id}`}
+                            cx={cx}
+                            cy={cy}
+                            r={4.5}
+                            fill="hsl(var(--primary))"
+                            stroke="var(--background)"
+                            strokeWidth={2}
+                            className="shadow-sm"
+                          />
+                        );
+                      }
+                      if (payload.isProjected) {
+                        return (
+                          <circle
+                            key={`dot-${payload.id}`}
+                            cx={cx}
+                            cy={cy}
+                            r={3}
+                            fill="none"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={1.5}
+                            strokeDasharray="2 2"
+                          />
+                        );
+                      }
+                      return <g key={`empty-${payload.id}`} />;
+                    }}
+                    activeDot={{ r: 6, fill: 'hsl(var(--primary))', stroke: 'var(--background)', strokeWidth: 3 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -316,9 +479,6 @@ export default function ManualAnalytics() {
         </div>
       </div>
 
-      {/* 20th Notebook (Mistakes & Clinical Traps Hub) */}
-      <MistakesNotebookCard />
-
       {/* Score History Table */}
       <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-border/60 pb-3">
@@ -354,6 +514,7 @@ export default function ManualAnalytics() {
       <ScoreLogModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        initialSubjectId={selectedSubjectId !== 'all' ? Number(selectedSubjectId) : undefined}
       />
     </div>
   );

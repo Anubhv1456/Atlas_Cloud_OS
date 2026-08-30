@@ -33,12 +33,20 @@ export function filterScoreLogs(
     result = result.filter(log => log.type === selectedType);
   }
   if (selectedSubjectId !== 'all') {
-    const subId = selectedSubjectId as string | number;
-    result = result.filter(log => log.subjectId === subId);
+    if (selectedSubjectId === 'gt') {
+      result = result.filter(log => log.type === 'gt' || !log.subjectId || String(log.subjectId).startsWith('gt'));
+    } else {
+      result = result.filter(log => {
+        if (log.subjectId === undefined || log.subjectId === null) return false;
+        return String(log.subjectId) === String(selectedSubjectId);
+      });
+    }
   }
   if (selectedSystemId !== 'all') {
-    const sysId = selectedSystemId as string | number;
-    result = result.filter(log => log.systemId === sysId);
+    result = result.filter(log => {
+      if (log.systemId === undefined || log.systemId === null) return false;
+      return String(log.systemId) === String(selectedSystemId);
+    });
   }
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase();
@@ -126,9 +134,51 @@ export function calculateAnalyticsStats(filteredLogs: ScoreLog[]) {
   };
 }
 
+export interface SubjectCurveSeries {
+  subjectId: number;
+  subjectName: string;
+  color: string;
+  data: Array<{
+    id: string;
+    index: number;
+    date: string;
+    fullDate: string;
+    percentage: number;
+    scoreStr?: string;
+    title: string;
+    type: string;
+    subjectName: string;
+    volume: number;
+    notes?: string;
+    isRealPoint: boolean;
+    isProjected: boolean;
+  }>;
+}
+
+// Subject decay factor calibration (Clinical vs Volatile facts)
+export function getSubjectStabilityFactor(subjectName: string = '', baseScore: number = 75): number {
+  const name = subjectName.toLowerCase();
+  let baseStability = 16;
+
+  // Volatile / fact-heavy medical disciplines decay faster
+  if (name.includes('pharma') || name.includes('biochem') || name.includes('micro') || name.includes('forensic')) {
+    baseStability = 10;
+  } 
+  // High conceptual / surgical / procedural disciplines retain longer
+  else if (name.includes('surg') || name.includes('anat') || name.includes('med') || name.includes('obg') || name.includes('gyn')) {
+    baseStability = 22;
+  } else if (name.includes('pedia') || name.includes('path') || name.includes('physio')) {
+    baseStability = 16;
+  }
+
+  // Scaling with test percentage: higher scores produce stronger memory traces
+  return baseStability + (baseScore / 100) * 14;
+}
+
 export function formatChartData(
   displayLogs: ScoreLog[],
-  subjectMap: Map<number, Subject>
+  subjectMap: Map<number, Subject>,
+  selectedSubjectId: string = 'all'
 ) {
   if (displayLogs.length === 0) return [];
   
@@ -136,66 +186,127 @@ export function formatChartData(
   const sorted = [...displayLogs].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   const chartData = [];
   
+  let lastDisplayedDate = '';
+
   for (let i = 0; i < sorted.length; i++) {
     const log = sorted[i];
     const logDate = new Date(log.timestamp);
     const subName = subjectMap.get(log.subjectId)?.name || '';
+    const formattedDate = format(logDate, 'MMM d');
     
-    // Real data point
+    // Avoid repeating adjacent identical dates on X-axis
+    const showDateTick = formattedDate !== lastDisplayedDate;
+    if (showDateTick) {
+      lastDisplayedDate = formattedDate;
+    }
+    
+    // Test volume weighting
+    const questionVolume = log.total || (log.type === 'gt' ? 200 : log.type === 'pyq' ? 50 : 25);
+    
+    // Primary recorded test spike point
     chartData.push({
-      id: log.id,
-      index: i + 1,
-      date: format(logDate, 'MMM d'),
+      id: String(log.id),
+      index: chartData.length + 1,
+      date: showDateTick ? formattedDate : '',
       fullDate: format(logDate, 'PPP'),
       percentage: log.percentage,
       scoreStr: `${log.score} / ${log.total}`,
       title: log.title,
       type: log.type === 'gt' ? 'Grand Test' : log.type === 'revision' ? 'System Revision' : log.type === 'pyq' ? 'PYQ Test' : 'Custom Set',
       subjectName: subName,
+      volume: questionVolume,
       notes: log.notes || '',
       isRealPoint: true,
+      isProjected: false,
     });
     
-    // Calculate decay curve before the next log
+    // Calculate authentic exponential decay curve before the next log
     if (i < sorted.length - 1) {
       const nextLog = sorted[i + 1];
       const nextLogDate = new Date(nextLog.timestamp);
       const daysDiff = (nextLogDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24);
       
-      // If gap is more than 2 days, insert a decay point to create the dropping arc
+      // If gap is more than 2 days, insert multiple smooth decay steps along the Ebbinghaus curve
       if (daysDiff > 2) {
-        // Ebbinghaus forgetting curve simulation (simplified exponential decay)
-        const decayedPercentage = Math.max(10, Math.round(log.percentage * Math.exp(-daysDiff / 15)));
-        const decayDate = new Date(nextLogDate.getTime() - (1000 * 60 * 60 * 24)); // 1 day before next test
+        const decayDays = Math.min(daysDiff - 0.5, daysDiff);
+        const stabilityFactor = getSubjectStabilityFactor(subName, log.percentage);
+        const decayedPercentage = Math.max(15, Math.round(log.percentage * Math.exp(-decayDays / stabilityFactor)));
+        const decayDate = new Date(nextLogDate.getTime() - 86400000); // 1 day before next test
         
         chartData.push({
           id: `decay-${log.id}`,
-          date: '', // Hide tick for fake point
+          index: chartData.length + 1,
+          date: '', // Hide tick for smooth spline
           fullDate: format(decayDate, 'PPP'),
           percentage: decayedPercentage,
-          title: 'Memory Decay',
+          title: 'Memory Decay Phase',
           type: 'Decay',
+          subjectName: subName,
+          volume: 0,
+          notes: 'Exponential forgetting before subsequent revision',
           isRealPoint: false,
+          isProjected: false,
         });
       }
     }
   }
   
-  // Add a final 'Today' point if the last log was over 2 days ago
+  // Add Current "Today" state
   const lastLog = sorted[sorted.length - 1];
-  const daysSinceLast = (Date.now() - new Date(lastLog.timestamp).getTime()) / (1000 * 60 * 60 * 24);
-  if (daysSinceLast > 2) {
-    const decayedPercentage = Math.max(10, Math.round(lastLog.percentage * Math.exp(-daysSinceLast / 15)));
-    chartData.push({
-      id: 'decay-now',
-      date: 'Today',
-      fullDate: format(new Date(), 'PPP'),
-      percentage: decayedPercentage,
-      title: 'Current Estimated Retention',
-      type: 'Decay',
-      isRealPoint: false,
-    });
-  }
+  const lastDate = new Date(lastLog.timestamp);
+  const lastSubName = subjectMap.get(lastLog.subjectId)?.name || '';
+  const daysSinceLast = Math.max(0, (Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+  const stabilityFactor = getSubjectStabilityFactor(lastSubName, lastLog.percentage);
+  const currentDecayed = Math.max(15, Math.round(lastLog.percentage * Math.exp(-daysSinceLast / stabilityFactor)));
+
+  chartData.push({
+    id: 'decay-today',
+    index: chartData.length + 1,
+    date: 'Today',
+    fullDate: `${format(new Date(), 'PPP')} (Today)`,
+    percentage: currentDecayed,
+    title: selectedSubjectId === 'all' ? 'Current Retention Level' : `${lastSubName} Current Retention`,
+    type: 'Current Status',
+    subjectName: selectedSubjectId === 'all' ? 'All Systems' : lastSubName,
+    volume: 0,
+    isRealPoint: daysSinceLast < 0.5,
+    isProjected: false,
+  });
+
+  // Future 7-Day & 14-Day Memory Decay Projection
+  const project7Pct = Math.max(10, Math.round(currentDecayed * Math.exp(-7 / stabilityFactor)));
+  const project14Pct = Math.max(10, Math.round(currentDecayed * Math.exp(-14 / stabilityFactor)));
+
+  const future7Date = new Date(Date.now() + 7 * 86400000);
+  const future14Date = new Date(Date.now() + 14 * 86400000);
+
+  chartData.push({
+    id: 'project-7d',
+    index: chartData.length + 1,
+    date: '+7d',
+    fullDate: `${format(future7Date, 'MMM d')} (Projected)`,
+    percentage: project7Pct,
+    title: '7-Day Projected Decay',
+    type: 'Forecast',
+    subjectName: selectedSubjectId === 'all' ? 'Projected Retention' : lastSubName,
+    volume: 0,
+    isRealPoint: false,
+    isProjected: true,
+  });
+
+  chartData.push({
+    id: 'project-14d',
+    index: chartData.length + 1,
+    date: '+14d',
+    fullDate: `${format(future14Date, 'MMM d')} (Projected)`,
+    percentage: project14Pct,
+    title: '14-Day Projected Decay',
+    type: 'Forecast',
+    subjectName: selectedSubjectId === 'all' ? 'Projected Retention' : lastSubName,
+    volume: 0,
+    isRealPoint: false,
+    isProjected: true,
+  });
   
   return chartData;
 }

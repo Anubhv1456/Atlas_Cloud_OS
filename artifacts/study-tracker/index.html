@@ -26,7 +26,7 @@
     <script>
       (function() {
         try {
-          var isDark = localStorage.getItem('theme') === 'dark' || !('theme' in localStorage);
+          var isDark = localStorage.getItem('theme') === 'dark';
           if (isDark) {
             document.documentElement.classList.add('dark');
           } else {
@@ -40,11 +40,11 @@
     <style>
       /* Zero-Flicker Native Launch Screen Canvas */
       html, body {
-        background-color: #F2F2F7;
+        background-color: #F4F5F8;
         color: #1c1c1e;
       }
       html.dark, html.dark body {
-        background-color: #000000;
+        background-color: #0d0f14;
         color: #f4f4f5;
       }
       #root:empty {

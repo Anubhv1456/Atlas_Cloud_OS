@@ -83,9 +83,9 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                 {log.type === 'gt' ? 'GT' : log.type === 'pyq' ? 'PYQ' : log.type === 'set' ? 'SET' : 'REV'}
               </span>
               {weakSubjects.length > 0 && (
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hidden sm:inline-flex items-center gap-1">
+                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hidden sm:inline-flex items-center gap-1">
                   <ShieldAlert className="w-2.5 h-2.5" />
-                  {weakSubjects.length} Leakage Areas
+                  {weakSubjects.length} {weakSubjects.length === 1 ? 'Leakage' : 'Leakages'}
                 </span>
               )}
             </div>
@@ -121,21 +121,25 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
             </span>
           </div>
 
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-muted/60 transition-colors">
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <div className="flex items-center gap-1.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground group-hover:text-foreground group-hover:bg-muted/60 transition-colors">
+              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Delete score entry"
+              aria-label="Delete score entry"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (log.id) onDelete(log.id);
+              }}
+              className="w-7 h-7 rounded-lg opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 transition-all focus:opacity-100"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (log.id) onDelete(log.id);
-            }}
-            className="w-7 h-7 rounded-full opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all focus:opacity-100"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
         </div>
       </div>
 

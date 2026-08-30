@@ -48,7 +48,7 @@ const queryClient = new QueryClient();
 const initTheme = () => {
   if (typeof window !== 'undefined') {
     try {
-      const isDark = localStorage.getItem('theme') === 'dark' || !('theme' in localStorage);
+      const isDark = localStorage.getItem('theme') === 'dark';
       if (isDark) {
         document.documentElement.classList.add('dark');
       } else {
@@ -58,8 +58,8 @@ const initTheme = () => {
       const savedMode = localStorage.getItem('atlas_theme_mode') || 'atlas';
       document.documentElement.setAttribute('data-theme', savedMode);
     } catch (e) {
-      console.warn('localStorage access denied, fallback to dark theme', e);
-      document.documentElement.classList.add('dark');
+      console.warn('localStorage access fallback to light theme', e);
+      document.documentElement.classList.remove('dark');
       document.documentElement.setAttribute('data-theme', 'atlas');
     }
   }
@@ -168,7 +168,7 @@ function ProtectedApp() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-dvh w-full relative">
+    <div className="flex flex-col md:flex-row min-h-dvh w-full relative bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />

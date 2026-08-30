@@ -156,7 +156,9 @@ export function MistakesNotebookCard() {
               <span className="text-2xl font-bold font-mono text-primary">
                 {topSubjectStats.length}
               </span>
-              <span className="text-[11px] text-primary/80">subjects</span>
+              <span className="text-[11px] text-primary/80">
+                {topSubjectStats.length === 1 ? 'subject' : 'subjects'}
+              </span>
             </div>
           </div>
 

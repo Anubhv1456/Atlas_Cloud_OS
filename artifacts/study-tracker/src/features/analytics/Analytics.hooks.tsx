@@ -35,22 +35,31 @@ export function useAnalyticsLogic() {
 
   // Subject lookup maps
   const subjectMap = useMemo(() => {
-    const map = new Map<number, Subject>();
-    subjects.forEach(s => { if (s.id) map.set(s.id, s); });
-    return map;
+    const map = new Map<number | string, Subject>();
+    subjects.forEach(s => { 
+      if (s.id !== undefined && s.id !== null) {
+        map.set(s.id, s);
+        map.set(String(s.id), s);
+      }
+    });
+    return map as Map<any, Subject>;
   }, [subjects]);
 
   const systemMap = useMemo(() => {
-    const map = new Map<number, StudySystem>();
-    systems.forEach(sys => { if (sys.id) map.set(sys.id, sys); });
-    return map;
+    const map = new Map<number | string, StudySystem>();
+    systems.forEach(sys => { 
+      if (sys.id !== undefined && sys.id !== null) {
+        map.set(sys.id, sys);
+        map.set(String(sys.id), sys);
+      }
+    });
+    return map as Map<any, StudySystem>;
   }, [systems]);
 
   // Available systems for selected subject
   const availableSystems = useMemo(() => {
     if (selectedSubjectId === 'all') return systems;
-    const subId = selectedSubjectId as string | number;
-    return systems.filter(sys => sys.subjectId === subId);
+    return systems.filter(sys => String(sys.subjectId) === String(selectedSubjectId));
   }, [systems, selectedSubjectId]);
 
   // Filtered score logs
@@ -90,8 +99,79 @@ export function useAnalyticsLogic() {
 
   // Chart data formatting
   const chartData = useMemo(() => {
-    return formatChartData(displayLogs, subjectMap);
-  }, [displayLogs, subjectMap]);
+    return formatChartData(displayLogs, subjectMap, selectedSubjectId);
+  }, [displayLogs, subjectMap, selectedSubjectId]);
+
+  // Unique subjects with scores, plus Grand Tests, plus curriculum subjects
+  const scoredSubjects = useMemo(() => {
+    const map = new Map<string, { id: string | number; name: string; count: number; avgScore: number; totalPct: number }>();
+    
+    // 1. First populate with subjects that have recorded score logs
+    scoreLogs.forEach(log => {
+      if (log.type === 'gt' || log.title.toLowerCase().includes('grand test') || log.title.toLowerCase().startsWith('gt')) {
+        const existing = map.get('gt') || { id: 'gt', name: 'Grand Tests (Mocks)', count: 0, avgScore: 0, totalPct: 0 };
+        existing.totalPct += log.percentage;
+        existing.count += 1;
+        existing.avgScore = Math.round((existing.totalPct / existing.count) * 10) / 10;
+        map.set('gt', existing);
+      } else if (log.subjectId !== undefined && log.subjectId !== null && String(log.subjectId).trim() !== '') {
+        const subIdKey = String(log.subjectId);
+        const sub = subjectMap.get(log.subjectId as any) || subjects.find(s => String(s.id) === subIdKey);
+        let name = sub?.name;
+        
+        if (!name) {
+          // If systemId present, infer from system
+          if (log.systemId) {
+            const sys = systemMap.get(log.systemId as any) || systems.find(s => String(s.id) === String(log.systemId));
+            if (sys && sys.subjectId) {
+              const matchedSub = subjectMap.get(sys.subjectId as any);
+              if (matchedSub) name = matchedSub.name;
+            }
+          }
+        }
+
+        if (!name) {
+          name = `Subject ${log.subjectId}`;
+        }
+
+        const existing = map.get(subIdKey) || { id: log.subjectId, name, count: 0, avgScore: 0, totalPct: 0 };
+        existing.totalPct += log.percentage;
+        existing.count += 1;
+        existing.avgScore = Math.round((existing.totalPct / existing.count) * 10) / 10;
+        map.set(subIdKey, existing);
+      }
+    });
+
+    // 2. If subjects exist in curriculum, ensure active subjects are represented
+    subjects.forEach(sub => {
+      if (sub.id !== undefined && sub.id !== null) {
+        const subIdKey = String(sub.id);
+        if (!map.has(subIdKey)) {
+          // Check if there are systems with logs
+          const subSystems = systems.filter(sys => String(sys.subjectId) === subIdKey);
+          const sysIds = new Set(subSystems.map(s => String(s.id)));
+          const matchedLogs = scoreLogs.filter(l => l.systemId && sysIds.has(String(l.systemId)));
+          
+          if (matchedLogs.length > 0) {
+            const totalPct = matchedLogs.reduce((acc, l) => acc + l.percentage, 0);
+            map.set(subIdKey, {
+              id: sub.id,
+              name: sub.name,
+              count: matchedLogs.length,
+              avgScore: Math.round((totalPct / matchedLogs.length) * 10) / 10,
+              totalPct,
+            });
+          }
+        }
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      // Prioritize subjects with more score logs
+      if (b.count !== a.count) return b.count - a.count;
+      return a.name.localeCompare(b.name);
+    });
+  }, [scoreLogs, subjects, systems, subjectMap, systemMap]);
 
   // System Breakdown averages for Bar Chart
   const systemBreakdownData = useMemo(() => {
@@ -120,11 +200,15 @@ export function useAnalyticsLogic() {
   const studyRecommendation = useMemo(() => {
     if (systems.length === 0) return null;
 
-    // Phase 5: The Clinical Intervention (The Apex Alert)
-    // We want strictly actionable, high-priority clinical thresholds based on retention metrics first.
-    
-    // Let's use the DB state to find the most vulnerable system by decay/status
-    const sortedByDecay = sortSystemsByRevisionPriority(systems, curriculumSets);
+    // Filter systems if a specific subject is selected
+    const scopedSystems = selectedSubjectId !== 'all'
+      ? systems.filter(s => String(s.subjectId) === String(selectedSubjectId))
+      : systems;
+
+    if (scopedSystems.length === 0) return null;
+
+    // Use DB state to find the most vulnerable system by decay/status
+    const sortedByDecay = sortSystemsByRevisionPriority(scopedSystems, curriculumSets);
     const topVulnerable = sortedByDecay.length > 0 ? sortedByDecay[0] : null;
 
     if (topVulnerable && (isRevisionDue(topVulnerable, curriculumSets) || topVulnerable.status === 'Weak')) {
@@ -137,19 +221,20 @@ export function useAnalyticsLogic() {
       let titlePrefix = '';
 
       if (topVulnerable.status === 'Weak') {
-          reason = `Critical: ${topVulnerable.name} retention has dropped below safety thresholds.`;
-          badge = 'Critical Vulnerability';
-          badgeColor = 'bg-rose-500/15 text-rose-500 border-rose-500/30';
-          titlePrefix = 'CRITICAL: ';
+        reason = `Retention for ${topVulnerable.name} is below baseline. A targeted drill will restore stability.`;
+        badge = 'Priority Intervention';
+        badgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25';
+        titlePrefix = '';
       } else if (overdue > 0) {
-        reason = `Warning: ${topVulnerable.name} is overdue by ${overdue} day${overdue !== 1 ? 's' : ''}. Memory decay accelerating.`;
-        badge = 'Accelerated Decay';
-        badgeColor = 'bg-amber-500/15 text-amber-500 border-amber-500/30';
-        titlePrefix = 'WARNING: ';
+        reason = `Overdue by ${overdue} day${overdue !== 1 ? 's' : ''}. A 15-minute targeted drill will restore retention to >80%.`;
+        badge = 'Memory Recall Due';
+        badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25';
+        titlePrefix = '';
       } else {
-        reason = `Targeted revision due today to maintain retention state.`;
-        badge = 'Scheduled Maintenance';
-        badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+        reason = `Targeted revision scheduled today to maintain peak retention.`;
+        badge = 'Scheduled Recall';
+        badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25';
+        titlePrefix = '';
       }
 
       return {
@@ -164,7 +249,7 @@ export function useAnalyticsLogic() {
     }
     
     // Fallback: Active multi-day
-    const activeMultiDay = systems.find(s => s.revisionState === 'in_progress');
+    const activeMultiDay = scopedSystems.find(s => s.revisionState === 'in_progress');
     if (activeMultiDay) {
       const subName = subjectMap.get(activeMultiDay.subjectId)?.name ?? 'Subject';
       return {
@@ -179,7 +264,7 @@ export function useAnalyticsLogic() {
     }
 
     return null;
-  }, [systems, curriculumSets, subjectMap]);
+  }, [systems, curriculumSets, subjectMap, selectedSubjectId]);
 
   const handleSetRecommendationAsPrimary = async (system: StudySystem) => {
     try {
@@ -193,7 +278,7 @@ export function useAnalyticsLogic() {
   };
 
   return {
-    scoreLogs, mistakeLogs, subjects, systems, curriculumSets, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
+    scoreLogs, mistakeLogs, subjects, scoredSubjects, systems, curriculumSets, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
     isModalOpen, setIsModalOpen,
     filteredLogs, 
     systemBreakdownData, handleDeleteLog, studyRecommendation,

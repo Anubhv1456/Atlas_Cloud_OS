@@ -70,14 +70,25 @@ export default function SubjectRadarPage() {
             </span>
           </button>
 
-          <Button
-            size="sm"
-            onClick={() => setAddSubjectOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer px-3 h-9"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Subject</span>
-          </Button>
+          {activeTab === 'curriculum' ? (
+            <Button
+              size="sm"
+              onClick={() => setAddSubjectOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer px-3 h-9"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Subject</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-score-log-modal'))}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 cursor-pointer px-3 h-9"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Log Score</span>
+            </Button>
+          )}
         </div>
       </div>
 
