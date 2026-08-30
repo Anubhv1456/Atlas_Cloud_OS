@@ -101,9 +101,9 @@ export default function Home() {
       <div className="min-h-dvh bg-background px-3.5 sm:px-6 lg:px-8 pt-5 sm:pt-8 pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 max-w-6xl mx-auto w-full flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="relative z-10 flex-1 flex flex-col w-full min-w-0">
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 mb-5 sm:mb-8 flex items-center justify-between gap-2.5 sm:gap-4 w-full min-w-0 bg-background/80 backdrop-blur-xl border-b border-border/20 py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <header className="sticky top-0 z-50 mb-5 sm:mb-8 flex items-center justify-between gap-2.5 sm:gap-4 w-full min-w-0 bg-background/50 dark:bg-background/40 backdrop-blur-2xl border-b border-border/20 py-2.5 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-sm">
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
-            <img src="/emblem.svg" alt="Atlas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-[14px] shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
+            <img src="/emblem.svg" alt="Atlas Logo" className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl shadow-sm border border-border/50 object-contain transition-transform hover:scale-105 active:scale-95 shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5 min-w-0">
                 <button
@@ -126,12 +126,11 @@ export default function Home() {
                   </span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-3xl font-bold text-foreground tracking-tight truncate">{greeting}</h1>
+              <h1 className="text-lg sm:text-2xl font-bold text-foreground tracking-tight truncate">{greeting}</h1>
             </div>
           </div>
-
           {/* Action controls - Top Right Corner */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             <AtlasSkyPreview />
           </div>
         </header>
