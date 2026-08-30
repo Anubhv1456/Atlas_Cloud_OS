@@ -80,13 +80,18 @@ export function AIAssistantSection() {
     try {
       const result = await testKey(keyToTest);
       if (result.success) {
-        toast.success(result.message);
+        toast.success('Google AI Studio API key verified');
       } else {
         toast.error(result.message);
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to connect to Google AI Studio.');
     }
+  };
+
+  const handleSelectModel = (modelId: string, modelTitle: string, modelTag: string) => {
+    updateSettings({ preferredModel: modelId as any });
+    toast.success(`Active Engine: ${modelTitle} (${modelTag})`);
   };
 
   const handleToggleEnable = (enabled: boolean) => {
@@ -239,7 +244,12 @@ export function AIAssistantSection() {
 
             {/* Model Architecture */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground px-1">Cognitive Engine Model</label>
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold text-foreground">Cognitive Engine Model</label>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Active: <span className="text-foreground font-semibold">{getModelLabel()}</span>
+                </span>
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: 'gemini-3.1-flash-lite', title: 'Flash Lite', tag: 'Fast' },
@@ -251,14 +261,17 @@ export function AIAssistantSection() {
                     <button
                       key={m.id}
                       type="button"
-                      onClick={() => updateSettings({ preferredModel: m.id as any })}
+                      onClick={() => handleSelectModel(m.id, m.title, m.tag)}
                       className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                         active
-                          ? 'border-primary bg-primary/10 text-foreground'
+                          ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary/40'
                           : 'border-border/60 bg-card hover:bg-muted/30 text-muted-foreground'
                       }`}
                     >
-                      <span className="text-[10px] font-semibold text-primary block">{m.tag}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-primary block">{m.tag}</span>
+                        {active && <Check className="w-3 h-3 text-primary" />}
+                      </div>
                       <span className="text-xs font-bold text-foreground block mt-0.5">{m.title}</span>
                     </button>
                   );

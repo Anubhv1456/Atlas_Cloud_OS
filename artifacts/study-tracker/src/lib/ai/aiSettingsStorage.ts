@@ -250,7 +250,7 @@ export async function validateGeminiKey(
       return {
         success: true,
         status: 'valid',
-        message: `Connected • Free Tier Active (${model})`,
+        message: 'Connected • Free Tier Active',
         model,
       };
     }
