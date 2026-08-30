@@ -23,6 +23,34 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Atlas">
+    <script>
+      (function() {
+        try {
+          var isDark = localStorage.getItem('theme') === 'dark' || !('theme' in localStorage);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+          var savedMode = localStorage.getItem('atlas_theme_mode') || 'atlas';
+          document.documentElement.setAttribute('data-theme', savedMode);
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* Zero-Flicker Native Launch Screen Canvas */
+      html, body {
+        background-color: #F2F2F7;
+        color: #1c1c1e;
+      }
+      html.dark, html.dark body {
+        background-color: #000000;
+        color: #f4f4f5;
+      }
+      #root:empty {
+        background-color: inherit;
+      }
+    </style>
     <link rel="manifest" href="/manifest.json">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">

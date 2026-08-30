@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown, HelpCircle, ShieldAlert } from 'lucide-react';
+import { Search, Compass, Zap, BookOpen, BrainCircuit, Award, Sparkles, Star, ChevronDown, HelpCircle, ShieldAlert, Bot, Layers, Database, Orbit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -9,31 +9,31 @@ const CHAPTERS = [
     id: 'philosophy',
     title: 'The Atlas Philosophy',
     icon: Compass,
-    searchTerms: 'mission sdsr engine algorithm sky progress bar memory',
+    searchTerms: 'mission sdsr engine algorithm sky progress bar memory curriculum tracker offline first',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">The Mission</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas is not a simple checklist; it is your strategic brain, designed to answer one question: <strong>"What should I study next?"</strong>
+            Atlas is not a content player, flashcard deck, or question bank. It is your <strong>Strategic Revision OS</strong>, engineered to answer one critical daily question: <strong>"What should I revise next to prevent memory decay?"</strong>
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">The SDSR Engine</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Our <strong>Spaced Decay Study Routine</strong> calculates memory decay over time. You study on your platform of choice (Primary QBank, Standard Video Course), and Atlas schedules the exact day you should revise it.
+            Our <strong>Spaced Decay Study Routine</strong> mathematically models the Ebbinghaus forgetting curve. You learn on your primary clinical platforms (Marrow, Pre-PG, DAMS, Bhatia, First Aid, Q-banks, or video lectures), and Atlas schedules the exact day and depth to revise.
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Atlas Sky</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas Sky is not a progress bar. It is a visual memory of your medical journey. As subjects strengthen, the sky becomes more connected. The pattern is unique to your order of mastery, making it a personal signature of your preparation rather than a score.
+            Atlas Sky is not a linear progress bar. It is an ambient visualization of your 19-subject medical mastery. As your systems solidify through spaced retention, constellations connect.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Trust the Algorithm</h4>
+          <h4 className="text-base font-bold text-foreground">Guilt-Free Dynamic Triage</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Do not panic if you fall behind. The dynamic queue automatically reorganizes pending reviews without guilt-tripping, ensuring you always focus on what matters most today.
+            Life, rotations, and exam burnout happen. If you miss days, Atlas never guilt-trips you with overdue backlogs. It automatically triggers <strong>Triage Mode</strong>, reprioritizing high-yield topics without penalizing your stats.
           </p>
         </section>
       </div>
@@ -48,66 +48,119 @@ const CHAPTERS = [
       <div className="space-y-8">
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">1</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">1</span> 
             The Next Action Card
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">Always start your day by checking the top recommendation on the Home Screen. It is precisely calculated based on your decay profile.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Start your session with the hero recommendation card on the Home Screen. It combines spaced decay math, exam question weighting, and your confidence history.</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">2</span> 
-            Active Revisions
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">2</span> 
+            Due Revisions First
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">Clear your "Due Revisions" queue before learning new content to lock in memory.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Always clear your due or decaying revisions before starting brand new curriculum systems. This locks in long-term memory consolidation.</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">3</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">3</span> 
             External Study
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">Use your primary content sources (like your core QBank or video lectures) to study the recommended topic.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Review the recommended topic on your chosen resource (textbook, Q-bank explanation, or lecture notes).</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px]">4</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">4</span> 
             Log & Evaluate
           </h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">Mark Content/QBank as complete in Atlas and rate your confidence honestly. This feeds the engine.</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">Tap <strong>"Log Session"</strong> or tick the system checkboxes in Atlas. Rate your confidence honestly (Weak, Average, Strong) to recalibrate the next revision interval.</p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'atlas-sky',
+    title: 'Atlas Sky: Visual Constellation',
+    icon: Orbit,
+    searchTerms: 'atlas sky constellation stars orbital lines decay fog polaris peak share milestone phases',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">The Antidote to Progress Bar Fatigue</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Traditional progress bars induce anxiety and guilt during long medical exam preparation. <strong>Atlas Sky</strong> replaces linear percentages with an ambient, generative constellation that maps your 19-subject retention in real time.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">How Your Sky Evolves</h4>
+          <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+            <p><strong className="text-foreground">✨ Stars & Cores:</strong> Each organ system represents a celestial star. When you complete modules, the stars ignite with subject color.</p>
+            <p><strong className="text-foreground">🌌 Orbital Gravitational Links:</strong> As you complete spaced revisions and maintain high retention over time, orbital lines connect systems across subjects into constellations.</p>
+            <p><strong className="text-foreground">🌫️ Decay Fog:</strong> When a system suffers severe memory decay, its luminosity dims gently, alerting you to touch upon it without shame or panic.</p>
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">The 4 Mastery Phases</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+            <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
+              <strong className="text-primary font-semibold block">Phase I: Foundation</strong>
+              <p className="text-muted-foreground">Igniting initial subject stars across foundational sciences.</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
+              <strong className="text-primary font-semibold block">Phase II: Clinical Consolidation</strong>
+              <p className="text-muted-foreground">Connecting high-yield organ systems and clinical disciplines.</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
+              <strong className="text-primary font-semibold block">Phase III: Revision Orbit</strong>
+              <p className="text-muted-foreground">Maintaining retention stability across all 19 subjects simultaneously.</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
+              <strong className="text-primary font-semibold block">Phase IV: Polaris Peak</strong>
+              <p className="text-muted-foreground">Exam-ready peak retention across the entire curriculum.</p>
+            </div>
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Fullscreen Immersion & Milestone Sharing</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Tap the <strong>Atlas Sky card</strong> on the Home dashboard to enter fullscreen interactive mode. You can pan, zoom, and inspect individual star clusters. Tap <strong>"Share Constellation"</strong> to generate high-resolution, exportable visual storycards celebrating your preparation milestones.
+          </p>
         </section>
       </div>
     )
   },
   {
     id: 'curriculum',
-    title: 'Managing Curriculum',
+    title: 'Curriculum & Radar',
     icon: BookOpen,
-    searchTerms: 'hierarchy subject system topic high-yield star study blocks study blocks progress tracking content units',
+    searchTerms: 'hierarchy subject system topic high-yield star study blocks radar 19 subjects modules',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Hierarchy</h4>
+          <h4 className="text-base font-bold text-foreground">Hierarchy: Subject ➔ System ➔ Topic</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Everything flows from <strong>Subject ➔ System ➔ Topic</strong>. Master the systems, and the subject takes care of itself.
+            Atlas organizes the medical curriculum into <strong>19 Subjects</strong>, broken down into organ systems and high-yield topics.
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            High-Yield Tagging <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+            The 19-Subject Medical Radar
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Tagging a system as High-Yield gives it a massive priority boost in the recommendation engine, ensuring it surfaces more frequently during crucial study phases.
+            Tap the <strong>Curriculum</strong> tab in the navigation bar to open the full macro-level <strong>Subject Radar</strong>. It displays completion rings, revision health, and systems needing attention across all 19 subjects simultaneously.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Study Blocks</h4>
+          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+            High-Yield Star Tagging <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+          </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Group granular topics (e.g., "ECG + Heart Failure") into custom blocks for highly focused revision sessions.
+            Starring a system as <strong>High-Yield</strong> applies a priority multiplier in the recommendation engine, ensuring essential topics surface frequently during exam sprints.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Progress Tracking</h4>
+          <h4 className="text-base font-bold text-foreground">Custom Curriculum Blocks & Study Sets</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas distinguishes between incremental <strong>Content Units</strong> (e.g., 12 videos left) and binary <strong>QBank</strong> completion. Track both for true mastery.
+            Group related topics (e.g., "Valvular Heart Disease + Infective Endocarditis") into custom study blocks with defined study depths (Rapid, Standard, or Deep).
           </p>
         </section>
       </div>
@@ -115,65 +168,133 @@ const CHAPTERS = [
   },
   {
     id: 'retention',
-    title: 'Mastering Retention',
+    title: 'Mastering Retention & Calibration',
     icon: BrainCircuit,
-    searchTerms: 'confidence ratings brutal memory decay calibration speed lengthy topics massive systems',
+    searchTerms: 'confidence ratings memory decay calibration speed rapid standard deep module depth retrievability',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Confidence Ratings</h4>
+          <h4 className="text-base font-bold text-foreground">Honest Confidence Ratings</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Be brutal. Guessing correctly during a QBank means you should rate it as <strong>Weak</strong> to ensure early revision. Don't lie to the algorithm.
+            When logging completion, rate your recall strictly. Guessing correctly on a Q-bank question without solid foundation should be logged as <strong>Weak</strong> to schedule an early review.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Memory Decay Calibration</h4>
+          <h4 className="text-base font-bold text-foreground">Per-System Retention Calibration</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Use the gear icon on systems to tweak your memory decay speed.
+            Expand any system card in a subject to adjust its <strong>Retention Calibration</strong> dropdown:
           </p>
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm space-y-3 mt-3">
+          <div className="bg-muted/40 border border-border/70 rounded-xl p-4 text-sm space-y-3 mt-3">
             <p className="flex items-start gap-2 text-foreground/90">
-              <span className="text-primary font-bold">Pro Tip:</span> 
-              <span>Use <strong>1.5x (Fast Decay)</strong> for volatile topics like Biochemistry.</span>
+              <span className="text-primary font-bold">1.5x / 1.2x (Fast Decay):</span> 
+              <span>Ideal for memory-volatile topics requiring frequent recall (e.g., Inborn Errors of Metabolism, Antimicrobial Spectra).</span>
             </p>
             <p className="flex items-start gap-2 text-foreground/90">
-              <span className="text-primary font-bold">Pro Tip:</span> 
-              <span>Use <strong>0.8x (Slow Decay)</strong> for deeply conceptual topics you retain easily.</span>
+              <span className="text-primary font-bold">0.8x (Slow Decay):</span> 
+              <span>Ideal for deeply conceptual, stable systems you retain effortlessly (e.g., General Pathology, Renal Physiology).</span>
             </p>
           </div>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Lengthy Topics</h4>
+          <h4 className="text-base font-bold text-foreground">Module Study Depth (Rapid / Standard / Deep)</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Use <strong>Mark as Lengthy</strong> in the system dropdown for massive systems (like CNS). This allows revisions to spread across multiple days without breaking your streak.
+            Curriculum sets can be configured with distinct study depths: <strong>Rapid Drill (~15m)</strong>, <strong>Standard (~30m)</strong>, or <strong>Deep Block (~60m)</strong>. The Knapsack recommendation engine automatically factors depth into your daily schedule.
           </p>
         </section>
       </div>
     )
   },
   {
-    id: 'exam',
-    title: 'Exam Strategy',
+    id: 'notebook',
+    title: 'The 20th Notebook & Error Traps',
     icon: Award,
-    searchTerms: 'mistake recovery queue concept retrieval misread fomo markers community wisdom analytics trailing subjects',
+    searchTerms: '20th notebook mistake recovery queue clinical lenses DOC IOC triad criteria imaging histopath contraindicated twin distinction anki export',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Mistake Recovery Queue</h4>
+          <h4 className="text-base font-bold text-foreground">The 20th Notebook Philosophy</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Don't just read GT/QBank explanations. Log wrong answers in the Mistake Log and categorize them strictly (Concept, Retrieval, Misread, FOMO). Review this queue the week before an exam.
+            In Indian medical PG preparation, the legendary "20th Notebook" is where you distill high-yield volatile facts, repetitive traps, and clinical pearls across all 19 subjects. Atlas digitizes this into an actionable, searchable ledger.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Markers (Community Wisdom)</h4>
+          <h4 className="text-base font-bold text-foreground">The 8 Clinical Lenses</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Leave "breadcrumbs" (mnemonics, clinical pearls, traps) on specific topics to instantly recall nuances during your next revision.
+            Every logged mistake or pearl can be categorized with specialized medical lenses for high-yield filtering:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-emerald-500 font-semibold block mb-0.5">💊 DOC</strong>
+              Drug of Choice & First-Line Regimens
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-blue-500 font-semibold block mb-0.5">🔍 IOC</strong>
+              Investigation of Choice & Gold Standards
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-amber-500 font-semibold block mb-0.5">⚠️ Triad</strong>
+              Classic Triads & Pathognomonic Signs
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-purple-500 font-semibold block mb-0.5">📊 Criteria</strong>
+              Diagnostic Criteria & Staging Systems
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-cyan-500 font-semibold block mb-0.5">🩻 Imaging</strong>
+              X-ray, CT, MRI & Ultrasound Findings
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-pink-500 font-semibold block mb-0.5">🔬 Histopath</strong>
+              Biopsy, Microscopy & Special Stains
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-rose-500 font-semibold block mb-0.5">🚫 Contraindicated</strong>
+              Absolute & Relative Clinical Contraindications
+            </div>
+            <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
+              <strong className="text-indigo-500 font-semibold block mb-0.5">🔄 Twin Distinction</strong>
+              High-yield look-alike & sound-alike differentials
+            </div>
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">AI Flashcard Deck Synthesis (.tsv format)</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Turn your mistake logs into high-yield active-recall cards in one tap. Atlas uses clinical AI to synthesize raw question explanations and 20th Notebook pearls into crisp prompt-and-answer flashcard decks, complete with clinical lens tags, ready for export into any external spaced-repetition app.
+          </p>
+        </section>
+      </div>
+    )
+  },
+  {
+    id: 'ai-copilot',
+    title: 'Atlas Clinical AI & Voice Co-Pilot',
+    icon: Bot,
+    searchTerms: 'ai voice copilot dictation gemini byok clinical stem triage parser error traps socratic',
+    content: (
+      <div className="space-y-8">
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">The Ambient Medical Co-Pilot</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Tap the floating emerald AI button on the Home Screen to open the <strong>Atlas Clinical AI Drawer</strong>. It functions as an interactive study partner, clinical stem extractor, and hands-free voice scribe.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Analytics</h4>
+          <h4 className="text-base font-bold text-foreground">1-Tap Clinical Stem / Q-Bank Parser</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Use the performance charts to spot trailing subjects and realign your study time proactively.
+            Tap the <strong>Clipboard</strong> icon inside the AI drawer to paste complex question stems or explanations from your Q-bank. The AI automatically isolates the core diagnostic trap and generates a 1-tap card to log straight into your 20th Notebook.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Voice Dictation & Ambient Triage</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Switch to the <strong>Voice Co-Pilot</strong> tab or hold the microphone button to dictate notes, log mistake pearls verbally during post-test reviews, or query clinical differentials hands-free.
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Privacy & Bring Your Own Key (BYOK)</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Connect your free Google AI Studio API Key in <strong>Settings ➔ Clinical AI & Voice</strong> to unlock Gemini 2.5 Flash / Pro intelligence with direct or Socratic clinical mentorship styles.
           </p>
         </section>
       </div>
@@ -181,27 +302,27 @@ const CHAPTERS = [
   },
   {
     id: 'power',
-    title: 'Power User Secrets',
+    title: 'Power User Features & Vault',
     icon: Sparkles,
-    searchTerms: 'algorithm override pinning target icon focus mode managing interruptions illness exams travel burnout triage mode custom topics',
+    searchTerms: 'algorithm override pinning target icon focus mode exam profile horizon countdown json backup restore data vault',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Algorithm Override (Pinning)</h4>
+          <h4 className="text-base font-bold text-foreground">Exam Profile & Horizon Countdown</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Need to cram for a college internal exam? Use the <strong>Focus Mode</strong> (Target icon) to pin a Subject/System as Primary or Secondary, temporarily overriding the AI recommendations.
+            Set your target exam (NEET PG, INI-CET, FMGE, USMLE Step 1/2, or MBBS Proff) and exam date in <strong>Settings ➔ Target Exam & Horizon</strong>. The dashboard automatically calculates your daily question pace and revision velocity.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Managing Interruptions</h4>
+          <h4 className="text-base font-bold text-foreground">Focus Mode & Manual Pinning</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Illness, college exams, travel, or burnout happen. Atlas will automatically enter <strong>Triage Mode</strong> after several days of inactivity, prioritizing high-yield overdue topics first without punishing your stats.
+            Need to prepare for a department posting or university internal exam? Click the <strong>Focus Mode</strong> (Target icon) to pin any subject or system as Primary or Secondary, temporarily overriding the automated algorithm.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Custom Topics</h4>
+          <h4 className="text-base font-bold text-foreground">Storage & Data Vault (Full JSON Backups)</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Add personalized topics into systems if the default ontology misses something specific to your university syllabus.
+            In <strong>Settings ➔ Storage & Data Vault</strong>, you can export a full offline JSON backup of your entire curriculum progress, 20th notebook pearls, and revision history, or restore it onto any device with one tap.
           </p>
         </section>
       </div>
@@ -211,49 +332,43 @@ const CHAPTERS = [
     id: 'faq',
     title: 'Frequently Asked Questions',
     icon: HelpCircle,
-    searchTerms: 'faq question answer help backup firebase recommendations decay retrievability focus mode triage zoom text size font scaling display shortcuts',
+    searchTerms: 'faq question answer help backup firebase recommendations decay retrievability focus mode triage text size',
     content: (
       <div className="space-y-6">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">How do I adjust text size or UI scaling?</h4>
+          <h4 className="text-base font-bold text-foreground">Does Atlas provide question banks or video lectures?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas fully supports native browser and OS scaling. Press <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ -</kbd> (or <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl -</kbd> on Windows) to adjust UI scale, or pinch-to-zoom on tablets and mobile devices. All medical charts, flashcards, and layouts adapt smoothly.
+            No. Atlas is strictly a <strong>Curriculum Tracking & Spaced Revision OS</strong>. You use your preferred primary content sources (Marrow, Pre-PG, DAMS, Bhatia, First Aid, UWorld, Pathoma), and Atlas schedules your revision timings and mistake ledgers.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">How do recommendations work?</h4>
+          <h4 className="text-base font-bold text-foreground">How do I adjust text size or UI scaling?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas uses an intelligent algorithm based on spaced memory decay, past confidence ratings, PYQ weighting, and exam yield to calculate what system or topic deserves your attention next.
+            Atlas fully supports native browser and OS scaling. Press <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">⌘ -</kbd> (or <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl +</kbd> / <kbd className="font-mono bg-muted/60 px-1 py-0.5 rounded text-xs text-foreground font-semibold">Ctrl -</kbd> on Windows), or pinch-to-zoom on mobile and tablet screens. All curriculum grids, medical charts, and clinical ledgers adapt smoothly.
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Is my study data backed up?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Yes. Your progress, custom study blocks, and mistake recovery logs are saved locally and synced securely to the cloud via Firebase when connected.
+            Yes. Atlas features a <strong>dual-layer architecture</strong>: all data is stored with zero-latency in local IndexedDB and automatically synced to the cloud via Firebase when online. You can also generate complete JSON vault exports in Settings anytime.
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Can I override the recommendation engine?</h4>
+          <h4 className="text-base font-bold text-foreground">What is the "20th Notebook"?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Absolutely. Click the Target icon (Focus Mode) on the home screen or inside any subject to pin a primary or secondary focus area for upcoming college internal exams or targeted study sprints.
+            It is your unified mistake repository and high-yield pearl ledger across all 19 subjects, categorized with 8 clinical lenses (DOC, IOC, Triads, Diagnostic Criteria, Imaging, Histopath, Contraindications, and Twin Distinctions).
+          </p>
+        </section>
+        <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Can I export my mistakes as flashcards using AI?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Yes. In the 20th Notebook, use <strong>AI Flashcard Synthesis</strong> to automatically distill your logged errors and clinical pearls into structured, tag-preserved flashcard decks ready for download and offline spaced-repetition practice.
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">What happens if I miss several days of study?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Atlas automatically triggers <strong>Triage Mode</strong> after prolonged inactivity, reorganizing overdue reviews by yield and urgency without overwhelming you or punishing your stats.
-          </p>
-        </section>
-        <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">How do High-Yield tags work?</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Tagging a system as High-Yield gives it a massive priority multiplier in the recommendation queue, ensuring high-yield exam concepts surface more frequently.
-          </p>
-        </section>
-        <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">How can I renew or maintain beta access?</h4>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            As Atlas transitions to official releases, early cohort members will be seamlessly migrated to full production tiers.
           </p>
         </section>
       </div>
@@ -435,4 +550,5 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
     </Dialog>
   );
 }
+
 

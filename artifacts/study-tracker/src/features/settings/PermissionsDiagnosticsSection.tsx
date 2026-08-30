@@ -10,11 +10,9 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
   Sliders
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { SettingsRow } from './SettingsLayout';
@@ -218,8 +216,7 @@ export function PermissionsDiagnosticsSection() {
     <>
       <SettingsRow
         icon={Sliders}
-        iconBg={isHealthy ? "bg-emerald-500/10" : "bg-primary/10"}
-        iconColor={isHealthy ? "text-emerald-500" : "text-primary"}
+        iconBg="bg-teal-600 dark:bg-teal-500"
         label="Permissions & Audio Diagnostics"
         sublabel={`Microphone (${micState}) • Voice Engine (${speechRecState})`}
         value={isHealthy ? 'Healthy' : 'Diagnose'}

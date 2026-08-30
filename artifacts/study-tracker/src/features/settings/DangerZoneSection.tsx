@@ -24,6 +24,7 @@ export function DangerZoneSection() {
         icon={Trash2}
         label="Delete All Data"
         destructive
+        isLast
         onClick={() => setShowDeleteConfirm(true)}
       />
 
@@ -43,40 +44,41 @@ export function DangerZoneSection() {
           <div className="my-2 p-3 rounded-xl bg-destructive/5 border border-destructive/15 text-xs text-destructive/90 space-y-1.5">
             <div className="font-semibold flex items-center gap-1.5">
               <Trash2 className="w-3.5 h-3.5 shrink-0" />
-              What will be permanently wiped:
+              <span>What will be purged:</span>
             </div>
-            <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-muted-foreground">
-              <li>All curriculum unit progress, completions, and coverage statuses</li>
-              <li>All custom study blocks, topic progress, and revision due dates</li>
-              <li>All exam goals, target dates, and daily study quotas</li>
-              <li>All test scores, 20th Notebook rules, and study activity logs</li>
+            <ul className="list-disc list-inside space-y-0.5 text-muted-foreground pl-1">
+              <li>All 19 NEET PG subjects & curriculum units</li>
+              <li>Revision schedules, decay intervals & history</li>
+              <li>Clinical score logs & diagnostic metrics</li>
+              <li>20th Notebook high-yield pearls</li>
+              <li>Voice transcripts and local cached audio</li>
             </ul>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
             <Button
               variant="outline"
-              className="flex-1 rounded-xl"
-              disabled={isDeleting}
               onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+              className="w-full sm:w-auto text-xs"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              className="flex-1 rounded-xl font-semibold shadow-sm gap-1.5"
-              disabled={isDeleting}
               onClick={handleDeleteAll}
+              disabled={isDeleting}
+              className="w-full sm:w-auto text-xs font-semibold gap-1.5"
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Purging Vault...
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
-                  Delete Everything
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Yes, Delete Everything
                 </>
               )}
             </Button>
@@ -84,82 +86,42 @@ export function DangerZoneSection() {
         </DialogContent>
       </Dialog>
 
-      {/* Reset Completion Message Card Dialog */}
+      {/* Completion Dialog */}
       <Dialog open={showCompletionCard} onOpenChange={setShowCompletionCard}>
-        <DialogContent className="sm:max-w-[480px] rounded-3xl mx-4 w-[calc(100%-2rem)] border-teal-500/30 bg-background/95 backdrop-blur-2xl shadow-2xl p-6 sm:p-7">
-          <DialogHeader className="space-y-3 text-center">
-            <div className="mx-auto w-14 h-14 bg-teal-500/10 text-teal-400 border border-teal-500/25 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/5">
-              <CheckCircle2 className="w-7 h-7" />
+        <DialogContent className="sm:max-w-[460px] rounded-2xl mx-4 w-[calc(100%-2rem)] border-emerald-500/20 bg-background/95 backdrop-blur-xl">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-3">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                <Sparkles className="w-3 h-3" /> Clean Starting State
-              </div>
-              <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                Workspace Reset Complete
-              </DialogTitle>
-            </div>
-            <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
-              {resetResult?.message || 'All study data, spaced repetition schedules, operational modes, and smoothing quotas have been completely wiped. Your workspace is now in a pristine, empty starting state.'}
+            <DialogTitle className="text-center text-xl font-bold tracking-tight">Database Reset Complete</DialogTitle>
+            <DialogDescription className="text-center text-xs sm:text-sm text-muted-foreground pt-1.5 leading-relaxed">
+              Atlas has been completely restored to its pristine factory state.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Structured Confirmation Card Matrix */}
-          <div className="space-y-2 my-4">
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-muted/40 border border-border/40 text-left">
-              <div className="w-7 h-7 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
-                <Layers className="w-3.5 h-3.5" />
+          {resetResult && (
+            <div className="my-2 p-3 rounded-xl bg-card border border-border/60 text-xs space-y-2">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5" /> Subjects Seeded</span>
+                <span className="font-semibold text-foreground">{resetResult.seededSubjects} standard subjects</span>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Curriculum Baseline Initialized</div>
-                <div className="text-[11px] text-muted-foreground leading-normal">
-                  All 19 MBBS subjects & organ systems restored to a clean 0% unstudied state.
-                </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> Storage Cleared</span>
+                <span className="font-semibold text-emerald-500">100% purged</span>
               </div>
             </div>
+          )}
 
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-muted/40 border border-border/40 text-left">
-              <div className="w-7 h-7 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
-                <RefreshCcw className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Smoothing Quota & Modes Cleared</div>
-                <div className="text-[11px] text-muted-foreground leading-normal">
-                  All backlog smoothing quotas, holiday freezes, and tactical sprints reset to Standard.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 rounded-2xl bg-muted/40 border border-border/40 text-left">
-              <div className="w-7 h-7 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
-                <HardDrive className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-foreground">Schedules & Local Caches Flushed</div>
-                <div className="text-[11px] text-muted-foreground leading-normal">
-                  All SDSR intervals, test logs, mistake queues, telemetry, and offline leases purged.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2 mt-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
             <Button
-              variant="outline"
-              className="flex-1 rounded-xl h-10 text-xs sm:text-sm font-medium"
-              onClick={() => setShowCompletionCard(false)}
-            >
-              Stay in Settings
-            </Button>
-            <Button
-              className="flex-1 rounded-xl h-10 text-xs sm:text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white shadow-md shadow-teal-900/20 gap-1.5"
               onClick={() => {
                 setShowCompletionCard(false);
                 setLocation('/');
               }}
+              className="w-full text-xs font-semibold gap-1.5 bg-primary"
             >
-              Go to Dashboard
-              <ArrowRight className="w-4 h-4" />
+              Return to Dashboard
+              <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -167,4 +129,3 @@ export function DangerZoneSection() {
     </>
   );
 }
-

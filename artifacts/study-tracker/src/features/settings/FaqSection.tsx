@@ -22,8 +22,7 @@ export function FaqSection() {
     <>
       <SettingsRow
         icon={BookOpen}
-        iconBg="bg-blue-500/10"
-        iconColor="text-blue-500"
+        iconBg="bg-blue-500"
         label="User Manual and FAQs"
         chevron
         onClick={() => setModalOpen(true)}

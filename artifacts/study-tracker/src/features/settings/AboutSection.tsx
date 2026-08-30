@@ -11,8 +11,7 @@ export function AboutSection() {
     <>
       <SettingsRow
         icon={AlertTriangle}
-        iconBg="bg-amber-500/10"
-        iconColor="text-amber-500"
+        iconBg="bg-amber-500"
         label="Medical & Educational Disclaimer"
         value="View Terms"
         chevron
@@ -20,18 +19,17 @@ export function AboutSection() {
       />
       <SettingsRow
         icon={ShieldCheck}
-        iconBg="bg-emerald-500/10"
-        iconColor="text-emerald-500"
+        iconBg="bg-emerald-600 dark:bg-emerald-500"
         label="Privacy Policy"
-        control={<ExternalLink className="w-4 h-4 text-muted-foreground/60" />}
+        control={<ExternalLink className="w-4 h-4 text-muted-foreground/50" />}
         onClick={() => window.open('/privacy', '_blank')}
       />
       <SettingsRow
         icon={FileText}
-        iconBg="bg-blue-500/10"
-        iconColor="text-blue-500"
+        iconBg="bg-blue-600 dark:bg-blue-500"
         label="Terms of Service"
-        control={<ExternalLink className="w-4 h-4 text-muted-foreground/60" />}
+        isLast
+        control={<ExternalLink className="w-4 h-4 text-muted-foreground/50" />}
         onClick={() => window.open('/terms', '_blank')}
       />
 

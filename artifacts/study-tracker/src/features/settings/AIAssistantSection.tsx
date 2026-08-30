@@ -10,7 +10,6 @@ import {
   RefreshCw, 
   ClipboardPaste,
   SlidersHorizontal,
-  ChevronRight,
   Check
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -112,8 +111,7 @@ export function AIAssistantSection() {
     <>
       <SettingsRow
         icon={Sparkles}
-        iconBg={settings.isAiEnabled ? "bg-purple-500/10" : "bg-muted"}
-        iconColor={settings.isAiEnabled ? "text-purple-500" : "text-muted-foreground"}
+        iconBg={settings.isAiEnabled ? "bg-purple-600 dark:bg-purple-500" : "bg-zinc-400 dark:bg-zinc-600"}
         label="Clinical AI & Voice"
         sublabel="Voice triage, mistake drills & case analysis"
         control={
@@ -128,8 +126,7 @@ export function AIAssistantSection() {
         <>
           <SettingsRow
             icon={Key}
-            iconBg={isConnected ? "bg-emerald-500/10" : "bg-amber-500/10"}
-            iconColor={isConnected ? "text-emerald-500" : "text-amber-500"}
+            iconBg={isConnected ? "bg-emerald-500" : "bg-amber-500"}
             label="Google AI Studio Key"
             sublabel={isConnected ? 'Connected & Verified' : 'Free BYOK required'}
             value={isConnected ? 'Active' : 'Configure'}
@@ -139,8 +136,7 @@ export function AIAssistantSection() {
 
           <SettingsRow
             icon={SlidersHorizontal}
-            iconBg="bg-primary/10"
-            iconColor="text-primary"
+            iconBg="bg-indigo-500"
             label="Model & Mentorship"
             sublabel={`${getModelLabel()} • ${settings.mentorshipStyle === 'direct' ? 'Direct' : 'Socratic'}`}
             chevron

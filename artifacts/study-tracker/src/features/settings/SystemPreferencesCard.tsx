@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Bell, Palette, Sparkles, Check } from 'lucide-react';
+import { Moon, Sun, Bell, Palette, Check } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/hooks/useTheme';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -27,8 +27,7 @@ export function SystemPreferencesCard() {
     <>
       <SettingsRow
         icon={isDark ? Moon : Sun}
-        iconBg={isDark ? "bg-amber-500/10" : "bg-sky-500/10"}
-        iconColor={isDark ? "text-amber-500" : "text-sky-500"}
+        iconBg={isDark ? "bg-amber-500" : "bg-sky-500"}
         label="Appearance"
         sublabel={isDark ? 'Dark Mode (OLED pitch)' : 'Light Mode (Porcelain)'}
         control={
@@ -41,8 +40,7 @@ export function SystemPreferencesCard() {
 
       <SettingsRow
         icon={Palette}
-        iconBg="bg-primary/10"
-        iconColor="text-primary"
+        iconBg="bg-purple-500"
         label="Cognitive Tint"
         sublabel="Environmental workspace accent"
         value={activeTintLabel}
@@ -52,8 +50,7 @@ export function SystemPreferencesCard() {
 
       <SettingsRow
         icon={Bell}
-        iconBg={isAlertsActive ? "bg-emerald-500/10" : "bg-muted"}
-        iconColor={isAlertsActive ? "text-emerald-500" : "text-muted-foreground"}
+        iconBg="bg-rose-500"
         label="Revision Reminders"
         sublabel={
           permissionStatus === 'denied'
@@ -89,7 +86,7 @@ export function SystemPreferencesCard() {
         <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <Palette className="w-4.5 h-4.5 text-primary" />
+              <Palette className="w-4.5 h-4.5 text-purple-500" />
               Cognitive Focus Tint
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">

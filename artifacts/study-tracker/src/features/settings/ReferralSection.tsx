@@ -11,12 +11,11 @@ export function ReferralSection() {
     <>
       <SettingsRow
         icon={Users}
-        iconBg="bg-indigo-500/10"
-        iconColor="text-indigo-500"
+        iconBg="bg-indigo-500"
         label={
           <div className="flex items-center gap-2">
             <span>Batchmate Passes</span>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-teal-500/30 text-teal-400 font-normal">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-teal-500/30 text-teal-600 dark:text-teal-400 font-normal">
               +14d Bonus
             </Badge>
           </div>

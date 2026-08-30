@@ -6,9 +6,7 @@ import {
   FileSpreadsheet, 
   RefreshCw, 
   CopyPlus, 
-  Merge,
-  AlertCircle,
-  HardDrive
+  Merge
 } from 'lucide-react';
 import { db } from '@/db/schema';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -170,8 +168,7 @@ export function DataVaultSection() {
 
       <SettingsRow
         icon={Database}
-        iconBg="bg-teal-500/10"
-        iconColor="text-teal-500"
+        iconBg="bg-teal-600 dark:bg-teal-500"
         label="Storage & Data Vault"
         sublabel={`${subjectCount} Subjects • ${setsCount} Blocks • ${scoreCount} Scores`}
         value="Synchronized"

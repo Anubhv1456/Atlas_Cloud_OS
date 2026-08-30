@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { OperationalModeSelector } from '@/features/dashboard/OperationalModeSelector';
-import { Target, Calendar, Award } from 'lucide-react';
+import { Target, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { SettingsRow } from './SettingsLayout';
 
@@ -22,8 +22,7 @@ export function ExamProfileSection() {
     <>
       <SettingsRow
         icon={Target}
-        iconBg="bg-teal-500/10"
-        iconColor="text-teal-500"
+        iconBg="bg-teal-600 dark:bg-teal-500"
         label="Target Exam & Horizon"
         sublabel={`${profile.currentYear || 'Medical Degree'} • ${profile.dailyQuestionGoal || 40} Qs/day`}
         value={isConfigured ? profile.targetExam : 'Configure'}
@@ -33,8 +32,7 @@ export function ExamProfileSection() {
 
       <SettingsRow
         icon={Calendar}
-        iconBg="bg-blue-500/10"
-        iconColor="text-blue-500"
+        iconBg="bg-blue-500"
         label="Examination Date"
         value={formattedDate}
         chevron
@@ -42,9 +40,9 @@ export function ExamProfileSection() {
       />
 
       {/* Operational Mode Segmented Control Row */}
-      <div className="p-3.5 bg-card/60 space-y-2.5">
+      <div className="p-3.5 bg-card space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
-          <span className="text-[12px] font-semibold text-foreground">
+          <span className="text-[13px] font-medium text-foreground">
             Operational Mode & Pacing
           </span>
           <span className="text-[11px] text-muted-foreground">

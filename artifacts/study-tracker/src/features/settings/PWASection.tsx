@@ -36,8 +36,7 @@ export function PWASection() {
   return (
     <SettingsRow
       icon={Download}
-      iconBg="bg-primary/10"
-      iconColor="text-primary"
+      iconBg="bg-blue-600 dark:bg-blue-500"
       label="Install App"
       chevron
       onClick={handlePwaInstallClick}

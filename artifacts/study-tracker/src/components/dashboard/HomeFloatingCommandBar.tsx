@@ -202,20 +202,21 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
             {/* Quick Action FAB Trigger */}
             <motion.button
               type="button"
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
               onClick={() => onOpenChat?.('text')}
               className={cn(
                 "w-12 h-12 sm:w-13 sm:h-13 rounded-full flex items-center justify-center relative cursor-pointer select-none",
-                "bg-zinc-900 text-zinc-100 border border-zinc-700/80 shadow-xl shadow-black/40",
-                "dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-300 dark:shadow-black/60",
-                "group focus:outline-none focus:ring-2 focus:ring-primary/60"
+                "bg-primary text-primary-foreground shadow-lg shadow-primary/30 border border-primary-border/80",
+                "hover:shadow-xl hover:shadow-primary/40 hover:brightness-105",
+                "active:scale-95 transition-all duration-200",
+                "group focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background"
               )}
-              title="Open Atlas AI Co-Pilot"
+              title="Open Atlas Clinical AI Co-Pilot"
             >
               {/* Subtle ambient pulse ring */}
-              <span className="absolute -inset-1 rounded-full bg-primary/20 animate-pulse pointer-events-none" />
-              <Sparkles className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform duration-200" />
+              <span className="absolute -inset-1 rounded-full bg-primary/25 animate-ping opacity-75 pointer-events-none duration-1000" />
+              <Sparkles className="w-5 h-5 text-primary-foreground group-hover:rotate-12 transition-transform duration-200 relative z-10" />
             </motion.button>
           </motion.div>
         </div>

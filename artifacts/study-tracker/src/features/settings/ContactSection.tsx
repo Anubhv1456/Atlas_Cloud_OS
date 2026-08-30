@@ -9,8 +9,7 @@ export function ContactSection() {
   return (
     <SettingsRow
       icon={Mail}
-      iconBg="bg-sky-500/10"
-      iconColor="text-sky-500"
+      iconBg="bg-blue-600 dark:bg-blue-500"
       label="Contact & Support Desk"
       chevron
       onClick={() => setLocation('/contact')}

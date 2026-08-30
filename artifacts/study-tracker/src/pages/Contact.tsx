@@ -233,7 +233,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <span className="font-semibold text-foreground block mb-0.5">How is my study data protected?</span>
-                  All study progress is stored locally on your device in IndexedDB. Local data exports (JSON) can be generated at any time in Settings.
+                  Atlas utilizes a dual-layer architecture: all progress is saved with zero-latency locally in IndexedDB and automatically synced to the cloud via Firebase when connected. Complete JSON vault backups can also be generated in Settings anytime.
                 </div>
               </div>
             </div>

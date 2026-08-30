@@ -546,11 +546,11 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className={cn(
             "relative w-full sm:w-[420px] h-[100dvh] sm:h-full flex flex-col rounded-none sm:rounded-3xl border-0 sm:border shadow-2xl overflow-hidden pointer-events-auto",
-            "bg-zinc-900/70 border-white/10 backdrop-blur-3xl"
+            "bg-card/95 dark:bg-zinc-950/95 border-border/80 dark:border-white/10 backdrop-blur-3xl"
           )}
         >
           {/* Header Bar with Live Exam Context Badge & Segmented Control */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-white/10 bg-black/20">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-border/60 dark:border-white/10 bg-muted/40 dark:bg-black/30 backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-primary/20">
@@ -568,21 +568,21 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
             </div>
 
             {/* Apple-Standard Segmented Control Tab Switcher */}
-            <div className="flex items-center p-1 rounded-xl bg-muted/60 border border-border/40 relative shadow-inner">
+            <div className="flex items-center p-1 rounded-xl bg-muted/80 dark:bg-muted/40 border border-border/60 dark:border-border/40 relative shadow-inner">
               <button
                 type="button"
                 onClick={() => setActiveTab('text')}
                 className={cn(
                   "relative px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 z-10 flex items-center gap-1.5 cursor-pointer select-none",
                   activeTab === 'text'
-                    ? "text-foreground shadow-xs"
+                    ? "text-primary dark:text-foreground font-bold shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {activeTab === 'text' && (
                   <motion.div
                     layoutId="segmented-tab-active"
-                    className="absolute inset-0 bg-background rounded-lg shadow-xs"
+                    className="absolute inset-0 bg-card rounded-lg shadow-xs border border-border/40 dark:border-border/20"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -598,19 +598,19 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 className={cn(
                   "relative px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 z-10 flex items-center gap-1.5 cursor-pointer select-none",
                   activeTab === 'voice'
-                    ? "text-foreground shadow-xs"
+                    ? "text-primary dark:text-foreground font-bold shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {activeTab === 'voice' && (
                   <motion.div
                     layoutId="segmented-tab-active"
-                    className="absolute inset-0 bg-background rounded-lg shadow-xs"
+                    className="absolute inset-0 bg-card rounded-lg shadow-xs border border-border/40 dark:border-border/20"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  <Radio className={cn("w-3.5 h-3.5", ambientSession.isListening ? "text-rose-500 animate-pulse" : "text-indigo-400")} />
+                  <Radio className={cn("w-3.5 h-3.5", ambientSession.isListening ? "text-rose-500 animate-pulse" : "text-primary")} />
                   Voice Co-Pilot
                 </span>
               </button>
@@ -1012,14 +1012,14 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           )}
 
           {/* Unified Multi-Modal Input Bar */}
-          <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-white/10 bg-black/20 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-black/40 border border-white/10 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+          <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-border/60 dark:border-white/10 bg-muted/30 dark:bg-black/30 backdrop-blur-xl shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-card dark:bg-black/50 border border-border/70 dark:border-white/10 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
               {/* 1-Tap Paste Clinical Stem Button */}
               <button
                 type="button"
                 onClick={handlePasteClinicalStem}
                 title="1-Tap Paste Clinical Stem / Q-Bank Explanation from Clipboard"
-                className="p-2.5 sm:p-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-card transition-colors shrink-0 cursor-pointer"
+                className="p-2.5 sm:p-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/80 dark:hover:bg-card transition-colors shrink-0 cursor-pointer"
               >
                 <Clipboard className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
@@ -1055,7 +1055,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   "p-2.5 sm:p-3 rounded-xl transition-all shrink-0 cursor-pointer select-none active:scale-95",
                   isListening
                     ? "bg-rose-500 text-white shadow-md animate-pulse"
-                    : "text-muted-foreground hover:text-foreground hover:bg-card"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80 dark:hover:bg-card"
                 )}
                 title={isListening ? "Release or tap to stop recording" : "Hold or tap to speak"}
               >
@@ -1075,7 +1075,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   "p-2.5 sm:p-3 rounded-xl transition-all shrink-0 cursor-pointer",
                   inputVal.trim() && !isLoading
                     ? "bg-primary text-primary-foreground shadow-sm hover:opacity-90 active:scale-95"
-                    : "bg-card text-muted-foreground/50 opacity-60 cursor-not-allowed border border-border/40"
+                    : "bg-muted text-muted-foreground/50 opacity-60 cursor-not-allowed border border-border/40"
                 )}
               >
                 <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />

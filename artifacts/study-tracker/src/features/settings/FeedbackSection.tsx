@@ -29,8 +29,7 @@ export function FeedbackSection() {
     <>
       <SettingsRow
         icon={MessageSquare}
-        iconBg="bg-teal-500/10"
-        iconColor="text-teal-500"
+        iconBg="bg-teal-600 dark:bg-teal-500"
         label="Send Feedback"
         chevron
         onClick={() => setModalOpen(true)}
