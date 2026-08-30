@@ -1,10 +1,28 @@
 import { Link, useLocation } from 'wouter';
-import { Home, Calendar, LayoutGrid, Settings, Sparkles, Target, ShieldCheck, User, HardDrive } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  Home,
+  Calendar,
+  LayoutGrid,
+  Settings,
+  Sparkles,
+  Target,
+  ShieldCheck,
+  User,
+  HardDrive,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { useSidebar } from '@/hooks/useSidebar';
 import { TargetExamModal } from '@/components/TargetExamModal';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useState, useEffect, useCallback } from 'react';
 
 export interface BottomNavProps {
@@ -15,6 +33,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
   const [location, setLocation] = useLocation();
   const { profile, isConfigured } = useExamProfile();
   const { user } = useAuth();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -115,7 +134,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
         try {
           navigator.vibrate(8);
         } catch {
-          // Ignore if vibration unsupported or restricted
+          // Ignore if vibration unsupported
         }
       }
     }
@@ -125,29 +144,143 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
     <>
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
 
-      {/* ── DESKTOP SIDEBAR (Visible on md+ screens) ────────────────────────── */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 lg:w-72 z-40 bg-card/80 backdrop-blur-2xl border-r border-border/60 flex-col justify-between p-4 shadow-sm select-none">
-        <div className="space-y-6">
-          {/* Brand Header */}
-          <Link href="/" className="flex items-center gap-3 px-2 py-1.5 group cursor-pointer">
-            <div className="relative">
-              <img src="/emblem.svg" alt="Atlas Logo" className="w-10 h-10 rounded-xl shadow-sm border border-border/60 object-contain transition-transform group-hover:scale-105" />
-              <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-card" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-base tracking-tight text-foreground group-hover:text-primary transition-colors">ATLAS</span>
-                <span className="text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">OS</span>
+      {/* ── DESKTOP & TABLET ADAPTIVE SIDEBAR / ICON RAIL (md+ screens) ─────── */}
+      <aside
+        className={cn(
+          "hidden md:flex fixed left-0 top-0 bottom-0 z-40 bg-card/85 dark:bg-card/90 backdrop-blur-2xl border-r border-border/60 flex-col justify-between shadow-sm select-none transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          isCollapsed ? "w-[72px] p-2.5 items-center" : "w-64 lg:w-72 p-4 items-stretch"
+        )}
+      >
+        <div className={cn("space-y-5 flex flex-col", isCollapsed ? "items-center w-full" : "w-full")}>
+          {/* Header Bar */}
+          <div className={cn("flex items-center", isCollapsed ? "justify-center w-full pt-1" : "justify-between px-1.5 py-1")}>
+            <Link
+              href="/"
+              className={cn(
+                "flex items-center gap-3 group cursor-pointer",
+                isCollapsed && "justify-center"
+              )}
+            >
+              <div className="relative">
+                <img
+                  src="/emblem.svg"
+                  alt="Atlas Logo"
+                  className={cn(
+                    "rounded-xl shadow-sm border border-border/60 object-contain transition-transform group-hover:scale-105",
+                    isCollapsed ? "w-9 h-9" : "w-10 h-10"
+                  )}
+                />
+                <span className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-card" />
               </div>
-              <p className="text-[11px] text-muted-foreground font-medium">Medical Study OS</p>
-            </div>
-          </Link>
+
+              <AnimatePresence initial={false}>
+                {!isCollapsed && (
+                  <motion.div
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="overflow-hidden whitespace-nowrap"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-base tracking-tight text-foreground group-hover:text-primary transition-colors">
+                        ATLAS
+                      </span>
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
+                        OS
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground font-medium">Medical Study OS</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Link>
+
+            {/* Apple-style Expand / Collapse Toggle Button */}
+            {!isCollapsed && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                    aria-label="Collapse sidebar"
+                  >
+                    <PanelLeftClose className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={12}>
+                  <p className="font-medium text-xs">Retract to Symbols <span className="text-muted-foreground font-mono ml-1">⌘\</span></p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {/* Toggle button when collapsed */}
+          {isCollapsed && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  className="w-10 h-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                  aria-label="Expand sidebar"
+                >
+                  <PanelLeftOpen className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12}>
+                <p className="font-medium text-xs">Expand Sidebar <span className="text-muted-foreground font-mono ml-1">⌘\</span></p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Navigation Links */}
-          <nav className="space-y-1">
-            <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">Navigation</div>
+          <nav className={cn("space-y-1.5 w-full flex flex-col", isCollapsed && "items-center")}>
+            {!isCollapsed && (
+              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                Navigation
+              </div>
+            )}
+
             {links.map(({ href, icon: Icon, label, shortcut }) => {
               const active = isPathActive(href);
+
+              if (isCollapsed) {
+                return (
+                  <Tooltip key={href}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={href}
+                        onClick={(e) => handleTabClick(href, e)}
+                        className={cn(
+                          "relative w-11 h-11 rounded-xl flex items-center justify-center transition-all group cursor-pointer select-none touch-manipulation active:scale-95",
+                          active
+                            ? "text-primary bg-primary/15 border border-primary/30 shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        )}
+                        aria-label={label}
+                      >
+                        <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                        {active && (
+                          <span className="absolute right-1 top-1 w-1.5 h-1.5 rounded-full bg-primary" />
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={14}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-xs">{label}</span>
+                        {shortcut && (
+                          <span className="font-mono text-[10px] bg-background/20 px-1 rounded text-primary-foreground/90">
+                            ⌘{shortcut}
+                          </span>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
               return (
                 <Link
                   key={href}
@@ -165,10 +298,14 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                     <span>{label}</span>
                   </div>
                   {shortcut && (
-                    <span className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors z-10",
-                      active ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground/60 group-hover:text-muted-foreground"
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors z-10",
+                        active
+                          ? "bg-primary/20 text-primary font-bold"
+                          : "text-muted-foreground/60 group-hover:text-muted-foreground"
+                      )}
+                    >
                       ⌘{shortcut}
                     </span>
                   )}
@@ -179,46 +316,80 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
         </div>
 
         {/* Footer / Exam Target & Profile */}
-        <div className="space-y-3 pt-4 border-t border-border/50">
+        <div className={cn("space-y-3 pt-4 border-t border-border/50 flex flex-col", isCollapsed ? "items-center w-full" : "w-full")}>
           {/* Target Exam Badge */}
-          <button
-            onClick={() => setExamModalOpen(true)}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-card hover:bg-muted/40 border border-border/80 transition-all text-left group"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
-                <Target className="w-4 h-4" />
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setExamModalOpen(true)}
+                  className="w-11 h-11 rounded-xl bg-card hover:bg-muted/50 border border-border/80 flex items-center justify-center text-primary group active:scale-95 transition-all cursor-pointer"
+                  aria-label="Target Exam"
+                >
+                  <Target className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={14}>
+                <p className="font-semibold text-xs">Target Exam: {isConfigured ? profile.targetExam : 'Set Target'}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setExamModalOpen(true)}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-card hover:bg-muted/40 border border-border/80 transition-all text-left group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Target Exam</p>
+                  <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                    {isConfigured ? profile.targetExam : 'Set Target Exam'}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Target Exam</p>
-                <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                  {isConfigured ? profile.targetExam : 'Set Target Exam'}
-                </p>
-              </div>
-            </div>
-            <Sparkles className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
-          </button>
+              <Sparkles className="w-3.5 h-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
+            </button>
+          )}
 
           {/* User Profile Mini Footer */}
-          <div className="flex items-center justify-between px-2 py-1 text-[11px] text-muted-foreground">
-            <div className="flex items-center gap-2 truncate">
-              <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[10px] shrink-0">
-                {user?.email ? user.email[0].toUpperCase() : <User className="w-3 h-3" />}
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs relative cursor-default border border-primary/20">
+                  {user?.email ? user.email[0].toUpperCase() : <User className="w-4 h-4" />}
+                  <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card", isOnline ? "bg-emerald-500" : "bg-teal-400")} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={14}>
+                <p className="font-semibold text-xs">{user?.email || 'Medical Scholar'}</p>
+                <p className="text-[10px] text-muted-foreground">{isOnline ? 'Cloud Synced' : 'On-Device Storage'}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="flex items-center justify-between px-2 py-1 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-2 truncate">
+                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[10px] shrink-0">
+                  {user?.email ? user.email[0].toUpperCase() : <User className="w-3 h-3" />}
+                </div>
+                <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
               </div>
-              <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
+              {isOnline ? (
+                <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Synced</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
+                  <HardDrive className="w-3 h-3" />
+                  <span>On Device</span>
+                </div>
+              )}
             </div>
-            {isOnline ? (
-              <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                <ShieldCheck className="w-3 h-3" />
-                <span>Synced</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
-                <HardDrive className="w-3 h-3" />
-                <span>On Device</span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </aside>
 
@@ -280,7 +451,3 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
     </>
   );
 }
-
-
-
-

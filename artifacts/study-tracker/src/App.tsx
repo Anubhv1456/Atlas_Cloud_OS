@@ -7,6 +7,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { BottomNav } from '@/components/BottomNav';
+import { useSidebar } from '@/hooks/useSidebar';
+import { cn } from '@/lib/utils';
 import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
@@ -69,6 +71,7 @@ initTheme();
 function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
   const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
+  const { isCollapsed } = useSidebar();
   const [location, setLocation] = useLocation();
 
   // Intercept incoming ?ref=... parameter and save to session
@@ -176,7 +179,12 @@ function ProtectedApp() {
       <AutoSyncEngine />
       <DynamicIslandCapsule />
       <BottomNav />
-      <div className="flex-1 w-full relative z-10 md:pl-64 lg:pl-72 transition-all duration-300 flex flex-col min-h-dvh">
+      <div
+        className={cn(
+          "flex-1 w-full relative z-10 transition-[padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col min-h-dvh",
+          isCollapsed ? "md:pl-[72px]" : "md:pl-64 lg:pl-72"
+        )}
+      >
         <AudioPermissionBanner />
         <OfflineLeaseBanner />
         <motion.main
