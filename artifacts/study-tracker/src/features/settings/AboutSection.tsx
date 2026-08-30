@@ -1,14 +1,32 @@
 import { useState } from 'react';
-import { ShieldCheck, FileText, ExternalLink, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, FileText, ExternalLink, AlertTriangle, ShieldAlert, RefreshCw, Sparkles } from 'lucide-react';
 import { SettingsRow } from './SettingsLayout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
 
 export function AboutSection() {
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
+  const { currentVersion, hasUpdate, isChecking, checkForUpdatesManually } = useAppUpdate();
 
   return (
     <>
+      <SettingsRow
+        icon={RefreshCw}
+        iconBg="bg-primary/10 text-primary"
+        label="Software Update"
+        value={
+          hasUpdate ? (
+            <span className="inline-flex items-center gap-1 text-primary font-semibold text-xs">
+              <Sparkles className="w-3 h-3" /> Update Ready
+            </span>
+          ) : (
+            `v${currentVersion}`
+          )
+        }
+        chevron
+        onClick={checkForUpdatesManually}
+      />
       <SettingsRow
         icon={AlertTriangle}
         iconBg="bg-amber-500"

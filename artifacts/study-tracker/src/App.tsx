@@ -208,6 +208,7 @@ function ProtectedApp() {
 }
 
 import { GlobalQuickEntry } from '@/components/ui/GlobalQuickEntry';
+import { AppUpdateCapsule } from '@/components/AppUpdateCapsule';
 
 function App() {
   useEffect(() => {
@@ -292,6 +293,7 @@ function App() {
             </WouterRouter>
           </ErrorBoundary>
           <GlobalQuickEntry />
+          <AppUpdateCapsule />
           <Toaster />
           <SonnerToaster position="top-center" richColors />
         </TooltipProvider>

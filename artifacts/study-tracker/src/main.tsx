@@ -4,6 +4,14 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './index.css';
+import {
+  initializeChunkLoadRecovery,
+  setServiceWorkerUpdater,
+  notifyUpdateAvailable,
+} from '@/lib/appUpdateManager';
+
+// Initialize zero-crash chunk load recovery and background update sync
+initializeChunkLoadRecovery();
 
 // Suppress ResizeObserver loop limit exceeded error & benign Vite WebSocket rejections
 window.addEventListener('unhandledrejection', (event) => {
@@ -22,18 +30,48 @@ window.addEventListener('error', (e) => {
   }
 });
 
-// Register PWA service worker with auto-update
+// Register PWA service worker with update lifecycle tracking
 if ('serviceWorker' in navigator) {
   try {
-    registerSW({
+    const updateSW = registerSW({
       immediate: true,
-      onRegisteredSW(swScriptUrl: string) {
+      onNeedRefresh() {
+        console.info('[PWA] New version ready in background. Surfacing update prompt.');
+        notifyUpdateAvailable();
+      },
+      onOfflineReady() {
+        console.info('[PWA] App is cached and ready for offline operation.');
+      },
+      onRegisteredSW(swScriptUrl: string, registration: ServiceWorkerRegistration | undefined) {
         console.log('[PWA] Service worker registered at:', swScriptUrl);
+        if (registration) {
+          // If a new worker is waiting and not yet applied
+          if (registration.waiting && navigator.serviceWorker.controller) {
+            setServiceWorkerUpdater(updateSW, registration.waiting);
+            // Trigger check to ensure it's not a redundant notification
+            checkForAppUpdate().catch(() => {});
+          }
+
+          // Monitor if a new worker finishes installing and moves to waiting state
+          registration.addEventListener('updatefound', () => {
+            const installing = registration.installing;
+            if (installing) {
+              installing.addEventListener('statechange', () => {
+                if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                  setServiceWorkerUpdater(updateSW, installing);
+                  notifyUpdateAvailable();
+                }
+              });
+            }
+          });
+        }
       },
       onRegisterError(error: any) {
         console.warn('[PWA] Service worker registration note:', error);
       },
     });
+
+    setServiceWorkerUpdater(updateSW);
   } catch (err) {
     console.warn('[PWA] registerSW call note:', err);
   }

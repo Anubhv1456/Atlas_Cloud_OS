@@ -1,0 +1,6 @@
+{
+  "version": "2.4.0",
+  "buildTime": 1772351800000,
+  "buildId": "atlas-v2.4.0-init",
+  "releaseNotes": "Clinical triage engine optimizations, spaced repetition enhancements, and stability improvements."
+}

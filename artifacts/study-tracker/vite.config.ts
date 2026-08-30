@@ -1,16 +1,66 @@
 import path from 'path';
+import fs from 'fs';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const port = 3000;
+const currentBuildTime = Date.now();
+const currentVersion = '2.4.0';
+const currentBuildId = `atlas-v${currentVersion}-${currentBuildTime}`;
+
+function versionManifestPlugin(): Plugin {
+  return {
+    name: 'atlas-version-manifest',
+    buildStart() {
+      const versionData = {
+        version: currentVersion,
+        buildTime: currentBuildTime,
+        buildId: currentBuildId,
+        releaseNotes: 'Performance optimizations, clinical triage engine updates, and spaced repetition improvements.',
+      };
+      try {
+        const publicDir = path.resolve(import.meta.dirname, 'public');
+        if (!fs.existsSync(publicDir)) {
+          fs.mkdirSync(publicDir, { recursive: true });
+        }
+        fs.writeFileSync(
+          path.resolve(publicDir, 'version.json'),
+          JSON.stringify(versionData, null, 2),
+          'utf-8'
+        );
+      } catch (e) {
+        console.warn('Failed to write public/version.json:', e);
+      }
+    },
+    generateBundle() {
+      const versionData = {
+        version: currentVersion,
+        buildTime: currentBuildTime,
+        buildId: currentBuildId,
+        releaseNotes: 'Performance optimizations, clinical triage engine updates, and spaced repetition improvements.',
+      };
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify(versionData, null, 2),
+      });
+    },
+  };
+}
 
 export default defineConfig({
   base: '/',
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(currentBuildTime),
+    __APP_VERSION__: JSON.stringify(currentVersion),
+    __APP_BUILD_ID__: JSON.stringify(currentBuildId),
+  },
   plugins: [
     react(),
     tailwindcss(),
+    versionManifestPlugin(),
     VitePWA({
       selfDestroying: false,
       registerType: 'autoUpdate',
