@@ -4,8 +4,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,8 @@ import {
   DEFAULT_CURRICULUM_OPTIONS 
 } from '@/lib/examProfile';
 import { toast } from 'sonner';
+import { Target, Calendar, HelpCircle, Check, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TargetExamModalProps {
   open: boolean;
@@ -40,7 +41,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         setTargetExam('Other Medical Board');
         setCustomExam(profile.targetExam);
       } else {
-        setTargetExam(profile.targetExam || '');
+        setTargetExam(profile.targetExam || 'NEET PG');
         setCustomExam('');
       }
       setTargetExamDate(profile.targetExamDate || '');
@@ -58,9 +59,9 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       const diffTime = exam.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
       if (diffDays > 0) {
-          // Assume ~4000 QBank average for standard medical exams
-          const defaultDaily = Math.max(10, Math.ceil(4000 / diffDays));
-          setDailyQuestionGoal(defaultDaily > 300 ? 300 : defaultDaily);
+        // Assume ~4000 QBank average for standard medical exams
+        const defaultDaily = Math.max(10, Math.ceil(4000 / diffDays));
+        setDailyQuestionGoal(defaultDaily > 300 ? 300 : defaultDaily);
       }
     }
   }, [targetExamDate, targetExam]);
@@ -68,13 +69,22 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
   useEffect(() => {
     // Auto-select curriculum based on known exam structures
     if (targetExam === 'NEET PG' || targetExam === 'INICET' || targetExam === 'NEXT' || targetExam === 'INI-CET') {
-      setCurriculum('System-Wise (e.g. CVS, RS, CNS)');
+      setCurriculum('Organ-System Based (Cardiology, Neurology, etc.)');
     } else if (targetExam.includes('USMLE') || targetExam.includes('PLAB') || targetExam.includes('AMC') || targetExam.includes('MCCQE')) {
-      setCurriculum('System-Wise (e.g. CVS, RS, CNS)');
+      setCurriculum('Organ-System Based (Cardiology, Neurology, etc.)');
     } else if (targetExam === 'MBBS Professional Exams') {
-       setCurriculum('Subject-Wise (e.g. Anatomy, Physiology)');
+      setCurriculum('Subject-Based (Anatomy, Pharmacology, Pathology, etc.)');
     }
   }, [targetExam]);
+
+  // Calculate days remaining badge
+  const daysRemaining = React.useMemo(() => {
+    if (!targetExamDate) return null;
+    const today = new Date();
+    const exam = new Date(targetExamDate);
+    const diff = Math.ceil((exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  }, [targetExamDate]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +105,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         dailyQuestionGoal: Number(dailyQuestionGoal) || 40,
         currentYear,
       });
-      toast.success('Exam profile updated.');
+      toast.success('Exam profile updated successfully.');
       onOpenChange(false);
     } catch (err) {
       toast.error('Failed to save exam target.');
@@ -106,162 +116,208 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-lg rounded-3xl p-6 sm:p-8 space-y-8 bg-card border-border/40 shadow-2xl">
-        <DialogHeader className="space-y-1 text-left">
-          <DialogTitle className="text-2xl font-medium tracking-tight">
-            Exam Profile
-          </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground/80">
-            Set your target to calibrate your timeline.
-          </DialogDescription>
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-[calc(100%-2.5rem)] max-w-xl max-h-[86dvh] p-0 overflow-hidden rounded-3xl bg-card/95 dark:bg-card/95 backdrop-blur-2xl border-border/60 shadow-2xl flex flex-col">
+        {/* ── Fixed Apple-Style Header ────────────────────────────────────────── */}
+        <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 border-b border-border/40 shrink-0 text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+                Exam Profile
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Calibrate your clinical curriculum, timeline, and daily question targets
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSave} className="space-y-8">
-          
-          <div className="space-y-4">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-              Target Examination
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {DEFAULT_EXAM_OPTIONS.map(exam => (
-                <button
-                  key={exam}
-                  type="button"
-                  onClick={() => setTargetExam(exam)}
-                  className={`px-4 py-3 rounded-2xl border text-sm text-left transition-all duration-200 ${
-                    targetExam === exam
-                      ? 'bg-primary/10 border-primary/50 text-primary font-medium'
-                      : 'border-border/60 hover:border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                  }`}
-                >
-                  {exam}
-                </button>
-              ))}
-            </div>
+        {/* ── Scrollable Body ─────────────────────────────────────────────────── */}
+        <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-5 overscroll-contain">
             
-            {targetExam === 'Other Medical Board' && (
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="customExam" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Specify Exam Name</Label>
+            {/* Target Exam Selection Grid */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Target Examination
+                </Label>
+                <span className="text-[10px] text-muted-foreground/80 font-medium">
+                  {targetExam ? targetExam : 'Select one'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                {DEFAULT_EXAM_OPTIONS.map((exam) => {
+                  const isSelected = targetExam === exam;
+                  return (
+                    <button
+                      key={exam}
+                      type="button"
+                      onClick={() => setTargetExam(exam)}
+                      className={cn(
+                        "relative px-2.5 py-2 sm:py-2.5 rounded-xl border text-xs font-semibold text-center transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer select-none active:scale-[0.98]",
+                        isSelected
+                          ? "bg-primary/15 border-primary/60 text-primary font-bold shadow-xs ring-1 ring-primary/30"
+                          : "border-border/60 hover:border-border/90 text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                      )}
+                    >
+                      <span className="truncate">{exam}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {targetExam === 'Other Medical Board' && (
+                <div className="space-y-1.5 mt-2 animate-in fade-in slide-in-from-top-1">
+                  <Label htmlFor="customExam" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Specify Examination Name
+                  </Label>
+                  <Input
+                    id="customExam"
+                    placeholder="e.g. Royal College Exam, FCPS, AMC..."
+                    value={customExam}
+                    onChange={(e) => setCustomExam(e.target.value)}
+                    required
+                    className="rounded-xl h-10 px-3.5 text-xs sm:text-sm border-border/60 bg-background/50 focus-visible:ring-primary/20"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Target Date & Daily Target (2-Column Tablet Grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-2xl border border-border/50">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="examDate" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-primary" />
+                    Target Exam Date
+                  </Label>
+                  {daysRemaining !== null && (
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                      {daysRemaining}d left
+                    </span>
+                  )}
+                </div>
                 <Input
-                  id="customExam"
-                  placeholder="e.g. Royal College Exam, FCPS Part 1..."
-                  value={customExam}
-                  onChange={e => setCustomExam(e.target.value)}
+                  id="examDate"
+                  type="date"
+                  value={targetExamDate}
+                  onChange={(e) => setTargetExamDate(e.target.value)}
+                  className="rounded-xl h-10 px-3 text-xs sm:text-sm bg-background border-border/60 focus-visible:ring-primary/20"
                   required
-                  className="rounded-2xl h-11 px-4 border-border/60 bg-transparent focus-visible:ring-primary/20"
                 />
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-muted/20 p-5 rounded-3xl border border-border/40">
-            <div className="space-y-2.5">
-              <Label htmlFor="examDate" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Target Exam Date
-              </Label>
-              <Input
-                id="examDate"
-                type="date"
-                value={targetExamDate}
-                onChange={e => setTargetExamDate(e.target.value)}
-                className="rounded-2xl h-11 px-4 bg-background border-border/60 focus-visible:ring-primary/20"
-                required
-              />
-            </div>
-
-            <div className="space-y-2.5">
-              <Label htmlFor="dailyGoal" className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                Daily QBank Target
-              </Label>
-              <Input
-                id="dailyGoal"
-                type="number"
-                min={5}
-                max={300}
-                value={dailyQuestionGoal}
-                onChange={e => setDailyQuestionGoal(Number(e.target.value))}
-                className="rounded-2xl h-11 px-4 bg-background border-border/60 focus-visible:ring-primary/20"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  {targetExam === 'MBBS Professional Exams' ? 'MBBS Professional Phase / Year' : 'Current Academic Level'}
-                </Label>
-                {targetExam === 'MBBS Professional Exams' && (
-                  <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
-                    Isolates Active Prof Syllabus
-                  </span>
-                )}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="dailyGoal" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    Daily QBank Target
+                  </Label>
+                  <span className="text-[10px] text-muted-foreground font-medium">MCQs/day</span>
+                </div>
+                <Input
+                  id="dailyGoal"
+                  type="number"
+                  min={5}
+                  max={300}
+                  value={dailyQuestionGoal}
+                  onChange={(e) => setDailyQuestionGoal(Number(e.target.value))}
+                  className="rounded-xl h-10 px-3 text-xs sm:text-sm bg-background border-border/60 focus-visible:ring-primary/20 font-medium"
+                  required
+                />
               </div>
-              <Select value={currentYear} onValueChange={setCurrentYear}>
-                <SelectTrigger className="rounded-2xl h-11 px-4 border-border/60 focus:ring-primary/20">
-                  <SelectValue placeholder="Select current year" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl border-border/60">
-                  {[
-                    { value: '1st Year MBBS', label: '1st Professional (Phase I: Anatomy, Physio, Biochem)' },
-                    { value: '2nd Year MBBS', label: '2nd Professional (Phase II: Path, Micro, Pharma)' },
-                    { value: '3rd Year MBBS', label: '3rd Professional Part 1 (Phase III Part 1: FMT, PSM, Ophtha, ENT)' },
-                    { value: 'Final MBBS', label: 'Final Professional Part 2 (Phase III Part 2: Med, Surg, OBGY, Peds)' },
-                    { value: 'Intern', label: 'Intern / CRMI (All 19 Subjects)' },
-                    { value: 'Postgraduate Resident', label: 'Postgraduate Resident / Board Review' },
-                    { value: 'Other', label: 'Other Academic Year' }
-                  ].map(yr => (
-                    <SelectItem key={yr.value} value={yr.value} className="rounded-xl">
-                      {yr.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
-            {targetExam === 'Other Medical Board' && (
-              <div className="space-y-2.5 animate-in fade-in slide-in-from-top-1">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  Curriculum Structure
-                </Label>
-                <Select value={curriculum} onValueChange={setCurriculum}>
-                  <SelectTrigger className="rounded-2xl h-11 px-4 border-border/60 focus:ring-primary/20">
-                    <SelectValue placeholder="Select curriculum type" />
+            {/* Academic Level & Curriculum */}
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {targetExam === 'MBBS Professional Exams'
+                      ? 'MBBS Professional Phase'
+                      : 'Current Academic Level'}
+                  </Label>
+                  {targetExam === 'MBBS Professional Exams' && (
+                    <span className="text-[10px] text-primary font-semibold">
+                      Filters Active Prof Syllabus
+                    </span>
+                  )}
+                </div>
+                <Select value={currentYear} onValueChange={setCurrentYear}>
+                  <SelectTrigger className="rounded-xl h-10 px-3 text-xs sm:text-sm border-border/60 bg-background/50 focus:ring-primary/20">
+                    <SelectValue placeholder="Select academic level" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-border/60">
-                    {DEFAULT_CURRICULUM_OPTIONS.map(opt => (
-                      <SelectItem key={opt} value={opt} className="rounded-xl">
-                        {opt}
+                  <SelectContent className="rounded-2xl border-border/60 max-h-60">
+                    {[
+                      { value: '1st Year MBBS', label: '1st Professional (Phase I: Anatomy, Physio, Biochem)' },
+                      { value: '2nd Year MBBS', label: '2nd Professional (Phase II: Path, Micro, Pharma)' },
+                      { value: '3rd Year MBBS', label: '3rd Professional Part 1 (FMT, PSM, Ophtha, ENT)' },
+                      { value: 'Final MBBS', label: 'Final Professional Part 2 (Med, Surg, OBGY, Peds)' },
+                      { value: 'Intern', label: 'Intern / CRMI (All 19 Subjects)' },
+                      { value: 'Postgraduate Resident', label: 'Postgraduate Resident / Board Review' },
+                      { value: 'Other', label: 'Other Academic Stage' },
+                    ].map((yr) => (
+                      <SelectItem key={yr.value} value={yr.value} className="rounded-xl text-xs sm:text-sm">
+                        {yr.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
+
+              {targetExam === 'Other Medical Board' && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1">
+                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <HelpCircle className="w-3 h-3 text-muted-foreground" />
+                    Curriculum Structure
+                  </Label>
+                  <Select value={curriculum} onValueChange={setCurriculum}>
+                    <SelectTrigger className="rounded-xl h-10 px-3 text-xs sm:text-sm border-border/60 bg-background/50 focus:ring-primary/20">
+                      <SelectValue placeholder="Select curriculum format" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-border/60">
+                      {DEFAULT_CURRICULUM_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt} className="rounded-xl text-xs sm:text-sm">
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
           </div>
 
-          <DialogFooter className="pt-4 flex items-center justify-between gap-3 sm:justify-end border-t border-border/40">
+          {/* ── Sticky Apple-Style Footer ───────────────────────────────────────── */}
+          <div className="px-5 sm:px-6 py-3 border-t border-border/40 bg-card/90 dark:bg-card/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
             <Button
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-full h-11 px-6 text-muted-foreground hover:text-foreground"
+              className="rounded-full h-9 sm:h-10 px-4 text-xs sm:text-sm text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="rounded-full h-11 px-8 font-medium shadow-sm"
+              className="rounded-full h-9 sm:h-10 px-6 font-semibold text-xs sm:text-sm shadow-md bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer disabled:opacity-70"
             >
               {saving ? (
-                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <div className="flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  <span>Saving...</span>
+                </div>
               ) : (
                 'Save Profile'
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
