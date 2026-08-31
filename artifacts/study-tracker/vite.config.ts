@@ -7,7 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const port = 3000;
 const currentBuildTime = Date.now();
-const currentVersion = '2.4.0';
+const buildNumber = Math.floor(currentBuildTime / 1000) % 100000;
+const currentVersion = `2.4.${buildNumber}`;
 const currentBuildId = `atlas-v${currentVersion}-${currentBuildTime}`;
 
 function versionManifestPlugin(): Plugin {

@@ -107,7 +107,7 @@ export function useAppUpdate() {
         if (result.manifest?.version) {
           setLatestVersion(result.manifest.version);
         }
-        toast.success(`Atlas Update Available: v${result.manifest?.version || '2.4.0'}`, {
+        toast.success(`Atlas Update Available: v${result.manifest?.version || latestVersion}`, {
           id: toastId,
           description: 'A new version with the latest improvements is ready to install.',
           action: {

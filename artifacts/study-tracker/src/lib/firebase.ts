@@ -33,15 +33,12 @@ if (typeof window !== "undefined") {
   }).catch(() => {});
 }
 
-// Use explicit init to avoid IndexedDB issues on HMR
+// Use getAuth directly to avoid IndexedDB issues on HMR and pending promise bugs
 let auth: Auth;
 try {
-  auth = initializeAuth(app, {
-    persistence: browserLocalPersistence,
-    popupRedirectResolver: browserPopupRedirectResolver,
-  });
+  auth = getAuth(app);
 } catch (e) {
-  auth = getAuth(app); // fallback if already initialized
+  auth = getAuth(app); // fallback
 }
 
 export { app, auth, analytics };
