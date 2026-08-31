@@ -396,7 +396,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
       {/* ── MOBILE FLOATING DOCK (Visible on small screens < md) ────────────── */}
       <div 
         className={cn(
-          "md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/80 bg-background/85 dark:bg-card/90 backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.2)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.55)] px-2 py-1.5 flex items-center justify-around transition-all duration-300 select-none",
+          "md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md h-16 rounded-full border border-border/20 dark:border-white/10 bg-background/60 dark:bg-background/40 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.25)] px-2 py-1.5 flex items-center justify-around transition-all duration-300 select-none",
           isAssistantOpen
             ? "translate-y-28 opacity-0 pointer-events-none"
             : "translate-y-0 opacity-100 pointer-events-auto"
@@ -412,33 +412,19 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                 href={href}
                 onClick={(e) => handleTabClick(href, e)}
                 className={cn(
-                  "relative flex flex-col items-center justify-center h-full flex-1 group rounded-full py-1 px-1 transition-colors duration-200 cursor-pointer select-none touch-manipulation active:scale-95 overflow-hidden",
-                  active ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+                  "relative flex flex-col items-center justify-center h-full flex-1 group rounded-full py-1 px-1 transition-colors duration-200 cursor-pointer select-none touch-manipulation active:scale-[0.97] overflow-visible",
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {/* Active Sliding Glowing Pill */}
-                {active && (
-                  <motion.div
-                    layoutId="activeNavPillMobile"
-                    className="absolute inset-0 bg-primary/15 dark:bg-primary/22 rounded-full border border-primary/35 shadow-[0_2px_12px_rgba(31,168,155,0.2)]"
-                    transition={{
-                      type: "spring",
-                      stiffness: 420,
-                      damping: 32,
-                      mass: 0.6
-                    }}
-                  />
-                )}
-
                 <div className="z-10 flex flex-col items-center justify-center gap-0.5">
                   <Icon className={cn(
-                    "w-5 h-5 transition-all duration-150",
-                    active ? "text-primary scale-110" : "text-muted-foreground group-hover:text-foreground"
+                    "w-[22px] h-[22px] transition-all duration-200",
+                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                   )} />
 
                   <span className={cn(
-                    "text-[10px] tracking-tight transition-colors duration-150 mt-0.5",
-                    active ? "text-primary font-bold" : "text-muted-foreground font-medium group-hover:text-foreground"
+                    "text-[10px] tracking-tight transition-colors duration-200 mt-0.5",
+                    active ? "text-primary font-semibold" : "text-muted-foreground font-medium group-hover:text-foreground"
                   )}>
                     {label}
                   </span>
