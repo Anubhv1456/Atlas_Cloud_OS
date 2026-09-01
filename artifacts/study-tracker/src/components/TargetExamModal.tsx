@@ -115,7 +115,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       });
 
       if (isCurriculumShift || !profile.targetExam) {
-         await loadUniversalOntology({ targetExam: finalExam, force: false });
+         await loadUniversalOntology({ targetExam: finalExam, force: true });
          toast.success('Curriculum synchronized successfully.');
       }
 

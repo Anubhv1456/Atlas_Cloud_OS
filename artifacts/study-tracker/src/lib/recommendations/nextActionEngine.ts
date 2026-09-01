@@ -1056,6 +1056,36 @@ export async function getNextActionRecommendation(
     !systems.some(s => s.contentCompleted || (s.revisionPassCount && s.revisionPassCount > 0)) &&
     !curriculumSets.some(c => Boolean(c.lastRevisionDate) || (c.revisionCount && c.revisionCount > 0));
 
+  // Inject synthetic primary for fresh users
+  let finalPrimary = primary;
+  if (isFreshState && !finalPrimary && suggestedStarterSubjects.length > 0) {
+    const starter = suggestedStarterSubjects[0];
+    finalPrimary = {
+      id: -1,
+      subjectId: starter.subjectId,
+      subjectName: starter.subjectName,
+      systemId: starter.firstSystemId as any,
+      systemName: starter.firstSystemName,
+      topicIds: [],
+      depth: 'standard',
+      estimatedMinutes: starter.estimatedHours * 60,
+      whyBreakdown: {
+        decayImpact: 0,
+        memoryDecayPercent: 0,
+        upcomingExamProximity: 0,
+        clinicalUtilityScore: 0,
+        mistakeDensity: 0,
+        urgencyMultiplier: 1,
+        depthLabel: 'baseline',
+        humanizedMessage: ''
+      },
+      score: 100,
+      archetype: 'zenith',
+      isQuickEligible: true,
+      isFreshState: true
+    };
+  }
+
   // Post-process candidates to inject humanized messages based on active archetype and exam vocabulary
   const attachHumanizedMessage = (rec) => {
     if (!rec) return null;
@@ -1083,7 +1113,7 @@ export async function getNextActionRecommendation(
   return {
     hasAnyCurriculumSets,
     hasPendingSyllabus,
-    primary: attachHumanizedMessage(primary),
+    primary: attachHumanizedMessage(finalPrimary),
     fallback: attachHumanizedMessage(fallback),
     upcomingQueue: upcomingQueue.map(c => attachHumanizedMessage(c)),
     sessionBudget,
