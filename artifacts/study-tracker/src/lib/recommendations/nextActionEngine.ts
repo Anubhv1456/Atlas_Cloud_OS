@@ -197,7 +197,8 @@ export async function getNextActionRecommendation(
   options: EngineOptions = {}
 ): Promise<NextActionEngineResult> {
   const localSkipIds = new Set(options.skipIds || []);
-  const targetExam = options.targetExam || 'NEET PG';
+  const profile = getLocalExamProfile();
+  const targetExam = options.targetExam || profile.targetExam || 'NEET PG';
   const now = new Date();
 
   // Circadian evaluation
@@ -276,8 +277,7 @@ export async function getNextActionRecommendation(
   const isTriageMode = daysSinceLastStudy > 3 && !recalibrationStatus.active && !isClinicalDuty;
 
   const allDbSubjects = await db.subjects.filter(s => !s.deletedAt).toArray();
-  const profile = getLocalExamProfile();
-  const activeExam = targetExam || profile.targetExam;
+  const activeExam = targetExam;
   const activeYear = profile.currentYear || 'Final MBBS';
 
   // --- THE CLEAN ROOM PATTERN ---
