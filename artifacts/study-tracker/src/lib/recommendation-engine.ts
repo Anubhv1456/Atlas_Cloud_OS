@@ -1,4 +1,5 @@
 import { normalizeName } from '@/lib/exam-presets';
+import { StrategyFactory } from './recommendations/strategies';
 import { REC_WEIGHTS, REC_MULTIPLIERS } from './recommendation-constants';
 import { Subject, StudySystem } from '@/db';
 import { ALL_SYSTEMS, ALL_SUBJECTS, OntologyTopic } from '@/data/ontology';

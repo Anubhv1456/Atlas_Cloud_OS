@@ -43,6 +43,9 @@ export function SubjectsGrid({
   const safeSubjects = Array.isArray(subjects) ? subjects : [];
   const safeSystems = Array.isArray(systems) ? systems : [];
 
+  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
+  const isCustom = profile.targetExam?.toLowerCase().includes('custom') || profile.targetExam?.toLowerCase().includes('general');
+
   // If in MBBS Professional mode and not overridden, strictly isolate subjects of that professional year
   const profFilteredSubjects = useMemo(() => {
     // 1. Find which ontology represents the active exam
@@ -92,8 +95,7 @@ export function SubjectsGrid({
   }, [profFilteredSubjects, isSprintActive, showAllOverride, sprintSubjectIdsSet]);
 
   
-  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
-  const isCustom = profile.targetExam?.toLowerCase().includes('custom') || profile.targetExam?.toLowerCase().includes('general');
+
 
   const filterTabs = useMemo(() => {
     if (isUSMLE) return ['All', 'Organ Systems', 'Multisystem', 'General Principles'];

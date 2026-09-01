@@ -8,6 +8,10 @@ import { isSubjectInProfScope, getAllowedSubjectsForProfile } from '@/lib/curric
 import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, OperationalModeRecord, DEFAULT_OPERATIONAL_MODE, HistoryEntry } from '@/db/types';
 import { getDaysSinceLastStudy } from '@/db/queries';
 import { calculateSubjectFriction, SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
+import { StrategyFactory } from './strategies';
+import { UNIVERSAL_ONTOLOGY as NEETPG_ONTOLOGY } from '@/data/ontology.neetpg';
+import { USMLE_ONTOLOGY } from '@/data/ontology.usmle';
+import { GENERAL_ONTOLOGY } from '@/data/ontology.general';
 
 export type RecommendationArchetype = 
   | 'tactical_strike' 
@@ -274,12 +278,27 @@ export async function getNextActionRecommendation(
   const activeExam = targetExam || profile.targetExam;
   const activeYear = profile.currentYear || 'Final MBBS';
 
-  // Apply strict MBBS Professional Exam filter if active
-  const isMBBSProf = true; // Use global AcademicPhases filter for all exams
+  // --- THE CLEAN ROOM PATTERN ---
+  const isUSMLE = activeExam?.toLowerCase().includes('usmle');
+  const isCustom = activeExam?.toLowerCase().includes('custom') || activeExam?.toLowerCase().includes('general');
   
+  let activeOntology = NEETPG_ONTOLOGY;
+  if (isUSMLE) activeOntology = USMLE_ONTOLOGY;
+  else if (isCustom) activeOntology = GENERAL_ONTOLOGY;
+  
+  const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
+  const cleanRoomSubjects = allDbSubjects.filter(sub => activeSubjectNames.has(sub.name.toLowerCase()));
+  
+  // Strategy Injection
+  const strategy = StrategyFactory.get(activeExam);
+  const daysRemaining = (options.daysRemaining !== undefined) ? options.daysRemaining : 60; // Mock calculation
+  const urgencyCurve = strategy.getUrgencyCurve(daysRemaining);
+
+  // Apply strict Academic Phase filter if active
+  const isMBBSProf = true;
   let subjects = isMBBSProf 
-    ? allDbSubjects.filter(s => isSubjectInProfScope(s.name, activeExam, activeYear))
-    : [...allDbSubjects];
+    ? cleanRoomSubjects.filter(s => isSubjectInProfScope(s.name, activeExam, activeYear))
+    : [...cleanRoomSubjects];
   
   let systems = await db.systems.filter(s => !s.deletedAt).toArray();
   
