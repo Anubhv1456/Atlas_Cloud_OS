@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
@@ -73,6 +74,8 @@ export function QuickMistakeModal({
   onDeleteMistake,
   onSaved
 }: QuickMistakeModalProps) {
+  const lexicon = useLexicon();
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Database subjects
@@ -141,7 +144,7 @@ export function QuickMistakeModal({
           source,
           updatedAt: new Date()
         });
-        toast.success('20th Notebook rule updated');
+        toast.success('{lexicon.mistakesJournal} rule updated');
       } else {
         await logMistake({
           subjectId,
@@ -159,7 +162,7 @@ export function QuickMistakeModal({
       onOpenChange(false);
       if (onSaved) onSaved();
     } catch (err) {
-      console.error('Failed to save 20th Notebook rule:', err);
+      console.error('Failed to save {lexicon.mistakesJournal} rule:', err);
       toast.error('Could not save rule. Please try again.');
     } finally {
       setSaving(false);
@@ -182,7 +185,7 @@ export function QuickMistakeModal({
               <BookOpen className="w-4 h-4" />
             </span>
             <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
-              {editingMistake ? 'Edit 20th Notebook Rule' : 'Add to 20th Notebook'}
+              {editingMistake ? 'Edit {lexicon.mistakesJournal} Rule' : 'Add to {lexicon.mistakesJournal}'}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">

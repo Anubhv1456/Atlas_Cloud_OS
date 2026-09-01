@@ -27,7 +27,7 @@ import {
   MistakeErrorType
 } from '@/lib/ai/intentParser';
 import { executeAtlasAction } from '@/lib/ai/atlasActionExecutor';
-import { UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { ALL_SUBJECTS as UNIVERSAL_ONTOLOGY } from '@/data/ontology';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 

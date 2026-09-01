@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { AtlasSkyShareModal } from './AtlasSkyShareModal';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { isSubjectInProfScope, NMC_MBBS_PROFESSIONAL_YEARS } from '@/lib/curriculumScope';
+import { isSubjectInProfScope, getPhaseNameForProfile } from '@/lib/curriculumScope';
 
 interface AtlasSkyModalProps {
   open: boolean;

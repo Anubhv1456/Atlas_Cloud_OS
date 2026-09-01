@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -157,7 +158,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
             <div>
               <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-                Immediate 20th Notebook Volatile Pearls to Audit
+                Immediate {lexicon.mistakesJournal} Volatile Pearls to Audit
               </h4>
               <div className="space-y-1.5">
                 {report.highYieldPearlsToAudit.map((pearl, idx) => (

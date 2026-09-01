@@ -256,8 +256,16 @@ export async function executeCognitiveCompiler(
 
   const apiKey = settings.geminiApiKey || (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : '') || '';
 
-  // If no cloud API key configured or AI turned off, seamlessly route to Atlas Local Cognitive Engine
-  if (!apiKey || settings.isAiEnabled === false) {
+  // Enforce BYOK Paywall
+  if (!apiKey) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-paywall-modal'));
+    }
+    throw new Error('AI_PAYWALL_REQUIRED');
+  }
+
+  // If AI turned off explicitly in settings, route to Atlas Local Cognitive Engine
+  if (settings.isAiEnabled === false) {
     const localResult = await executeLocalMedicalCognitiveEngine(input, conversationHistory);
     return {
       delta: localResult.delta,

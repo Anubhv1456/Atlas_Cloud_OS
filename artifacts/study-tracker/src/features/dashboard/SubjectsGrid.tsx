@@ -6,9 +6,9 @@ import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { Button } from '@/components/ui/button';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
 import { loadUniversalOntology } from '@/lib/exam-presets';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { ALL_SUBJECTS, USMLE_ONTOLOGY, GENERAL_ONTOLOGY, NEETPG_ONTOLOGY } from '@/data/ontology';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { isSubjectInProfScope, NMC_MBBS_PROFESSIONAL_YEARS } from '@/lib/curriculumScope';
+import { isSubjectInProfScope, getPhaseNameForProfile } from '@/lib/curriculumScope';
 import { cn } from '@/lib/utils';
 
 interface SubjectsGridProps {
@@ -17,18 +17,9 @@ interface SubjectsGridProps {
   handleSubjectDragEnd: (result: DropResult) => void;
 }
 
-const PHASE_MAPPING: Record<string, string[]> = {
-  'Pre-Clinical': ['Anatomy', 'Physiology', 'Biochemistry'],
-  'Para-Clinical': ['Pathology', 'Microbiology', 'Pharmacology', 'Forensic Medicine & Toxicology', 'Community Medicine (PSM)'],
-  'Clinical': ['General Medicine', 'Medicine', 'General Surgery', 'Surgery', 'Obstetrics & Gynaecology', 'OBGY', 'Pediatrics', 'Orthopedics', 'ENT (Otorhinolaryngology)', 'Ophthalmology', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
-};
 
-const YEAR_MAPPING: Record<string, string[]> = {
-  '1st Year': ['Anatomy', 'Physiology', 'Biochemistry'],
-  '2nd Year': ['Pathology', 'Microbiology', 'Pharmacology'],
-  '3rd Year': ['Forensic Medicine & Toxicology', 'Community Medicine (PSM)', 'ENT (Otorhinolaryngology)', 'Ophthalmology'],
-  'Final Year': ['General Medicine', 'Medicine', 'General Surgery', 'Surgery', 'Obstetrics & Gynaecology', 'OBGY', 'Pediatrics', 'Orthopedics', 'Psychiatry', 'Dermatology', 'Anaesthesiology', 'Radiology']
-};
+
+
 
 type FilterOption = 'All' | 'Pre-Clinical' | 'Para-Clinical' | 'Clinical' | '1st Year' | 'Final Year';
 
@@ -54,9 +45,22 @@ export function SubjectsGrid({
 
   // If in MBBS Professional mode and not overridden, strictly isolate subjects of that professional year
   const profFilteredSubjects = useMemo(() => {
-    if (!isMBBSProf || showAllOverride) return safeSubjects;
-    return safeSubjects.filter(sub => isSubjectInProfScope(sub.name, profile.targetExam, activeYear));
-  }, [safeSubjects, isMBBSProf, showAllOverride, profile.targetExam, activeYear]);
+    // 1. Find which ontology represents the active exam
+    let activeOntology = NEETPG_ONTOLOGY;
+    if (isUSMLE) activeOntology = USMLE_ONTOLOGY;
+    else if (isCustom) activeOntology = GENERAL_ONTOLOGY;
+
+    const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
+
+    // 2. Filter out subjects that do not belong to the active exam curriculum AT ALL
+    const activeTrackSubjects = safeSubjects.filter(sub => activeSubjectNames.has(sub.name.toLowerCase()));
+
+    // 3. Apply year isolation if needed
+    if (showAllOverride || !isMBBSProf) {
+      return activeTrackSubjects; 
+    }
+    return activeTrackSubjects.filter(sub => isSubjectInProfScope(sub.name, profile.targetExam, activeYear));
+  }, [safeSubjects, isMBBSProf, showAllOverride, profile.targetExam, activeYear, isUSMLE, isCustom]);
 
   const isSprintActive = opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0;
 
@@ -87,11 +91,41 @@ export function SubjectsGrid({
     return profFilteredSubjects;
   }, [profFilteredSubjects, isSprintActive, showAllOverride, sprintSubjectIdsSet]);
 
+  
+  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
+  const isCustom = profile.targetExam?.toLowerCase().includes('custom') || profile.targetExam?.toLowerCase().includes('general');
+
+  const filterTabs = useMemo(() => {
+    if (isUSMLE) return ['All', 'Organ Systems', 'Multisystem', 'General Principles'];
+    if (isCustom) return ['All', 'Medical', 'Surgical', 'Basic Sciences'];
+    return ['All', 'Pre-Clinical', 'Para-Clinical', 'Clinical'];
+  }, [isUSMLE, isCustom]);
+
   const filteredSubjects = useMemo(() => {
     if (activeFilter === 'All') return candidateSubjects;
-    const allowedNames = PHASE_MAPPING[activeFilter] || YEAR_MAPPING[activeFilter] || [];
-    return candidateSubjects.filter(sub => sub && allowedNames.includes(sub.name));
-  }, [candidateSubjects, activeFilter]);
+    return candidateSubjects.filter(sub => {
+      if (!sub) return false;
+      const lower = sub.name.toLowerCase();
+      if (isUSMLE) {
+         if (activeFilter === 'Organ Systems') return lower.includes('system') && !lower.includes('immune');
+         if (activeFilter === 'Multisystem') return lower.includes('immune') || lower.includes('hematology') || lower.includes('musculoskeletal');
+         if (activeFilter === 'General Principles') return lower.includes('principles') || lower.includes('pathology') || lower.includes('microbiology');
+         return true;
+      }
+      if (isCustom) {
+         if (activeFilter === 'Medical') return lower.includes('medicine') || lower.includes('pediatrics');
+         if (activeFilter === 'Surgical') return lower.includes('surgery') || lower.includes('obstetrics');
+         if (activeFilter === 'Basic Sciences') return lower.includes('sciences') || lower.includes('anatomy');
+         return true;
+      }
+      // NEET PG (Default)
+      if (activeFilter === 'Pre-Clinical') return ['anatomy', 'physiology', 'biochemistry'].includes(lower);
+      if (activeFilter === 'Para-Clinical') return ['pathology', 'microbiology', 'pharmacology', 'forensic', 'community'].some(k => lower.includes(k));
+      if (activeFilter === 'Clinical') return ['medicine', 'surgery', 'obstetrics', 'pediatrics', 'orthopedics', 'psychiatry', 'dermatology', 'radiology', 'anaesthesiology', 'ophthalmology', 'ent'].some(k => lower.includes(k));
+      return true;
+    });
+  }, [candidateSubjects, activeFilter, isUSMLE, isCustom]);
+
 
   return (
     <section id="subject-portfolio" className="flex-1">
@@ -105,7 +139,7 @@ export function SubjectsGrid({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
-                  {NMC_MBBS_PROFESSIONAL_YEARS[activeYear]?.name || activeYear} Syllabus
+                  {getPhaseNameForProfile(profile.targetExam, activeYear)} Syllabus
                 </span>
                 <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                   University Exam Calibrated
@@ -197,7 +231,7 @@ export function SubjectsGrid({
         {(!isMBBSProf || showAllOverride) && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 w-full sm:w-auto scrollbar-none no-scrollbar max-w-full">
             <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1 hidden sm:block shrink-0" />
-            {(['All', 'Pre-Clinical', 'Para-Clinical', 'Clinical'] as FilterOption[]).map(filter => (
+            {(filterTabs).map(filter => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}

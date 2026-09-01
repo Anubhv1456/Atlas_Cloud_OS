@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { getLocalExamProfile, ExamProfile } from '@/lib/examProfile';
 import { ALL_SUBJECTS } from '@/data/ontology';
+import { getExamMaxScore } from '@/lib/curriculumScope';
 import { isRevisionDue, today, getSystemMemoryLoss, getRetrievability } from '@/db/revisionEngine';
 import { generateCognitiveProfile, CognitiveDiagnosticProfile } from '@/lib/ai/diagnosticService';
 import { SUBJECT_METRICS_PROFILE, calculateSubjectFriction } from './frictionEngine';
@@ -238,7 +239,7 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
   dueUnits.sort((a, b) => a.retrievability - b.retrievability || b.daysOverdue - a.daysOverdue);
   const topDueUnits = dueUnits.slice(0, 8);
 
-  // Aggregate 20th Notebook mistake pearls
+  // Aggregate Mistakes Journal mistake pearls
   const unresolvedMistakes = rawMistakes.filter(m => !m.resolved);
   const volatileMistakes = unresolvedMistakes.filter(m => m.isVolatile);
 
@@ -261,7 +262,8 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
 
   // Aggregate recent test scores
   const recentScores: ScoreSummary[] = rawScores.slice(0, 5).map(s => {
-    const total = s.totalMarks || (s.maxScore ? s.maxScore : 200);
+    const maxExamScore = getExamMaxScore(userProfile.targetExam);
+    const total = s.totalMarks || (s.maxScore ? s.maxScore : maxExamScore);
     const scoreVal = s.score;
     const pct = total > 0 ? Math.round((scoreVal / total) * 100) : 0;
     const weakList: string[] = [];
@@ -389,7 +391,7 @@ export function formatContextForSystemPrompt(ctx: LiveAtlasContext, isRoutine = 
     );
   }
 
-  // Top 3 20th Notebook Volatile Rules & Traps
+  // Top 3 Mistakes Journal Volatile Rules & Traps
   if (ctx.notebookPearls.recentPearls.length > 0) {
     lines.push(
       `Recent 20th NB Traps: ` +

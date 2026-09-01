@@ -117,7 +117,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
       setHudState('preview');
     } catch (err: any) {
       console.error('[VoiceHUD] Compilation failed:', err);
-      setErrorMessage(err.message || 'Could not understand audio. Try again.');
+      if(err.message !== 'AI_PAYWALL_REQUIRED') setErrorMessage(err.message || 'Could not understand audio. Try again.');
       setHudState('preview');
     }
   };
@@ -156,7 +156,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
       });
       handleCancelVoiceHUD();
     } catch (err: any) {
-      toast.error('Could not save note', { description: err.message });
+      if(err.message !== 'AI_PAYWALL_REQUIRED') toast.error('Could not save note', { description: err.message });
     }
   };
 

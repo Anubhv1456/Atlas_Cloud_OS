@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
@@ -8,6 +9,8 @@ import { getReferralCodeDetails, claimReferralCode, ReferralCodeDoc, getReferral
 import { toast } from 'sonner';
 
 export default function AcceptInvitation() {
+  const lexicon = useLexicon();
+
   const { user, signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
@@ -196,7 +199,7 @@ export default function AcceptInvitation() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                <span>20th Notebook Mistake Extraction & Flash Reviews</span>
+                <span>{lexicon.mistakesJournal} Mistake Extraction & Flash Reviews</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />

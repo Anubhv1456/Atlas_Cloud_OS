@@ -1,5 +1,6 @@
 import { useEffect, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { UpgradePaywallModal } from "@/components/UpgradePaywallModal";
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster, toast } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -171,7 +172,7 @@ function ProtectedApp() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-dvh w-full relative bg-background text-foreground">
+    <div className="flex flex-col md:flex-row min-h-dvh w-full relative bg-background text-foreground overflow-x-hidden">
       <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
       <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
@@ -181,7 +182,7 @@ function ProtectedApp() {
       <BottomNav />
       <div
         className={cn(
-          "flex-1 w-full relative z-10 transition-[padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col min-h-dvh",
+          "flex-1 min-w-0 w-full relative z-10 transition-[padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col min-h-dvh",
           isCollapsed ? "md:pl-[72px]" : "md:pl-64 lg:pl-72"
         )}
       >
@@ -303,6 +304,8 @@ function App() {
           <GlobalQuickEntry />
           <AppUpdateCapsule />
           <Toaster />
+          <UpgradePaywallModal />
+          <UpgradePaywallModal />
           <SonnerToaster position="top-center" richColors />
         </TooltipProvider>
         </QueryClientProvider>

@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ export function SafeDeleteSubjectDialog({
   onConfirmDelete,
   onMergeWithDuplicate
 }: SafeDeleteSubjectDialogProps) {
+  const lexicon = useLexicon();
+
   const hasLoggedProgress = Boolean(
     progressScore && (
       progressScore.completedSystemsCount > 0 ||
@@ -87,7 +90,7 @@ export function SafeDeleteSubjectDialog({
               )}
               {progressScore.completedPyqCount > 0 && (
                 <div className="p-2 rounded-xl bg-background/80 border border-border/40">
-                  <span className="font-bold text-emerald-500">{progressScore.completedPyqCount}</span> PYQ years solved
+                  <span className="font-bold text-emerald-500">{progressScore.completedPyqCount}</span> {lexicon.practiceExams} solved
                 </div>
               )}
             </div>

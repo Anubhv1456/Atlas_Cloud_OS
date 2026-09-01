@@ -275,7 +275,7 @@ export async function getNextActionRecommendation(
   const activeYear = profile.currentYear || 'Final MBBS';
 
   // Apply strict MBBS Professional Exam filter if active
-  const isMBBSProf = activeExam.toLowerCase().includes('mbbs') || activeExam.toLowerCase().includes('professional exam');
+  const isMBBSProf = true; // Use global AcademicPhases filter for all exams
   
   let subjects = isMBBSProf 
     ? allDbSubjects.filter(s => isSubjectInProfScope(s.name, activeExam, activeYear))

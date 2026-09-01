@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
-import { UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { ALL_SUBJECTS } from '@/data/ontology';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -150,7 +150,7 @@ export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
   }, [isSearchOpen]);
 
   // Filtered Subjects for Quick Navigation (0ms instant search)
-  const filteredSubjects = UNIVERSAL_ONTOLOGY.filter((s) => 
+  const filteredSubjects = ALL_SUBJECTS.filter((s) => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 6);
 

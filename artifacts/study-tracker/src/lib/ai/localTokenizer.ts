@@ -145,7 +145,7 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
   // GUARD: Incomplete Slot Detection (e.g. "Add this DOC:", "note:", "missed:", "DOC", "add pearl:")
   // Prevents empty payload cards or trailing punctuation from ever creating cards
   // -------------------------------------------------------------
-  const incompleteTriggers = /^(?:add\s+this\s+|add\s+|create\s+|log\s+)?(?:doc|drug of choice|ioc|investigation of choice|note|pearl|rule|mistake|20th notebook|trap):?\s*([.\s!?,;:-]*)$/i;
+  const incompleteTriggers = /^(?:add\s+this\s+|add\s+|create\s+|log\s+)?(?:doc|drug of choice|ioc|investigation of choice|note|pearl|rule|mistake|Mistakes Journal|trap):?\s*([.\s!?,;:-]*)$/i;
   const incompleteMatch = input.match(incompleteTriggers);
   if (incompleteMatch) {
     let topicName = 'Pharmacology';
@@ -154,7 +154,7 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
 
     let clarification = `Which drug of choice and condition should I log to ${topicName}?`;
     if (/ioc|investigation/i.test(input)) clarification = `Which investigation of choice and condition should I log?`;
-    else if (/note|pearl|rule|20th/i.test(input)) clarification = `What clinical pearl or rule would you like to log to your 20th Notebook?`;
+    else if (/note|pearl|rule|20th/i.test(input)) clarification = `What clinical pearl or rule would you like to log to your Mistakes Journal?`;
 
     return {
       matched: true,
@@ -245,13 +245,13 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
   // -------------------------------------------------------------
   // PATTERN 2: Grand Test / Mock Score Record (e.g. "GT 4 score 142/200", "mock 135 65 correct")
   // -------------------------------------------------------------
-  const scoreRegex = /(?:gt|mock|test|exam|swt)\s*(?:#|no\.?)?\s*(\d+)?\s*(?:score|marks|scored|got)?\s*:?\s*(\d+)(?:\s*\/\s*(\d+))?/i;
+  const scoreRegex = /(?:gt|mock|test|exam|swt|nbme|uwsa|uworld|cms form|block)\s*(?:#|no\.?)?\s*(\d+)?\s*(?:score|marks|scored|got)?\s*:?\s*(\d+)(?:\s*\/\s*(\d+))?/i;
   const scoreMatch = input.match(scoreRegex);
 
   if (scoreMatch && (scoreMatch[1] || scoreMatch[2])) {
     const testNumber = scoreMatch[1] ? parseInt(scoreMatch[1], 10) : 1;
     const scoreVal = parseInt(scoreMatch[2], 10);
-    const totalMarks = scoreMatch[3] ? parseInt(scoreMatch[3], 10) : 200;
+    const totalMarks = scoreMatch[3] ? parseInt(scoreMatch[3], 10) : (scoreMatch[2] ? parseInt(scoreMatch[2], 10) : 200);
 
     if (scoreVal <= totalMarks && totalMarks > 0) {
       const delta: CognitiveDelta = {
@@ -287,7 +287,7 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
   }
 
   // -------------------------------------------------------------
-  // PATTERN 3: 20th Notebook Mistake / Clinical Pearl with Deterministic Keyword Deconstruction
+  // PATTERN 3: Mistakes Journal Mistake / Clinical Pearl with Deterministic Keyword Deconstruction
   // E.g. "missed question on phentolamine in pharma", "DOC Trigeminal neuralgia carbamazepine", "IOC for aortic dissection CT angio"
   // -------------------------------------------------------------
   const mistakeKeywords = /^(?:add\s+|create\s+|log\s+)?(?:missed|wrong|mistake|note|pearl|rule|remember|trap|doc|drug of choice|ioc|investigation of choice)(?::|\s+)\s*(.+)/i;
@@ -347,7 +347,7 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
       targetSubjectId: resolved.id,
       targetSubjectName: resolved.name,
       confidence: 0.92,
-      executiveSummary: `Captured 20th Notebook pearl for ${resolved.name}.`,
+      executiveSummary: `Captured Mistakes Journal pearl for ${resolved.name}.`,
       distillation: {
         twentyNotebookRule: formattedRule,
         tag,

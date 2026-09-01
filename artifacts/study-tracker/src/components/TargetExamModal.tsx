@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Target, Calendar, HelpCircle, Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 
 interface TargetExamModalProps {
   open: boolean;
@@ -95,6 +96,13 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       return;
     }
 
+    const isCurriculumShift = profile.targetExam && profile.targetExam !== finalExam;
+
+    if (isCurriculumShift) {
+       const confirm = window.confirm("Switching your target exam will reorganize your dashboard to reflect the new curriculum. Your previous progress will be safely retained in the background. Proceed?");
+       if (!confirm) return;
+    }
+
     setSaving(true);
     try {
       await updateProfile({
@@ -105,6 +113,12 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         dailyQuestionGoal: Number(dailyQuestionGoal) || 40,
         currentYear,
       });
+
+      if (isCurriculumShift || !profile.targetExam) {
+         await loadUniversalOntology({ targetExam: finalExam, force: false });
+         toast.success('Curriculum synchronized successfully.');
+      }
+
       toast.success('Exam profile updated successfully.');
       onOpenChange(false);
     } catch (err) {

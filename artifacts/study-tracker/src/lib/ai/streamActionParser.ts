@@ -57,7 +57,7 @@ export function extractClinicalActionsFromDelta(delta: CognitiveDelta): AtlasCli
         actions.push({
           id: `act_mistake_${now}_${Math.random().toString(36).substring(2, 6)}`,
           actionType: 'ACTION_UPSERT_MISTAKE',
-          title: `Save 20th Notebook Pearl`,
+          title: `Save Mistakes Journal Pearl`,
           description: `${payload.subjectName} • ${payload.pearlRule.slice(0, 48)}...`,
           isConfirmed: false,
           payload,

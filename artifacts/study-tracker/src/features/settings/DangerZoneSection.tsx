@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import { Trash2, ShieldAlert, CheckCircle2, Sparkles, ArrowRight, Loader2, RefreshCcw, HardDrive, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -6,6 +7,8 @@ import { SettingsRow } from './SettingsLayout';
 import { useLocation } from 'wouter';
 
 export function DangerZoneSection() {
+  const lexicon = useLexicon();
+
   const {
     showDeleteConfirm,
     setShowDeleteConfirm,
@@ -37,7 +40,7 @@ export function DangerZoneSection() {
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Permanently Delete All Data?</DialogTitle>
             <DialogDescription className="text-center text-xs sm:text-sm text-muted-foreground pt-1.5 leading-relaxed">
-              This action cannot be undone. This will permanently delete all 19 subjects, curriculum units, study blocks, score logs, revision schedules, and 20th Notebook rules.
+              This action cannot be undone. This will permanently delete all 19 subjects, curriculum units, study blocks, score logs, revision schedules, and {lexicon.mistakesJournal} rules.
             </DialogDescription>
           </DialogHeader>
 
@@ -50,7 +53,7 @@ export function DangerZoneSection() {
               <li>All 19 NEET PG subjects & curriculum units</li>
               <li>Revision schedules, decay intervals & history</li>
               <li>Clinical score logs & diagnostic metrics</li>
-              <li>20th Notebook high-yield pearls</li>
+              <li>{lexicon.mistakesJournal} high-yield pearls</li>
               <li>Voice transcripts and local cached audio</li>
             </ul>
           </div>

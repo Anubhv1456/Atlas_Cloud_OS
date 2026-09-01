@@ -140,7 +140,7 @@ export async function executeOptimisticMutation(action: AtlasClinicalAction): Pr
           success: true,
           actionId: action.id,
           entityId: mistakeId,
-          message: `Saved 20th Notebook Pearl for ${canonicalName}`,
+          message: `Saved Mistakes Journal Pearl for ${canonicalName}`,
         };
       }
 
@@ -178,7 +178,7 @@ export async function executeOptimisticMutation(action: AtlasClinicalAction): Pr
         const scoreId = await db.scoreLogs.add({
           testName: payload.testName || 'Mock Grand Test',
           score: payload.score,
-          totalMarks: payload.totalMarks || 200,
+          totalMarks: payload.totalMarks || 100,
           timestamp: now,
           weakAreas: (payload.weakAreas || []) as any,
           notes: 'Voice Co-Pilot Score Submission',

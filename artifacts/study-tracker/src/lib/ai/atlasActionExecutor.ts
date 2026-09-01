@@ -60,7 +60,7 @@ export async function executeAtlasAction(action: ParsedAtlasAction): Promise<Act
 
         return {
           success: true,
-          message: `Mistake logged to 20th Notebook (${mistake.tag})`,
+          message: `Mistake logged to Mistakes Journal (${mistake.tag})`,
           data: { mistakeId },
         };
       }

@@ -1,5 +1,5 @@
 import { auth } from '@/lib/firebase';
-import { UNIVERSAL_ONTOLOGY, OntologySubject } from '@/data/ontology';
+import { ALL_SUBJECTS as UNIVERSAL_ONTOLOGY, OntologySubject } from '@/data/ontology';
 
 export interface SanitizedTopic {
   id: string;

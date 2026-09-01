@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { SupportedGeminiModel } from './aiSettingsStorage';
 
 /**
- * 20th Notebook Mistake Tags
+ * Mistakes Journal Mistake Tags
  */
 export const MistakeTagSchema = z.enum([
   'Drug of Choice',
@@ -271,7 +271,7 @@ export const GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
         },
         twentyNotebookRule: {
           type: 'STRING',
-          description: 'High-yield 1-line rule for the 20th Notebook (e.g., "DOC for Torsades de Pointes is IV Magnesium Sulfate").',
+          description: 'High-yield 1-line rule for the Mistakes Journal (e.g., "DOC for Torsades de Pointes is IV Magnesium Sulfate").',
         },
         trapCategory: {
           type: 'STRING',

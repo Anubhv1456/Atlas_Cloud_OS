@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React from 'react';
 import { Link } from 'wouter';
 import { useSubjects, useAllSystems } from '@/db';
@@ -18,6 +19,8 @@ import {
 import { calculateOverallProgress } from '@/lib/progress';
 
 export function HomeRadarSummaryCard() {
+  const lexicon = useLexicon();
+
   const subjects = useSubjects();
   const systems = useAllSystems();
   const { profile } = useExamProfile();
@@ -97,7 +100,7 @@ export function HomeRadarSummaryCard() {
 
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5">
           <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">
-            20th Notebook
+            {lexicon.mistakesJournal}
           </span>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">

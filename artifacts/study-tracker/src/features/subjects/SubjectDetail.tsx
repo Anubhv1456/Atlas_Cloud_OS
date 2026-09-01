@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { StudySystem } from '@/db';
 import { cn } from '@/lib/utils';
 import { calculateSubjectProgress } from '@/lib/progress';
+import { useLexicon } from '@/lib/lexicon';
 import { usePYQSectionLogic, useSubjectDetailLogic } from './SubjectDetail.hooks';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
@@ -607,6 +608,8 @@ const STAGES = [
 ];
 
 export default function SubjectDetail() {
+  const lexicon = useLexicon();
+
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'systems' | 'pyq'>('systems');
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
@@ -662,10 +665,10 @@ export default function SubjectDetail() {
               <button
                 id="btn-subject-mistakes-notebook"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted/80 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/40 active:scale-95"
-                title={`Open 20th Notebook for ${subject?.name || 'this subject'}`}
+                title={`Open ${lexicon.mistakesJournal} for ${subject?.name || 'this subject'}`}
               >
                 <BookOpen className="w-3.5 h-3.5 text-primary" />
-                <span className="hidden sm:inline">20th Notebook</span>
+                <span className="hidden sm:inline">{lexicon.mistakesJournal}</span>
               </button>
             </Link>
             <button
@@ -700,22 +703,22 @@ export default function SubjectDetail() {
             <ProgressBar progress={progress} className="h-2.5" />
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border/40 text-center">
-            <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
+          <div className="flex sm:grid sm:grid-cols-3 gap-2 sm:gap-3 pt-3 border-t border-border/40 text-center overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:pb-0 scrollbar-none snap-x snap-mandatory">
+            <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[110px] sm:w-auto sm:flex-1 snap-center">
               <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">{systems.length}</div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Systems</div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Systems</div>
             </div>
-            <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
+            <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[120px] sm:w-auto sm:flex-1 snap-center">
               <div className={cn("text-lg font-bold leading-none mb-1 font-mono", overdueSystemsCount > 0 ? "text-amber-500" : "text-emerald-500")}>
                 {overdueSystemsCount}
               </div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Needs Attention</div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Needs Attention</div>
             </div>
-            <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
+            <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[110px] sm:w-auto sm:flex-1 snap-center">
               <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">
                 {pyqTotalCount > 0 ? `${pyqCompletedCount}/${pyqTotalCount}` : '0'}
               </div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">PYQs Solved</div>
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">{lexicon.practiceExams}s Solved</div>
             </div>
           </div>
         </div>
@@ -812,11 +815,11 @@ export default function SubjectDetail() {
       </header>
 
       {/* ── Workspace Tab Bar ───────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 border-b border-border/40 pb-2 mb-6">
+      <div className="flex items-center gap-2 border-b border-border/40 pb-2 mb-6 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('systems')}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
+            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none whitespace-nowrap shrink-0 snap-start",
             activeTab === 'systems'
               ? "bg-primary text-primary-foreground shadow-xs"
               : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -828,7 +831,7 @@ export default function SubjectDetail() {
         <button
           onClick={() => setActiveTab('pyq')}
           className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
+            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none whitespace-nowrap shrink-0 snap-start",
             activeTab === 'pyq'
               ? "bg-amber-500 text-white shadow-xs"
               : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"

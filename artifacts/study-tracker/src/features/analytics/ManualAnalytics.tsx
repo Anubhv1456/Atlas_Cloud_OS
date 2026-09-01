@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'wouter';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -55,6 +56,8 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { MistakesNotebookCard } from '@/features/mistakes/MistakesNotebookCard';
 
 export default function ManualAnalytics() {
+  const lexicon = useLexicon();
+
 
   const {
     scoreLogs, subjects, scoredSubjects, systems, densityLimit, setDensityLimit, searchQuery, setSearchQuery, chartData, displayLogs,
@@ -159,7 +162,7 @@ export default function ManualAnalytics() {
             <Link
               href={`/mistakes?subjectId=${encodeURIComponent(String(studyRecommendation.system.subjectId))}&systemId=${encodeURIComponent(String(studyRecommendation.system.id || ''))}&origin=analytics_apex`}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border/80 hover:border-primary/40 text-xs font-bold text-muted-foreground hover:text-foreground transition-all shadow-2xs hover:shadow-xs cursor-pointer active:scale-95"
-              title={`Review 20th Notebook rules for ${studyRecommendation.subjectName}`}
+              title={`Review {lexicon.mistakesJournal} rules for ${studyRecommendation.subjectName}`}
             >
               <BookOpen className="w-3.5 h-3.5 text-primary" />
               <span>Review Mistakes</span>
@@ -457,7 +460,7 @@ export default function ManualAnalytics() {
                           <Link
                             href={mistakesUrl}
                             className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg bg-background/80 hover:bg-background text-foreground shadow-2xs cursor-pointer shrink-0"
-                            title={`Open 20th Notebook rules for ${sys.fullName}`}
+                            title={`Open {lexicon.mistakesJournal} rules for ${sys.fullName}`}
                           >
                             <BookOpen className="w-3.5 h-3.5 text-primary" />
                           </Link>

@@ -137,7 +137,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     }
 
     // Ensure base curriculum is loaded idempotently in background
-    loadUniversalOntology().catch(() => {});
+    loadUniversalOntology({ targetExam: selectedGoal || 'MBBS Professional Exams' }).catch(() => {});
 
     // Permanently mark onboarding as completed
     await markOnboarded();
@@ -171,7 +171,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       setImportProgress(15);
       setImportStatusText('Preparing Universal Medical Curriculum...');
 
-      await loadUniversalOntology({
+      await loadUniversalOntology({ targetExam: selectedGoal,
         onProgress: (pct, msg) => {
           setImportProgress(pct);
           setImportStatusText(msg);

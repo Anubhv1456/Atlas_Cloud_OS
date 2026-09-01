@@ -74,7 +74,7 @@ export function WhyRecommendationSheet({
             {/* Exam Yield */}
             <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/25 space-y-1">
               <div className="flex items-center justify-between text-[11px] font-semibold text-sky-400">
-                <span>NEET Yield</span>
+                <span>Exam Yield</span>
                 <Target className="w-3.5 h-3.5" />
               </div>
               <div className="text-xl font-black font-mono text-sky-400">

@@ -3,7 +3,8 @@ import { User } from 'firebase/auth';
 import { createSignedVaultBackup, verifyVaultBackupProvenance, AtlasVaultEnvelope } from './vaultSignature';
 import { StudySystem, CurriculumSet, HistoryEntry, DEFAULT_OPERATIONAL_MODE } from '@/db/types';
 import { scheduleFirstRevision, scheduleNextRevision, today } from '@/db/revisionEngine';
-import { UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { getLocalExamProfile } from '@/lib/examProfile';
 import { generateHLC } from './hlc';
 import { doc, setDoc, getDocs, collection, writeBatch } from 'firebase/firestore';
 import { firestoreDb } from './firebase';
@@ -309,7 +310,8 @@ export async function restoreCompleteVault(
     if (existingSets.length === 0 && isCompleted) {
       // Look up topics from Universal Ontology if available
       let topicIds: string[] = [];
-      for (const sub of UNIVERSAL_ONTOLOGY) {
+      const activeOntology = getOntologyForExam(getLocalExamProfile().targetExam || 'NEET PG');
+      for (const sub of activeOntology) {
         const foundSys = sub.systems.find(s => s.name.toLowerCase() === sys.name.toLowerCase());
         if (foundSys && foundSys.topics.length > 0) {
           topicIds = foundSys.topics.map(t => t.id);
@@ -749,7 +751,8 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
       if (isSystemCompleted) {
         // Recover missing CurriculumSet
         let topicIds: string[] = [];
-        for (const sub of UNIVERSAL_ONTOLOGY) {
+        const activeOntology = getOntologyForExam(getLocalExamProfile().targetExam || 'NEET PG');
+      for (const sub of activeOntology) {
           const foundSys = sub.systems.find(s => s.name.toLowerCase() === sys.name.toLowerCase());
           if (foundSys && foundSys.topics.length > 0) {
             topicIds = foundSys.topics.map(t => t.id);

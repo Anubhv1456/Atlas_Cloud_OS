@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState } from 'react';
 import { useSubjects, useAllSystems, updateSubjectsOrder } from '@/db';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
@@ -21,6 +22,8 @@ import Analytics from '@/features/analytics/Analytics';
 import { cn } from '@/lib/utils';
 
 export default function SubjectRadarPage() {
+  const lexicon = useLexicon();
+
   const [activeTab, setActiveTab] = useState<'curriculum' | 'diagnostics'>('curriculum');
   const subjects = useSubjects();
   const systems = useAllSystems();
@@ -131,7 +134,7 @@ export default function SubjectRadarPage() {
       {/* ── Main Tab Content ─────────────────────────────────────────────── */}
       {activeTab === 'curriculum' ? (
         <div className="space-y-6">
-          {/* 20th Notebook Mistakes & Traps Card */}
+          {/* {lexicon.mistakesJournal} Mistakes & Traps Card */}
           <MistakesNotebookCard />
 
           {/* Subjects Grid & Portfolio */}

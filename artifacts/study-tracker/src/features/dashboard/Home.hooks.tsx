@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import { ALL_SUBJECTS } from "@/data/ontology";
 import { isSystemComplete } from '@/lib/progress';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -21,6 +22,8 @@ import { DropResult } from '@hello-pangea/dnd';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 export function useHomeLogic() {
+  const lexicon = useLexicon();
+
 
   const subjects = useSubjects();
   const streak = useCurrentStreak();

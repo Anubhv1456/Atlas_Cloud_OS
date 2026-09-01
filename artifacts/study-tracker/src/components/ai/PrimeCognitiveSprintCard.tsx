@@ -62,7 +62,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
             </span>
 
             <span className="text-[11px] font-mono text-muted-foreground">
-              NEET-PG / INI-CET Weightage Priority
+              Board Exam Weightage Priority
             </span>
           </div>
 

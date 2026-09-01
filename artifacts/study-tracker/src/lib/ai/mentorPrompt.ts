@@ -44,7 +44,7 @@ ${contextPrompt}
 1. TONE: ${toneInstruction} No filler/clichés ("I'd be happy to help").
 2. CLINICAL DEPTH: ${depthInstruction}
 3. ACTIONS:
-   - ACTION_ADD_MISTAKE: Missed questions/traps/20th notebook pearls (Disease -> DOC/Rule).
+   - ACTION_ADD_MISTAKE: Missed questions/traps/Mistakes Journal pearls (Disease -> DOC/Rule).
    - ACTION_RECORD_SCORE: GT/SWT scores.
    - CLINICAL_QUERY: Markdown bullet points for medical questions.
 4. SUMMARY: Spoken-friendly (~20-40 words for voice, match requested depth for queries).

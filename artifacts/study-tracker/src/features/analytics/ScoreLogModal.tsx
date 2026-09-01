@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db, ScoreLog } from '@/db';
@@ -45,6 +46,8 @@ export function ScoreLogModal({
   initialTitle,
   onSuccess,
 }: ScoreLogModalProps) {
+  const lexicon = useLexicon();
+
   const { toast } = useToast();
   const subjects = useLiveQuery(() => db.subjects.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
   const systems = useLiveQuery(() => db.systems.toArray().then(res => res.filter(s => !s.deletedAt)), []) || [];
@@ -369,7 +372,7 @@ export function ScoreLogModal({
                 </div>
               ) : (
                 <div className="space-y-1.5 mb-4">
-                  <Label className="text-xs font-semibold text-foreground">PYQ Year (Optional)</Label>
+                  <Label className="text-xs font-semibold text-foreground">{lexicon.practiceExams} Year (Optional)</Label>
                   <Select
                     value={pyqYearId ? String(pyqYearId) : 'none'}
                     onValueChange={(val) => setPyqYearId(val === 'none' ? undefined : val)}

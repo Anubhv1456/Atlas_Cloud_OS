@@ -24,11 +24,32 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // Suppress benign ResizeObserver notifications
-window.addEventListener('error', (e) => {
-  if (e.message && e.message.includes('ResizeObserver loop')) {
-    e.stopImmediatePropagation();
+const _setupResizeObserverLoopFix = () => {
+  const _windowError = window.onerror;
+  window.onerror = function (msg, url, line, col, error) {
+    if (typeof msg === 'string' && msg.includes('ResizeObserver loop')) {
+      return true;
+    }
+    if (_windowError) return _windowError(msg, url, line, col, error);
+  };
+  
+  window.addEventListener('error', (e) => {
+    if (e.message && e.message.includes('ResizeObserver loop')) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, { capture: true });
+};
+_setupResizeObserverLoopFix();
+
+// Also suppress it from console.error to avoid React/Vite overlays
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  if (typeof args[0] === 'string' && args[0].includes('ResizeObserver loop')) {
+    return;
   }
-});
+  originalConsoleError.apply(console, args);
+};
 
 // Register PWA service worker with update lifecycle tracking
 if ('serviceWorker' in navigator) {

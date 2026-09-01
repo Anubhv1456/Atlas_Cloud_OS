@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useSearch, Link } from 'wouter';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -44,6 +45,8 @@ import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
 import { FlashcardStudioModal } from '@/components/FlashcardStudioModal';
 
 export function getTagMeta(tag: string) {
+  const lexicon = useLexicon();
+
   const norm = tag.toLowerCase();
   if (norm === 'doc' || norm.includes('pharma') || norm.includes('drug')) {
     return { icon: '💊', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' };
@@ -79,6 +82,8 @@ export function getTagMeta(tag: string) {
 }
 
 export default function MistakeRecoveryQueue() {
+  const lexicon = useLexicon();
+
   const searchStr = useSearch();
   const [, setLocation] = useLocation();
 
@@ -232,7 +237,7 @@ export default function MistakeRecoveryQueue() {
       return;
     }
 
-    let markdown = `# 20th Notebook — Rapid Pre-GT Revision Sheet\n`;
+    let markdown = `# {lexicon.mistakesJournal} — Rapid Pre-GT Revision Sheet\n`;
     markdown += `Generated on ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}\n\n`;
 
     groupedMistakes.forEach(group => {
@@ -279,7 +284,7 @@ export default function MistakeRecoveryQueue() {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-            <span>20th Notebook</span>
+            <span>{lexicon.mistakesJournal}</span>
             <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
               {activeMistakes.length} Active Rules
             </span>
@@ -607,7 +612,7 @@ export default function MistakeRecoveryQueue() {
           </div>
           <div className="space-y-1 max-w-sm">
             <h3 className="text-base font-bold text-foreground">
-              {statusFilter === 'archived' ? 'No Archived Rules' : 'No 20th Notebook Rules Found'}
+              {statusFilter === 'archived' ? 'No Archived Rules' : 'No {lexicon.mistakesJournal} Rules Found'}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {searchQuery || selectedSubjectId !== 'all' || selectedTag !== 'all'

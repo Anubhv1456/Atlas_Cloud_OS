@@ -46,7 +46,7 @@ export const HIGH_YIELD_CLINICAL_KEYWORDS = [
   'multiple sclerosis', 'guillain barre', 'parkinson', 'levodopa', 'carbidopa',
   'alzheimer', 'donepezil', 'memantine', 'wilson disease', 'penicillamine',
   'hemochromatosis', 'deferoxamine', 'cirrhosis', 'portal hypertension', 'esophageal varices',
-  'q-bank', 'marrow', 'pre-pg', 'first aid', 'grand test', 'mock test', 'pyq', '20th notebook'
+  'q-bank', 'practice sets', 'mock exams', 'master summary', 'grand test', 'mock test', 'practice test', 'Mistakes Journal'
 ];
 
 /**
@@ -108,9 +108,9 @@ export const speechGrammarCorrector = {
       [/\bgrand test\b/gi, 'Grand Test'],
       [/\bgt\b/gi, 'GT'],
       [/\bdoc\b/gi, 'Drug of Choice'],
-      [/\b20th note book\b/gi, '20th notebook'],
-      [/\btwentieth notebook\b/gi, '20th notebook'],
-      [/\b20th note\b/gi, '20th notebook'],
+      [/\b20th note book\b/gi, 'Mistakes Journal'],
+      [/\btwentieth notebook\b/gi, 'Mistakes Journal'],
+      [/\b20th note\b/gi, 'Mistakes Journal'],
       [/\bchar cot\b/gi, 'Charcot'],
       [/\bcharcots\b/gi, 'Charcot\'s'],
       [/\bshark coat\b/gi, 'Charcot'],
@@ -127,9 +127,9 @@ export const speechGrammarCorrector = {
       [/\btakayasu arteritis\b/gi, 'Takayasu arteritis'],
       [/\bkawasakis\b/gi, 'Kawasaki'],
       [/\bmyesthenia\b/gi, 'myasthenia'],
-      [/\bfirstaid\b/gi, 'First Aid'],
-      [/\bmarro\b/gi, 'Marrow'],
-      [/\bpre pg\b/gi, 'Pre-PG'],
+      [/\bfirstaid\b/gi, 'Master Summary'],
+      [/\bmarro\b/gi, 'QBank'],
+      [/\bpre pg\b/gi, 'QBank'],
       [/\bneet pg\b/gi, 'NEET-PG'],
       [/\bus mle\b/gi, 'USMLE'],
       [/\binicet\b/gi, 'INI-CET'],

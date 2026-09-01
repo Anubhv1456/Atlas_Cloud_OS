@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -19,6 +20,8 @@ import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { cn } from '@/lib/utils';
 
 export function MistakesNotebookCard() {
+  const lexicon = useLexicon();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSubjectId, setModalSubjectId] = useState<string | number | undefined>(undefined);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -87,7 +90,7 @@ export function MistakesNotebookCard() {
                 <BookOpen className="w-4 h-4" />
               </span>
               <h2 className="text-base font-bold text-foreground tracking-tight">
-                20th Notebook
+                {lexicon.mistakesJournal}
               </h2>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">

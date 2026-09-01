@@ -136,7 +136,7 @@ export async function executeLocalMedicalCognitiveEngine(
         .join('\n');
       summary = `🩺 **Priority Memory Decay Radar**:\n\nYou have **${dueQueue.length} systems** currently experiencing cognitive decay:\n\n${itemsList}\n\n💡 **Prescription**: Start with a **45-minute active recall review** on **${urgentItems[0].subjectName} - ${urgentItems[0].systemName}** before watching any new lectures.`;
     } else if (weakestSubject) {
-      summary = `🩺 **Curriculum Status**:\n\nYour current highest friction subject is **${weakestSubject.name}** with a memory loss factor of **${weakestSubject.memoryLossPercent}%** and ${weakestSubject.activeMistakesCount} unresolved 20th notebook errors.\n\n🎯 **Recommendation**: Allocate 1 hour today to high-yield Q-Bank questions in **${weakestSubject.name}**.`;
+      summary = `🩺 **Curriculum Status**:\n\nYour current highest friction subject is **${weakestSubject.name}** with a memory loss factor of **${weakestSubject.memoryLossPercent}%** and ${weakestSubject.activeMistakesCount} unresolved Mistakes Journal errors.\n\n🎯 **Recommendation**: Allocate 1 hour today to high-yield Q-Bank questions in **${weakestSubject.name}**.`;
     } else {
       summary = `✨ **Cognitive Retention is Stable**!\n\nAll your scheduled system revisions are up to date with retrievability above baseline threshold. Would you like to do a **rapid 10-question Socratic drill** on your primary focus subject or log today's study block?`;
     }
@@ -192,7 +192,7 @@ export async function executeLocalMedicalCognitiveEngine(
   for (const pearl of HIGH_YIELD_CLINICAL_KNOWLEDGE) {
     const isMatch = pearl.keywords.some(kw => lowerInput.includes(kw));
     if (isMatch) {
-      const summary = `📋 **Clinical Takeaway — ${pearl.topic}** (${pearl.subject}):\n\n• **Core Rule**: ${pearl.pearl}\n• ⚠️ **High-Yield Pitfall**: ${pearl.trap}\n\n*Would you like me to commit this rule to your 20th Notebook error ledger?*`;
+      const summary = `📋 **Clinical Takeaway — ${pearl.topic}** (${pearl.subject}):\n\n• **Core Rule**: ${pearl.pearl}\n• ⚠️ **High-Yield Pitfall**: ${pearl.trap}\n\n*Would you like me to commit this rule to your Mistakes Journal error ledger?*`;
       
       const action: ParsedAtlasAction = {
         action: 'ACTION_ADD_MISTAKE',
@@ -230,7 +230,7 @@ export async function executeLocalMedicalCognitiveEngine(
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // 4. INTENT: 20th Notebook Mistake Addition (Natural Language Fallback)
+  // 4. INTENT: Mistakes Journal Mistake Addition (Natural Language Fallback)
   // ─────────────────────────────────────────────────────────────────────────────
   const isMistakeIntent = /pearl|mistake|note|trap|rule|doc\s+for|ioc\s+for|remember\s+that/i.test(lowerInput);
   if (isMistakeIntent) {
@@ -239,7 +239,7 @@ export async function executeLocalMedicalCognitiveEngine(
       .replace(/^(?:add\s+pearl|add\s+mistake|log\s+note|remember\s+that|note:?)\s*:?/i, '')
       .trim();
 
-    const summary = `💡 **20th Notebook Pearl Synthesized**:\n\n**Subject**: ${subjectResolved.name}\n**Rule**: "${cleanRule}"\n\nI have generated the interactive action card below. Click **Confirm** to lock this into your error ledger.`;
+    const summary = `💡 **Mistakes Journal Pearl Synthesized**:\n\n**Subject**: ${subjectResolved.name}\n**Rule**: "${cleanRule}"\n\nI have generated the interactive action card below. Click **Confirm** to lock this into your error ledger.`;
 
     const action: ParsedAtlasAction = {
       action: 'ACTION_ADD_MISTAKE',
@@ -280,7 +280,7 @@ export async function executeLocalMedicalCognitiveEngine(
   if (isStudyIntent) {
     const subjectResolved = fastLookupSubject(input);
 
-    const summary = `🩺 **${subjectResolved.name} Review Logged**:\n\nGreat work reviewing **${subjectResolved.name}**. Did you encounter any volatile traps, Drug of Choice (DOC), or high-yield rules to log in your **20th Notebook**? Or would you like a **rapid Socratic drill** on this topic?`;
+    const summary = `🩺 **${subjectResolved.name} Review Logged**:\n\nGreat work reviewing **${subjectResolved.name}**. Did you encounter any volatile traps, Drug of Choice (DOC), or high-yield rules to log in your **Mistakes Journal**? Or would you like a **rapid Socratic drill** on this topic?`;
 
     return {
       delta: {
@@ -318,7 +318,7 @@ export async function executeLocalMedicalCognitiveEngine(
   // 6. DEFAULT GENERAL MEDICAL ASSISTANT DIALOGUE
   // ─────────────────────────────────────────────────────────────────────────────
   const subjectFound = fastLookupSubject(input);
-  const generalResponse = `👋 **Atlas Study Assistant**: I'm tracking your **19-subject preparation curriculum** and live Ebbinghaus decay curve.\n\nYou can:\n• Ask for a **Voice Recall Drill** (e.g. *"Drill me on ${subjectFound.name}"*)\n• Check **Memory Decay** (e.g. *"What are my priority decay topics?"*)\n• Dictate **Study Sessions** (e.g. *"Studied 45 mins ${subjectFound.name}"*)\n• Log **20th Notebook Mistakes** (e.g. *"Add pearl: DOC for Trigeminal Neuralgia is Carbamazepine"*)\n\nWhat would you like to focus on right now?`;
+  const generalResponse = `👋 **Atlas Study Assistant**: I'm tracking your **19-subject preparation curriculum** and live Ebbinghaus decay curve.\n\nYou can:\n• Ask for a **Voice Recall Drill** (e.g. *"Drill me on ${subjectFound.name}"*)\n• Check **Memory Decay** (e.g. *"What are my priority decay topics?"*)\n• Dictate **Study Sessions** (e.g. *"Studied 45 mins ${subjectFound.name}"*)\n• Log **Mistakes Journal Mistakes** (e.g. *"Add pearl: DOC for Trigeminal Neuralgia is Carbamazepine"*)\n\nWhat would you like to focus on right now?`;
 
   return {
     delta: {

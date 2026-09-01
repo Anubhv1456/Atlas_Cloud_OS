@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { db, dbEvents } from '@/db';
-import { UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
 import { generateHLC } from '@/lib/hlc';
 import * as T from '@/db/types';
 
@@ -26,17 +26,19 @@ export interface LoadOntologyOptions {
   force?: boolean;
   showToast?: boolean;
   onProgress?: (percent: number, stepLabel: string) => void;
+  targetExam?: string;
 }
 
 export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
-  const { force = false, showToast = false, onProgress } = options;
+  const { force = false, showToast = false, onProgress, targetExam = 'NEET PG' } = options;
+  const activeOntology = getOntologyForExam(targetExam);
 
   try {
     // Check existing active subjects
     const existingSubjects = await db.subjects.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
     
-    // Idempotency: If all ontology subjects are already present and we are not forcing, exit cleanly
-    if (existingSubjects.length >= 19 && !force) {
+    // Idempotency: If ontology subjects are already present and we are not forcing, exit cleanly
+    if (existingSubjects.length >= activeOntology.length && !force) {
       if (onProgress) onProgress(100, 'Curriculum already loaded');
       return { success: true, count: existingSubjects.length, reloaded: false };
     }
@@ -80,7 +82,7 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
 
     let subjectOrder = 0;
 
-    for (const sub of UNIVERSAL_ONTOLOGY) {
+    for (const sub of activeOntology) {
       const normSubName = normalizeName(sub.name);
       const existingSub = existingMapByNorm.get(normSubName);
 

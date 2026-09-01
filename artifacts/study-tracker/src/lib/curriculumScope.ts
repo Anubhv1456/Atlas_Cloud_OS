@@ -1,8 +1,3 @@
-/**
- * Official Medical Curriculum & Professional Year Partitioning
- * Aligned with NMC CBME Guidelines for Indian Medical Colleges & International Standards.
- */
-
 export interface ProfPhaseDefinition {
   phaseId: string;
   name: string;
@@ -11,64 +6,35 @@ export interface ProfPhaseDefinition {
   canonicalSubjects: string[];
 }
 
-export const NMC_MBBS_PROFESSIONAL_YEARS: Record<string, ProfPhaseDefinition> = {
-  '1st Year MBBS': {
-    phaseId: 'phase_1',
-    name: '1st Professional (Phase I)',
-    shortName: '1st Prof',
-    description: 'Pre-Clinical Foundation (12 Months)',
-    canonicalSubjects: ['Anatomy', 'Physiology', 'Biochemistry']
+export const ACADEMIC_PHASES: Record<string, Record<string, ProfPhaseDefinition>> = {
+  'NEET PG': {
+    '1st Year MBBS': { phaseId: 'phase_1', name: '1st Professional', shortName: '1st Prof', description: 'Pre-Clinical Foundation', canonicalSubjects: ['Anatomy', 'Physiology', 'Biochemistry'] },
+    '2nd Year MBBS': { phaseId: 'phase_2', name: '2nd Professional', shortName: '2nd Prof', description: 'Para-Clinical Core', canonicalSubjects: ['Pathology', 'Microbiology', 'Pharmacology'] },
+    '3rd Year MBBS': { phaseId: 'phase_3_part_1', name: '3rd Professional Part I', shortName: '3rd Prof Part 1', description: 'Clinical Specialties', canonicalSubjects: ['Forensic Medicine & Toxicology', 'Forensic Medicine', 'Community Medicine (PSM)', 'Community Medicine', 'Ophthalmology', 'ENT (Otorhinolaryngology)', 'ENT'] },
+    'Final MBBS': { phaseId: 'phase_3_part_2', name: 'Final Professional Part II', shortName: 'Final Prof', description: 'Major Clinicals', canonicalSubjects: ['General Medicine', 'Medicine', 'General Surgery', 'Surgery', 'Obstetrics & Gynaecology', 'OBGY', 'Pediatrics', 'Orthopedics', 'Dermatology', 'Psychiatry', 'Radiology', 'Anaesthesiology'] }
   },
-  '2nd Year MBBS': {
-    phaseId: 'phase_2',
-    name: '2nd Professional (Phase II)',
-    shortName: '2nd Prof',
-    description: 'Para-Clinical Core (12 Months)',
-    canonicalSubjects: ['Pathology', 'Microbiology', 'Pharmacology']
-  },
-  '3rd Year MBBS': {
-    phaseId: 'phase_3_part_1',
-    name: '3rd Professional Part I (Phase III Part 1)',
-    shortName: '3rd Prof Part 1',
-    description: 'Clinical Specialties & Preventive Medicine (12 Months)',
-    canonicalSubjects: [
-      'Forensic Medicine & Toxicology',
-      'Forensic Medicine',
-      'Community Medicine (PSM)',
-      'Community Medicine',
-      'Ophthalmology',
-      'ENT (Otorhinolaryngology)',
-      'ENT'
-    ]
-  },
-  'Final MBBS': {
-    phaseId: 'phase_3_part_2',
-    name: 'Final Professional Part II (Phase III Part 2)',
-    shortName: 'Final Prof',
-    description: 'Major Clinical Medicine & Surgery (18 Months)',
-    canonicalSubjects: [
-      'General Medicine',
-      'Medicine',
-      'General Surgery',
-      'Surgery',
-      'Obstetrics & Gynaecology',
-      'Obstetrics and Gynaecology',
-      'OBGY',
-      'Pediatrics',
-      'Paediatrics',
-      'Orthopedics',
-      'Dermatology',
-      'Psychiatry',
-      'Radiology',
-      'Anaesthesia',
-      'Anaesthesiology'
-    ]
+  'USMLE': {
+    'MS1': { phaseId: 'usmle_ms1', name: 'Medical School Year 1', shortName: 'MS1', description: 'Basic Sciences', canonicalSubjects: ['Biochemistry & Medical Genetics', 'General Principles', 'Cardiovascular System', 'Respiratory System'] },
+    'MS2': { phaseId: 'usmle_ms2', name: 'Medical School Year 2', shortName: 'MS2', description: 'Pathology & Pharmacology Integration', canonicalSubjects: ['General Pathology & Pharmacology', 'Microbiology & Immunology', 'Renal System', 'Gastrointestinal System', 'Endocrine System', 'Reproductive System', 'Nervous System & Special Senses', 'Musculoskeletal, Skin & Connective Tissue', 'Hematology & Oncology', 'Immune System'] },
+    'MS3 (Clinical)': { phaseId: 'usmle_ms3', name: 'Medical School Year 3', shortName: 'MS3', description: 'Core Clinical Rotations', canonicalSubjects: [] },
+    'MS4 (Advanced)': { phaseId: 'usmle_ms4', name: 'Medical School Year 4', shortName: 'MS4', description: 'Advanced Clinicals / Sub-I', canonicalSubjects: [] }
   }
 };
 
-/**
- * Checks if a subject belongs to the user's active academic year when MBBS Professional Exam mode is selected.
- */
+export const NMC_MBBS_PROFESSIONAL_YEARS = ACADEMIC_PHASES['NEET PG'];
+
+export function getExamMaxScore(targetExam?: string): number {
+  if (!targetExam) return 200;
+  const lower = targetExam.toLowerCase();
+  if (lower.includes('usmle step 2')) return 300; 
+  if (lower.includes('usmle step 1')) return 280; 
+  if (lower.includes('usmle')) return 280;
+  if (lower.includes('neet')) return 200;
+  if (lower.includes('inicet') || lower.includes('ini-cet')) return 200;
+  if (lower.includes('fmge')) return 300;
+  return 100;
+}
+
 export function isSubjectInProfScope(
   subjectName: string,
   targetExam?: string,
@@ -76,46 +42,53 @@ export function isSubjectInProfScope(
 ): boolean {
   if (!targetExam || !currentYear) return true;
   
-  const isMBBSProf = targetExam.toLowerCase().includes('mbbs') || targetExam.toLowerCase().includes('professional exam');
-  if (!isMBBSProf) {
-    // Non-MBBS exams (NEET PG, INICET, USMLE) include all subjects
-    return true;
-  }
+  const isUSMLE = targetExam.toLowerCase().includes('usmle');
+  const examKey = isUSMLE ? 'USMLE' : 'NEET PG';
+  const phaseDict = ACADEMIC_PHASES[examKey];
 
-  // Normalize year key
-  const normalizedYear = Object.keys(NMC_MBBS_PROFESSIONAL_YEARS).find(
+  if (!phaseDict) return true;
+
+  const normalizedYear = Object.keys(phaseDict).find(
     k => k.toLowerCase() === currentYear.toLowerCase() || currentYear.toLowerCase().includes(k.toLowerCase().split(' ')[0])
   );
 
-  if (!normalizedYear) {
-    // If year is unknown (e.g. Intern/Other), allow all subjects
-    return true;
-  }
+  if (!normalizedYear) return true;
 
-  const phase = NMC_MBBS_PROFESSIONAL_YEARS[normalizedYear];
-  if (!phase) return true;
+  const phase = phaseDict[normalizedYear];
+  if (!phase || !phase.canonicalSubjects || phase.canonicalSubjects.length === 0) return true;
 
   const cleanSubjectName = subjectName.trim().toLowerCase();
   return phase.canonicalSubjects.some(s => s.toLowerCase() === cleanSubjectName || cleanSubjectName.includes(s.toLowerCase()) || s.toLowerCase().includes(cleanSubjectName));
 }
 
-/**
- * Returns the list of canonical subject names for an exam profile.
- */
 export function getAllowedSubjectsForProfile(
   targetExam?: string,
   currentYear?: string
 ): string[] | null {
   if (!targetExam || !currentYear) return null;
+  const isUSMLE = targetExam.toLowerCase().includes('usmle');
+  const examKey = isUSMLE ? 'USMLE' : 'NEET PG';
+  const phaseDict = ACADEMIC_PHASES[examKey];
 
-  const isMBBSProf = targetExam.toLowerCase().includes('mbbs') || targetExam.toLowerCase().includes('professional exam');
-  if (!isMBBSProf) return null;
+  if (!phaseDict) return null;
 
-  const normalizedYear = Object.keys(NMC_MBBS_PROFESSIONAL_YEARS).find(
+  const normalizedYear = Object.keys(phaseDict).find(
     k => k.toLowerCase() === currentYear.toLowerCase() || currentYear.toLowerCase().includes(k.toLowerCase().split(' ')[0])
   );
-
   if (!normalizedYear) return null;
+  return phaseDict[normalizedYear].canonicalSubjects;
+}
 
-  return NMC_MBBS_PROFESSIONAL_YEARS[normalizedYear].canonicalSubjects;
+export function getPhaseNameForProfile(targetExam?: string, currentYear?: string): string {
+  if (!targetExam || !currentYear) return currentYear || 'Syllabus';
+  const isUSMLE = targetExam.toLowerCase().includes('usmle');
+  const examKey = isUSMLE ? 'USMLE' : 'NEET PG';
+  const phaseDict = ACADEMIC_PHASES[examKey];
+  if (!phaseDict) return currentYear;
+  
+  const normalizedYear = Object.keys(phaseDict).find(
+    k => k.toLowerCase() === currentYear.toLowerCase() || currentYear.toLowerCase().includes(k.toLowerCase().split(' ')[0])
+  );
+  if (!normalizedYear) return currentYear;
+  return phaseDict[normalizedYear].name || currentYear;
 }

@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -25,6 +26,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function BetaAccess() {
+  const lexicon = useLexicon();
+
+
   const { hasAccess, paymentStatus, paymentRejectionNote, vaultActivationRequired, vaultProvenance, loading: accessLoading } = useBetaAccess();
   const { user, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
@@ -424,7 +428,7 @@ export default function BetaAccess() {
                   <span>High-Volume Study Vault Restored</span>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  Your curriculum, custom notes, and 20th Notebook mistakes ({vaultProvenance?.metrics?.subjectCount || 19} subjects, {vaultProvenance?.metrics?.totalStudyMinutes || 180}+ study minutes) are safely restored in your browser. To generate active recall recommendations and continuous SDSR scheduling, please activate your Atlas Pass.
+                  Your curriculum, custom notes, and {lexicon.mistakesJournal} mistakes ({vaultProvenance?.metrics?.subjectCount || 19} subjects, {vaultProvenance?.metrics?.totalStudyMinutes || 180}+ study minutes) are safely restored in your browser. To generate active recall recommendations and continuous SDSR scheduling, please activate your Atlas Pass.
                 </p>
               </div>
             )}

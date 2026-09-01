@@ -143,7 +143,7 @@ export const DynamicIslandCapsule: React.FC = () => {
 
       handleDismiss();
     } catch (err: any) {
-      toast.error('Could not save note', { description: err.message });
+      if(err.message !== 'AI_PAYWALL_REQUIRED') toast.error('Could not save note', { description: err.message });
     }
   };
 

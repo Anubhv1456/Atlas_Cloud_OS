@@ -1,3 +1,4 @@
+import { useLexicon } from '@/lib/lexicon';
 import React, { useEffect, useState } from 'react';
 import { 
   Zap, 
@@ -20,6 +21,8 @@ import { cn } from '@/lib/utils';
 import { fetchCohortTelemetryLogs, KnowledgeGapItem } from '@/lib/telemetry';
 
 export function CohortTelemetryView() {
+  const lexicon = useLexicon();
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -178,7 +181,7 @@ export function CohortTelemetryView() {
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            {drillsTotal > 0 ? 'Active recall recovery success rate' : 'Populates from 20th Notebook reviews'}
+            {drillsTotal > 0 ? 'Active recall recovery success rate' : 'Populates from {lexicon.mistakesJournal} reviews'}
           </p>
         </div>
 
@@ -310,7 +313,7 @@ export function CohortTelemetryView() {
               <Brain className="w-6 h-6 text-primary mx-auto opacity-70" />
               <p className="text-xs font-semibold text-foreground">No Knowledge Gaps Detected Yet</p>
               <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
-                As students log mistakes or fail active recall drills in their 20th Notebook, high-yield retrieval failure clusters will automatically populate here in real time.
+                As students log mistakes or fail active recall drills in their {lexicon.mistakesJournal}, high-yield retrieval failure clusters will automatically populate here in real time.
               </p>
             </div>
           )}
@@ -363,7 +366,7 @@ export function CohortTelemetryView() {
             {totalErrorsCount > 0 ? (
               <><strong>Active Recall Health</strong>: Realtime taxonomy distinguishes execution slips from retrieval decay, allowing Atlas to recalibrate revision intervals appropriately.</>
             ) : (
-              <><strong>Ready for Live Data</strong>: Error classifications will update as students categorize test mistakes in their 20th Notebook.</>
+              <><strong>Ready for Live Data</strong>: Error classifications will update as students categorize test mistakes in their {lexicon.mistakesJournal}.</>
             )}
           </p>
         </div>
