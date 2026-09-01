@@ -140,14 +140,7 @@ export default function Home() {
           
           {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
         <div className="mb-8">
-          <NextActionCard
-            customPrimarySubject={customPrimarySubject}
-            customPrimarySystem={customPrimarySystem}
-            setFocusDialogType={setFocusDialogType}
-            setFocus={setFocus}
-            setSubjectFocus={setSubjectFocus}
-            goToSystem={goToSystem}
-          />
+          <NextActionCard />
         </div>
 
         {/* ── Dedicated Subject Radar Entry Card ──────────────────────────────── */}

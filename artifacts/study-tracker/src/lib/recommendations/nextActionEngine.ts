@@ -41,6 +41,7 @@ export interface AlgorithmWhyBreakdown {
   weakTopicsCount: number;
   revisionPass: number;
   depthLabel: string;
+  humanizedMessage?: string;
   estimatedMinutes?: number;
   circadianAffinity: string;
   formulaString: string;
@@ -207,7 +208,7 @@ export async function getNextActionRecommendation(
   const mode = operationalMode.mode || 'standard';
   const isTacticalSprint = mode === 'tactical_sprint';
   const isClinicalDuty = mode === 'clinical_duty';
-  const isFinalLap = mode === 'final_lap';
+  let isFinalLap = mode === 'final_lap';
   const isHoliday = mode === 'holiday';
 
   // 2. Fetch history for today to detect momentum & daily volume
@@ -240,7 +241,8 @@ export async function getNextActionRecommendation(
   }
 
   // In Clinical Duty mode, force quick session budget and cap to 30 min micro-doses
-  const sessionBudget: SessionBudget = isClinicalDuty ? 'quick' : (options.sessionBudget || 'quick');
+  let sessionBudget: SessionBudget = isClinicalDuty ? 'quick' : (options.sessionBudget || 'quick');
+  if (circadian.period === 'evening' && !isFinalLap) { sessionBudget = 'quick'; }
 
   // Recalibration status check
   const recalibrationStatus = isSoftRecalibrating(operationalMode, now);
@@ -291,7 +293,18 @@ export async function getNextActionRecommendation(
   
   // Strategy Injection
   const strategy = StrategyFactory.get(activeExam);
-  const daysRemaining = (options.daysRemaining !== undefined) ? options.daysRemaining : 60; // Mock calculation
+    // Calculate actual days remaining from profile if available
+  let calculatedDays = 60; // fallback
+  if (profile.targetExamDate) {
+    const targetDate = new Date(profile.targetExamDate);
+    if (!isNaN(targetDate.getTime())) {
+      calculatedDays = Math.max(0, Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    }
+  }
+  const daysRemaining = (options.daysRemaining !== undefined) ? options.daysRemaining : calculatedDays;
+  if (daysRemaining < 45) {
+    isFinalLap = true;
+  }
   const urgencyCurve = strategy.getUrgencyCurve(daysRemaining);
 
   // Apply strict Academic Phase filter if active
@@ -903,7 +916,34 @@ export async function getNextActionRecommendation(
   
   const primary = filteredCandidates[0] || null;
   const fallback = filteredCandidates[1] || (filteredCandidates.length > 1 ? filteredCandidates.find(c => c.id !== primary?.id) : null) || null;
-  const upcomingQueue = filteredCandidates.slice(1, 5);
+
+  // Subject Deduplication for the queue (prefer diversity, backfill if needed)
+  const upcomingQueue: NextActionRecommendation[] = [];
+  const seenSubjectIds = new Set<number>();
+  const skippedCandidates: NextActionRecommendation[] = [];
+  
+  if (primary) {
+    seenSubjectIds.add(primary.subjectId);
+  }
+  
+  for (let i = 1; i < filteredCandidates.length; i++) {
+    const candidate = filteredCandidates[i];
+    if (!seenSubjectIds.has(candidate.subjectId)) {
+      upcomingQueue.push(candidate);
+      seenSubjectIds.add(candidate.subjectId);
+    } else {
+      skippedCandidates.push(candidate);
+    }
+    if (upcomingQueue.length >= 4) break;
+  }
+  
+  // Backfill if we need more items (e.g. Tactical Sprint on a single subject)
+  if (upcomingQueue.length < 4 && skippedCandidates.length > 0) {
+    for (const candidate of skippedCandidates) {
+      if (upcomingQueue.length >= 4) break;
+      upcomingQueue.push(candidate);
+    }
+  }
 
   const hasAnyCurriculumSets = curriculumSets.length > 0;
   const totalSyllabusSystemCount = ALL_SYSTEMS.length;
@@ -1016,12 +1056,36 @@ export async function getNextActionRecommendation(
     !systems.some(s => s.contentCompleted || (s.revisionPassCount && s.revisionPassCount > 0)) &&
     !curriculumSets.some(c => Boolean(c.lastRevisionDate) || (c.revisionCount && c.revisionCount > 0));
 
+  // Post-process candidates to inject humanized messages based on active archetype and exam vocabulary
+  const attachHumanizedMessage = (rec) => {
+    if (!rec) return null;
+    let message = '';
+    
+    if (isFreshState) {
+      message = "Let's establish your baseline. We're starting with a highly-tested core subject to calibrate your personalized algorithm.";
+    } else if (isFinalLap) {
+      message = `Critical ${targetExam} Integration: You historically drop points in ${rec.subjectName}. Review these high-yield concepts before your mock exam.`;
+    } else if (rec.archetype === 'remediation_clinic') {
+      message = `Your memory retention for ${rec.subjectName} has decayed by ${rec.whyBreakdown.memoryDecayPercent}%. Let's do a quick ${rec.estimatedMinutes || 30}-minute block to plug this leak.`;
+    } else {
+      message = `Optimizing spaced repetition. Focusing on ${rec.systemName || rec.subjectName} for ${rec.whyBreakdown.depthLabel} retention.`;
+    }
+    
+    return {
+      ...rec,
+      whyBreakdown: {
+        ...rec.whyBreakdown,
+        humanizedMessage: message
+      }
+    };
+  };
+
   return {
     hasAnyCurriculumSets,
     hasPendingSyllabus,
-    primary,
-    fallback,
-    upcomingQueue,
+    primary: attachHumanizedMessage(primary),
+    fallback: attachHumanizedMessage(fallback),
+    upcomingQueue: upcomingQueue.map(c => attachHumanizedMessage(c)),
     sessionBudget,
     totalCandidatesEvaluated,
     quickEligibleCount,
