@@ -18,9 +18,9 @@ export function getLexicon(targetExam?: string): Lexicon {
   if (isUsmle) {
     return {
       mistakesJournal: "Mistakes Journal",
-      practiceExams: "Self-Assessments",
+      practiceExams: "High Yield Review",
       practiceQuestions: "QBank Blocks",
-      mockExams: "Mock Exams",
+      mockExams: "NBME / Mock",
       flashcards: "Flashcards",
       coreReviewNotes: "Master Summary",
       examContext: "USMLE (Board Exams)",
@@ -30,9 +30,9 @@ export function getLexicon(targetExam?: string): Lexicon {
     // NEET PG / INI-CET / default
     return {
       mistakesJournal: "Mistakes Journal",
-      practiceExams: "Past Year Questions (PYQs)",
+      practiceExams: "PYQ / Test",
       practiceQuestions: "QBank Modules",
-      mockExams: "Grand Tests (Mock Exams)",
+      mockExams: "Grand Test (GT)",
       flashcards: "Flashcards",
       coreReviewNotes: "Core Review Notes",
       examContext: "NEET PG / INI-CET",

@@ -37,7 +37,48 @@ export function GlobalQuickEntry() {
 
   const processQuickEntry = async (text: string) => {
     try {
-      // Extract tags
+      // 1. QBank Block Parsing Heuristic
+      // E.g., "Did a 40q block, got 65%. Struggled with Cardio and Renal."
+      const qMatch = text.match(/(\d+)\s*(?:q|question|questions)/i);
+      const pctMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
+      
+      if (qMatch && pctMatch) {
+        const total = parseFloat(qMatch[1]);
+        const percentage = parseFloat(pctMatch[1]);
+        
+        if (!isNaN(total) && !isNaN(percentage)) {
+          const score = (percentage / 100) * total;
+          
+          // Auto-tag subjects by simple substring match
+          const allSubjects = await db.subjects.toArray();
+          const matchedSubjectIds = allSubjects
+            .filter(sub => text.toLowerCase().includes(sub.name.toLowerCase()))
+            .map(sub => String(sub.id));
+          
+          await db.scoreLogs.add({
+            type: 'qbank',
+            title: 'QBank Block',
+            score: score,
+            total: total,
+            percentage: percentage,
+            subjectId: 'qbank', // Bypass strict subject validation
+            subjectIds: matchedSubjectIds.length > 0 ? matchedSubjectIds : undefined,
+            timestamp: new Date(),
+            createdAt: new Date(),
+            notes: text,
+          } as any);
+
+          toast.success("QBank Block Logged Globally!", {
+            description: `Recorded ${percentage}% on ${total} questions.`
+          });
+          
+          setOpen(false);
+          setInputValue('');
+          return;
+        }
+      }
+
+      // Extract tags for standard Friction logging
       const tagRegex = /#\w+/g;
       const tags = text.match(tagRegex) || [];
       const content = text.replace(tagRegex, '').trim();

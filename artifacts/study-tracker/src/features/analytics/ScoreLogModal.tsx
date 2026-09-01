@@ -24,7 +24,7 @@ import { GtAutopsyModal } from './GtAutopsyModal';
 interface ScoreLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialType?: 'revision' | 'pyq' | 'gt';
+  initialType?: 'revision' | 'pyq' | 'gt' | 'qbank';
   initialSubjectId?: number;
   initialSystemId?: number;
   initialTopicId?: string;
@@ -61,7 +61,7 @@ export function ScoreLogModal({
     return `${year}-${month}-${day}`;
   };
 
-  const [type, setType] = useState<'revision' | 'pyq' | 'gt'>(initialType);
+  const [type, setType] = useState<'revision' | 'pyq' | 'gt' | 'qbank'>(initialType);
   const [subjectId, setSubjectId] = useState<number | undefined>(initialSubjectId);
   const [systemId, setSystemId] = useState<number | undefined>(initialSystemId);
   const [topicId, setTopicId] = useState<string | undefined>(initialTopicId);
@@ -149,7 +149,7 @@ export function ScoreLogModal({
       return;
     }
 
-    if (!subjectId && type !== 'gt') {
+    if (!subjectId && type !== 'gt' && type !== 'qbank') {
       toast({
         title: 'Subject Required',
         description: 'Please select a subject for this score entry.',
@@ -170,6 +170,8 @@ export function ScoreLogModal({
           logTitle = selectedSys ? `${selectedSys.name} Revision` : `${selectedSub?.name} Revision`;
         } else if (type === 'pyq') {
           logTitle = selectedPyq ? `${selectedSub?.name} ${selectedPyq.year} PYQ` : `${selectedSub?.name} PYQ`;
+        } else if (type === 'qbank') {
+          logTitle = 'QBank Block';
         } else {
           logTitle = 'Grand Test';
         }
@@ -188,7 +190,7 @@ export function ScoreLogModal({
 
       const logData: any = {
         type,
-        subjectId: subjectId || 'gt',
+        subjectId: subjectId || (type === 'qbank' ? 'qbank' : 'gt'),
         systemId: systemId || null,
         topicId: topicId || null,
         pyqYearId: pyqYearId || null,
@@ -285,7 +287,7 @@ export function ScoreLogModal({
 
         <form onSubmit={handleSave} className="space-y-4 pt-2">
           {/* Entry Type Toggle */}
-          <div className="grid grid-cols-3 gap-2 bg-muted/50 p-1 rounded-lg border border-border">
+          <div className="grid grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg border border-border">
             <button
               type="button"
               onClick={() => { setType('revision'); setPyqYearId(undefined); }}
@@ -306,7 +308,18 @@ export function ScoreLogModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              PYQ / Test
+              {lexicon.practiceExams}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setType('qbank'); setSystemId(undefined); setPyqYearId(undefined); }}
+              className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                type === 'qbank'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              QBank Block
             </button>
             <button
               type="button"
@@ -317,7 +330,7 @@ export function ScoreLogModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Grand Test (GT)
+              {lexicon.mockExams}
             </button>
           </div>
 
@@ -326,7 +339,9 @@ export function ScoreLogModal({
             <>
               {/* Subject Selector */}
               <div className="space-y-1.5 mb-4">
-                <Label className="text-xs font-semibold text-foreground">Subject *</Label>
+                <Label className="text-xs font-semibold text-foreground">
+                  {type === 'qbank' ? 'Primary Subject (Optional)' : 'Subject *'}
+                </Label>
                 <Select
                   value={subjectId ? String(subjectId) : ''}
                   onValueChange={(val) => {
@@ -370,7 +385,7 @@ export function ScoreLogModal({
                     </SelectContent>
                   </Select>
                 </div>
-              ) : (
+              ) : type === 'qbank' ? null : (
                 <div className="space-y-1.5 mb-4">
                   <Label className="text-xs font-semibold text-foreground">{lexicon.practiceExams} Year (Optional)</Label>
                   <Select
@@ -512,7 +527,7 @@ export function ScoreLogModal({
             <Button type="button" variant="outline" onClick={onClose} className="text-xs">
               Skip / Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isValidScore || (!subjectId && type !== 'gt')} className="text-xs font-semibold">
+            <Button type="submit" disabled={isSubmitting || !isValidScore || (!subjectId && type !== 'gt' && type !== 'qbank')} className="text-xs font-semibold">
               {isSubmitting ? 'Saving...' : 'Record Score'}
             </Button>
           </DialogFooter>
