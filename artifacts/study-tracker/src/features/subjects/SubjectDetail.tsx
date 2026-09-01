@@ -627,8 +627,6 @@ export default function SubjectDetail() {
   useEffect(() => {
     if (!subject && id && !hasAttemptedLoad) {
       setHasAttemptedLoad(true);
-      // If subject not loaded yet or cache is hydrating, trigger background universal curriculum verify
-      loadUniversalOntology().catch(() => {});
     }
   }, [subject, id, hasAttemptedLoad]);
 
