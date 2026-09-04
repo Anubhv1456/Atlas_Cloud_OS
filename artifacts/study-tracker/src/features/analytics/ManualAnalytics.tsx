@@ -27,6 +27,7 @@ import {
   Bar,
   ReferenceLine,
 } from 'recharts';
+import { VisxTrendChart } from "./VisxTrendChart";
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import {
   BarChart3,
@@ -264,145 +265,7 @@ export default function ManualAnalytics() {
             />
           ) : (
             <div className="h-72 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
-                  <defs>
-                    {/* Apple Health Multi-Stop Dynamic Gradient */}
-                    <linearGradient id="scoreAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                      <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/30" />
-                  
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: 'currentColor' }}
-                    className="text-muted-foreground/70 font-medium"
-                  />
-                  <YAxis 
-                    domain={[0, 100]} 
-                    axisLine={false} 
-                    tickLine={false}
-                    ticks={[25, 50, 75, 100]}
-                    tick={{ fontSize: 9, fill: 'currentColor' }}
-                    className="text-muted-foreground/40 font-mono"
-                    width={28}
-                  />
-                  
-                  {/* Clinical 75% Mastery Safety Line */}
-                  <ReferenceLine 
-                    y={75} 
-                    stroke="rgba(16, 185, 129, 0.4)" 
-                    strokeDasharray="4 4" 
-                    label={{ 
-                      value: '75% Target', 
-                      position: 'insideTopRight', 
-                      fill: 'rgba(16, 185, 129, 0.7)', 
-                      fontSize: 9,
-                      fontWeight: 600
-                    }} 
-                  />
-                  
-                  <Tooltip
-                    wrapperStyle={{ outline: 'none', zIndex: 50 }}
-                    allowEscapeViewBox={{ x: false, y: false }}
-                    cursor={{ stroke: 'currentColor', strokeWidth: 1, strokeOpacity: 0.15, strokeDasharray: '3 3' }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const isForecast = data.isProjected;
-                        return (
-                          <div className="bg-background/95 backdrop-blur-xl border border-border/60 p-3.5 rounded-2xl shadow-xl text-xs space-y-2 max-w-[260px]">
-                            <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2">
-                              <span className="font-bold text-foreground truncate">{data.title}</span>
-                              {isForecast ? (
-                                <Badge className="text-[9px] px-1.5 py-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">
-                                  Forecast
-                                </Badge>
-                              ) : data.isRealPoint ? (
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
-                                  {data.type}
-                                </Badge>
-                              ) : null}
-                            </div>
-
-                            <div className="flex items-baseline justify-between pt-0.5">
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">
-                                  {isForecast ? 'Forecasted Retention' : 'Memory Retention'}
-                                </span>
-                                <span className={cn(
-                                  "font-mono font-bold text-2xl tracking-tighter leading-none",
-                                  data.percentage >= 75 ? "text-emerald-500" : data.percentage >= 60 ? "text-amber-500" : "text-rose-500"
-                                )}>
-                                  {data.percentage}%
-                                </span>
-                              </div>
-                              {data.scoreStr && (
-                                <span className="text-[11px] font-mono text-muted-foreground">
-                                  Raw: {data.scoreStr}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="text-[10px] text-muted-foreground pt-1 flex items-center justify-between border-t border-border/30">
-                              <span>{data.fullDate}</span>
-                              {data.subjectName && <span className="font-medium text-foreground/80 truncate max-w-[120px]">{data.subjectName}</span>}
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  
-                  <Area
-                    type="monotone"
-                    dataKey="percentage"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2.5}
-                    fill="url(#scoreAreaGrad)"
-                    dot={(props: any) => {
-                      const { cx, cy, payload } = props;
-                      if (payload.isRealPoint) {
-                        return (
-                          <circle
-                            key={`dot-${payload.id}`}
-                            cx={cx}
-                            cy={cy}
-                            r={4.5}
-                            fill="hsl(var(--primary))"
-                            stroke="var(--background)"
-                            strokeWidth={2}
-                            className="shadow-sm"
-                          />
-                        );
-                      }
-                      if (payload.isProjected) {
-                        return (
-                          <circle
-                            key={`dot-${payload.id}`}
-                            cx={cx}
-                            cy={cy}
-                            r={3}
-                            fill="none"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={1.5}
-                            strokeDasharray="2 2"
-                          />
-                        );
-                      }
-                      return <g key={`empty-${payload.id}`} />;
-                    }}
-                    activeDot={{ r: 6, fill: 'hsl(var(--primary))', stroke: 'var(--background)', strokeWidth: 3 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <VisxTrendChart data={chartData} />
             </div>
           )}
         </div>

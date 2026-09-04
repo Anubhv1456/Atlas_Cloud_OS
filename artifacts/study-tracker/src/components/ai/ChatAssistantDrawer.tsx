@@ -1,3 +1,7 @@
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
@@ -924,7 +928,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
                       )}>
-                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
+                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown></div>
                       </div>
                     ) : null}
 
