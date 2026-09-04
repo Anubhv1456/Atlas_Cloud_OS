@@ -171,6 +171,7 @@ export function useBetaAccess() {
         const userRef = doc(firestoreDb, 'users', user.uid);
         await setDoc(userRef, {
           betaAccess: true,
+          paymentStatus: 'pending',
           betaAccessExpiresAt: expTime,
           vaultActivationRequired: false,
           updatedAt: new Date()

@@ -1,3 +1,4 @@
+import { getLocalExamProfile } from "@/lib/examProfile";
 import { toast } from "sonner";
 import { db, dbEvents } from '@/db';
 import { getOntologyForExam } from '@/data/ontology';
@@ -30,7 +31,10 @@ export interface LoadOntologyOptions {
 }
 
 export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
-  const { force = false, showToast = false, onProgress, targetExam = 'NEET PG' } = options;
+  let { force = false, showToast = false, onProgress, targetExam } = options;
+  if (!targetExam) {
+    targetExam = getLocalExamProfile().targetExam || 'NEET PG';
+  }
   const activeOntology = getOntologyForExam(targetExam);
 
   try {
