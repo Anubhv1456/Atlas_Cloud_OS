@@ -1,6 +1,6 @@
 {
-  "version": "2.4.91966",
-  "buildTime": 1788491966312,
-  "buildId": "atlas-v2.4.91966-1788491966312",
+  "version": "2.4.38767",
+  "buildTime": 1788538767363,
+  "buildId": "atlas-v2.4.38767-1788538767363",
   "releaseNotes": "Performance optimizations, clinical triage engine updates, and spaced repetition improvements."
 }

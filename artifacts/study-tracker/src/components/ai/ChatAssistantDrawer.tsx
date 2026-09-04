@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, 
@@ -923,9 +924,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
                       )}>
-                        <div className="whitespace-pre-wrap break-words font-medium">
-                          {msg.content}
-                        </div>
+                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
                       </div>
                     ) : null}
 

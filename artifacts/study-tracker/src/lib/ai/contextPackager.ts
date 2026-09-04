@@ -262,7 +262,7 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
 
   // Aggregate recent test scores
   const recentScores: ScoreSummary[] = rawScores.slice(0, 5).map(s => {
-    const maxExamScore = getExamMaxScore(userProfile.targetExam);
+    const maxExamScore = getExamMaxScore(examProfile.targetExam);
     const total = s.totalMarks || (s.maxScore ? s.maxScore : maxExamScore);
     const scoreVal = s.score;
     const pct = total > 0 ? Math.round((scoreVal / total) * 100) : 0;
