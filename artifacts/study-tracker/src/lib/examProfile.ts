@@ -14,17 +14,10 @@ export interface ExamProfile {
 const LOCAL_STORAGE_KEY = 'atlas_user_exam_profile';
 
 export const DEFAULT_EXAM_OPTIONS = [
+  'NEET PG / INI-CET',
   'USMLE Step 1',
   'USMLE Step 2 CK',
-  'USMLE Step 3',
-  'NEET PG',
-  'INI-CET',
-  'MBBS Professional Exams',
-  'PLAB 1 / PLAB 2',
-  'MCCQE Part 1',
-  'AMC CAT MCQ',
-  'NExT Exam',
-  'Other Medical Board'
+  'MBBS Professional Exams'
 ];
 
 export const DEFAULT_CURRICULUM_OPTIONS = [
@@ -34,7 +27,7 @@ export const DEFAULT_CURRICULUM_OPTIONS = [
 ];
 
 export const DEFAULT_EXAM_PROFILE: ExamProfile = {
-  targetExam: 'NEET PG',
+  targetExam: 'NEET PG / INI-CET',
   targetExamDate: '',
   curriculum: 'Organ-System Based (Cardiology, Neurology, etc.)',
   targetScore: '',
@@ -97,14 +90,14 @@ export async function fetchExamProfile(userId?: string): Promise<ExamProfile> {
       cloudFetchPromise(),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 400))
     ]);
-
+    
     if (cloudProfile) {
       return cloudProfile;
     }
   } catch (e) {
     // Return local on timeout/error
   }
-
+  
   return local;
 }
 
@@ -112,7 +105,6 @@ export async function saveExamProfile(profile: ExamProfile, userId?: string): Pr
   setLocalExamProfile(profile);
   const uid = userId || auth.currentUser?.uid;
   if (!uid || !firestoreDb) return;
-
   try {
     const userRef = doc(firestoreDb, `users/${uid}`);
     await setDoc(userRef, {

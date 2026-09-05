@@ -27,7 +27,9 @@ import {
   Volume2,
   VolumeX,
   MessageSquare,
-  Radio
+  Radio,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
@@ -164,6 +166,45 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<'text' | 'voice'>(initialMode === 'voice' ? 'voice' : 'text');
 
   const [inputVal, setInputVal] = useState('');
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const fileInputRefLibrary = useRef<HTMLInputElement>(null);
+  const fileInputRefCamera = useRef<HTMLInputElement>(null);
+  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        // Max dimension 1200
+        const MAX_DIM = 1200;
+        if (width > height && width > MAX_DIM) {
+          height *= MAX_DIM / width;
+          width = MAX_DIM;
+        } else if (height > MAX_DIM) {
+          width *= MAX_DIM / height;
+          height = MAX_DIM;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setAttachedImage(dataUrl);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    // Reset input
+    if (e.target) e.target.value = '';
+  };
+
   const [isLoading, setIsLoading] = useState(false);
   const [liveContext, setLiveContext] = useState<LiveAtlasContext | null>(null);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
@@ -332,7 +373,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
       role: 'user',
       content: text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isVoiceInput: isVoiceActive
+      isVoiceInput: isVoiceActive,
+      attachedImageBase64: attachedImage || undefined
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -928,7 +970,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
                       )}>
-                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown></div>
+                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>{msg.attachedImageBase64 && <div className="mt-2"><img src={msg.attachedImageBase64} alt="Attached" className="w-full max-w-[200px] rounded-lg border border-border/30" /></div>}</div>
                       </div>
                     ) : null}
 
@@ -1016,8 +1058,50 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
 
           {/* Unified Multi-Modal Input Bar */}
           <div className="p-3 sm:p-4 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] border-t border-border/60 dark:border-white/10 bg-muted/30 dark:bg-black/30 backdrop-blur-xl shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-card dark:bg-black/50 border border-border/70 dark:border-white/10 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              {/* 1-Tap Paste Clinical Stem Button */}
+
+      {/* Hidden File Inputs */}
+      <input 
+        type="file" 
+        accept="image/jpeg, image/png, image/webp" 
+        className="hidden" 
+        ref={fileInputRefLibrary} 
+        onChange={handleImageUpload} 
+      />
+      <input 
+        type="file" 
+        accept="image/jpeg, image/png, image/webp" 
+        capture="environment"
+        className="hidden" 
+        ref={fileInputRefCamera} 
+        onChange={handleImageUpload} 
+      />
+
+      {/* Image Preview Staging Area */}
+      {attachedImage && (
+        <div className="relative mb-2 inline-block">
+          <img src={attachedImage} alt="Attached" className="h-16 w-auto rounded-lg border border-border/50 shadow-sm" />
+          <button 
+            type="button" 
+            onClick={() => setAttachedImage(null)} 
+            className="absolute -top-1.5 -right-1.5 bg-card/80 backdrop-blur-sm p-0.5 rounded-full border border-border text-muted-foreground hover:text-rose-500 hover:border-rose-500/50 transition-colors shadow-sm"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-card dark:bg-black/50 border border-border/70 dark:border-white/10 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+        {/* Camera Upload Button */}
+        <button
+          type="button"
+          onClick={() => setIsActionSheetOpen(true)}
+          title="Upload image or screenshot for OCR"
+          className="p-2.5 sm:p-3 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/80 dark:hover:bg-card transition-colors shrink-0 cursor-pointer"
+        >
+          <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+        
+        {/* 1-Tap Paste Clinical Stem Button */}
               <button
                 type="button"
                 onClick={handlePasteClinicalStem}
@@ -1085,11 +1169,66 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               </button>
             </div>
             <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 text-center pb-1 pt-1.5 px-4 select-none">
-              ⚖️ Educational revision assistant for medical exam prep. Not for clinical diagnosis or patient care.
+              ⚖️ Atlas is an educational strategy mentor. Always verify clinical facts and dosages with primary sources.
             </p>
           </div>
         </>
       )}
+
+        {/* iOS Action Sheet for Image Selection */}
+        <AnimatePresence>
+          {isActionSheetOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
+                onClick={() => setIsActionSheetOpen(false)}
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="fixed bottom-4 left-4 right-4 z-[101] flex flex-col gap-2"
+              >
+                <div className="flex flex-col bg-card/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl divide-y divide-border/50">
+                  <button
+                    type="button"
+                    className="p-4 text-center text-primary font-medium hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setIsActionSheetOpen(false);
+                      setTimeout(() => fileInputRefCamera.current?.click(), 150);
+                    }}
+                  >
+                    <Camera className="w-5 h-5" />
+                    Take Photo
+                  </button>
+                  <button
+                    type="button"
+                    className="p-4 text-center text-primary font-medium hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setIsActionSheetOpen(false);
+                      setTimeout(() => fileInputRefLibrary.current?.click(), 150);
+                    }}
+                  >
+                    <ImageIcon className="w-5 h-5" />
+                    Photo Library
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="p-4 bg-card/95 backdrop-blur-xl rounded-2xl text-center text-foreground font-semibold hover:bg-muted/50 transition-colors shadow-2xl"
+                  onClick={() => setIsActionSheetOpen(false)}
+                >
+                  Cancel
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         </motion.div>
       </div>
     </AnimatePresence>

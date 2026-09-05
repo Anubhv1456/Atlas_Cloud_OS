@@ -87,7 +87,7 @@ export function SprintSetupDrawer({
 
   const handleActivate = async () => {
     if (selectedSubjectIds.length === 0) {
-      toast.error('Please select at least one subject for the Tactical Sprint.');
+      toast.error('Please select at least one subject for the Intense Review.');
       return;
     }
 
@@ -98,7 +98,7 @@ export function SprintSetupDrawer({
         targetSubjectIds: selectedSubjectIds,
         targetDate: targetDate ? new Date(targetDate).toISOString() : null,
         dailyCapacityMinutes,
-        notes: `Tactical Sprint on ${selectedSubjectIds.length} subjects`
+        notes: `Intense Review on ${selectedSubjectIds.length} subjects`
       });
 
       const selectedNames = subjectsList
@@ -107,7 +107,7 @@ export function SprintSetupDrawer({
         .slice(0, 3)
         .join(', ');
 
-      toast.success(`🎯 Tactical Sprint Activated`, {
+      toast.success(`🎯 Intense Review Activated`, {
         description: `Focused exclusively on ${selectedNames}${selectedSubjectIds.length > 3 ? ` +${selectedSubjectIds.length - 3} more` : ''}.`
       });
 
@@ -149,7 +149,7 @@ export function SprintSetupDrawer({
               </div>
               <div>
                 <SheetTitle className="text-lg sm:text-xl font-bold tracking-tight">
-                  Tactical Prof Sprint
+                  Intense Review Mode
                 </SheetTitle>
                 <SheetDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                   Triage all recommendations, QBanks, and active recall drills strictly to selected exam subjects.
@@ -280,7 +280,7 @@ export function SprintSetupDrawer({
               className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 shadow-md shadow-primary/20"
             >
               <Target className="w-4 h-4 mr-2" />
-              {isCurrentlyInSprint ? 'Update Tactical Sprint' : `Activate Sprint (${selectedSubjectIds.length} Subjects)`}
+              {isCurrentlyInSprint ? 'Update Intense Review' : `Activate Sprint (${selectedSubjectIds.length} Subjects)`}
             </Button>
 
             {isCurrentlyInSprint && (

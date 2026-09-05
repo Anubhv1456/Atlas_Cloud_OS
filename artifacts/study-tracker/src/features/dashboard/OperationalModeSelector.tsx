@@ -138,7 +138,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
             <span>Standard</span>
           </button>
 
-          {/* Tactical Prof Sprint Pill */}
+          {/* Intense Review Mode Pill */}
           <button
             type="button"
             onClick={() => handleSelectMode('tactical_sprint')}
@@ -150,7 +150,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
             )}
           >
             <Target className="w-3.5 h-3.5 shrink-0" />
-            <span>Prof Sprint</span>
+            <span>Intense Review</span>
             {currentMode === 'tactical_sprint' && opMode?.targetSubjectIds?.length ? (
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
             ) : null}

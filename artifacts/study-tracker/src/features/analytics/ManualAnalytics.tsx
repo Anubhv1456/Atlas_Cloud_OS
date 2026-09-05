@@ -28,6 +28,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { VisxTrendChart } from "./VisxTrendChart";
+import { MockExamsWidget } from "./MockExamsWidget";
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import {
   BarChart3,
@@ -183,7 +184,10 @@ export default function ManualAnalytics() {
 
       {/* Main Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Trend Line Chart (Spans 2 cols) */}
+        {/* Mock Exams Dashboard Widget */}
+      <MockExamsWidget />
+
+      {/* Trend Line Chart (Spans 2 cols) */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>

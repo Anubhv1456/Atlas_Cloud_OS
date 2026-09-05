@@ -1,3 +1,4 @@
+import pkg from './package.json';
 import path from 'path';
 import fs from 'fs';
 import react from '@vitejs/plugin-react';
@@ -8,7 +9,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 const port = 3000;
 const currentBuildTime = Date.now();
 const buildNumber = Math.floor(currentBuildTime / 1000) % 100000;
-const currentVersion = `2.4.${buildNumber}`;
+const currentVersion = `${pkg.version || '0.1.0'}-build.${buildNumber}`;
 const currentBuildId = `atlas-v${currentVersion}-${currentBuildTime}`;
 
 function versionManifestPlugin(): Plugin {

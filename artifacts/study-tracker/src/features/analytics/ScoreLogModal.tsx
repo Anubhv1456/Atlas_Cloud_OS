@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Award, CheckCircle2, Trophy, TriangleAlert } from 'lucide-react';
+import { Award, CheckCircle2, Trophy, TriangleAlert, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 import { processFSRS } from '@/lib/fsrs-engine';
@@ -294,6 +294,11 @@ export function ScoreLogModal({
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-4 pt-2">
+          {/* AI Shortcut Advertising */}
+          <div className="flex items-center gap-2 p-2.5 rounded-xl border border-primary/20 bg-primary/5 text-primary text-xs font-medium">
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="leading-snug">Tired of typing? Just copy your Q-Bank score report to your clipboard and open the Atlas AI Assistant to auto-fill this.</span>
+          </div>
           {/* Entry Type Toggle */}
           <div className="grid grid-cols-4 gap-2 bg-muted/50 p-1 rounded-lg border border-border">
             <button
@@ -543,7 +548,7 @@ export function ScoreLogModal({
       </DialogContent>
     </Dialog>
 
-    {/* GT Autopsy Breakdown Modal */}
+    {/* Mock Exam Breakdown Modal */}
     <GtAutopsyModal
       report={autopsyReport}
       isOpen={isAutopsyOpen}

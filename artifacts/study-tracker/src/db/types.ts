@@ -8,6 +8,7 @@ export interface UIPreference {
   focus?: 'primary' | 'secondary' | null;
   focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
+  examProfile?: string;
   updatedAt: Date;
   hlc?: string;
 }
@@ -20,6 +21,7 @@ export interface Subject {
   focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
   createdAt: Date;
+  examProfile?: string;
   updatedAt: Date;
   deletedAt?: Date | null;
   hlc?: string;
@@ -95,6 +97,7 @@ export interface CurriculumUnit {
   revisionProgressPercent?: number;
 
   createdAt?: Date;
+  examProfile?: string;
   updatedAt: Date;
   deletedAt?: Date | null;
   hlc?: string;
@@ -240,6 +243,7 @@ export interface OperationalModeRecord {
   previousMode?: OperationalModeType;
   lastRecalibratedAt?: string;
   notes?: string;
+  examProfile?: string;
   updatedAt: Date;
   hlc?: string;
 }

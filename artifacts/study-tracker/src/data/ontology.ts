@@ -1,14 +1,21 @@
 import { OntologySubject, OntologySystem, OntologyTopic } from './types';
 import { UNIVERSAL_ONTOLOGY as NEETPG_ONTOLOGY } from './ontology.neetpg';
-import { USMLE_ONTOLOGY } from './ontology.usmle';
+import { USMLE_ONTOLOGY, USMLE_STEP1_ONTOLOGY, USMLE_STEP2_ONTOLOGY } from './ontology.usmle';
 import { GENERAL_ONTOLOGY } from './ontology.general';
 
 // Helper function to dynamically load ontology based on exam string
 export function getOntologyForExam(targetExam: string): OntologySubject[] {
-  if (targetExam.toLowerCase().includes('usmle')) {
+  const examLower = targetExam.toLowerCase();
+  if (examLower.includes('step 1')) {
+    return USMLE_STEP1_ONTOLOGY;
+  }
+  if (examLower.includes('step 2')) {
+    return USMLE_STEP2_ONTOLOGY;
+  }
+  if (examLower.includes('usmle')) {
     return USMLE_ONTOLOGY;
   }
-  if (targetExam.toLowerCase().includes('custom') || targetExam.toLowerCase().includes('general')) {
+  if (examLower.includes('custom') || examLower.includes('general')) {
     return GENERAL_ONTOLOGY;
   }
   return NEETPG_ONTOLOGY;

@@ -79,6 +79,8 @@ class FirestoreTable<T extends Record<string, any>> {
   public ready: Promise<void>;
   private isInitialLoadDone = false;
 
+  public workspaceSuffix: string = "";
+
   constructor(public name: string) {
     this.ready = new Promise<void>((resolve) => {
       this.readyResolve = resolve;
@@ -87,7 +89,7 @@ class FirestoreTable<T extends Record<string, any>> {
 
   public startListener(uid: string) {
     if (this.unsubscribe) this.unsubscribe();
-    const q = collection(firestoreDb, `users/${uid}/${this.name}`);
+    const q = collection(firestoreDb, `users/${uid}/${this.name}${this.workspaceSuffix}`);
     this.unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -163,7 +165,7 @@ class FirestoreTable<T extends Record<string, any>> {
 
   getCollectionRef() {
     if (!auth.currentUser) throw new Error("Not authenticated");
-    return collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`);
+    return collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`);
   }
 
   async toArray(): Promise<T[]> {
@@ -201,7 +203,7 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
 
     if (auth.currentUser) {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
       await setDoc(docRef, cleanPayload, { merge: true });
     }
     return id;
@@ -230,7 +232,7 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
 
     if (auth.currentUser) {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
       await setDoc(docRef, cleanPayload, { merge: true });
     }
     return id;
@@ -264,7 +266,7 @@ class FirestoreTable<T extends Record<string, any>> {
       const chunk = resolvedItems.slice(i, i + 400);
       chunk.forEach(item => {
         const id = (item as any).id;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
+        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}${this.workspaceSuffix}`, String(id));
         batch.set(docRef, item, { merge: true });
       });
       await batch.commit();
@@ -299,7 +301,7 @@ class FirestoreTable<T extends Record<string, any>> {
       const chunk = resolvedItems.slice(i, i + 400);
       chunk.forEach(item => {
         const id = (item as any).id;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}`, String(id));
+        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}${this.workspaceSuffix}`, String(id));
         batch.set(docRef, item, { merge: true });
       });
       await batch.commit();
@@ -327,7 +329,7 @@ class FirestoreTable<T extends Record<string, any>> {
     }
 
     if (!auth.currentUser) return 1;
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
     await setDoc(docRef, cleanChanges, { merge: true });
     return 1;
   }
@@ -337,7 +339,7 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`, String(id));
+    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
     await deleteDoc(docRef);
   }
 
@@ -604,7 +606,7 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
     if (!auth.currentUser) return;
     try {
-      const q = collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}`);
+      const q = collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`);
       const snap = await getDocs(q);
       if (snap.empty) return;
       const docs = snap.docs;
@@ -619,7 +621,40 @@ class FirestoreTable<T extends Record<string, any>> {
   }
 }
 
+
+export function getWorkspaceSuffix(exam?: string): string {
+  if (!exam) return "";
+  const lower = exam.toLowerCase();
+  if (lower.includes("step 1")) return "_usmle1";
+  if (lower.includes("step 2")) return "_usmle2";
+  if (lower.includes("usmle")) return "_usmle";
+  if (lower.includes("plab")) return "_plab";
+  if (lower.includes("amc")) return "_amc";
+  if (lower.includes("mccqe")) return "_mccqe";
+  if (lower.includes("custom") || lower.includes("other")) return "_custom";
+  return "";
+}
+
 class AtlasDB {
+
+  switchWorkspace(exam?: string) {
+    const newSuffix = getWorkspaceSuffix(exam);
+    const tables = [
+      this.subjects, this.systems, this.history, this.pyqYears, this.scoreLogs,
+      this.uiPreferences, this.topicProgress, this.curriculumSets, this.revisionSets,
+      this.mistakeLogs, this.recommendationSkips, this.operationalModes
+    ];
+    
+    if (this.subjects.workspaceSuffix === newSuffix) return;
+
+    tables.forEach(t => t.stopListener());
+    tables.forEach(t => t.workspaceSuffix = newSuffix);
+    
+    if (auth.currentUser) {
+      tables.forEach(t => t.startListener(auth.currentUser!.uid));
+    }
+  }
+
   subjects = new FirestoreTable<T.Subject>('subjects');
   systems = new FirestoreTable<T.StudySystem>('systems');
   history = new FirestoreTable<T.HistoryEntry>('history');

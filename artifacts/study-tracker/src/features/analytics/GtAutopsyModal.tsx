@@ -43,7 +43,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
               </div>
               <div>
                 <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                  <span>Grand Test Psychometric Autopsy</span>
+                  <span>Grand Test Psychometric Performance Review</span>
                   <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[10px] font-mono font-bold">
                     GT-DELTA
                   </span>

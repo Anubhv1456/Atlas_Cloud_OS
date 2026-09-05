@@ -1,6 +1,6 @@
 import { OntologySubject } from './ontology.neetpg';
 
-export const USMLE_ONTOLOGY: OntologySubject[] = [
+export const USMLE_STEP1_ONTOLOGY: OntologySubject[] = [
   {
     id: 'USMLE_1',
     name: 'Cardiovascular System',
@@ -343,4 +343,77 @@ export const USMLE_ONTOLOGY: OntologySubject[] = [
       ] }
     ]
   }
+
+  , {
+    id: 'USMLE_12',
+    name: 'Biochemistry & Medical Genetics',
+    systems: [
+      { id: 'USMLE_12_1', name: 'Biochemistry', subjectId: 'USMLE_12', topics: [ { id: 'USMLE_12_1_001', subjectId: 'USMLE_12', systemId: 'USMLE_12_1', name: 'Biochemistry Fundamentals', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] },
+      { id: 'USMLE_12_2', name: 'Medical Genetics', subjectId: 'USMLE_12', topics: [ { id: 'USMLE_12_2_001', subjectId: 'USMLE_12', systemId: 'USMLE_12_2', name: 'Medical Genetics', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_13',
+    name: 'General Pathology & Pharmacology',
+    systems: [
+      { id: 'USMLE_13_1', name: 'General Pathology', subjectId: 'USMLE_13', topics: [ { id: 'USMLE_13_1_001', subjectId: 'USMLE_13', systemId: 'USMLE_13_1', name: 'General Pathology', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] },
+      { id: 'USMLE_13_2', name: 'General Pharmacology', subjectId: 'USMLE_13', topics: [ { id: 'USMLE_13_2_001', subjectId: 'USMLE_13', systemId: 'USMLE_13_2', name: 'General Pharmacology', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_14',
+    name: 'Microbiology & Immunology',
+    systems: [
+      { id: 'USMLE_14_1', name: 'Microbiology', subjectId: 'USMLE_14', topics: [ { id: 'USMLE_14_1_001', subjectId: 'USMLE_14', systemId: 'USMLE_14_1', name: 'Microbiology Core', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] },
+      { id: 'USMLE_14_2', name: 'Immunology Basics', subjectId: 'USMLE_14', topics: [ { id: 'USMLE_14_2_001', subjectId: 'USMLE_14', systemId: 'USMLE_14_2', name: 'Immunology Core', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
 ];
+
+export const USMLE_STEP2_ONTOLOGY: OntologySubject[] = [
+  {
+    id: 'USMLE_15',
+    name: 'Internal Medicine',
+    systems: [
+      { id: 'USMLE_15_1', name: 'IM Clerkship', subjectId: 'USMLE_15', topics: [ { id: 'USMLE_15_1_001', subjectId: 'USMLE_15', systemId: 'USMLE_15_1', name: 'Internal Medicine Wards', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_16',
+    name: 'Surgery',
+    systems: [
+      { id: 'USMLE_16_1', name: 'Surgery Clerkship', subjectId: 'USMLE_16', topics: [ { id: 'USMLE_16_1_001', subjectId: 'USMLE_16', systemId: 'USMLE_16_1', name: 'Surgery Clerkship', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_17',
+    name: 'Pediatrics',
+    systems: [
+      { id: 'USMLE_17_1', name: 'Pediatrics Clerkship', subjectId: 'USMLE_17', topics: [ { id: 'USMLE_17_1_001', subjectId: 'USMLE_17', systemId: 'USMLE_17_1', name: 'Pediatrics Core', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_18',
+    name: 'Obstetrics & Gynaecology',
+    systems: [
+      { id: 'USMLE_18_1', name: 'OB/GYN Clerkship', subjectId: 'USMLE_18', topics: [ { id: 'USMLE_18_1_001', subjectId: 'USMLE_18', systemId: 'USMLE_18_1', name: 'OB/GYN Wards', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_19',
+    name: 'Psychiatry',
+    systems: [
+      { id: 'USMLE_19_1', name: 'Psychiatry Clerkship', subjectId: 'USMLE_19', topics: [ { id: 'USMLE_19_1_001', subjectId: 'USMLE_19', systemId: 'USMLE_19_1', name: 'Psychiatry Core', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  },
+  {
+    id: 'USMLE_20',
+    name: 'Family Medicine',
+    systems: [
+      { id: 'USMLE_20_1', name: 'Family Medicine Clerkship', subjectId: 'USMLE_20', topics: [ { id: 'USMLE_20_1_001', subjectId: 'USMLE_20', systemId: 'USMLE_20_1', name: 'Family Medicine Concepts', highYield: true, estimatedStudyMinutes: 120, relatedTopics: [], aliases: [], pyqWeight: 5, difficulty: 'average' } ] }
+    ]
+  }
+];
+
+// Export generic USMLE_ONTOLOGY for backward compatibility if needed, though we will phase it out
+export const USMLE_ONTOLOGY: OntologySubject[] = [...USMLE_STEP1_ONTOLOGY, ...USMLE_STEP2_ONTOLOGY];

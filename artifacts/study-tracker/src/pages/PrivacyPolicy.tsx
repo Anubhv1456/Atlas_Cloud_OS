@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+
+declare const __APP_VERSION__: string;
 import { Link, useLocation } from 'wouter';
 import {
   Shield,
@@ -211,7 +213,7 @@ export default function PrivacyPolicy() {
             <span>•</span>
             <div>Last Updated: August 22, 2026</div>
             <span>•</span>
-            <div>Version 2.4 (Enterprise Medical Edition)</div>
+            <div>Version {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"} (Enterprise Medical Edition)</div>
           </div>
         </div>
       </div>

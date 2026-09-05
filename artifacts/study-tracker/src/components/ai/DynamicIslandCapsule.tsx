@@ -98,9 +98,9 @@ export const DynamicIslandCapsule: React.FC = () => {
       const prompt = `Analyze this clinical Q-Bank explanation or question stem and extract the high-yield 20th notebook takeaway rule:\n${copiedSnippet}`;
 
       const res = await executeCognitiveCompiler(prompt, [], { bypassLocalTokenizer: false, cognitiveLoad: 'routine' });
-      const rule = res.delta.distillation?.twentyNotebookRule || res.delta.executiveSummary || 'High-Yield Clinical Concept';
+      const rule = res.delta.distillations?.[0]?.twentyNotebookRule || res.delta.executiveSummary || 'High-Yield Clinical Concept';
       const subject = res.delta.targetSubjectName || 'General Medicine';
-      const tag = res.delta.distillation?.tag || 'Drug of Choice';
+      const tag = res.delta.distillations?.[0]?.tag || 'Drug of Choice';
 
       setDistilledPearl({ rule, subject, tag });
       setIslandState('distilled');

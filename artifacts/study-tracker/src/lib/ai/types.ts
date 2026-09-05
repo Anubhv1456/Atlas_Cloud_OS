@@ -57,6 +57,9 @@ export type CognitiveIntent = z.infer<typeof CognitiveIntentSchema>;
  * High-Yield Clinical Knowledge Distillation
  */
 export const ClinicalDistillationSchema = z.object({
+  subjectId: z.string().default('SUB_11'),
+  subjectName: z.string().default('General Medicine'),
+  systemName: z.string().default('General Pearl'),
   hingeConcept: z.string().default(''),
   distractorTrap: z.string().default(''),
   twentyNotebookRule: z.string().default(''),
@@ -103,7 +106,7 @@ export const CognitiveDeltaSchema = z.object({
   targetSubjectName: z.string().default('General Medicine'),
   subtopicTaxonomy: z.string().default(''),
   executiveSummary: z.string().default(''),
-  distillation: ClinicalDistillationSchema.optional(),
+  distillations: z.array(ClinicalDistillationSchema).optional(),
   studyDelta: StudyDeltaSchema.optional(),
   scoreDelta: ScoreDeltaSchema.optional(),
   detectedPreferenceShift: z.object({
@@ -203,13 +206,16 @@ export const ROUTINE_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
         totalMarks: { type: 'NUMBER' },
       },
     },
-    distillation: {
-      type: 'OBJECT',
-      properties: {
-        twentyNotebookRule: { type: 'STRING' },
-        tag: { type: 'STRING' },
-        clinicalTrigger: { type: 'STRING' },
-      },
+    distillations: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          twentyNotebookRule: { type: 'STRING' },
+          tag: { type: 'STRING' },
+          clinicalTrigger: { type: 'STRING' },
+        }
+      }
     },
     detectedPreferenceShift: {
       type: 'OBJECT',
@@ -258,8 +264,10 @@ export const GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
       type: 'STRING',
       description: 'Crisp, high-yield coaching, differential takeaway, or direct explanation formatted in clean Markdown without fluff.',
     },
-    distillation: {
-      type: 'OBJECT',
+    distillations: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
       properties: {
         hingeConcept: {
           type: 'STRING',
@@ -294,10 +302,11 @@ export const GEMINI_COGNITIVE_DELTA_RESPONSE_SCHEMA = {
           description: 'True if this is a high-yield volatile fact prone to rapid memory decay.',
         },
         clinicalTrigger: {
-          type: 'STRING',
-          description: 'Keyword trigger vignette clue that activates this rule.',
+            type: 'STRING',
+            description: 'Keyword trigger vignette clue that activates this rule.',
+          },
         },
-      },
+      }
     },
     studyDelta: {
       type: 'OBJECT',

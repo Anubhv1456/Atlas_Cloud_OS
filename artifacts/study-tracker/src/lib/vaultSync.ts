@@ -300,7 +300,7 @@ export async function restoreCompleteVault(
                (h.subjectName && h.subjectName.toLowerCase() === sysSubName.toLowerCase());
       }
       return false;
-    }).sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+    }).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 
     const latestCompletion = systemHistory[0]?.completedAt || sys.completionDate || sys.lastRevisionDate;
     const hasHistory = systemHistory.length > 0;

@@ -131,7 +131,7 @@ export async function parseMedicalIntent(userInput: string): Promise<IntentParse
       action: {
         action: 'ACTION_CLINICAL_QUERY',
         reply: result.delta.executiveSummary,
-        suggestedAction: result.delta.distillation?.twentyNotebookRule,
+        suggestedAction: result.delta.distillations?.[0]?.twentyNotebookRule,
       },
       rawResponse: result.delta.executiveSummary,
       modelUsed: result.modelUsed,
@@ -163,7 +163,7 @@ export async function parseIntentWithGemini(
   return {
     action: 'ACTION_CLINICAL_QUERY',
     reply: result.delta.executiveSummary,
-    suggestedAction: result.delta.distillation?.twentyNotebookRule,
+    suggestedAction: result.delta.distillations?.[0]?.twentyNotebookRule,
   };
 }
 

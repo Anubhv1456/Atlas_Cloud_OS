@@ -16,8 +16,8 @@ export const ACADEMIC_PHASES: Record<string, Record<string, ProfPhaseDefinition>
   'USMLE': {
     'MS1': { phaseId: 'usmle_ms1', name: 'Medical School Year 1', shortName: 'MS1', description: 'Basic Sciences', canonicalSubjects: ['Biochemistry & Medical Genetics', 'General Principles', 'Cardiovascular System', 'Respiratory System'] },
     'MS2': { phaseId: 'usmle_ms2', name: 'Medical School Year 2', shortName: 'MS2', description: 'Pathology & Pharmacology Integration', canonicalSubjects: ['General Pathology & Pharmacology', 'Microbiology & Immunology', 'Renal System', 'Gastrointestinal System', 'Endocrine System', 'Reproductive System', 'Nervous System & Special Senses', 'Musculoskeletal, Skin & Connective Tissue', 'Hematology & Oncology', 'Immune System'] },
-    'MS3 (Clinical)': { phaseId: 'usmle_ms3', name: 'Medical School Year 3', shortName: 'MS3', description: 'Core Clinical Rotations', canonicalSubjects: [] },
-    'MS4 (Advanced)': { phaseId: 'usmle_ms4', name: 'Medical School Year 4', shortName: 'MS4', description: 'Advanced Clinicals / Sub-I', canonicalSubjects: [] }
+    'MS3 (Clinical)': { phaseId: 'usmle_ms3', name: 'Medical School Year 3', shortName: 'MS3', description: 'Core Clinical Rotations', canonicalSubjects: ['Internal Medicine', 'Surgery', 'Pediatrics', 'Obstetrics & Gynaecology', 'Psychiatry', 'Family Medicine'] },
+    'MS4 (Advanced)': { phaseId: 'usmle_ms4', name: 'Medical School Year 4', shortName: 'MS4', description: 'Advanced Clinicals / Sub-I', canonicalSubjects: ['Internal Medicine', 'Surgery', 'Pediatrics', 'Obstetrics & Gynaecology', 'Psychiatry', 'Family Medicine'] }
   }
 };
 

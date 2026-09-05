@@ -144,11 +144,11 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
         </div>
       </div>
 
-      {/* Fluid Expandable Recovery Autopsy Capsule */}
+      {/* Fluid Expandable Recovery Performance Review Capsule */}
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
-            key="score-autopsy"
+            key="score-performance review"
             initial={{ height: 0, opacity: 0 }}
             animate={{ 
               height: 'auto', 

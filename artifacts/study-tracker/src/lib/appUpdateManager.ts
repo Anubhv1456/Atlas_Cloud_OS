@@ -11,10 +11,10 @@ export const CLIENT_BUILD_TIME: number =
   typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : 1772351800000;
 
 export const CLIENT_APP_VERSION: string =
-  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.4.0';
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.1.0';
 
 export const CLIENT_BUILD_ID: string =
-  typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : 'atlas-v2.4.0-init';
+  typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : 'atlas-v0.1.0-init';
 
 export interface VersionManifest {
   version: string;
@@ -44,7 +44,7 @@ let updateSWCallback: ((reloadPage?: boolean) => Promise<void>) | null = null;
 let latestDetectedManifest: VersionManifest | null = null;
 
 /**
- * Compare two semver strings (e.g. "2.4.1" vs "2.4.0")
+ * Compare two semver strings (e.g. "0.1.1" vs "0.1.0")
  */
 export function isNewerSemver(remote: string, current: string): boolean {
   if (!remote || !current) return false;
@@ -190,7 +190,7 @@ export async function checkForAppUpdate(): Promise<{
       return { hasUpdate: false, manifest };
     }
 
-    // Condition 2: Strictly newer semantic version (e.g. 2.4.1 > 2.4.0)
+    // Condition 2: Strictly newer semantic version (e.g. 0.1.1 > 0.1.0)
     const isVersionStrictlyNewer = isNewerSemver(manifest.version, CLIENT_APP_VERSION);
 
     // Condition 3: Strictly newer build timestamp (must be > current build time by at least 15 seconds)

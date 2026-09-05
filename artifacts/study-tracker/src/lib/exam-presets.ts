@@ -42,7 +42,9 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
     const existingSubjects = await db.subjects.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
     
     // Idempotency: If ontology subjects are already present and we are not forcing, exit cleanly
-    if (existingSubjects.length >= activeOntology.length && !force) {
+    const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
+    const presentActiveSubjects = existingSubjects.filter(s => s.name && activeSubjectNames.has(s.name.toLowerCase()));
+    if (presentActiveSubjects.length >= activeOntology.length && !force) {
       if (onProgress) onProgress(100, 'Curriculum already loaded');
       return { success: true, count: existingSubjects.length, reloaded: false };
     }

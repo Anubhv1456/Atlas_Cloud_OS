@@ -336,6 +336,12 @@ const CHAPTERS = [
     content: (
       <div className="space-y-6">
         <section className="space-y-2">
+          <h4 className="text-base font-bold text-foreground">Do I need to log every single flashcard I do?</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            No! Atlas tracks macro-level mastery (Subjects & Systems), not micro-facts. Use it alongside your favorite Q-Banks and flashcards. Just rate your high-level retention for the entire system after your study block.
+          </p>
+        </section>
+        <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Does Atlas provide question banks or video lectures?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
             No. Atlas is strictly a <strong>Curriculum Tracking & Spaced Revision OS</strong>. You use your preferred primary content sources (Marrow, Pre-PG, DAMS, Bhatia, First Aid, UWorld, Pathoma), and Atlas schedules your revision timings and mistake ledgers.

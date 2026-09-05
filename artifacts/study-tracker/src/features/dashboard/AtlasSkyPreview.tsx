@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { Sparkles } from 'lucide-react';
-import { AtlasSkyModal } from './AtlasSkyModal';
+import { AtlasSkyModal } from './AtlasSkyController';
 import { calculateOverallProgress } from '@/lib/progress';
 
 export function AtlasSkyPreview() {

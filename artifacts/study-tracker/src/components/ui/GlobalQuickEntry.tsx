@@ -120,7 +120,7 @@ export function GlobalQuickEntry() {
           <Sparkles className="w-5 h-5 text-primary mr-3 opacity-70" />
           <Input
             ref={inputRef}
-            placeholder="Type friction... e.g. Forgot MOA of Heparin #Pharma #Cardio #Volatile"
+            placeholder="Try saying: 'Log 45 mins of Cardiology...'"
             className="flex-1 border-0 shadow-none focus-visible:ring-0 text-lg px-0 py-6 placeholder:text-muted-foreground/60 h-auto"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}

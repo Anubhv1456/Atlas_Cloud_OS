@@ -571,6 +571,15 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               <div className="grid grid-cols-2 gap-2.5 my-2">
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
+                    Macro Mastery
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Tracks Subjects & Systems, not micro-facts. Use alongside your favorite Q-Banks.
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     Intelligent Direction
                   </div>

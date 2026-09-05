@@ -13,6 +13,7 @@ export interface ChatMessage {
   isVoiceInput?: boolean;
   source?: 'LOCAL_TOKENIZER' | 'GEMINI_CLOUD' | 'HYBRID';
   latencyMs?: number;
+  attachedImageBase64?: string;
 }
 
 /**
@@ -22,7 +23,8 @@ export interface ChatMessage {
 export async function sendChatMessageToGemini(
   conversationHistory: ChatMessage[],
   newMessage: string,
-  isVoice: boolean = false
+  isVoice: boolean = false,
+  attachedImageBase64?: string
 ): Promise<{
   replyMessage: string;
   proposedAction?: ParsedAtlasAction | null;
@@ -34,7 +36,7 @@ export async function sendChatMessageToGemini(
   const result = await executeCognitiveCompiler(
     newMessage,
     conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-    { bypassLocalTokenizer: false, cognitiveLoad: 'routine' }
+    { bypassLocalTokenizer: false, cognitiveLoad: 'routine', attachedImageBase64 }
   );
 
   return {

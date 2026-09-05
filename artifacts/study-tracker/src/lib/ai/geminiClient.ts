@@ -20,6 +20,7 @@ export interface GeminiClientOptions {
   bypassCache?: boolean;
   cognitiveLoad?: CognitiveLoad;
   maxRetries?: number;
+  attachedImageBase64?: string;
 }
 
 export interface CognitiveExecutionResult {
@@ -151,8 +152,8 @@ export async function convertDeltaToAction(
     };
   }
 
-  if (delta.intent === 'ACTION_ADD_MISTAKE' && (delta.distillation || delta.executiveSummary)) {
-    const d = delta.distillation;
+  if (delta.intent === 'ACTION_ADD_MISTAKE' && (delta.distillations?.[0] || delta.executiveSummary)) {
+    const d = delta.distillations?.[0];
     const resolved = await resolveSubject(delta.targetSubjectName || 'General Medicine');
     const ruleCandidate = (d?.twentyNotebookRule || d?.hingeConcept || delta.executiveSummary || fallbackInput || '').trim();
 
@@ -309,9 +310,19 @@ export async function executeCognitiveCompiler(
     };
   });
 
+  const finalParts: any[] = [{ text: input }];
+  if (options.attachedImageBase64) {
+    const base64Data = options.attachedImageBase64.split(',')[1] || options.attachedImageBase64;
+    finalParts.push({
+      inlineData: {
+        mimeType: 'image/jpeg',
+        data: base64Data
+      }
+    });
+  }
   contents.push({
     role: 'user',
-    parts: [{ text: input }],
+    parts: finalParts,
   });
 
   let rawData: any;
@@ -409,7 +420,7 @@ export async function executeCognitiveCompiler(
         targetSubjectName: parsedJson.targetSubjectName || 'General Medicine',
         subtopicTaxonomy: parsedJson.subtopicTaxonomy || '',
         executiveSummary: parsedJson.executiveSummary || rawJsonText,
-        distillation: parsedJson.distillation,
+        distillation: parsedJson.distillations?.[0],
         studyDelta: parsedJson.studyDelta,
         scoreDelta: parsedJson.scoreDelta,
         source: 'GEMINI_CLOUD',

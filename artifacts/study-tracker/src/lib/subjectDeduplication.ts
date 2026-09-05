@@ -294,7 +294,7 @@ export async function mergeAndDeduplicateAllSubjects(): Promise<MergeDeduplicate
 
         // 2. Reassign Curriculum Sets directly under dupId
         if (setsTable) {
-          const setsCount = await setsTable.where('subjectId').equals(dupId).count();
+          const setsCount = await setsTable.where('subjectId').equals(dupId).toArray().then(arr => arr.length);
           if (setsCount > 0) {
             await setsTable.where('subjectId').equals(dupId).modify({
               subjectId: keeperId,
@@ -306,7 +306,7 @@ export async function mergeAndDeduplicateAllSubjects(): Promise<MergeDeduplicate
         }
 
         // 3. Reassign History entries under dupId
-        const histCount = await db.history.where('subjectId').equals(dupId).count();
+        const histCount = await db.history.where('subjectId').equals(dupId).toArray().then(arr => arr.length);
         if (histCount > 0) {
           await db.history.where('subjectId').equals(dupId).modify({
             subjectId: keeperId,
@@ -339,7 +339,7 @@ export async function mergeAndDeduplicateAllSubjects(): Promise<MergeDeduplicate
         }
 
         // 5. Reassign Score Logs
-        const scoreCount = await db.scoreLogs.where('subjectId').equals(dupId).count();
+        const scoreCount = await db.scoreLogs.where('subjectId').equals(dupId).toArray().then(arr => arr.length);
         if (scoreCount > 0) {
           await db.scoreLogs.where('subjectId').equals(dupId).modify({
             subjectId: keeperId,

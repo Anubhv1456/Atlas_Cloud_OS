@@ -1,4 +1,6 @@
 import React from 'react';
+
+declare const __APP_VERSION__: string;
 import {
   AccountSection,
   ExamProfileSection,
@@ -83,7 +85,7 @@ export default function Settings() {
 
       {/* ── Footer Attribution ────────────────────────────────────────────── */}
       <footer className="text-center text-[11px] text-muted-foreground/60 py-4 select-none">
-        Atlas Medical Operating System • Version 2.4
+        Atlas Medical Operating System • Version {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"}
       </footer>
     </div>
   );

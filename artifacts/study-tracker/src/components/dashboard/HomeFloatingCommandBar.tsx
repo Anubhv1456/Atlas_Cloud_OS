@@ -452,24 +452,24 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                       )}
 
                       {/* Action 2: 20th Notebook Mistake Capsule */}
-                      {compiledDelta.distillation?.twentyNotebookRule && (
+                      {compiledDelta.distillations?.[0]?.twentyNotebookRule && (
                         <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-zinc-900/90 border border-amber-500/30 text-xs text-zinc-200">
                           <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                             <Lightbulb className="w-3.5 h-3.5" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="font-semibold text-amber-300 block">
-                              20th Notebook: {compiledDelta.distillation.tag || 'Clinical Rule'}
+                              20th Notebook: {compiledDelta.distillations?.[0].tag || 'Clinical Rule'}
                             </span>
                             <span className="text-zinc-300 text-[11px] leading-relaxed">
-                              {compiledDelta.distillation.twentyNotebookRule}
+                              {compiledDelta.distillations?.[0].twentyNotebookRule}
                             </span>
                           </div>
                         </div>
                       )}
 
                       {/* Fallback General Summary Capsule if neither is specifically populated */}
-                      {!compiledDelta.studyDelta && !compiledDelta.distillation?.twentyNotebookRule && (
+                      {!compiledDelta.studyDelta && !compiledDelta.distillations?.[0]?.twentyNotebookRule && (
                         <div className="p-2.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-200 leading-relaxed font-medium">
                           {compiledDelta.executiveSummary}
                         </div>

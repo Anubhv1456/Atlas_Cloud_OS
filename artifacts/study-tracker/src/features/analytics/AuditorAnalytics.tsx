@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { generateCognitiveProfile } from '@/lib/ai/contextPackager';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
+import { MockExamsWidget } from './MockExamsWidget';
 import { db } from '@/db';
 
 export default function AuditorAnalytics() {
@@ -57,6 +58,9 @@ export default function AuditorAnalytics() {
           The AI auditor has synthesized your data to identify core cognitive frictions and high-impact improvement vectors.
         </p>
       </div>
+
+      {/* Mock Exams Dashboard Widget */}
+      <MockExamsWidget />
 
       {/* Auditor Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

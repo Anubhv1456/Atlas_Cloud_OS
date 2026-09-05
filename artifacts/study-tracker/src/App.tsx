@@ -218,6 +218,7 @@ function ProtectedApp() {
 }
 
 import { GlobalQuickEntry } from '@/components/ui/GlobalQuickEntry';
+import { CurriculumInitializationEngine } from '@/components/CurriculumInitializationEngine';
 import { AppUpdateCapsule } from '@/components/AppUpdateCapsule';
 
 function App() {
@@ -228,9 +229,7 @@ function App() {
         // Wait for Firestore initial snapshot load to avoid cold-boot race conditions
         await db.subjects.ready;
         const count = await db.subjects.count();
-        if (count === 0) {
-          await loadUniversalOntology();
-        } else {
+        if (count > 0) {
           // Check if there are any residual duplicate subjects from earlier sessions and safely merge
           const dups = await findDuplicateSubjectGroups();
           if (dups.length > 0) {
@@ -300,7 +299,9 @@ function App() {
         <TooltipProvider>
           <ErrorBoundary>
             <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
-              <ProtectedApp />
+              <CurriculumInitializationEngine>
+                <ProtectedApp />
+              </CurriculumInitializationEngine>
             </WouterRouter>
           </ErrorBoundary>
           <GlobalQuickEntry />

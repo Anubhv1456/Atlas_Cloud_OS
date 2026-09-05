@@ -18,7 +18,6 @@ import {
 import { toast } from 'sonner';
 import { Target, Calendar, HelpCircle, Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { loadUniversalOntology } from '@/lib/exam-presets';
 
 interface TargetExamModalProps {
   open: boolean;
@@ -98,13 +97,8 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
     const isCurriculumShift = profile.targetExam && profile.targetExam !== finalExam;
 
-    if (isCurriculumShift) {
-       const confirm = window.confirm("Switching your target exam will reorganize your dashboard to reflect the new curriculum. Your previous progress will be safely retained in the background. Proceed?");
-       if (!confirm) return;
-    }
-
-    setSaving(true);
     try {
+      setSaving(true);
       await updateProfile({
         targetExam: finalExam,
         targetExamDate,
@@ -114,14 +108,15 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         currentYear,
       });
 
-      if (isCurriculumShift || !profile.targetExam) {
-         await loadUniversalOntology({ targetExam: finalExam, force: true });
-         toast.success('Curriculum synchronized successfully.');
+      // Auto-loader will handle curriculum sync if workspace is empty
+      if (isCurriculumShift) {
+        // Reset local initialization flag so auto-loader knows it can run for the new exam
+        localStorage.removeItem(`atlas_initialized_${finalExam.replace(/\s+/g, '_').toLowerCase()}`);
       }
 
       toast.success('Exam profile updated successfully.');
       onOpenChange(false);
-    } catch (err) {
+    } catch (err) { console.error(err);
       toast.error('Failed to save exam target.');
     } finally {
       setSaving(false);

@@ -257,16 +257,11 @@ export function SubjectsGrid({
           title="Curriculum Initializing"
           description="Your medical curriculum is being loaded..."
           action={
-            <Button 
-              onClick={async () => {
-                await loadUniversalOntology({ force: true, showToast: true });
-              }} 
-              variant="outline"
-              size="sm" 
-              className="gap-1.5 rounded-xl shadow-xs mt-2"
-            >
-              <BookOpen className="w-4 h-4" /> Load Universal Curriculum
-            </Button>
+            profile?.targetExam?.toLowerCase().includes('custom') || profile?.targetExam?.toLowerCase().includes('other') ? (
+              <Button onClick={() => setAddModalOpen(true)} variant="outline" size="sm" className="gap-1.5 rounded-xl shadow-xs mt-2">
+                <BookOpen className="w-4 h-4" /> Create First Subject
+              </Button>
+            ) : undefined
           }
         />
       ) : filteredSubjects.length === 0 ? (

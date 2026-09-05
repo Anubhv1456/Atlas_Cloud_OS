@@ -10,9 +10,7 @@ import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, Operat
 import { getDaysSinceLastStudy } from '@/db/queries';
 import { calculateSubjectFriction, SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
 import { StrategyFactory } from './strategies';
-import { UNIVERSAL_ONTOLOGY as NEETPG_ONTOLOGY } from '@/data/ontology.neetpg';
-import { USMLE_ONTOLOGY } from '@/data/ontology.usmle';
-import { GENERAL_ONTOLOGY } from '@/data/ontology.general';
+import { getOntologyForExam } from '@/data/ontology';
 
 export type RecommendationArchetype = 
   | 'tactical_strike' 
@@ -284,10 +282,7 @@ export async function getNextActionRecommendation(
   // --- THE CLEAN ROOM PATTERN ---
   const isUSMLE = activeExam?.toLowerCase().includes('usmle');
   const isCustom = activeExam?.toLowerCase().includes('custom') || activeExam?.toLowerCase().includes('general');
-  
-  let activeOntology = NEETPG_ONTOLOGY;
-  if (isUSMLE) activeOntology = USMLE_ONTOLOGY;
-  else if (isCustom) activeOntology = GENERAL_ONTOLOGY;
+  let activeOntology = getOntologyForExam(activeExam || 'NEET PG');
   
   const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
   const cleanRoomSubjects = allDbSubjects.filter(sub => activeSubjectNames.has(sub.name.toLowerCase()));
@@ -1075,7 +1070,7 @@ export async function getNextActionRecommendation(
 
   // Detect fresh user / no progress state (e.g. fresh onboarding or cleared progress)
   const isFreshState = historyEntries.length === 0 && 
-    !systems.some(s => s.contentCompleted || (s.revisionPassCount && s.revisionPassCount > 0)) &&
+    !systems.some(s => s.contentCompleted || (s.revisionCount && s.revisionCount > 0)) &&
     !curriculumSets.some(c => Boolean(c.lastRevisionDate) || (c.revisionCount && c.revisionCount > 0));
 
   // Inject synthetic primary for fresh users
