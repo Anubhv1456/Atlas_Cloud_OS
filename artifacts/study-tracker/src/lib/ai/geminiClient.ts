@@ -310,7 +310,14 @@ export async function executeCognitiveCompiler(
     };
   });
 
-  const finalParts: any[] = [{ text: input }];
+  const finalParts: any[] = [];
+  if (input) {
+    finalParts.push({ text: input });
+  } else if (options.attachedImageBase64) {
+    finalParts.push({ text: 'Analyze this image and extract all high-yield clinical facts into atomic pearls.' });
+  } else {
+    finalParts.push({ text: input });
+  }
   if (options.attachedImageBase64) {
     const base64Data = options.attachedImageBase64.split(',')[1] || options.attachedImageBase64;
     finalParts.push({
