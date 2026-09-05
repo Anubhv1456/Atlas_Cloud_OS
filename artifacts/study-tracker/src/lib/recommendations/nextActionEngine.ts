@@ -2,6 +2,7 @@
 import { db } from '@/db';
 import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval, isSoftRecalibrating, calculateKnapsackPriority } from '@/db';
 import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
+import { calculateFSRSRetention } from '@/lib/fsrs-engine';
 import { getSubjectWeightageInfo, getYearMultiplier } from '@/lib/recommendation-engine';
 import { getLocalExamProfile } from '@/lib/examProfile';
 import { isSubjectInProfScope, getAllowedSubjectsForProfile } from '@/lib/curriculumScope';
@@ -55,8 +56,8 @@ export interface NextActionRecommendation {
   title: string;
   subjectName: string;
   systemName: string;
-  subjectId: number;
-  systemId: number;
+  subjectId: number | string;
+  systemId: number | string;
   curriculumSetId?: string;
   depth: 'rapid' | 'standard' | 'deep';
   isLengthy: boolean;
@@ -414,8 +415,22 @@ export async function getNextActionRecommendation(
     let daysOverdue = 0;
     let isOverdue = false;
     let isDueToday = false;
-    
-    if (set.nextRevisionDate) {
+    let usesFSRS = false;
+
+    // First try to use FSRS dates if available on parent system
+    if (parentSystem && parentSystem.fsrsDue) {
+      usesFSRS = true;
+      const revDate = new Date(parentSystem.fsrsDue);
+      const diffMs = now.getTime() - revDate.getTime();
+      const diffDays = diffMs / (1000 * 3600 * 24);
+      if (diffDays >= 1) {
+        isOverdue = true;
+        daysOverdue = Math.floor(diffDays);
+      } else if (diffDays >= -0.5) {
+        isDueToday = true;
+      }
+    } else if (set.nextRevisionDate) {
+      // Fallback to SDSR
       const revDate = new Date(set.nextRevisionDate);
       const diffMs = now.getTime() - revDate.getTime();
       const diffDays = diffMs / (1000 * 3600 * 24);
@@ -447,7 +462,12 @@ export async function getNextActionRecommendation(
       });
     }
     
-    let baseMemoryLoss = topicMemoryLosses.length > 0 ? calculateBlockMemoryLoss(topicMemoryLosses) : 0;
+    let baseMemoryLoss = 0;
+    if (usesFSRS && parentSystem) {
+      baseMemoryLoss = 100 - calculateFSRSRetention(parentSystem, now);
+    } else if (topicMemoryLosses.length > 0) {
+      baseMemoryLoss = calculateBlockMemoryLoss(topicMemoryLosses);
+    }
     
     // If block is overdue, ensure memory loss accurately reflects elapsed revision debt
     if (isOverdue && baseMemoryLoss < 40) {
@@ -652,8 +672,8 @@ export async function getNextActionRecommendation(
       : !hasStudiedBefore
       ? `Targeted for First-Pass foundational intake. High exam weightage (${yieldWeight}%) in ${subjectName}. Completing this initializes spaced repetition scheduling.`
       : isOverdue
-      ? `Critical spaced repetition step overdue by ${daysOverdue} day${daysOverdue > 1 ? 's' : ''}. Memory decay is calculated at ${memoryDecayPercent}% based on Ebbinghaus forgetting curves. Immediate active recall required to stabilize memory retention.`
-      : `Targeted for Pass #${revisionCount + 1}. Retention is calculated at ${retrievabilityPercent}% based on Ebbinghaus decay curves and high exam weightage (${yieldWeight}%).`;
+      ? `Critical spaced repetition step overdue by ${daysOverdue} day${daysOverdue > 1 ? 's' : ''}. Memory decay is calculated at ${memoryDecayPercent}% based on FSRS scientifically optimized curves. Immediate active recall required to stabilize memory retention.`
+      : `Targeted for Pass #${revisionCount + 1}. Retention is calculated at ${retrievabilityPercent}% based on FSRS memory decay curves and high exam weightage (${yieldWeight}%).`;
 
     const whyBreakdown: AlgorithmWhyBreakdown = {
       priorityScore: actionIndex,
@@ -676,8 +696,9 @@ export async function getNextActionRecommendation(
       title: set.name,
       subjectName,
       systemName,
-      subjectId: Number(set.subjectId),
-      systemId: set.systemId,
+      subjectId: set.subjectId!,
+      systemId: set.systemId!,
+      
       curriculumSetId: set.id,
       depth: setDepth,
       isLengthy,
@@ -719,8 +740,9 @@ export async function getNextActionRecommendation(
               title: `${sub.name} • High-Yield Core`,
               subjectName: sub.name,
               systemName: sysName,
-              subjectId: Number(sub.id),
-              systemId: Number(sysId),
+              subjectId: sub.id!,
+              systemId: sysId!,
+              
               depth: 'rapid',
               isLengthy: false,
               isQuickEligible: true,

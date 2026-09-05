@@ -230,7 +230,9 @@ export function formatChartData(
       if (daysDiff > 2) {
         const decayDays = Math.min(daysDiff - 0.5, daysDiff);
         const stabilityFactor = getSubjectStabilityFactor(subName, log.percentage);
-        const decayedPercentage = Math.max(15, Math.round(log.percentage * Math.exp(-decayDays / stabilityFactor)));
+        // Apply FSRS Retention formula: R = 0.9 ^ (elapsed_days / stability)
+        const fsrsStability = Math.max(1, stabilityFactor / 2);
+        const decayedPercentage = Math.max(15, Math.round(log.percentage * Math.pow(0.9, decayDays / fsrsStability)));
         const decayDate = new Date(nextLogDate.getTime() - 86400000); // 1 day before next test
         
         chartData.push({
@@ -352,4 +354,13 @@ export function calculateSystemBreakdown(
     }))
     .sort((a, b) => b.average - a.average)
     .slice(0, 8); // Top 8 systems
+}
+
+import { Rating } from 'ts-fsrs';
+
+export function mapScoreToFSRSRating(percentage: number): Rating {
+  if (percentage < 50) return Rating.Again;
+  if (percentage <= 70) return Rating.Hard;
+  if (percentage <= 85) return Rating.Good;
+  return Rating.Easy;
 }

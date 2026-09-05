@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Award, CheckCircle2, Trophy, TriangleAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
+import { processFSRS } from '@/lib/fsrs-engine';
+import { mapScoreToFSRSRating } from '@/features/analytics/analyticsUtils';
 import { analyzeGtAutopsy, GtAutopsyReport } from './GtAutopsyService';
 import { GtAutopsyModal } from './GtAutopsyModal';
 
@@ -232,6 +234,12 @@ export function ScoreLogModal({
           await db.systems.update(systemId, sysUpdates);
           console.log(`SDSR Calibrated System: ${systemId} -> new interval ${sysUpdates.currentRevisionInterval} days`);
         }
+      }
+
+      // Invisible FSRS Calibration
+      if (systemId) {
+        const rating = mapScoreToFSRSRating(percentage);
+        await processFSRS(systemId, rating, logTimestamp);
       }
 
 

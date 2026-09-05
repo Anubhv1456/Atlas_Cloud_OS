@@ -76,6 +76,17 @@ export interface CurriculumUnit {
   averageScore?: number;
   scoreHistory?: ScoreLog[];
 
+  // FSRS (Free Spaced Repetition Scheduler) Integration
+  fsrsDue?: Date | string | null;
+  fsrsStability?: number;
+  fsrsDifficulty?: number;
+  fsrsElapsedDays?: number;
+  fsrsScheduledDays?: number;
+  fsrsReps?: number;
+  fsrsLapses?: number;
+  fsrsState?: number; // 0=New, 1=Learning, 2=Review, 3=Relearning
+  fsrsLastReview?: Date | string | null;
+
   // Multi-Day / Lengthy Active Revision states
   revisionState?: 'idle' | 'in_progress' | 'completed';
   revisionStartedAt?: Date | null;

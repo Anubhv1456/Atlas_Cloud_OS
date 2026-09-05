@@ -21,6 +21,7 @@ import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
+import { runFSRSMigration } from '@/lib/fsrs-engine';
 import { mergeAndDeduplicateAllSubjects, findDuplicateSubjectGroups } from '@/lib/subjectDeduplication';
 import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 import { db, dbEvents } from '@/db';
@@ -238,6 +239,7 @@ function App() {
           if (!hasRun) {
             hasRun = true;
             await repairAndRehydrateRevisionDates();
+            await runFSRSMigration();
           }
         }
       } catch (err) {

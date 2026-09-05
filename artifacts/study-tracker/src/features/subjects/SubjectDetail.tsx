@@ -649,7 +649,7 @@ export default function SubjectDetail() {
   if (!subject) return null;
 
   return (
-    <div className="min-h-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-5xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="min-h-full w-full bg-background px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-5xl mx-auto flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-x-hidden">
       {/* Header */}
       <header className="mb-6 space-y-5">
         <div className="flex items-center justify-between">

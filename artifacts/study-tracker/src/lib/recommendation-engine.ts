@@ -1,5 +1,6 @@
 import { normalizeName } from '@/lib/exam-presets';
 import { StrategyFactory } from './recommendations/strategies';
+import { calculateFSRSRetention } from "./fsrs-engine";
 import { REC_WEIGHTS, REC_MULTIPLIERS } from './recommendation-constants';
 import { Subject, StudySystem } from '@/db';
 import { ALL_SYSTEMS, ALL_SUBJECTS, OntologyTopic } from '@/data/ontology';
@@ -213,13 +214,15 @@ export function computeIntelligentRecommendation(
           reasons.push('• Pending QBank practice');
         }
 
-        if (true) {
-          if (set.nextRevisionDate && new Date(set.nextRevisionDate) < new Date()) {
-            score += REC_WEIGHTS.REVISION_DUE_BONUS;
-            reasons.push('• Active revision due based on spaced repetition');
-          } else {
-            score += REC_WEIGHTS.MASTERED_PENALTY;
-          }
+        const fsrsRetention = calculateFSRSRetention(sys);
+        if (sys.fsrsDue && new Date(sys.fsrsDue) < new Date()) {
+          score += (100 - fsrsRetention) * 10;
+          reasons.unshift(`• FSRS Alert: Retention dropped to ${Math.round(fsrsRetention)}%`);
+        } else if (set.nextRevisionDate && new Date(set.nextRevisionDate) < new Date()) {
+          score += REC_WEIGHTS.REVISION_DUE_BONUS;
+          reasons.push('• Active revision due based on spaced repetition');
+        } else {
+          score += REC_WEIGHTS.MASTERED_PENALTY;
         }
 
         if (score > bestScore) {
@@ -231,9 +234,16 @@ export function computeIntelligentRecommendation(
         }
       }
     } else {
-            // Fallback
+      // Fallback
       let score = weightage.weight * yearMult;
       const reasons: string[] = [];
+      const fsrsRetention = calculateFSRSRetention(sys);
+      
+      if (sys.fsrsDue && new Date(sys.fsrsDue) < new Date()) {
+        score += (100 - fsrsRetention) * 10;
+        reasons.unshift(`• FSRS Alert: Retention dropped to ${Math.round(fsrsRetention)}%`);
+      }
+      
       if (sys.isHighYield) {
         score += 150;
         reasons.unshift('🔥 Marked as High Yield');

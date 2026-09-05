@@ -98,7 +98,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="min-h-dvh bg-background flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="min-h-dvh w-full bg-background flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-x-hidden">
         {/* ── Full-Width Sticky Header ───────────────────────────────────────── */}
         <header className="sticky top-0 z-50 flex items-center justify-between gap-2.5 sm:gap-4 w-full bg-background/95 dark:bg-background/80 backdrop-blur-xl border-b border-border/40 py-3 px-4 sm:px-6 lg:px-8 shadow-sm">
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1 max-w-6xl mx-auto w-full">

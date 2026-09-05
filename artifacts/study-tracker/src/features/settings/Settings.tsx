@@ -22,7 +22,7 @@ export default function Settings() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="w-full flex-1 min-h-dvh bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-16 max-w-2xl mx-auto flex flex-col relative animate-in fade-in duration-200 space-y-6">
+    <div className="w-full flex-1 min-h-dvh bg-background px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-16 max-w-2xl mx-auto flex flex-col relative animate-in fade-in duration-200 space-y-6 overflow-x-hidden">
       {/* ── Apple-Grade Large Title Header ───────────────────────────────── */}
       <header className="px-1 pt-2">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">

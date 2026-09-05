@@ -86,7 +86,7 @@ export default function ManualAnalytics() {
   }, [selectedSubjectId, subjectMap]);
   
   return (
-    <div className="min-h-full bg-background text-foreground px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="min-h-full w-full bg-background text-foreground px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-x-hidden">
       {/* Diagnostics Apex - Readiness Metric */}
       <div className="pt-2 pb-6 border-b border-border/40 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="flex flex-col gap-2">

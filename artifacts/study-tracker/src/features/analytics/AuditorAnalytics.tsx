@@ -44,7 +44,7 @@ export default function AuditorAnalytics() {
   }, [mistakeLogs, subjects, curriculumSets]);
 
   return (
-    <div className="min-h-full bg-background text-foreground px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="min-h-full w-full bg-background text-foreground px-4 sm:px-6 lg:px-8 pt-8 pb-28 md:pb-10 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 overflow-x-hidden">
       
       {/* Auditor Header */}
       <div className="pt-2">
