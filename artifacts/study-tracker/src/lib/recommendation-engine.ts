@@ -166,6 +166,7 @@ export function computeIntelligentRecommendation(
     if (systemSets.length > 0) {
       for (const set of systemSets) {
         let score = weightage.weight * yearMult;
+        const reasons: string[] = [];
       
       // Smart Clinical Tags (System level)
       if (sys.tags && sys.tags.includes('#HighYield')) {
@@ -186,7 +187,6 @@ export function computeIntelligentRecommendation(
           score += 15;
           reasons.push('• Identified as #Volatile (requires spaced repetition)');
         }
-        const reasons: string[] = [];
 
         if (yearMult > 2.0) {
           reasons.push(`• Essential ${currentYear} priority (${subName})`);

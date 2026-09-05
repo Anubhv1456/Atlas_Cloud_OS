@@ -30,7 +30,7 @@ export type VisxTrendChartProps = {
   data: ChartDataPoint[];
 };
 
-const getX = (d: ChartDataPoint) => d.date;
+const getX = (d: ChartDataPoint) => String(d.id || d.date);
 const getY = (d: ChartDataPoint) => d.percentage;
 
 const defaultStyles = {
@@ -138,6 +138,10 @@ const BaseChart = withTooltip<
             scale={xScale}
             stroke="transparent"
             tickStroke="transparent"
+            tickFormat={(val) => {
+              const point = data.find(d => getX(d) === val);
+              return point ? point.date : '';
+            }}
             tickLabelProps={() => ({
               fill: 'hsl(var(--muted-foreground))',
               fontSize: 10,
