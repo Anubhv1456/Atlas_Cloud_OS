@@ -417,7 +417,8 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessageToGemini(messages, text, isVoiceActive);
+      const response = await sendChatMessageToGemini(messages, text, isVoiceActive, attachedImage || undefined);
+      setAttachedImage(null);
 
       const assistantMessage: ChatMessage = {
         id: `ast-${Date.now()}`,
@@ -970,7 +971,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
                       )}>
-                        <div className="prose prose-sm dark:prose-invert max-w-none break-words font-medium"><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>{msg.attachedImageBase64 && <div className="mt-2"><img src={msg.attachedImageBase64} alt="Attached" className="w-full max-w-[200px] rounded-lg border border-border/30" /></div>}</div>
+                        <div className={`prose prose-sm max-w-none break-words font-medium ${isAssistant ? "dark:prose-invert" : "text-primary-foreground prose-p:text-primary-foreground prose-headings:text-primary-foreground prose-strong:text-primary-foreground"}`}><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>{msg.attachedImageBase64 && <div className="mt-2"><img src={msg.attachedImageBase64} alt="Attached" className="max-h-48 w-auto object-contain rounded-lg border border-border/30" /></div>}</div>
                       </div>
                     ) : null}
 
@@ -1023,7 +1024,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           </div>
 
           {/* Quick Discovery Prompt Chips */}
-          <div className="px-4 py-2 border-t border-border/40 bg-muted/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <div className="px-4 py-2 border-t border-border/40 bg-muted/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 min-h-[3rem]">
             {promptPillsToRender.map((pill, idx) => (
               <button
                 key={idx}
