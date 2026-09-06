@@ -153,7 +153,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
             <button 
               onClick={fetchStatus} 
               disabled={loading}
-              className="text-[11px] text-muted-foreground hover:text-teal-400 flex items-center gap-1 transition-colors"
+              className="text-xs text-muted-foreground hover:text-teal-400 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className={cn("w-3 h-3", loading && "animate-spin")} />
               <span>Refresh</span>
@@ -183,19 +183,19 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
                       <div className="font-medium text-foreground truncate">
                         {record.refereeEmail || record.refereeName || 'Doctor'}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-xs text-muted-foreground">
                         Joined {dateStr}
                       </div>
                     </div>
 
                     <div>
                       {isQualified ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-400 text-[11px] font-semibold border border-teal-500/20">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-400 text-xs font-semibold border border-teal-500/20">
                           <CheckCircle2 className="w-3 h-3" />
                           +14d Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-[11px] font-medium border border-amber-500/20">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
                           <Clock className="w-3 h-3" />
                           First Session Pending
                         </span>

@@ -80,17 +80,17 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
               <span className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                 {log.title || 'Score Record'}
               </span>
-              <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-1.5 py-0.2 rounded bg-muted text-muted-foreground shrink-0">
+              <span className="text-xs uppercase font-mono font-bold tracking-wider px-1.5 py-0.2 rounded bg-muted text-muted-foreground shrink-0">
                 {log.type === 'gt' ? 'GT' : log.type === 'pyq' ? 'PYQ' : log.type === 'set' ? 'SET' : 'REV'}
               </span>
               {weakSubjects.length > 0 && (
-                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hidden sm:inline-flex items-center gap-1">
+                <span className="text-xs font-mono font-medium px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hidden sm:inline-flex items-center gap-1">
                   <ShieldAlert className="w-2.5 h-2.5" />
                   {weakSubjects.length} {weakSubjects.length === 1 ? 'Leakage' : 'Leakages'}
                 </span>
               )}
             </div>
-            <div className="text-[11px] text-muted-foreground flex items-center gap-2 truncate">
+            <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
               <span className="font-medium">{formatDistanceToNow(getLogTimestamp(log), { addSuffix: true })}</span>
               {subName && (
                 <>
@@ -117,7 +117,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
             )}>
               {log.percentage}%
             </span>
-            <span className="text-[10px] text-muted-foreground font-mono mt-1">
+            <span className="text-xs text-muted-foreground font-mono mt-1">
               {log.score}/{log.total}
             </span>
           </div>
@@ -173,7 +173,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                 <Target className="w-3.5 h-3.5 text-primary" />
                 <span className="font-bold text-foreground text-xs">Actionable Recovery Capsule</span>
               </div>
-              <span className="text-[10px] font-mono text-muted-foreground">
+              <span className="text-xs font-mono text-muted-foreground">
                 Recorded {log.total} questions • Accuracy {log.percentage}%
               </span>
             </div>
@@ -181,7 +181,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
             {/* Recovery Topics & Cluster Diagnostics */}
             {recoveryTopics.length > 0 ? (
               <div className="space-y-2">
-                <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <ShieldAlert className="w-3 h-3 text-rose-500" />
                   Target High-Friction Recovery Topics:
                 </h5>
@@ -196,7 +196,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {item.volatile.map((vol, vIdx) => (
-                          <span key={vIdx} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                          <span key={vIdx} className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300">
                             {vol}
                           </span>
                         ))}
@@ -206,7 +206,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-2.5 rounded-lg bg-card border border-border/60 text-muted-foreground text-[11px] flex items-center gap-2">
+              <div className="p-2.5 rounded-lg bg-card border border-border/60 text-muted-foreground text-xs flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>Performance was balanced. Maintain active spaced recall pace.</span>
               </div>
@@ -216,7 +216,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
             <div className="p-2.5 rounded-xl bg-card border border-border/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   Recommended Recovery Strategy: <strong className="text-foreground">Timed 25-Q Drill on flagged volatile traps</strong>
                 </span>
               </div>
@@ -225,7 +225,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('open-command-palette'));
                 }}
-                className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <span>Drill Weak Subjects</span>
                 <ArrowRight className="w-3 h-3" />

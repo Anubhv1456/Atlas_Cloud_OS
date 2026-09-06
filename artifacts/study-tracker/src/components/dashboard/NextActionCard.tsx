@@ -57,20 +57,9 @@ export function NextActionCard() {
   return (
     <div className="space-y-6">
       {/* ── Massive Primary CTA (Phase 2.1) ─────────────────────────────────── */}
-      <div className="bg-card border rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col items-center justify-center text-center">
-        <div className="absolute top-4 right-4">
-          <Badge variant="outline" className="bg-muted/50 text-[10px] tracking-wider uppercase font-medium">
-             {phaseLabel}
-          </Badge>
-        </div>
-        <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
-        
+      <div className="bg-card border border-border/60 rounded-xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col items-center justify-center text-center">
         {primary ? (
           <>
-            <Badge variant="outline" className="mb-4 bg-primary/5 text-primary border-primary/20">
-              {primary.whyBreakdown.depthLabel}
-            </Badge>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
               {primary.subjectName}
             </h2>
@@ -93,7 +82,7 @@ export function NextActionCard() {
           size="lg" 
           onClick={handleStartSession}
           disabled={isStarting || !primary}
-          className="h-16 px-10 rounded-full text-lg shadow-[0_0_40px_rgba(var(--primary-rgb,59,130,246),0.4)] hover:shadow-[0_0_60px_rgba(var(--primary-rgb,59,130,246),0.6)] hover:scale-105 transition-all duration-300"
+          className="h-16 px-10 rounded-xl text-lg shadow-sm hover:scale-105 transition-all duration-300"
         >
           {isStarting ? (
             <span className="flex items-center gap-2">
@@ -107,6 +96,9 @@ export function NextActionCard() {
             </span>
           )}
         </Button>
+        <p className="mt-6 text-xs text-muted-foreground/80 font-medium">
+          Note: Keep using Anki for daily micro-flashcards. Use Study Tracker to macro-schedule your QBank blocks and modules.
+        </p>
       </div>
 
       {/* ── Dynamic "Up Next" Feed (Phase 2.2) ─────────────────────────────── */}
@@ -140,7 +132,7 @@ export function NextActionCard() {
                    </div>
                    <h4 className="font-bold text-sm text-foreground line-clamp-1 mb-0.5">{pulse.systemName || pulse.subjectName}</h4>
                    {(pulse.systemName && pulse.systemName !== pulse.subjectName) && (
-                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 line-clamp-1">{pulse.subjectName}</p>
+                     <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2 line-clamp-1">{pulse.subjectName}</p>
                    )}
                    <p className="text-xs text-muted-foreground line-clamp-2">{pulse.whyBreakdown.humanizedMessage || pulse.title}</p>
                 </div>

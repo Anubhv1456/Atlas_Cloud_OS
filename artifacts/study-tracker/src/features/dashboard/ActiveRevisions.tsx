@@ -72,7 +72,7 @@ export function ActiveRevisions({
             <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
             <div className="p-4">
               <div className="flex items-center justify-between mb-2 gap-1">
-                <p className="text-[10px] uppercase tracking-wider text-primary font-semibold flex items-center gap-1.5 truncate">
+                <p className="text-xs uppercase tracking-wider text-primary font-semibold flex items-center gap-1.5 truncate">
                   {customPrimarySubject ? (
                     <><BookOpen className="w-3 h-3 shrink-0" /> {customPrimarySubject.name}</>
                   ) : isAutoPrimary ? (
@@ -137,7 +137,7 @@ export function ActiveRevisions({
                   <p className="font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 text-sm leading-snug">
                     {primaryFocus.name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-1 truncate">
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
                     {customPrimarySubject ? `Subject: ${customPrimarySubject.name}` : subjects.find(s => s.id === primaryFocus.subjectId)?.name}
                   </p>
                 </button>

@@ -5,6 +5,8 @@ import { loadUniversalOntology } from '@/lib/exam-presets';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 
+export const ATLAS_CURRICULUM_VERSION = 'v2026.09.usmle_blueprint_v10_organ_systems';
+
 export function CurriculumInitializationEngine({ children }: { children: React.ReactNode }) {
   const { profile, loading: profileLoading } = useExamProfile();
   const targetExam = profile.targetExam || 'NEET PG';
@@ -23,8 +25,26 @@ export function CurriculumInitializationEngine({ children }: { children: React.R
     
     const checkAndLoad = async () => {
       // Check local storage to see if we already initialized this specific exam manually or automatically
-      const initializedKey = `atlas_initialized_${targetExam.replace(/\s+/g, '_').toLowerCase()}`;
+      const examKey = targetExam.replace(/\s+/g, '_').toLowerCase();
+      const initializedKey = `atlas_initialized_${examKey}`;
+      const versionKey = `atlas_curriculum_version_${examKey}`;
       const hasInitialized = localStorage.getItem(initializedKey) === 'true';
+      const currentVersion = localStorage.getItem(versionKey);
+
+      // Check if blueprint version needs update / reconciliation
+      if (currentVersion !== ATLAS_CURRICULUM_VERSION) {
+        try {
+          await loadUniversalOntology({
+            targetExam,
+            force: false,
+            showToast: false
+          });
+          localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
+          localStorage.setItem(initializedKey, 'true');
+        } catch (err) {
+          console.error('Curriculum blueprint sync failed:', err);
+        }
+      }
 
       if (subjectCount === 0 && !hasInitialized) {
         setIsInitializing(true);
@@ -44,17 +64,20 @@ export function CurriculumInitializationEngine({ children }: { children: React.R
               }
             });
             localStorage.setItem(initializedKey, 'true');
+            localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
           } catch (err) {
             console.error('Auto-load failed:', err);
           }
         } else if (currentCount > 0) {
             // It synced from cloud!
             localStorage.setItem(initializedKey, 'true');
+            localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
         }
         if (isMounted) setIsInitializing(false);
       } else if (subjectCount > 0 && !hasInitialized) {
          // Mark as initialized if they already have data (e.g. legacy users or cloud rehydrated)
          localStorage.setItem(initializedKey, 'true');
+         localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
       }
     };
     

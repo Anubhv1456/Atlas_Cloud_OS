@@ -234,19 +234,19 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                   {sprintDetails.dayText}
                 </span>
                 {sprintDetails.targetDateFormatted && (
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     (Target: {sprintDetails.targetDateFormatted})
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground/90 mt-0.5 truncate">
+              <p className="text-xs text-muted-foreground/90 mt-0.5 truncate">
                 Triage locked to selected subjects. Tap to edit targets or end sprint.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0 pl-2">
-            <Badge variant="outline" className="text-[10px] bg-primary/10 border-primary/30 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+            <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
               Edit / End
             </Badge>
             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
@@ -270,7 +270,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                   3 Micro-Doses (≤ 30m Total)
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Calibrated for post-call fatigue and on-ward shifts. No overdue debt accumulation.
               </p>
             </div>
@@ -304,7 +304,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                   {opMode?.targetDate ? `Until ${format(new Date(opMode.targetDate), 'EEE, MMM d')}` : 'Paused'}
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Streak is frozen and reviews are paused. Zero backlog debt accumulation.
               </p>
             </div>
@@ -340,13 +340,13 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
                   Day {Math.max(1, 10 - recalibrationInfo.daysRemaining)} of 10 ({recalibrationInfo.daysRemaining}d left)
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Backlog items are smoothly drip-fed alongside daily items. Zero debt pressure.
               </p>
             </div>
           </div>
 
-          <Badge variant="outline" className="text-[10px] bg-teal-500/10 border-teal-500/30 text-teal-400 shrink-0 ml-2">
+          <Badge variant="outline" className="text-xs bg-teal-500/10 border-teal-500/30 text-teal-400 shrink-0 ml-2">
             Paced Recovery
           </Badge>
         </div>

@@ -26,7 +26,8 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { toast } from 'sonner';
 
 export interface QuickMistakeModalProps {
@@ -79,6 +80,7 @@ export function QuickMistakeModal({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Database subjects
+  const { profile } = useExamProfile();
   const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
   
   // Normalized 19 Subjects List
@@ -86,8 +88,8 @@ export function QuickMistakeModal({
     if (dbSubjects.length > 0) {
       return dbSubjects.map(s => ({ id: s.id, name: s.name }));
     }
-    return ALL_SUBJECTS.map(s => ({ id: s.id, name: s.name }));
-  }, [dbSubjects]);
+    return getOntologyForExam(profile.targetExam || 'NEET PG').map(s => ({ id: s.id, name: s.name }));
+  }, [dbSubjects, profile.targetExam]);
 
   const [subjectId, setSubjectId] = useState<number | string>(subjectOptions[0]?.id || 1);
   const [keyTakeaway, setKeyTakeaway] = useState('');
@@ -106,7 +108,15 @@ export function QuickMistakeModal({
         setIsVolatile(Boolean(editingMistake.isVolatile));
         setSource(editingMistake.source || 'GT');
       } else {
-        setSubjectId(defaultSubjectId || subjectOptions[0]?.id || 1);
+        if (defaultSubjectId) {
+          const match = subjectOptions.find(
+            s => String(s.id).toLowerCase() === String(defaultSubjectId).toLowerCase() ||
+                 s.name.toLowerCase() === String(defaultSubjectId).toLowerCase()
+          );
+          setSubjectId(match ? match.id : (defaultSubjectId || subjectOptions[0]?.id || 1));
+        } else {
+          setSubjectId(subjectOptions[0]?.id || 1);
+        }
         setKeyTakeaway('');
         setSelectedTags(defaultTags || []);
         setIsVolatile(false);
@@ -144,7 +154,7 @@ export function QuickMistakeModal({
           source,
           updatedAt: new Date()
         });
-        toast.success('{lexicon.mistakesJournal} rule updated');
+        toast.success(`${lexicon.mistakesJournal} rule updated`);
       } else {
         await logMistake({
           subjectId,
@@ -162,7 +172,7 @@ export function QuickMistakeModal({
       onOpenChange(false);
       if (onSaved) onSaved();
     } catch (err) {
-      console.error('Failed to save {lexicon.mistakesJournal} rule:', err);
+      console.error(`Failed to save ${lexicon.mistakesJournal} rule:`, err);
       toast.error('Could not save rule. Please try again.');
     } finally {
       setSaving(false);
@@ -185,7 +195,7 @@ export function QuickMistakeModal({
               <BookOpen className="w-4 h-4" />
             </span>
             <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
-              {editingMistake ? 'Edit {lexicon.mistakesJournal} Rule' : 'Add to {lexicon.mistakesJournal}'}
+              {editingMistake ? `Edit ${lexicon.mistakesJournal} Rule` : `Add to ${lexicon.mistakesJournal}`}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
@@ -197,7 +207,7 @@ export function QuickMistakeModal({
           {/* Top Selection Row: Subject & Source */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
                 Subject
               </label>
               <select
@@ -214,7 +224,7 @@ export function QuickMistakeModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
                 Source
               </label>
               <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/40 border border-border/80">
@@ -240,10 +250,10 @@ export function QuickMistakeModal({
           {/* Core Rule Textarea */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 The Golden Rule / Key Distinction
               </label>
-              <span className="text-[10px] text-muted-foreground font-mono">
+              <span className="text-xs text-muted-foreground font-mono">
                 ⌘ + Enter to save
               </span>
             </div>
@@ -260,7 +270,7 @@ export function QuickMistakeModal({
 
           {/* Quick Tag Pills */}
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
               High-Yield Tags (1-Tap Selection)
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -296,7 +306,7 @@ export function QuickMistakeModal({
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block">
                   Mark as Volatile Trap ⚡
                 </span>
-                <span className="text-[11px] text-amber-600/80 dark:text-amber-400/80">
+                <span className="text-xs text-amber-600/80 dark:text-amber-400/80">
                   Highlight this rule in the pre-GT urgent revision spotlight.
                 </span>
               </div>

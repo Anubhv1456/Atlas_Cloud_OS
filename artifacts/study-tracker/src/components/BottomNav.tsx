@@ -190,7 +190,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                         OS
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground font-medium">Medical Study OS</p>
+                    <p className="text-xs text-muted-foreground font-medium">Medical Study OS</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -238,7 +238,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
           {/* Navigation Links */}
           <nav className={cn("space-y-1.5 w-full flex flex-col", isCollapsed && "items-center")}>
             {!isCollapsed && (
-              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+              <div className="px-2 pb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
                 Navigation
               </div>
             )}
@@ -271,7 +271,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-xs">{label}</span>
                         {shortcut && (
-                          <span className="font-mono text-[10px] bg-background/20 px-1 rounded text-primary-foreground/90">
+                          <span className="font-mono text-xs bg-background/20 px-1 rounded text-primary-foreground/90">
                             ⌘{shortcut}
                           </span>
                         )}
@@ -300,7 +300,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                   {shortcut && (
                     <span
                       className={cn(
-                        "text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors z-10",
+                        "text-xs font-mono px-1.5 py-0.5 rounded transition-colors z-10",
                         active
                           ? "bg-primary/20 text-primary font-bold"
                           : "text-muted-foreground/60 group-hover:text-muted-foreground"
@@ -345,7 +345,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                   <Target className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Target Exam</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Exam</p>
                   <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                     {isConfigured ? profile.targetExam : 'Set Target Exam'}
                   </p>
@@ -366,24 +366,24 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={14}>
                 <p className="font-semibold text-xs">{user?.email || 'Medical Scholar'}</p>
-                <p className="text-[10px] text-muted-foreground">{isOnline ? 'Cloud Synced' : 'On-Device Storage'}</p>
+                <p className="text-xs text-muted-foreground">{isOnline ? 'Cloud Synced' : 'On-Device Storage'}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex items-center justify-between px-2 py-1 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between px-2 py-1 text-xs text-muted-foreground">
               <div className="flex items-center gap-2 truncate">
-                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[10px] shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs shrink-0">
                   {user?.email ? user.email[0].toUpperCase() : <User className="w-3 h-3" />}
                 </div>
                 <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
               </div>
               {isOnline ? (
-                <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <div className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                   <ShieldCheck className="w-3 h-3" />
                   <span>Synced</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 text-[10px] font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
+                <div className="flex items-center gap-1 text-xs font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
                   <HardDrive className="w-3 h-3" />
                   <span>On Device</span>
                 </div>
@@ -423,7 +423,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                   )} />
 
                   <span className={cn(
-                    "text-[10px] tracking-tight transition-colors duration-200 mt-0.5",
+                    "text-xs tracking-tight transition-colors duration-200 mt-0.5",
                     active ? "text-primary font-semibold" : "text-muted-foreground font-medium group-hover:text-foreground"
                   )}>
                     {label}

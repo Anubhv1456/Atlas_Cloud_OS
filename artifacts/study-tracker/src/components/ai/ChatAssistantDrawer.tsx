@@ -608,7 +608,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   <h3 className="font-bold text-sm tracking-tight text-foreground truncate">
                     Atlas Clinical Intelligence
                   </h3>
-                  <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
+                  <p className="text-xs text-muted-foreground font-medium tracking-wide uppercase">
                     Active Assistant
                   </p>
                 </div>
@@ -835,7 +835,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     ) : (
                       <Mic className="w-10 h-10 sm:w-14 sm:h-14" />
                     )}
-                    <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest mt-0.5 sm:mt-1 opacity-70">
+                    <span className="text-[9px] sm:text-xs uppercase font-bold tracking-widest mt-0.5 sm:mt-1 opacity-70">
                       {ambientSession.isListening ? "Listening" : ambientSession.isThinking ? "Thinking" : ambientSession.isSpeakingAI ? "Speaking" : "Hold Orb"}
                     </span>
                   </motion.div>
@@ -857,7 +857,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       "w-2 h-2 rounded-full",
                       ambientSession.isListening ? "bg-emerald-400 animate-ping" : ambientSession.isThinking ? "bg-amber-400 animate-spin" : ambientSession.isSpeakingAI ? "bg-sky-400 animate-pulse" : "bg-muted-foreground/40"
                     )} />
-                    <span className="text-[11px] sm:text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+                    <span className="text-xs sm:text-xs uppercase tracking-wider font-semibold text-muted-foreground">
                       {ambientSession.isListening
                         ? "Listening... (English / Hindi / Hinglish)"
                         : ambientSession.isThinking
@@ -896,7 +896,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       key={idx}
                       type="button"
                       onClick={() => ambientSession.submitSpeechTurn(chip.query)} 
-                      className="whitespace-nowrap shrink-0 px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-95 shadow-2xs"
+                      className="whitespace-nowrap shrink-0 px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-xs font-medium bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50 backdrop-blur-sm transition-all duration-200 cursor-pointer active:scale-95 shadow-2xs"
                     >
                       {chip.label}
                     </button>
@@ -930,7 +930,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       : "Hold to Talk (Push-to-Talk)"}
                   </span>
                 </button>
-                <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 text-center select-none pt-0.5">
+                <p className="text-[9px] sm:text-xs text-muted-foreground/60 text-center select-none pt-0.5">
                   ⚖️ Educational revision tool for medical exam prep. Not for clinical patient management.
                 </p>
               </div>
@@ -997,7 +997,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     )}
 
                     <span className={cn(
-                      "text-[10px] text-muted-foreground/70 px-1",
+                      "text-xs text-muted-foreground/70 px-1",
                       isAssistant ? "text-left" : "text-right"
                     )}>
                       {msg.timestamp}
@@ -1013,7 +1013,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-pulse">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
-                <div className="flex items-center gap-1 font-mono text-[11px]">
+                <div className="flex items-center gap-1 font-mono text-xs">
                   <span>Analyzing Atlas curriculum</span>
                   <span className="animate-bounce">.</span>
                   <span className="animate-bounce [animation-delay:0.2s]">.</span>
@@ -1031,7 +1031,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 type="button"
                 disabled={isLoading}
                 onClick={() => handleSendMessage(pill.text)}
-                className="shrink-0 px-2.5 py-1 rounded-full bg-background/80 hover:bg-background border border-border/60 hover:border-primary/40 text-[11px] text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
+                className="shrink-0 px-2.5 py-1 rounded-full bg-background/80 hover:bg-background border border-border/60 hover:border-primary/40 text-xs text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs whitespace-nowrap active:scale-95"
               >
                 {pill.label}
               </button>
@@ -1050,7 +1050,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
               <button
                 type="button"
                 onClick={handleToggleVoice}
-                className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors"
+                className="px-2 py-0.5 rounded text-xs font-semibold bg-rose-500 text-white hover:bg-rose-600 transition-colors"
               >
                 Done
               </button>
@@ -1169,7 +1169,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 text-center pb-1 pt-1.5 px-4 select-none">
+            <p className="text-[9px] sm:text-xs text-muted-foreground/60 text-center pb-1 pt-1.5 px-4 select-none">
               ⚖️ Atlas is an educational strategy mentor. Always verify clinical facts and dosages with primary sources.
             </p>
           </div>

@@ -100,7 +100,8 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     { id: 'INI-CET', label: 'INI-CET', badge: 'AIIMS / Premier' },
     { id: 'FMGE', label: 'FMGE / Screening', badge: 'Licensing' },
     { id: 'NExT', label: 'NExT (Upcoming)', badge: 'Unified Exam' },
-    { id: 'USMLE Step 1', label: 'USMLE Step 1 / Step 2', badge: 'US Licensing' },
+    { id: 'USMLE Step 1', label: 'USMLE Step 1 (Organ Systems & Foundational)', badge: 'US Licensing' },
+    { id: 'USMLE Step 2', label: 'USMLE Step 2 CK (Clinical Clerkships)', badge: 'US Licensing' },
     { id: 'Custom', label: 'Custom / General Medical', badge: 'Flexible' },
   ];
 
@@ -319,7 +320,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               </div>
 
               <div className="space-y-2 max-w-sm">
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[11px] font-bold px-3 py-0.5 rounded-full">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold px-3 py-0.5 rounded-full">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Medical Study Operating System
                 </Badge>
@@ -349,7 +350,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   Skip for now & explore
                 </Button>
 
-                <p className="text-[10px] text-muted-foreground/70 text-center leading-tight pt-1">
+                <p className="text-xs text-muted-foreground/70 text-center leading-tight pt-1">
                   ⚖️ <span className="font-semibold">Educational Aid:</span> Strictly for medical revision & exam preparation. Not for clinical patient diagnosis.
                 </p>
               </div>
@@ -365,7 +366,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 1 of 3</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">Step 1 of 3</span>
                 <h2 className="text-xl font-bold text-foreground">What are you preparing for?</h2>
                 <p className="text-xs text-muted-foreground">Select your primary examination goal to tailor your presets and revision schedule.</p>
               </div>
@@ -389,7 +390,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                         <span className="text-xs font-bold text-foreground">{goal.label}</span>
                         {isSelected && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
                       </div>
-                      <span className="text-[10px] text-muted-foreground font-mono">{goal.badge}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{goal.badge}</span>
                     </button>
                   );
                 })}
@@ -440,7 +441,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 2 of 3</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">Step 2 of 3</span>
                 <h2 className="text-xl font-bold text-foreground">Personalize Your Pacing</h2>
                 <p className="text-xs text-muted-foreground">Help Atlas tailor recommendations to your exact timeline.</p>
               </div>
@@ -450,7 +451,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                     <span>Expected Exam Date</span>
-                    <span className="text-[10px] text-muted-foreground font-normal">Optional</span>
+                    <span className="text-xs text-muted-foreground font-normal">Optional</span>
                   </label>
                   <div className="grid grid-cols-4 gap-1.5 mb-1.5">
                     {[
@@ -463,7 +464,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                         key={btn.label}
                         type="button"
                         onClick={() => applyDatePreset(btn.m)}
-                        className="text-[10px] font-medium py-1.5 rounded-xl border border-border/60 hover:bg-muted/60 transition-colors text-foreground cursor-pointer"
+                        className="text-xs font-medium py-1.5 rounded-xl border border-border/60 hover:bg-muted/60 transition-colors text-foreground cursor-pointer"
                       >
                         {btn.label}
                       </button>
@@ -554,7 +555,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Step 3 of 3</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Step 3 of 3</span>
                   <h2 className="text-xl font-bold text-foreground">How Atlas Guides You</h2>
                   <p className="text-xs text-muted-foreground">Four algorithmic pillars drive every study decision.</p>
                 </div>
@@ -574,7 +575,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
                     Macro Mastery
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     Tracks Subjects & Systems, not micro-facts. Use alongside your favorite Q-Banks.
                   </p>
                 </div>
@@ -583,7 +584,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     Intelligent Direction
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     Curriculum weightage dynamically guides daily priorities.
                   </p>
                 </div>
@@ -593,7 +594,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
                     Active Recall
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     Prioritizes active retrieval practice over passive reading.
                   </p>
                 </div>
@@ -603,7 +604,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-sky-500" />
                     Spaced Repetition
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     Schedules memory callbacks before knowledge decay occurs.
                   </p>
                 </div>
@@ -613,7 +614,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                     Continuous Calibration
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     Real-time adaptation to test scores and weak areas.
                   </p>
                 </div>
@@ -697,7 +698,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="text-center space-y-1">
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] font-bold px-3 py-0.5 rounded-full">
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs font-bold px-3 py-0.5 rounded-full">
                   <Sparkles className="w-3 h-3 mr-1 text-emerald-500" />
                   Calibration Complete
                 </Badge>
@@ -722,7 +723,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 </div>
 
                 <div className="space-y-1.5 pt-2 border-t border-border/40">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Why Atlas Chose This
                   </span>
                   <ul className="space-y-1">

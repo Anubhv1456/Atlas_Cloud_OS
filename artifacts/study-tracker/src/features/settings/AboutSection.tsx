@@ -67,7 +67,7 @@ export function AboutSection() {
 
           <div className="space-y-4 text-xs sm:text-sm text-muted-foreground leading-relaxed max-h-[55vh] overflow-y-auto pr-2 my-2 border-y border-border/40 py-3">
             <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-medium space-y-1">
-              <p className="font-bold uppercase tracking-wider text-[11px]">Strictly for Medical Education & Licensing Prep</p>
+              <p className="font-bold uppercase tracking-wider text-xs">Strictly for Medical Education & Licensing Prep</p>
               <p>Atlas is not a certified medical device and must never be utilized as a substitute for professional clinical judgment, diagnosis, or patient management.</p>
             </div>
 

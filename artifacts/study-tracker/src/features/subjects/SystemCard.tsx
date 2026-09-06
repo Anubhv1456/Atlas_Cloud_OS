@@ -22,7 +22,6 @@ import { CurriculumSets } from './CurriculumSets';
 import { TopicList } from './TopicList';
 import { ViewMarkersModal } from './ViewMarkersModal';
 import { useSystemCardLogic } from './SystemCard.hooks';
-import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 
 interface SystemCardProps {
   system: StudySystem;
@@ -33,7 +32,6 @@ interface SystemCardProps {
 
 export function SystemCard(props: SystemCardProps) {
   const { system, subjectName, dragHandleProps, highlighted } = props;
-  const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
   
   const { 
     expanded, setExpanded, 
@@ -98,7 +96,7 @@ export function SystemCard(props: SystemCardProps) {
               </span>
             )}
 
-            <span className="inline-flex px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-bold font-mono rounded-md shrink-0">
+            <span className="inline-flex px-2 py-0.5 bg-primary/10 text-primary text-xs font-bold font-mono rounded-md shrink-0">
               {progress}%
             </span>
 
@@ -110,7 +108,7 @@ export function SystemCard(props: SystemCardProps) {
                   e.stopPropagation();
                   setShowLogSession(true);
                 }}
-                className="h-7 text-[11px] font-bold px-2.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 shrink-0 transition-colors gap-1 cursor-pointer"
+                className="h-7 text-xs font-bold px-2.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 shrink-0 transition-colors gap-1 cursor-pointer"
                 title="Start SDSR Revision"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -151,13 +149,13 @@ export function SystemCard(props: SystemCardProps) {
           {/* Sub-Telemetry Line */}
           <div className="pt-2 flex items-center gap-3 text-xs text-muted-foreground font-medium flex-wrap">
             {blocksTotal > 0 && (
-              <span className="flex items-center gap-1 text-[11px]">
+              <span className="flex items-center gap-1 text-xs">
                 <Folder className="w-3 h-3 text-primary/70" />
                 <span>Modules: <strong className="text-foreground">{blocksCompleted}/{blocksTotal}</strong></span>
               </span>
             )}
 
-            <span className="text-[11px]">
+            <span className="text-xs">
               Topics: <strong className="text-foreground">{totalTopicsCount}</strong>
               {weakTopicsCount > 0 && (
                 <span className="text-rose-500 ml-1 font-semibold">({weakTopicsCount} weak)</span>
@@ -165,17 +163,17 @@ export function SystemCard(props: SystemCardProps) {
             </span>
 
             {overdueDays > 0 ? (
-              <span className="text-[11px] text-amber-500 font-semibold flex items-center gap-1">
+              <span className="text-xs text-amber-500 font-semibold flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 <span>SDSR Due ({overdueDays}d overdue)</span>
               </span>
             ) : revisionDue ? (
-              <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
+              <span className="text-xs text-amber-400 font-semibold flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 <span>SDSR Review Due</span>
               </span>
             ) : system.lastRevised ? (
-              <span className="text-[11px] text-muted-foreground/80">
+              <span className="text-xs text-muted-foreground/80">
                 Revised {formatDistanceToNow(system.lastRevised, { addSuffix: true })}
               </span>
             ) : null}
@@ -218,7 +216,7 @@ export function SystemCard(props: SystemCardProps) {
               {/* Curriculum Modules (Study Blocks) */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Folder className="w-3.5 h-3.5 text-primary" />
                     <span>Curriculum Modules</span>
                   </h4>
@@ -261,11 +259,11 @@ export function SystemCard(props: SystemCardProps) {
               {/* Clinical Pearls & Weak Concepts + Retention Calibration */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Clinical Pearls & Weak Concepts
                   </h4>
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-[10px] font-medium text-muted-foreground">Retention Calibration:</span>
+                    <span className="text-xs font-medium text-muted-foreground">Retention Calibration:</span>
                     <DropdownMenu open={showDecayCalibration} onOpenChange={setShowDecayCalibration}>
                       <DropdownMenuTrigger className="font-semibold text-primary hover:underline flex items-center gap-0.5 focus:outline-none cursor-pointer">
                         {system.decayFactor ? system.decayFactor.toFixed(2) : '1.00'}x
@@ -299,7 +297,7 @@ export function SystemCard(props: SystemCardProps) {
             </div>
             
             {/* Integrated Ambient Footer Bar */}
-            <div className="px-4 py-2.5 border-t border-border/40 bg-muted/20 rounded-b-2xl text-[11px] font-medium text-muted-foreground flex items-center justify-between flex-wrap gap-2">
+            <div className="px-4 py-2.5 border-t border-border/40 bg-muted/20 rounded-b-2xl text-xs font-medium text-muted-foreground flex items-center justify-between flex-wrap gap-2">
               <span className="flex items-center gap-1.5">
                 <span>Last revised:</span>
                 <strong className="text-foreground font-semibold">
@@ -379,7 +377,7 @@ export function SystemCard(props: SystemCardProps) {
             </DialogHeader>
             <div className="py-2 space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Marker Classification</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Marker Classification</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'clinical_pearl', icon: '📌', label: 'Clinical Pearl', desc: 'High-yield diagnostic/rx key' },
@@ -402,13 +400,13 @@ export function SystemCard(props: SystemCardProps) {
                         <span>{type.icon}</span>
                         <span>{type.label}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{type.desc}</span>
+                      <span className="text-xs text-muted-foreground mt-0.5 leading-tight">{type.desc}</span>
                     </button>
                   ))}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Medical Insight</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Medical Insight</label>
                 <Textarea
                   autoFocus
                   value={insightContent}
@@ -419,7 +417,7 @@ export function SystemCard(props: SystemCardProps) {
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Reference Source (Optional)</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Reference Source (Optional)</label>
                 <Input
                   type="text"
                   value={insightSource}

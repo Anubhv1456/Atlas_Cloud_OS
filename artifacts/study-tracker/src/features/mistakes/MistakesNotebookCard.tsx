@@ -126,19 +126,19 @@ export function MistakesNotebookCard() {
         {/* Diagnostic Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-xl bg-muted/40 border border-border/40 space-y-0.5">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
               Active Rules
             </span>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-bold font-mono text-foreground">
                 {activeMistakes.length}
               </span>
-              <span className="text-[11px] text-muted-foreground">active</span>
+              <span className="text-xs text-muted-foreground">active</span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5">
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
               <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
               Volatile Rules
             </span>
@@ -146,12 +146,12 @@ export function MistakesNotebookCard() {
               <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
                 {volatileMistakes.length}
               </span>
-              <span className="text-[11px] text-amber-600/80 dark:text-amber-400/80">urgent</span>
+              <span className="text-xs text-amber-600/80 dark:text-amber-400/80">urgent</span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-0.5">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               Coverage
             </span>
@@ -159,14 +159,14 @@ export function MistakesNotebookCard() {
               <span className="text-2xl font-bold font-mono text-primary">
                 {topSubjectStats.length}
               </span>
-              <span className="text-[11px] text-primary/80">
+              <span className="text-xs text-primary/80">
                 {topSubjectStats.length === 1 ? 'subject' : 'subjects'}
               </span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-0.5">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
               <Archive className="w-3 h-3 text-emerald-500" />
               Archived
             </span>
@@ -174,7 +174,7 @@ export function MistakesNotebookCard() {
               <span className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {archivedMistakes.length}
               </span>
-              <span className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">mastered</span>
+              <span className="text-xs text-emerald-600/80 dark:text-emerald-400/80">mastered</span>
             </div>
           </div>
         </div>
@@ -184,7 +184,7 @@ export function MistakesNotebookCard() {
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
               <span>Top Subject Notebooks</span>
-              <Link href="/mistakes" className="text-[11px] font-bold text-primary hover:underline">
+              <Link href="/mistakes" className="text-xs font-bold text-primary hover:underline">
                 View full ledger →
               </Link>
             </div>
@@ -199,7 +199,7 @@ export function MistakesNotebookCard() {
                   <span className="text-foreground group-hover:text-primary transition-colors">
                     {sub.name}
                   </span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-muted text-[10px] font-mono text-muted-foreground">
+                  <span className="px-1.5 py-0.2 rounded-full bg-muted text-xs font-mono text-muted-foreground">
                     {sub.activeCount}
                   </span>
                   {sub.volatileCount > 0 && (
@@ -219,7 +219,7 @@ export function MistakesNotebookCard() {
                 <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span>Pre-GT Volatile Spotlight</span>
               </span>
-              <span className="text-[11px] text-muted-foreground">High-yield revision</span>
+              <span className="text-xs text-muted-foreground">High-yield revision</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -235,7 +235,7 @@ export function MistakesNotebookCard() {
                     className="p-3 rounded-xl bg-muted/30 border border-border/60 hover:border-primary/40 transition-all flex flex-col justify-between gap-2 group cursor-pointer"
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-bold">
+                      <div className="flex items-center justify-between text-xs font-bold">
                         <span className="text-primary truncate">{subName}</span>
                         <span className="text-amber-500 font-mono flex items-center gap-0.5">
                           <Zap className="w-2.5 h-2.5 fill-amber-500" />

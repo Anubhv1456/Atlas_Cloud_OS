@@ -436,7 +436,7 @@ export default function BetaAccess() {
             {/* Top Cohort Header Banner */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-white/[0.06]">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[11px] font-semibold mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                   {cohortHeaderTitle}
                 </div>
@@ -456,12 +456,12 @@ export default function BetaAccess() {
                   <div className="text-xl sm:text-2xl font-bold text-teal-400 font-mono tracking-tight">
                     {currency}{price}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                  <div className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">
                     {duration} Cohort Pass
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 mt-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
                     <Users className="w-3.5 h-3.5 text-teal-400" />
                     <span>{claimedSeats} / {totalSeats} Seats Claimed</span>
                   </div>
@@ -482,7 +482,7 @@ export default function BetaAccess() {
                   <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
                   <span className="truncate">Enrolling candidate <strong className="text-zinc-200 font-mono font-medium">{user.email}</strong></span>
                 </div>
-                <span className="text-[10px] text-teal-400 font-semibold uppercase tracking-wider shrink-0 hidden sm:inline">Priority Queue</span>
+                <span className="text-xs text-teal-400 font-semibold uppercase tracking-wider shrink-0 hidden sm:inline">Priority Queue</span>
               </div>
             )}
 
@@ -507,7 +507,7 @@ export default function BetaAccess() {
                       <path d="M40 10h5v15h-5zm10 5h10v5H50zm-5 10h15v5H45zm-5 10h10v10H40zm15 0h10v5H55zm20 0h15v5H75zm-30 10h10v15H45zm15 5h10v10H60zm15-5h10v5H75zm10 10h5v15h-5zm-45 10h5v10h-5zm10-5h15v5H55zm20 0h10v10H75zm-15 10h10v5H60z" fill="#0D9488" />
                     </svg>
                   )}
-                  <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-semibold">
+                  <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-semibold">
                     Expand QR
                   </div>
                 </div>
@@ -519,7 +519,7 @@ export default function BetaAccess() {
                     <button
                       type="button"
                       onClick={handleCopyUpi}
-                      className="text-[11px] text-zinc-300 hover:text-white flex items-center gap-1 font-medium cursor-pointer"
+                      className="text-xs text-zinc-300 hover:text-white flex items-center gap-1 font-medium cursor-pointer"
                     >
                       {copiedUpi ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedUpi ? 'Copied' : 'Copy'}</span>
@@ -545,7 +545,7 @@ export default function BetaAccess() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-zinc-200 flex items-center justify-between">
                     <span>12-Digit Transaction UTR / Ref <span className="text-teal-400">*</span></span>
-                    <span className="text-[10px] text-zinc-500 font-mono">Required</span>
+                    <span className="text-xs text-zinc-500 font-mono">Required</span>
                   </label>
                   <input
                     type="text"
@@ -555,7 +555,7 @@ export default function BetaAccess() {
                     placeholder="e.g. 423910842910"
                     className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/10 px-3.5 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/30 transition-all"
                   />
-                  <p className="text-[10px] text-zinc-500 leading-tight">
+                  <p className="text-xs text-zinc-500 leading-tight">
                     Found in payment app receipt under UTR, Ref ID, or Transaction Reference.
                   </p>
                 </div>
@@ -564,7 +564,7 @@ export default function BetaAccess() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-zinc-200 flex items-center justify-between">
                     <span>Payment Screenshot</span>
-                    <span className="text-[10px] text-zinc-500">Optional</span>
+                    <span className="text-xs text-zinc-500">Optional</span>
                   </label>
 
                   <input 
@@ -581,7 +581,7 @@ export default function BetaAccess() {
                         <img src={proofImage} alt="Uploaded Proof" className="w-8 h-8 rounded-lg object-cover border border-teal-500/30 shrink-0" />
                         <div className="truncate">
                           <span className="text-xs font-medium text-teal-300 block truncate">{proofFileName || 'payment_proof.jpg'}</span>
-                          <span className="text-[10px] text-teal-400/70">Screenshot attached</span>
+                          <span className="text-xs text-teal-400/70">Screenshot attached</span>
                         </div>
                       </div>
                       <button
@@ -632,21 +632,21 @@ export default function BetaAccess() {
                 <Brain className="w-4 h-4 text-teal-400 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-zinc-200">Spaced Repetition</div>
-                  <div className="text-[10px] text-zinc-500">Automated memory decay</div>
+                  <div className="text-xs text-zinc-500">Automated memory decay</div>
                 </div>
               </div>
               <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.01] border border-white/[0.04]">
                 <Target className="w-4 h-4 text-teal-400 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-zinc-200">QBank & PYQ Engine</div>
-                  <div className="text-[10px] text-zinc-500">19 Subjects & systems</div>
+                  <div className="text-xs text-zinc-500">19 Subjects & systems</div>
                 </div>
               </div>
               <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.01] border border-white/[0.04]">
                 <Sparkles className="w-4 h-4 text-teal-400 shrink-0" />
                 <div>
                   <div className="text-xs font-semibold text-zinc-200">High-Yield Markers</div>
-                  <div className="text-[10px] text-zinc-500">Peer pearls & clinical tips</div>
+                  <div className="text-xs text-zinc-500">Peer pearls & clinical tips</div>
                 </div>
               </div>
             </div>

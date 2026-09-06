@@ -45,7 +45,7 @@ export function ExamProfileSection() {
           <span className="text-[13px] font-medium text-foreground">
             Operational Mode & Pacing
           </span>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             Dynamic Regimen
           </span>
         </div>

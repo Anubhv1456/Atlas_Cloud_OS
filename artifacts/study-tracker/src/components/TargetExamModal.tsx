@@ -150,10 +150,10 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
             {/* Target Exam Selection Grid */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Target Examination
                 </Label>
-                <span className="text-[10px] text-muted-foreground/80 font-medium">
+                <span className="text-xs text-muted-foreground/80 font-medium">
                   {targetExam ? targetExam : 'Select one'}
                 </span>
               </div>
@@ -182,7 +182,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
               {targetExam === 'Other Medical Board' && (
                 <div className="space-y-1.5 mt-2 animate-in fade-in slide-in-from-top-1">
-                  <Label htmlFor="customExam" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <Label htmlFor="customExam" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Specify Examination Name
                   </Label>
                   <Input
@@ -201,12 +201,12 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-2xl border border-border/50">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="examDate" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Label htmlFor="examDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-primary" />
                     Target Exam Date
                   </Label>
                   {daysRemaining !== null && (
-                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                    <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                       {daysRemaining}d left
                     </span>
                   )}
@@ -223,11 +223,11 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="dailyGoal" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Label htmlFor="dailyGoal" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-primary" />
                     Daily QBank Target
                   </Label>
-                  <span className="text-[10px] text-muted-foreground font-medium">MCQs/day</span>
+                  <span className="text-xs text-muted-foreground font-medium">MCQs/day</span>
                 </div>
                 <Input
                   id="dailyGoal"
@@ -246,13 +246,13 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {targetExam === 'MBBS Professional Exams'
                       ? 'MBBS Professional Phase'
                       : 'Current Academic Level'}
                   </Label>
                   {targetExam === 'MBBS Professional Exams' && (
-                    <span className="text-[10px] text-primary font-semibold">
+                    <span className="text-xs text-primary font-semibold">
                       Filters Active Prof Syllabus
                     </span>
                   )}
@@ -281,7 +281,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
               {targetExam === 'Other Medical Board' && (
                 <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1">
-                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <HelpCircle className="w-3 h-3 text-muted-foreground" />
                     Curriculum Structure
                   </Label>

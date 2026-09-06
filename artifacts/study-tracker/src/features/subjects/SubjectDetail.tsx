@@ -17,7 +17,7 @@ import {
   ChevronLeft, ChevronDown, ChevronRight, Plus, Trash2, Edit2,
   LayoutList, Lock, Check, BookOpen, Award, LayoutGrid, Sparkles,
   RefreshCw, Calendar, CheckCircle2, Circle, MoreVertical, Search,
-  Brain
+  Brain, Folder
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -26,6 +26,10 @@ import { Input } from '@/components/ui/input';
 import { StudySystem } from '@/db';
 import { cn } from '@/lib/utils';
 import { calculateSubjectProgress } from '@/lib/progress';
+import { CurriculumSets } from '@/features/subjects/CurriculumSets';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { db } from '@/db';
+import { ALL_SYSTEMS } from '@/data/ontology';
 import { useLexicon } from '@/lib/lexicon';
 import { usePYQSectionLogic, useSubjectDetailLogic } from './SubjectDetail.hooks';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
@@ -93,7 +97,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                 </h3>
                 {total > 0 && (
                   <span className={cn(
-                    "text-[10px] font-mono tabular-nums font-semibold px-2 py-0.5 rounded-full border shrink-0",
+                    "text-xs font-mono tabular-nums font-semibold px-2 py-0.5 rounded-full border shrink-0",
                     completed === total
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                       : "bg-muted text-muted-foreground border-border/60"
@@ -261,12 +265,12 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                             title="Click to view/update resonance"
                           >
                             <span className="font-bold">{scoreLog.percentage}%</span>
-                            <span className="text-[10px] opacity-80">{scoreLog.score}/{scoreLog.total}</span>
+                            <span className="text-xs opacity-80">{scoreLog.score}/{scoreLog.total}</span>
                           </button>
                         ) : (
                           <button
                             onClick={() => setScoreModalPyq(year)}
-                            className="w-full text-left py-1 px-2 rounded-lg border border-dashed border-border/70 text-[11px] text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-between"
+                            className="w-full text-left py-1 px-2 rounded-lg border border-dashed border-border/70 text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-between"
                           >
                             <span>No score</span>
                             <Plus className="w-3 h-3 opacity-60" />
@@ -339,7 +343,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
 
                         {scoreLog && (
                           <span className={cn(
-                            "text-[11px] font-mono tabular-nums font-bold px-2 py-0.5 rounded-md border shrink-0",
+                            "text-xs font-mono tabular-nums font-bold px-2 py-0.5 rounded-md border shrink-0",
                             scoreLog.percentage >= 75
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                               : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
@@ -442,7 +446,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
 
             {/* Quick Presets Buttons */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 Quick Presets
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -500,7 +504,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                   placeholder="e.g. 2024"
                 />
                 {!endYearValidation.isValid && presetEndYear !== '' && (
-                  <p className="text-[10px] text-destructive font-medium leading-tight mt-0.5">{endYearValidation.error}</p>
+                  <p className="text-xs text-destructive font-medium leading-tight mt-0.5">{endYearValidation.error}</p>
                 )}
               </div>
               <div className="space-y-1">
@@ -518,7 +522,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                   placeholder="e.g. 5"
                 />
                 {!spanValidation.isValid && presetSpan !== '' && (
-                  <p className="text-[10px] text-destructive font-medium leading-tight mt-0.5">{spanValidation.error}</p>
+                  <p className="text-xs text-destructive font-medium leading-tight mt-0.5">{spanValidation.error}</p>
                 )}
               </div>
             </div>
@@ -611,8 +615,9 @@ export default function SubjectDetail() {
   const lexicon = useLexicon();
 
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'systems' | 'pyq'>('systems');
+  const [activeTab, setActiveTab] = useState<'study-blocks' | 'systems' | 'pyq'>('systems');
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  const [hasSetInitialTab, setHasSetInitialTab] = useState(false);
 
   const {
     subjectId, subject, systems, pyqYears,
@@ -623,6 +628,49 @@ export default function SubjectDetail() {
     overdueSystemsCount, recommendedFocus,
     isSubjectMastered,
   } = useSubjectDetailLogic(id);
+
+  const subjectSets = useLiveQuery(
+    () => {
+      if (!subjectId) return [];
+      return (db.curriculumSets || db.revisionSets)
+        .where('subjectId')
+        .equals(subjectId)
+        .filter(s => !s.deletedAt)
+        .toArray()
+        .then(arr => arr.sort((a, b) => (a.order || 0) - (b.order || 0)))
+        .then(res => res || []);
+    },
+    [subjectId]
+  ) || [];
+
+  useEffect(() => {
+    if (!hasSetInitialTab && subjectSets.length > 0) {
+      setActiveTab('study-blocks');
+      setHasSetInitialTab(true);
+    } else if (!hasSetInitialTab && subjectSets.length === 0 && hasAttemptedLoad) {
+      setHasSetInitialTab(true);
+    }
+  }, [subjectSets.length, hasSetInitialTab, hasAttemptedLoad]);
+
+  const allTopics = useMemo(() => {
+    return systems.flatMap(sys => {
+      const preset = ALL_SYSTEMS.find(s => s.id === sys.ontologySystemId);
+      let t = preset ? preset.topics : [];
+      if (sys.customTopics) {
+        const custom = sys.customTopics.filter(ct => !ct.deleted).map(ct => ({
+          id: ct.id,
+          name: ct.name,
+          subjectId: subjectId as any,
+          systemId: sys.ontologySystemId || sys.id as string,
+          relatedTopics: [],
+          aliases: [],
+          highYield: false
+        }));
+        t = [...t, ...custom];
+      }
+      return t;
+    });
+  }, [systems, subjectId]);
 
   useEffect(() => {
     if (!subject && id && !hasAttemptedLoad) {
@@ -681,10 +729,10 @@ export default function SubjectDetail() {
 
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-teal-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-500">
               Subject Intelligence
             </span>
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               High-Yield Focus
             </span>
           </div>
@@ -704,19 +752,19 @@ export default function SubjectDetail() {
           <div className="flex sm:grid sm:grid-cols-3 gap-2 sm:gap-3 pt-3 border-t border-border/40 text-center overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible sm:pb-0 scrollbar-none snap-x snap-mandatory">
             <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[110px] sm:w-auto sm:flex-1 snap-center">
               <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">{systems.length}</div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Systems</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Systems</div>
             </div>
             <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[120px] sm:w-auto sm:flex-1 snap-center">
               <div className={cn("text-lg font-bold leading-none mb-1 font-mono", overdueSystemsCount > 0 ? "text-amber-500" : "text-emerald-500")}>
                 {overdueSystemsCount}
               </div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">Needs Attention</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Needs Attention</div>
             </div>
             <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[110px] sm:w-auto sm:flex-1 snap-center">
               <div className="text-lg font-bold text-foreground leading-none mb-1 font-mono">
                 {pyqTotalCount > 0 ? `${pyqCompletedCount}/${pyqTotalCount}` : '0'}
               </div>
-              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">{lexicon.practiceExams}s Solved</div>
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">{lexicon.practiceExams}s Solved</div>
             </div>
           </div>
         </div>
@@ -745,11 +793,11 @@ export default function SubjectDetail() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
                     Recommended Focus
                   </span>
                   <span className={cn(
-                    "text-[10px] font-semibold px-2 py-0.2 rounded-full border",
+                    "text-xs font-semibold px-2 py-0.2 rounded-full border",
                     recommendedFocus.reason === 'overdue_decay'
                       ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                       : recommendedFocus.reason === 'weak_retention'
@@ -796,7 +844,7 @@ export default function SubjectDetail() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
                     Subject Mastered
                   </span>
                 </div>
@@ -814,6 +862,18 @@ export default function SubjectDetail() {
 
       {/* ── Workspace Tab Bar ───────────────────────────────────────────── */}
       <div className="flex items-center gap-2 border-b border-border/40 pb-2 mb-6 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+        <button
+          onClick={() => setActiveTab('study-blocks')}
+          className={cn(
+            "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none whitespace-nowrap shrink-0 snap-start",
+            activeTab === 'study-blocks'
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          )}
+        >
+          <Folder className="w-3.5 h-3.5" />
+          <span>Study Blocks {subjectSets.length > 0 ? `(${subjectSets.length})` : ''}</span>
+        </button>
         <button
           onClick={() => setActiveTab('systems')}
           className={cn(
@@ -841,7 +901,15 @@ export default function SubjectDetail() {
       </div>
 
       {/* ── TAB CONTENT ────────────────────────────────────────────────── */}
-      {activeTab === 'pyq' ? (
+
+      {activeTab === 'study-blocks' ? (
+        <section className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <CurriculumSets 
+            subjectId={subject.id as number} 
+            topics={allTopics}
+          />
+        </section>
+      ) : activeTab === 'pyq' ? (
         <section className="mb-8">
           <PYQSection
             subjectId={subject.id!}

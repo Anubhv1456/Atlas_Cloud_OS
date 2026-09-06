@@ -160,7 +160,7 @@ export function AudioPermissionBanner() {
                 </p>
                 <span
                   className={cn(
-                    'hidden md:inline-block px-1.5 py-0.5 rounded-full text-[10px] font-mono border',
+                    'hidden md:inline-block px-1.5 py-0.5 rounded-full text-xs font-mono border',
                     micState === 'denied'
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                       : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
@@ -169,7 +169,7 @@ export function AudioPermissionBanner() {
                   {micState === 'denied' ? 'Action Required' : 'Chrome PWA'}
                 </span>
               </div>
-              <p className="text-muted-foreground text-[11px] leading-tight mt-0.5">
+              <p className="text-muted-foreground text-xs leading-tight mt-0.5">
                 {micState === 'denied'
                   ? 'Chrome blocked microphone access. Unblock in site settings to enable voice commands.'
                   : 'Grant microphone permission to register Atlas in Chrome settings and enable voice copilot commands.'}
@@ -237,24 +237,24 @@ export function AudioPermissionBanner() {
             <div className="space-y-3 text-xs">
               <div className="p-3.5 rounded-xl bg-muted/60 border border-border space-y-2.5">
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-[11px] flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
                     1
                   </span>
                   <div>
                     <strong className="text-foreground">Android App / WebAPK:</strong>
-                    <p className="text-muted-foreground text-[11px] mt-0.5">
+                    <p className="text-muted-foreground text-xs mt-0.5">
                       Long-press the <strong>Atlas App Icon</strong> on your home screen &gt; Tap <strong>App Info (i)</strong> &gt; Tap <strong>Permissions</strong> &gt; Set <strong>Microphone</strong> to <strong>Allow</strong>.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5 pt-2 border-t border-border/60">
-                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-[11px] flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
                     2
                   </span>
                   <div>
                     <strong className="text-foreground">Desktop / Mobile Chrome Browser:</strong>
-                    <p className="text-muted-foreground text-[11px] mt-0.5">
+                    <p className="text-muted-foreground text-xs mt-0.5">
                       Click the <strong>Tune / Lock Icon</strong> next to the web address (URL bar) &gt; Tap <strong>Site Settings</strong> &gt; Change <strong>Microphone</strong> from "Block" to "Allow".
                     </p>
                   </div>

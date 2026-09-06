@@ -264,7 +264,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                         <span className="text-xs font-bold text-zinc-100">Atlas Clinical Scribe</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                       </div>
-                      <span className="text-[10px] text-zinc-400 font-mono">
+                      <span className="text-xs text-zinc-400 font-mono">
                         {isSpeaking ? 'Listening to clinical speech...' : 'Speak study block or mistake...'}
                       </span>
                     </div>
@@ -312,7 +312,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
 
                 {/* Bottom Actions Bar */}
                 <div className="flex items-center justify-between gap-2 mt-3 pt-1 border-t border-zinc-800/80 relative z-10">
-                  <span className="text-[10px] text-zinc-500 font-mono">
+                  <span className="text-xs text-zinc-500 font-mono">
                     120Hz DSP • Ontology VAD Active
                   </span>
 
@@ -356,7 +356,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                   <Loader2 className="w-4 h-4 text-primary animate-spin" />
                   <div>
                     <h4 className="text-xs font-bold text-zinc-100">Compiling Medical Intent...</h4>
-                    <p className="text-[10px] text-zinc-400">Extracting subject, duration, and 20th Notebook rules</p>
+                    <p className="text-xs text-zinc-400">Extracting subject, duration, and 20th Notebook rules</p>
                   </div>
                 </div>
 
@@ -396,7 +396,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                     <div className="w-2 h-2 rounded-full bg-rose-400 shrink-0 mt-1.5" />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold text-rose-300">Could Not Understand Audio</h4>
-                      <p className="text-[11px] text-zinc-400 leading-relaxed mt-0.5">{errorMessage}</p>
+                      <p className="text-xs text-zinc-400 leading-relaxed mt-0.5">{errorMessage}</p>
                     </div>
                   </div>
                 ) : compiledDelta ? (
@@ -404,17 +404,17 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                     {/* Header & Auto-Commit Countdown Ring */}
                     <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                        <span className="text-xs uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                           {compiledDelta.targetSubjectName || 'Clinical Log'}
                         </span>
-                        <span className="text-[10px] text-zinc-400 font-mono">
+                        <span className="text-xs text-zinc-400 font-mono">
                           {compiledDelta.intent.replace('ACTION_', '')}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {!isPausedCountdown && (
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[10px] text-emerald-400 font-mono font-semibold">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs text-emerald-400 font-mono font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span>Auto-saving in {countdown}s</span>
                           </div>
@@ -443,7 +443,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                               Logged {compiledDelta.studyDelta.durationMinutes}m {compiledDelta.targetSubjectName}
                             </span>
                             {compiledDelta.studyDelta.topicExtracted && (
-                              <span className="text-zinc-400 block text-[11px] truncate">
+                              <span className="text-zinc-400 block text-xs truncate">
                                 • {compiledDelta.studyDelta.topicExtracted}
                               </span>
                             )}
@@ -461,7 +461,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                             <span className="font-semibold text-amber-300 block">
                               20th Notebook: {compiledDelta.distillations?.[0].tag || 'Clinical Rule'}
                             </span>
-                            <span className="text-zinc-300 text-[11px] leading-relaxed">
+                            <span className="text-zinc-300 text-xs leading-relaxed">
                               {compiledDelta.distillations?.[0].twentyNotebookRule}
                             </span>
                           </div>
@@ -480,7 +480,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
 
                 {/* Bottom Actions & Swipe-to-cancel gesture hint */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 font-mono">
+                  <span className="text-xs text-zinc-500 font-mono">
                     Swipe card to cancel
                   </span>
 

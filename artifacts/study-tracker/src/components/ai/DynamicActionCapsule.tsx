@@ -79,13 +79,13 @@ export const DynamicActionCapsule: React.FC<DynamicActionCapsuleProps> = ({
             </button>
 
             <div className="flex flex-col truncate">
-              <span className="text-[11px] font-bold text-foreground flex items-center gap-1.5 leading-none">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5 leading-none">
                 {isSpeakingAI ? 'Atlas Speaking...' : isThinking ? 'Synthesizing...' : isListening ? 'Listening (Release to Submit)...' : 'Hold Mic to Speak'}
                 {isListening && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
                 )}
               </span>
-              <span className="text-[10px] text-muted-foreground truncate leading-tight mt-0.5">
+              <span className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
                 {liveTranscript || (isListening ? 'Speak your thoughts or revision requests...' : isSpeakingAI ? 'Explaining high-yield pearl' : 'Hold button above to talk')}
               </span>
             </div>

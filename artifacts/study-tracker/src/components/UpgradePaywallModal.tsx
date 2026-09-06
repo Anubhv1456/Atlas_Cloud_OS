@@ -100,7 +100,7 @@ export function UpgradePaywallModal() {
               <Zap className="w-4 h-4 mr-2" />
               Get Lifetime Access
             </Button>
-            <p className="text-[10px] text-center text-muted-foreground mt-3">
+            <p className="text-xs text-center text-muted-foreground mt-3">
               Secure checkout via Stripe. Includes all future Atlas UI updates.
             </p>
           </div>

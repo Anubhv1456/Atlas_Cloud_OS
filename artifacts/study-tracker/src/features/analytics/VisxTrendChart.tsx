@@ -305,7 +305,7 @@ const BaseChart = withTooltip<
 
             <div className="flex items-baseline justify-between pt-0.5">
               <div>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold block">
                   {tooltipData.isProjected ? 'Forecasted Retention' : 'Memory Retention'}
                 </span>
                 <span className={cn(
@@ -316,13 +316,13 @@ const BaseChart = withTooltip<
                 </span>
               </div>
               {tooltipData.scoreStr && (
-                <span className="text-[11px] font-mono text-muted-foreground">
+                <span className="text-xs font-mono text-muted-foreground">
                   Raw: {tooltipData.scoreStr}
                 </span>
               )}
             </div>
 
-            <div className="text-[10px] text-muted-foreground pt-1 flex items-center justify-between border-t border-border/30">
+            <div className="text-xs text-muted-foreground pt-1 flex items-center justify-between border-t border-border/30">
               <span>{tooltipData.fullDate}</span>
               {tooltipData.subjectName && <span className="font-medium text-foreground/80 truncate max-w-[120px]">{tooltipData.subjectName}</span>}
             </div>

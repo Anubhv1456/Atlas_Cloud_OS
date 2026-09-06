@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActionUpsertMistakePayload, AtlasClinicalAction } from '@/lib/ai/actionSchemas';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { Flame, Sparkles, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 interface MistakePearlActionCardProps {
@@ -81,7 +82,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
       {/* Editable Rule Box */}
       <div className="space-y-2 mb-3">
         <div className="bg-background/90 border border-border/60 rounded-xl p-2.5 focus-within:ring-1 focus-within:ring-amber-500/50">
-          <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-0.5">
+          <label className="text-xs uppercase font-bold text-muted-foreground block mb-0.5">
             Core High-Yield Rule
           </label>
           <textarea
@@ -95,7 +96,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
 
         {/* Pitfall Trap Box */}
         <div className="bg-background/90 border border-border/60 rounded-xl p-2.5 focus-within:ring-1 focus-within:ring-amber-500/50">
-          <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-amber-500/90 mb-0.5">
+          <div className="flex items-center gap-1 text-xs uppercase font-bold text-amber-500/90 mb-0.5">
             <ShieldAlert className="w-3 h-3" />
             <span>Common Trap / Pitfall</span>
           </div>
@@ -116,7 +117,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
             key={t.id}
             type="button"
             onClick={() => setErrorType(t.id)}
-            className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-colors whitespace-nowrap ${
+            className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
               errorType === t.id
                 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/30'
                 : 'bg-muted/40 text-muted-foreground hover:bg-muted'

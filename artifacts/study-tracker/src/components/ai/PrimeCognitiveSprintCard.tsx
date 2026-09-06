@@ -52,7 +52,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
           {/* Signal Indicator */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className={cn(
-              "text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center gap-1",
+              "text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center gap-1",
               topPulse.urgency === 'CRITICAL'
                 ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
                 : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
@@ -61,7 +61,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
               {topPulse.urgency === 'CRITICAL' ? 'Decay Alert • High Friction' : 'Prime Focus of the Hour'}
             </span>
 
-            <span className="text-[11px] font-mono text-muted-foreground">
+            <span className="text-xs font-mono text-muted-foreground">
               Board Exam Weightage Priority
             </span>
           </div>
@@ -80,7 +80,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
         {/* Action Button & Time Estimate */}
         <div className="flex items-center sm:self-auto gap-3 pt-2 md:pt-0 shrink-0">
           <div className="text-right hidden sm:block">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-bold">Estimated Time</div>
+            <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground font-bold">Estimated Time</div>
             <div className="text-sm font-mono font-bold text-foreground flex items-center justify-end gap-1">
               <Clock className="w-3.5 h-3.5 text-primary" />
               <span>{topPulse.estimatedMinutes} Minutes</span>

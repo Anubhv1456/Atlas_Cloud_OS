@@ -206,14 +206,14 @@ export function TopicList({
       {/* Topics Header & Management Bar */}
       <div className="px-3.5 py-2.5 border-b border-border/40 flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             Curriculum Topics
           </span>
-          <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md">
+          <span className="text-xs font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md">
             {topics.length}
           </span>
           {hasCustomEdits && (
-            <span className="text-[10px] text-teal-600 dark:text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs text-teal-600 dark:text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded font-medium">
               Modified
             </span>
           )}
@@ -224,7 +224,7 @@ export function TopicList({
             <button
               type="button"
               onClick={() => setShowResetConfirm(true)}
-              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
               title="Reset to default medical curriculum"
             >
               <RotateCcw className="w-3 h-3" />
@@ -236,7 +236,7 @@ export function TopicList({
             <button
               type="button"
               onClick={() => setIsAddingTopic(true)}
-              className="flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
@@ -311,7 +311,7 @@ export function TopicList({
             )}
           </div>
           {topicSearch && (
-            <span className="text-[10px] font-mono text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-md border border-border/40">
+            <span className="text-xs font-mono text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-md border border-border/40">
               {filteredTopics.length}/{topics.length}
             </span>
           )}
@@ -426,7 +426,7 @@ export function TopicList({
                         {topic.name}
                       </span>
                       {sets.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground/60 shrink-0 hidden sm:inline-block">
+                        <span className="text-xs text-muted-foreground/60 shrink-0 hidden sm:inline-block">
                           ({sets.map(s => s.name).join(', ')})
                         </span>
                       )}
@@ -484,7 +484,7 @@ export function TopicList({
                       {revisionSets.length > 0 && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                             Add to Study Block
                           </DropdownMenuLabel>
                           {revisionSets.map(rs => (
@@ -528,7 +528,7 @@ export function TopicList({
 
       {/* Scroll Footer Indicator */}
       {topics.length > 5 && !topicSearch && (
-        <div className="px-3 py-1.5 bg-muted/20 border-t border-border/30 flex items-center justify-between text-[10px] text-muted-foreground/80 font-medium shrink-0">
+        <div className="px-3 py-1.5 bg-muted/20 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground/80 font-medium shrink-0">
           <span>Scroll or search to view all {topics.length} topics</span>
           <span className="font-mono text-[9px] bg-muted/60 px-1.5 py-0.5 rounded border border-border/30">{topics.length} items</span>
         </div>
@@ -542,7 +542,7 @@ export function TopicList({
               <DialogTitle className="text-base font-bold">Rename Topic</DialogTitle>
             </DialogHeader>
             <div className="py-3 space-y-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
                 Topic Title
               </label>
               <Input

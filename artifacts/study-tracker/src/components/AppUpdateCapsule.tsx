@@ -47,11 +47,11 @@ export const AppUpdateCapsule: React.FC = () => {
                     <h4 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
                       Atlas Update Ready
                     </h4>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
                       v{latestVersion}
                     </span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                     Tap to apply latest triage enhancements & fixes
                   </p>
                 </div>

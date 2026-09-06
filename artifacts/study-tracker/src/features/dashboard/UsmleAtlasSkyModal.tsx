@@ -68,17 +68,20 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
       // Step 1 or generic USMLE
       config = [
         { name: 'Biochemistry & Medical Genetics', shortName: 'Biochem/Genetics', phase: 'principles', phaseLabel: 'General Principles', angle: 0, radiusPercent: 20 },
-        { name: 'General Principles', shortName: 'General Princ.', phase: 'principles', phaseLabel: 'General Principles', angle: 72, radiusPercent: 20 },
-        { name: 'General Pathology & Pharmacology', shortName: 'Path/Pharm', phase: 'principles', phaseLabel: 'General Principles', angle: 144, radiusPercent: 20 },
-        { name: 'Microbiology & Immunology', shortName: 'Micro/Immuno', phase: 'principles', phaseLabel: 'General Principles', angle: 216, radiusPercent: 20 },
-        { name: 'Immune System', shortName: 'Immune', phase: 'principles', phaseLabel: 'General Principles', angle: 288, radiusPercent: 20 },
+        { name: 'General Pathology', shortName: 'Pathology', phase: 'principles', phaseLabel: 'General Principles', angle: 51, radiusPercent: 20 },
+        { name: 'General Pharmacology', shortName: 'Pharmacology', phase: 'principles', phaseLabel: 'General Principles', angle: 102, radiusPercent: 20 },
+        { name: 'Immunology', shortName: 'Immunology', phase: 'principles', phaseLabel: 'General Principles', angle: 154, radiusPercent: 20 },
+        { name: 'Microbiology', shortName: 'Microbiology', phase: 'principles', phaseLabel: 'General Principles', angle: 205, radiusPercent: 20 },
+        { name: 'Public Health Sciences & Medical Ethics', shortName: 'Public Health', phase: 'principles', phaseLabel: 'General Principles', angle: 257, radiusPercent: 20 },
+        { name: 'Psychiatry & Behavioral Health', shortName: 'Psych/Behavioral', phase: 'principles', phaseLabel: 'General Principles', angle: 308, radiusPercent: 20 },
+        
         { name: 'Cardiovascular System', shortName: 'Cardio', phase: 'systems', phaseLabel: 'Organ System', angle: 0, radiusPercent: 40 },
         { name: 'Respiratory System', shortName: 'Respiratory', phase: 'systems', phaseLabel: 'Organ System', angle: 40, radiusPercent: 40 },
         { name: 'Renal System', shortName: 'Renal', phase: 'systems', phaseLabel: 'Organ System', angle: 80, radiusPercent: 40 },
         { name: 'Gastrointestinal System', shortName: 'GI', phase: 'systems', phaseLabel: 'Organ System', angle: 120, radiusPercent: 40 },
         { name: 'Endocrine System', shortName: 'Endocrine', phase: 'systems', phaseLabel: 'Organ System', angle: 160, radiusPercent: 40 },
         { name: 'Reproductive System', shortName: 'Repro', phase: 'systems', phaseLabel: 'Organ System', angle: 200, radiusPercent: 40 },
-        { name: 'Nervous System & Special Senses', shortName: 'Neuro', phase: 'systems', phaseLabel: 'Organ System', angle: 240, radiusPercent: 40 },
+        { name: 'Neurology & Special Senses', shortName: 'Neuro', phase: 'systems', phaseLabel: 'Organ System', angle: 240, radiusPercent: 40 },
         { name: 'Musculoskeletal, Skin & Connective Tissue', shortName: 'MSK/Derm', phase: 'systems', phaseLabel: 'Organ System', angle: 280, radiusPercent: 40 },
         { name: 'Hematology & Oncology', shortName: 'Heme/Onc', phase: 'systems', phaseLabel: 'Organ System', angle: 320, radiusPercent: 40 }
       ];
@@ -122,20 +125,20 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
       'GI': 'Gastrointestinal System',
       'Endo': 'Endocrine System',
       'Repro': 'Reproductive System',
-      'Neuro': 'Nervous System & Special Senses',
-      'CNS': 'Nervous System & Special Senses',
+      'Neuro': 'Neurology & Special Senses',
+      'CNS': 'Neurology & Special Senses',
       'MSK': 'Musculoskeletal, Skin & Connective Tissue',
       'Derm': 'Musculoskeletal, Skin & Connective Tissue',
       'Heme': 'Hematology & Oncology',
       'Onc': 'Hematology & Oncology',
       'Biochem': 'Biochemistry & Medical Genetics',
       'Genetics': 'Biochemistry & Medical Genetics',
-      'Micro': 'Microbiology & Immunology',
-      'Immuno': 'Microbiology & Immunology',
-      'Path': 'General Pathology & Pharmacology',
-      'Pathology': 'General Pathology & Pharmacology',
-      'Pharm': 'General Pathology & Pharmacology',
-      'Pharmacology': 'General Pathology & Pharmacology',
+      'Micro': 'Microbiology',
+      'Immuno': 'Immunology',
+      'Path': 'General Pathology',
+      'Pathology': 'General Pathology',
+      'Pharm': 'General Pharmacology',
+      'Pharmacology': 'General Pharmacology',
       'Medicine': 'Internal Medicine',
       'IM': 'Internal Medicine',
       'OBGYN': 'Obstetrics & Gynaecology',
@@ -269,11 +272,11 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm sm:text-base font-semibold text-zinc-100 tracking-tight">Atlas Sky</h2>
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
                     {Math.round(globalHealth)}% Luminosity
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 hidden sm:block">
+                <p className="text-xs text-zinc-400 hidden sm:block">
                   Astronomical Map of Medical Retention • 19 MBBS Subjects
                 </p>
               </div>
@@ -509,7 +512,7 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
 
                       {/* Smart Radial Label Text */}
                       <span className={cn(
-                        "absolute left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
+                        "absolute left-1/2 -translate-x-1/2 text-xs tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
                         isUpperHemisphere ? "-top-4" : "top-3.5",
                         isSelected ? "text-teal-300 font-bold scale-105" : (isDarkMatter ? "text-zinc-600 opacity-0 group-hover:opacity-100 group-hover:text-zinc-400" : "text-zinc-400 group-hover:text-zinc-100")
                       )}>
@@ -538,7 +541,7 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-1">
                         <Brain className="w-3 h-3" />
                         <span>{selectedStar.phaseLabel}</span>
                       </div>
@@ -596,15 +599,15 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
             <div className="flex items-center justify-center gap-6 py-1 px-4 rounded-xl bg-white/[0.01] border border-white/[0.05] w-fit mx-auto">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-800 border border-zinc-700/50 opacity-60" />
-                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter font-medium">Dark Matter (Unstarted)</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-tighter font-medium">Dark Matter (Unstarted)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
-                <span className="text-[10px] text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
+                <span className="text-xs text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-                <span className="text-[10px] text-amber-400/80 uppercase tracking-tighter font-semibold">Mastered Constellation</span>
+                <span className="text-xs text-amber-400/80 uppercase tracking-tighter font-semibold">Mastered Constellation</span>
               </div>
             </div>
 

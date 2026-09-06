@@ -226,6 +226,13 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: false,
+    modulePreload: {
+      resolveDependencies: (filename, deps, { hostId, hostType }) => {
+        // Preload core bundles and data chunks to avoid waterfalls
+        const criticalChunks = ['Home', 'ontology-data', 'firebase-core', 'vendor', 'index', 'ui-libs'];
+        return deps.filter(dep => criticalChunks.some(chunk => dep.includes(chunk)));
+      }
+    },
     minify: 'esbuild',
     cssMinify: true,
     target: 'es2020',
@@ -235,7 +242,6 @@ export default defineConfig({
           'recharts': ['recharts'],
           'framer-motion': ['framer-motion'],
           'lucide': ['lucide-react'],
-          'dexie': ['dexie', 'dexie-react-hooks'],
           'vendor': ['react', 'react-dom', 'wouter', '@tanstack/react-query'],
           'ui-libs': ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-popover', 'cmdk', 'sonner', 'embla-carousel-react'],
           'form-libs': ['react-hook-form', '@hookform/resolvers', 'zod'],

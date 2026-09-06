@@ -91,7 +91,7 @@ export function CohortTelemetryView() {
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
               Cohort Telemetry & Habit Velocity
             </h1>
-            <Badge variant="outline" className="text-[10px] font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
+            <Badge variant="outline" className="text-xs font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
               Live Ground Truth
             </Badge>
           </div>
@@ -101,7 +101,7 @@ export function CohortTelemetryView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-[11px] text-muted-foreground font-mono">
+          <span className="text-xs text-muted-foreground font-mono">
             Synced {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
           <Button
@@ -131,12 +131,12 @@ export function CohortTelemetryView() {
             <div className="text-3xl font-extrabold text-foreground tracking-tight">
               {totalRecs > 0 ? `${acceptanceRate}%` : '0%'}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-teal-400">
+            <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-teal-400">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>{totalRecs > 0 ? 'Unclamped Ground Truth' : 'Awaiting Decisions'}</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {totalRecs > 0 ? `${totalAccepted} accepted vs ${totalSkipped} skipped` : 'No recommendation decisions logged yet'}
           </p>
         </div>
@@ -153,12 +153,12 @@ export function CohortTelemetryView() {
             <div className="text-3xl font-extrabold text-foreground tracking-tight">
               {s10Speed > 0 ? `${s10Speed}s` : '—'}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-sky-400">
+            <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-sky-400">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{s10Speed > 0 ? (s10Speed <= 10.0 ? 'Rapid Intuition (≤10s)' : 'Pacing Measured') : 'Awaiting Timing'}</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {s10Speed > 0 ? 'Mount to revision initiation' : 'Measured from Next Action card interactions'}
           </p>
         </div>
@@ -175,13 +175,13 @@ export function CohortTelemetryView() {
             <div className="text-3xl font-extrabold text-foreground tracking-tight">
               {drillsTotal > 0 ? `${drillResolutionPct}%` : '0%'}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-primary">
+            <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-primary">
               <Activity className="w-3.5 h-3.5" />
               <span>{drillsTotal > 0 ? `${drillsCleared} of ${drillsTotal} items mastered` : 'No Recall Drills Yet'}</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {drillsTotal > 0 ? 'Active recall recovery success rate' : 'Populates from {lexicon.mistakesJournal} reviews'}
+          <p className="text-xs text-muted-foreground">
+            {drillsTotal > 0 ? 'Active recall recovery success rate' : `Populates from ${lexicon.mistakesJournal} reviews`}
           </p>
         </div>
 
@@ -197,12 +197,12 @@ export function CohortTelemetryView() {
             <div className="text-3xl font-extrabold text-foreground tracking-tight">
               $0.00
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-emerald-400">
+            <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-emerald-400">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>{totalLoggedBatches > 0 ? `${totalLoggedBatches} Batches Synced (${totalLoggedEvents} Evts)` : '100% Free Plan'}</span>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Atomic batch buffer keeps writes near zero
           </p>
         </div>
@@ -217,7 +217,7 @@ export function CohortTelemetryView() {
               <h3 className="text-sm font-bold text-foreground">Column A — Engine Accuracy & Skip Reasons</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Why students reject or defer recommendations</p>
             </div>
-            <Badge variant="outline" className="text-[10px] font-mono">Algorithm Diagnostics</Badge>
+            <Badge variant="outline" className="text-xs font-mono">Algorithm Diagnostics</Badge>
           </div>
 
           {totalSkipsCount > 0 ? (
@@ -247,7 +247,7 @@ export function CohortTelemetryView() {
             <div className="py-8 px-4 rounded-xl border border-dashed border-border/60 text-center space-y-2">
               <CheckCircle2 className="w-6 h-6 text-teal-400 mx-auto opacity-70" />
               <p className="text-xs font-semibold text-foreground">No Recommendation Skips Logged</p>
-              <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 When students defer or reject recommendations, specific resistance patterns (fatigue, prerequisites, completed elsewhere) will chart here.
               </p>
             </div>
@@ -275,7 +275,7 @@ export function CohortTelemetryView() {
             <Badge 
               variant="outline" 
               className={cn(
-                "text-[10px] font-mono",
+                "text-xs font-mono",
                 isDynamicGaps ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" : "text-muted-foreground border-border/40"
               )}
             >
@@ -289,14 +289,14 @@ export function CohortTelemetryView() {
                 <div key={i} className="p-3 rounded-xl border border-border/40 bg-background/50 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 font-mono">
+                      <span className="text-xs font-bold uppercase tracking-wider text-teal-400 font-mono">
                         {gap.subject}
                       </span>
                       <span className="text-xs font-bold text-foreground truncate block">
                         {gap.topic}
                       </span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {gap.count} student mistake recoveries logged
                     </div>
                   </div>
@@ -312,7 +312,7 @@ export function CohortTelemetryView() {
             <div className="py-8 px-4 rounded-xl border border-dashed border-border/60 text-center space-y-2">
               <Brain className="w-6 h-6 text-primary mx-auto opacity-70" />
               <p className="text-xs font-semibold text-foreground">No Knowledge Gaps Detected Yet</p>
-              <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                 As students log mistakes or fail active recall drills in their {lexicon.mistakesJournal}, high-yield retrieval failure clusters will automatically populate here in real time.
               </p>
             </div>
@@ -333,36 +333,36 @@ export function CohortTelemetryView() {
               <h3 className="text-sm font-bold text-foreground">Column C — Error Taxonomy Breakdown</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Classification of mistakes logged during QBank drills</p>
             </div>
-            <Badge variant="outline" className="text-[10px] font-mono">Cognitive Profile</Badge>
+            <Badge variant="outline" className="text-xs font-mono">Cognitive Profile</Badge>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="p-4 rounded-xl border border-rose-500/20 bg-rose-500/5 space-y-1">
-              <span className="text-[10px] font-bold uppercase text-rose-400">Knowledge Gap (Concept)</span>
+              <span className="text-xs font-bold uppercase text-rose-400">Knowledge Gap (Concept)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.concept || 0}</div>
-              <p className="text-[10px] text-muted-foreground">Theory missing / misunderstood</p>
+              <p className="text-xs text-muted-foreground">Theory missing / misunderstood</p>
             </div>
 
             <div className="p-4 rounded-xl border border-sky-500/20 bg-sky-500/5 space-y-1">
-              <span className="text-[10px] font-bold uppercase text-sky-400">Retrieval Failure</span>
+              <span className="text-xs font-bold uppercase text-sky-400">Retrieval Failure</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.retrieval || 0}</div>
-              <p className="text-[10px] text-muted-foreground">Knew the concept, blanked in exam</p>
+              <p className="text-xs text-muted-foreground">Knew the concept, blanked in exam</p>
             </div>
 
             <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-1">
-              <span className="text-[10px] font-bold uppercase text-amber-400">Execution Slip (Misread)</span>
+              <span className="text-xs font-bold uppercase text-amber-400">Execution Slip (Misread)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.misread || 0}</div>
-              <p className="text-[10px] text-muted-foreground">Rushed reading / missed 'EXCEPT'</p>
+              <p className="text-xs text-muted-foreground">Rushed reading / missed 'EXCEPT'</p>
             </div>
 
             <div className="p-4 rounded-xl border border-purple-500/20 bg-primary/5 space-y-1">
-              <span className="text-[10px] font-bold uppercase text-primary">Overthinking (FOMO)</span>
+              <span className="text-xs font-bold uppercase text-primary">Overthinking (FOMO)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.fomo || 0}</div>
-              <p className="text-[10px] text-muted-foreground">Second-guessed the right answer</p>
+              <p className="text-xs text-muted-foreground">Second-guessed the right answer</p>
             </div>
           </div>
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {totalErrorsCount > 0 ? (
               <><strong>Active Recall Health</strong>: Realtime taxonomy distinguishes execution slips from retrieval decay, allowing Atlas to recalibrate revision intervals appropriately.</>
             ) : (
@@ -378,7 +378,7 @@ export function CohortTelemetryView() {
               <h3 className="text-sm font-bold text-foreground">Column D — Free Tier Quota Telemetry</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Firebase Spark plan daily consumption meters</p>
             </div>
-            <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/30">100% Free</Badge>
+            <Badge variant="outline" className="text-xs font-mono text-emerald-400 border-emerald-500/30">100% Free</Badge>
           </div>
 
           <div className="space-y-4 pt-2">

@@ -47,7 +47,7 @@ export function BatchTriageDrawer({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1 text-left flex-1">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-primary/80">
+                    <span className="text-xs uppercase font-bold tracking-widest text-primary/80">
                       {pearl.subjectName || 'Pearl'} • {pearl.systemName || pearl.tag}
                     </span>
                     <p className="text-sm font-medium text-foreground leading-relaxed">

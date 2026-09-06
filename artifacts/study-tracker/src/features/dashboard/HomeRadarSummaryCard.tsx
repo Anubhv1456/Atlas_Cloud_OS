@@ -63,50 +63,50 @@ export function HomeRadarSummaryCard() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
         <div className="p-3 rounded-xl bg-muted/40 border border-border/40 space-y-0.5">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
             Progress
           </span>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-bold font-mono text-foreground">
               {overallProgress}%
             </span>
-            <span className="text-[11px] text-muted-foreground">completed</span>
+            <span className="text-xs text-muted-foreground">completed</span>
           </div>
         </div>
 
         <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-0.5">
-          <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest block">
+          <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest block">
             Subjects
           </span>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-bold font-mono text-teal-600 dark:text-teal-400">
               {rawSubjects.length}
             </span>
-            <span className="text-[11px] text-teal-600/70 dark:text-teal-400/70">active</span>
+            <span className="text-xs text-teal-600/70 dark:text-teal-400/70">active</span>
           </div>
         </div>
 
         <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-0.5">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-widest block">
+          <span className="text-xs font-bold text-primary uppercase tracking-widest block">
             Solid Units
           </span>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-bold font-mono text-primary">
               {completedSystems}
             </span>
-            <span className="text-[11px] text-primary/70">mastered</span>
+            <span className="text-xs text-primary/70">mastered</span>
           </div>
         </div>
 
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5">
-          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">
             {lexicon.mistakesJournal}
           </span>
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
               {activeMistakes.length}
             </span>
-            <span className="text-[11px] text-amber-600/70 dark:text-amber-400/70">rules</span>
+            <span className="text-xs text-amber-600/70 dark:text-amber-400/70">rules</span>
           </div>
         </div>
       </div>

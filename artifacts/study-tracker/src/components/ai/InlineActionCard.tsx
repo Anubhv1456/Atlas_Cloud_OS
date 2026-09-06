@@ -27,7 +27,8 @@ import {
   MistakeErrorType
 } from '@/lib/ai/intentParser';
 import { executeAtlasAction } from '@/lib/ai/atlasActionExecutor';
-import { ALL_SUBJECTS as UNIVERSAL_ONTOLOGY } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -39,7 +40,7 @@ export interface InlineActionCardProps {
   className?: string;
 }
 
-const ALL_SUBJECTS = UNIVERSAL_ONTOLOGY.map((s) => s.name);
+
 
 const MISTAKE_TAGS: { label: string; value: MistakeTag }[] = [
   { label: 'Drug of Choice', value: 'Drug of Choice' },
@@ -80,6 +81,9 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
   onDecline,
   className
 }) => {
+  const { profile } = useExamProfile();
+  const currentOntology = getOntologyForExam(profile.targetExam || 'NEET PG');
+  const availableSubjectNames = currentOntology.map(s => s.name);
   const [currentAction, setCurrentAction] = useState<ParsedAtlasAction>(action);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [localStatus, setLocalStatus] = useState<'pending' | 'committed' | 'declined'>(status);
@@ -118,10 +122,10 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
           </div>
           <div>
             <p className="font-semibold">Successfully Committed to Atlas</p>
-            <p className="text-[11px] opacity-80">Local IndexedDB updated & memory decay recalibrated</p>
+            <p className="text-xs opacity-80">Local IndexedDB updated & memory decay recalibrated</p>
           </div>
         </div>
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 font-mono font-bold tracking-tight">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 font-mono font-bold tracking-tight">
           SYNCED
         </span>
       </motion.div>
@@ -130,7 +134,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
   if (localStatus === 'declined') {
     return (
-      <div className="mt-2.5 p-2.5 rounded-xl bg-muted/40 border border-border/40 text-[11px] text-muted-foreground italic flex items-center justify-between">
+      <div className="mt-2.5 p-2.5 rounded-xl bg-muted/40 border border-border/40 text-xs text-muted-foreground italic flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <X className="w-3.5 h-3.5 text-muted-foreground/60" />
           <span>Proposal discarded</span>
@@ -138,7 +142,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
         <button
           type="button"
           onClick={() => setLocalStatus('pending')}
-          className="text-[10px] text-primary hover:underline font-medium not-italic"
+          className="text-xs text-primary hover:underline font-medium not-italic"
         >
           Restore
         </button>
@@ -165,14 +169,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
             </div>
             <div>
               <span className="font-semibold text-foreground text-xs sm:text-sm">20th Notebook Mistake</span>
-              <span className="text-[10px] text-muted-foreground ml-1.5">Proposed Pearl</span>
+              <span className="text-xs text-muted-foreground ml-1.5">Proposed Pearl</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
           >
             <Edit3 className="w-3 h-3" />
             <span>{isEditing ? 'Collapse' : 'Edit'}</span>
@@ -183,14 +187,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 Subject
               </label>
               <select
                 value={mistake.subjectName}
                 onChange={(e) => {
                   const sName = e.target.value;
-                  const matched = UNIVERSAL_ONTOLOGY.find((s) => s.name === sName);
+                  const matched = currentOntology.find((s) => s.name === sName);
                   setCurrentAction({
                     ...mistake,
                     subjectName: sName,
@@ -199,14 +203,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                 }}
                 className="w-full px-2.5 py-1.5 bg-background border border-border/80 rounded-lg text-xs text-foreground focus:ring-1 focus:ring-amber-500 focus:outline-none"
               >
-                {ALL_SUBJECTS.map((sub) => (
+                {availableSubjectNames.map((sub) => (
                   <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 System / Sub-topic
               </label>
               <input
@@ -221,7 +225,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* Interactive High-Yield Tag Pills */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
               High-Yield Classification Tag
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -233,7 +237,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                     type="button"
                     onClick={() => setCurrentAction({ ...mistake, tag: tag.value })}
                     className={cn(
-                      "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer",
+                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer",
                       isSelected
                         ? "bg-amber-500 text-white shadow-xs font-semibold scale-102"
                         : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50"
@@ -248,7 +252,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* Root-Cause Selector */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
               Root-Cause Trap
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -266,7 +270,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                         : "bg-background/60 border-border/60 text-muted-foreground hover:bg-muted"
                     )}
                   >
-                    <span className="text-[11px]">{rc.label}</span>
+                    <span className="text-xs">{rc.label}</span>
                     <span className="text-[9px] opacity-75 leading-tight truncate">{rc.desc}</span>
                   </button>
                 );
@@ -276,7 +280,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* Editable Golden Rule / Takeaway Text Area */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
               Golden Rule / High-Yield Takeaway
             </label>
             <textarea
@@ -302,7 +306,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
               type="button"
               onClick={() => setCurrentAction({ ...mistake, isUrgent: !mistake.isUrgent })}
               className={cn(
-                "px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer",
+                "px-2 py-0.5 rounded-md text-xs font-bold transition-all cursor-pointer",
                 mistake.isUrgent
                   ? "bg-rose-500 text-white"
                   : "bg-muted text-muted-foreground hover:text-foreground"
@@ -360,14 +364,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
             </div>
             <div>
               <span className="font-semibold text-foreground text-xs sm:text-sm">Study Session Block</span>
-              <span className="text-[10px] text-muted-foreground ml-1.5">Proposed Log</span>
+              <span className="text-xs text-muted-foreground ml-1.5">Proposed Log</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
           >
             <Edit3 className="w-3 h-3" />
             <span>{isEditing ? 'Collapse' : 'Edit'}</span>
@@ -378,14 +382,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
           {/* Subject & Topic Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 Subject
               </label>
               <select
                 value={study.subjectName}
                 onChange={(e) => {
                   const sName = e.target.value;
-                  const matched = UNIVERSAL_ONTOLOGY.find((s) => s.name === sName);
+                  const matched = currentOntology.find((s) => s.name === sName);
                   setCurrentAction({
                     ...study,
                     subjectName: sName,
@@ -394,14 +398,14 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                 }}
                 className="w-full px-2.5 py-1.5 bg-background border border-border/80 rounded-lg text-xs text-foreground focus:ring-1 focus:ring-teal-500 focus:outline-none"
               >
-                {ALL_SUBJECTS.map((sub) => (
+                {availableSubjectNames.map((sub) => (
                   <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 Topic / Notes
               </label>
               <input
@@ -420,7 +424,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* Duration Stepper (±15 min) + Preset Chips */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
               Study Duration
             </label>
             <div className="flex items-center gap-3">
@@ -455,7 +459,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                     type="button"
                     onClick={() => setCurrentAction({ ...study, durationMinutes: mins })}
                     className={cn(
-                      "px-2 py-1 rounded-md text-[10px] font-mono transition-all cursor-pointer",
+                      "px-2 py-1 rounded-md text-xs font-mono transition-all cursor-pointer",
                       study.durationMinutes === mins
                         ? "bg-teal-600 text-white font-bold"
                         : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -470,7 +474,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* Post-Session Confidence Toggles (High, Medium, Low) */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
               Post-Session Confidence Level
             </label>
             <div className="grid grid-cols-3 gap-1.5">
@@ -554,13 +558,13 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
             </div>
             <div>
               <span className="font-semibold text-foreground text-xs sm:text-sm">Test Score Entry</span>
-              <span className="text-[10px] text-muted-foreground ml-1.5">Mock Evaluation</span>
+              <span className="text-xs text-muted-foreground ml-1.5">Mock Evaluation</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className={cn(
-              "px-2 py-0.5 rounded-full font-mono text-[10px] font-bold",
+              "px-2 py-0.5 rounded-full font-mono text-xs font-bold",
               pct >= 70 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
               pct >= 55 ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400" :
               "bg-rose-500/15 text-rose-600 dark:text-rose-400"
@@ -570,7 +574,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
             <button
               type="button"
               onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
             >
               <Edit3 className="w-3 h-3" />
               <span>{isEditing ? 'Collapse' : 'Edit'}</span>
@@ -581,7 +585,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
         <div className="space-y-3">
           {/* Test Name Input */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
               Test Name / Source
             </label>
             <input
@@ -596,7 +600,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
           {/* Score & Total Marks Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 Score Earned
               </label>
               <input
@@ -608,7 +612,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
+              <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1 block">
                 Total Marks
               </label>
               <input
@@ -622,7 +626,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
           {/* 1-Tap Weak Area Tag Toggles */}
           <div>
-            <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
+            <label className="text-xs uppercase font-bold text-muted-foreground tracking-wider mb-1.5 block">
               1-Tap Flag Weak Subject Areas
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -634,7 +638,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                     type="button"
                     onClick={() => toggleWeakSubject(sub)}
                     className={cn(
-                      "px-2.5 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer",
+                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer",
                       isSelected
                         ? "bg-rose-500 text-white font-semibold shadow-xs"
                         : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/50"

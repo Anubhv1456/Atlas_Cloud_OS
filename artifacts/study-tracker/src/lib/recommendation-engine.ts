@@ -3,7 +3,7 @@ import { StrategyFactory } from './recommendations/strategies';
 import { calculateFSRSRetention } from "./fsrs-engine";
 import { REC_WEIGHTS, REC_MULTIPLIERS } from './recommendation-constants';
 import { Subject, StudySystem } from '@/db';
-import { ALL_SYSTEMS, ALL_SUBJECTS, OntologyTopic } from '@/data/ontology';
+import { OntologyTopic } from '@/data/ontology';
 import { TopicProgress } from '@/db/types';
 
 export interface SubjectWeightage {

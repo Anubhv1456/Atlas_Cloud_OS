@@ -93,7 +93,7 @@ export default function AdminDashboard() {
               <span className="font-extrabold text-base tracking-tight text-foreground block leading-none">
                 Atlas Command
               </span>
-              <span className="text-[10px] text-teal-400 font-mono font-semibold uppercase tracking-wider">
+              <span className="text-xs text-teal-400 font-mono font-semibold uppercase tracking-wider">
                 Founder Console
               </span>
             </div>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
         
         {/* Nav Items */}
         <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1.5">
-          <div className="px-3 pb-2 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70">
+          <div className="px-3 pb-2 text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground/70">
             Navigation Wings
           </div>
 
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
                   <div className="text-xs font-bold tracking-tight block text-foreground">
                     {item.label}
                   </div>
-                  <div className="text-[10px] text-muted-foreground line-clamp-1">
+                  <div className="text-xs text-muted-foreground line-clamp-1">
                     {item.subtitle}
                   </div>
                 </div>

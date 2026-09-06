@@ -14,7 +14,7 @@ export interface UIPreference {
 }
 
 export interface Subject {
-  id?: number;
+  id?: number | string;
   name: string;
   order?: number;
   focus?: 'primary' | 'secondary' | null;
@@ -25,6 +25,7 @@ export interface Subject {
   updatedAt: Date;
   deletedAt?: Date | null;
   hlc?: string;
+  ontologySubjectId?: string;
 }
 
 export type SystemStatus = 'Strong' | 'Average' | 'Weak';
@@ -37,6 +38,7 @@ export interface CurriculumUnit {
   subjectId?: number | string;
   subjectIds?: (number | string)[];
   systemId?: number | string;
+  ontologySystemId?: string;
   name: string;
   tags?: string[];
   topicIds?: string[];

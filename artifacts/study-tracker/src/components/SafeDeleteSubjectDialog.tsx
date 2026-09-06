@@ -72,7 +72,7 @@ export function SafeDeleteSubjectDialog({
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>Active Medical Progress Detected:</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-foreground">
+            <div className="grid grid-cols-2 gap-2 text-xs text-foreground">
               {progressScore.completedSystemsCount > 0 && (
                 <div className="p-2 rounded-xl bg-background/80 border border-border/40">
                   <span className="font-bold text-amber-500">{progressScore.completedSystemsCount}</span> completed systems
@@ -96,7 +96,7 @@ export function SafeDeleteSubjectDialog({
             </div>
 
             {siblingDuplicate && (
-              <p className="text-[11px] text-amber-400/90 pt-1 leading-normal">
+              <p className="text-xs text-amber-400/90 pt-1 leading-normal">
                 💡 Another copy of <span className="font-semibold text-foreground">"{subjectName}"</span> exists. You can safely merge all progress into it instead of deleting!
               </p>
             )}

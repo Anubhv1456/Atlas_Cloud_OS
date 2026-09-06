@@ -4,8 +4,11 @@ import { ALL_SUBJECTS, ALL_SYSTEMS } from '@/data/ontology';
 import { normalizeName } from '@/lib/exam-presets';
 
 export function getSystemTotalTopics(system: StudySystem, subjectName: string): number {
-  const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
-  const os = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(system.name));
+  const ontologySubject = ALL_SUBJECTS.find(s => s.name?.toLowerCase() === subjectName?.toLowerCase());
+  const os = ALL_SYSTEMS.find(s => 
+    (ontologySubject ? s.subjectId === ontologySubject.id : true) && 
+    normalizeName(s.name) === normalizeName(system.name)
+  );
   const customTopics = system.customTopics?.filter(t => !(t as any).deleted) || [];
   return (os?.topics.length || 0) + customTopics.length;
 }

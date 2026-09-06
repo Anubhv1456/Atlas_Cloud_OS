@@ -200,10 +200,10 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
             <p className="font-bold text-xs text-emerald-200">
               {draftAction.action === 'ACTION_ADD_MISTAKE' ? '20th Notebook Pearl Saved' : 'Action Successfully Saved'}
             </p>
-            <p className="text-[10px] text-emerald-400/80">Curriculum database synchronized</p>
+            <p className="text-xs text-emerald-400/80">Curriculum database synchronized</p>
           </div>
         </div>
-        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+        <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
           CONFIRMED
         </span>
       </motion.div>
@@ -284,7 +284,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
           {/* Header Controls */}
           <div className="flex items-center gap-1 shrink-0">
             {countdown > 0 && !isPausedCountdown && (
-              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                 {countdown}s
               </span>
             )}
@@ -329,7 +329,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Subject</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subject</label>
                       <select
                         value={mistake.subjectName}
                         onChange={(e) => {
@@ -351,7 +351,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tag Category</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tag Category</label>
                       <select
                         value={mistake.tag}
                         onChange={(e) => setDraftAction({ ...mistake, tag: e.target.value as MistakeTag })}
@@ -367,7 +367,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Clinical Rule / Distinction</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clinical Rule / Distinction</label>
                     <textarea
                       rows={2}
                       value={mistake.ruleText}
@@ -378,7 +378,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Psychometric Root Cause</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Psychometric Root Cause</label>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {ERROR_ROOT_CAUSES.map((rc) => (
                         <button
@@ -386,7 +386,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                           type="button"
                           onClick={() => setDraftAction({ ...mistake, errorType: rc.key })}
                           className={cn(
-                            "px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                            "px-2 py-0.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
                             mistake.errorType === rc.key
                               ? "bg-primary text-primary-foreground font-bold"
                               : "bg-muted text-muted-foreground hover:text-foreground"
@@ -406,7 +406,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                   </p>
                   
                   {/* Subtle Tags Strip */}
-                  <div className="flex items-center justify-between gap-2 pt-2 mt-2 border-t border-border/40 text-[11px]">
+                  <div className="flex items-center justify-between gap-2 pt-2 mt-2 border-t border-border/40 text-xs">
                     <div className="flex items-center gap-1.5">
                       {ERROR_ROOT_CAUSES.map((rc) => (
                         <button
@@ -414,7 +414,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                           type="button"
                           onClick={() => setDraftAction({ ...mistake, errorType: rc.key })}
                           className={cn(
-                            "px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                            "px-2 py-0.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
                             mistake.errorType === rc.key
                               ? "bg-muted-foreground/20 text-foreground font-bold"
                               : "bg-muted/50 text-muted-foreground hover:text-foreground"
@@ -429,7 +429,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                       type="button"
                       onClick={() => setDraftAction({ ...mistake, isUrgent: !mistake.isUrgent })}
                       className={cn(
-                        "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer shrink-0",
+                        "flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium transition-colors cursor-pointer shrink-0",
                         mistake.isUrgent
                           ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30"
                           : "text-muted-foreground hover:text-foreground"
@@ -453,7 +453,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
               {isEditing ? (
                 <div className="space-y-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Subject</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subject</label>
                     <select
                       value={study.subjectName}
                       onChange={(e) => {
@@ -474,7 +474,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Duration (Minutes)</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Duration (Minutes)</label>
                     <input
                       type="number"
                       value={study.durationMinutes}
@@ -498,7 +498,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                         type="button"
                         onClick={() => setDraftAction({ ...study, durationMinutes: d })}
                         className={cn(
-                          "px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer",
+                          "px-2 py-0.5 rounded text-xs font-mono transition-colors cursor-pointer",
                           study.durationMinutes === d
                             ? "bg-teal-500 text-white font-bold"
                             : "bg-muted text-muted-foreground hover:text-foreground"
@@ -524,7 +524,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
               {isEditing ? (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Score</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score</label>
                     <input
                       type="number"
                       value={scoreRec.score}
@@ -533,7 +533,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Total Marks</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Marks</label>
                     <input
                       type="number"
                       value={scoreRec.totalMarks}
@@ -555,9 +555,9 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
 
                   {scoreRec.weakSubjects && scoreRec.weakSubjects.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-[10px] text-muted-foreground">Focus:</span>
+                      <span className="text-xs text-muted-foreground">Focus:</span>
                       {scoreRec.weakSubjects.map(ws => (
-                        <span key={ws} className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 text-[10px] font-medium">
+                        <span key={ws} className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 text-xs font-medium">
                           {ws}
                         </span>
                       ))}
@@ -572,7 +572,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
 
       {/* ── 3. UNIFIED BOTTOM TACTILE ACTIONS ── */}
       <div className="px-3.5 py-2.5 bg-muted/30 border-t border-border/40 flex items-center justify-between gap-2">
-        <span className="text-[10px] text-muted-foreground/70 font-medium">
+        <span className="text-xs text-muted-foreground/70 font-medium">
           Swipe up to dismiss
         </span>
 

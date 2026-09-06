@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, CheckCircle2, Download, RefreshCcw, FileBox, GripVertical } from 'lucide-react';
 import { generateFlashcardDeck, downloadFlashcardTSV, generateFlashcardPreview, Flashcard } from '@/lib/flashcardExport';
 import { db } from '@/db';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { Settings2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -265,7 +265,7 @@ return (
                       </div>
                     ) : (
                       <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
-                        <div className="text-muted-foreground text-[10px] mb-2 leading-tight">
+                        <div className="text-muted-foreground text-xs mb-2 leading-tight">
                           <span className="font-semibold text-primary">💡 Format Advice:</span> The AI will follow your exact instructions. If you want fill-in-the-blank cards, explicitly tell the AI to use flashcard cloze syntax (e.g., <code className="text-emerald-400">{"{{c1::hidden text}}"}</code>) instead of standard brackets like <code className="text-rose-400">[...]</code>.
                         </div>
                         <Textarea 
@@ -310,7 +310,7 @@ return (
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 pb-2">
                           <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Target Deck</label>
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Target Deck</label>
                             <input 
                               type="text" 
                               value={targetDeck}
@@ -323,7 +323,7 @@ return (
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Custom Tags</label>
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Custom Tags</label>
                             <input 
                               type="text" 
                               value={customTags}
@@ -362,12 +362,12 @@ return (
                   ) : previewCard ? (
                     <div className="w-full space-y-4">
                       <div className="bg-background rounded-lg p-4 border shadow-sm">
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Front</div>
+                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Front</div>
                         <div className="text-sm" dangerouslySetInnerHTML={{ __html: previewCard.front }} />
                       </div>
                       <div className="bg-background rounded-lg p-4 border shadow-sm relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-                         <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-2 pl-2">Back</div>
+                         <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2 pl-2">Back</div>
                          <div className="text-sm pl-2" dangerouslySetInnerHTML={{ __html: previewCard.back }} />
                       </div>
                     </div>

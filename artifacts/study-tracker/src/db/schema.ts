@@ -85,6 +85,7 @@ class FirestoreTable<T extends Record<string, any>> {
     this.ready = new Promise<void>((resolve) => {
       this.readyResolve = resolve;
     });
+    dbEvents.emit('change', this.name);
   }
 
   public startListener(uid: string) {
@@ -161,6 +162,7 @@ class FirestoreTable<T extends Record<string, any>> {
     this.ready = new Promise<void>((resolve) => {
       this.readyResolve = resolve;
     });
+    dbEvents.emit('change', this.name);
   }
 
   getCollectionRef() {

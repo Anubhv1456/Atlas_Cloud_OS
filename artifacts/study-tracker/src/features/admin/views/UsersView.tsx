@@ -481,7 +481,7 @@ export function UsersView() {
           </button>
 
           {hiddenAdminCount > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-purple-500/20 text-purple-300 text-[11px] font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-purple-500/20 text-purple-300 text-xs font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
               <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>{hiddenAdminCount} Admin profile{hiddenAdminCount > 1 ? 's' : ''} hidden</span>
             </div>
@@ -498,12 +498,12 @@ export function UsersView() {
             activeTab === 'all' ? "bg-card border-teal-500/40 ring-1 ring-teal-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <span>Total</span>
             <Users className="w-3.5 h-3.5 text-teal-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-foreground">{stats.total}</div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">All candidates</p>
+          <p className="text-xs text-muted-foreground mt-0.5">All candidates</p>
         </div>
 
         <div 
@@ -513,12 +513,12 @@ export function UsersView() {
             activeTab === 'active' ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 uppercase tracking-wider">
             <span>Active</span>
             <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-emerald-400">{stats.active}</div>
-          <p className="text-[10px] text-emerald-500/80 mt-0.5 font-medium">Cohort active</p>
+          <p className="text-xs text-emerald-500/80 mt-0.5 font-medium">Cohort active</p>
         </div>
 
         <div 
@@ -528,12 +528,12 @@ export function UsersView() {
             activeTab === 'trial' ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
             <span>15d Trial</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-amber-300">{stats.trials}</div>
-          <p className="text-[10px] text-amber-500/80 mt-0.5 font-medium">Trial evaluation</p>
+          <p className="text-xs text-amber-500/80 mt-0.5 font-medium">Trial evaluation</p>
         </div>
 
         <div 
@@ -543,12 +543,12 @@ export function UsersView() {
             activeTab === 'expiring_soon' ? "bg-orange-500/10 border-orange-500/40 ring-1 ring-orange-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-orange-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-orange-400 uppercase tracking-wider">
             <span>Expiring ≤7d</span>
             <Clock className="w-3.5 h-3.5 text-orange-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-orange-300">{stats.expiringSoon}</div>
-          <p className="text-[10px] text-orange-500/80 mt-0.5">Need renewal</p>
+          <p className="text-xs text-orange-500/80 mt-0.5">Need renewal</p>
         </div>
 
         <div 
@@ -558,12 +558,12 @@ export function UsersView() {
             activeTab === 'expired' ? "bg-rose-500/10 border-rose-500/40 ring-1 ring-rose-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-rose-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-rose-400 uppercase tracking-wider">
             <span>Expired</span>
             <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-rose-300">{stats.expired}</div>
-          <p className="text-[10px] text-rose-500/80 mt-0.5">Pass ended</p>
+          <p className="text-xs text-rose-500/80 mt-0.5">Pass ended</p>
         </div>
 
         <div 
@@ -573,12 +573,12 @@ export function UsersView() {
             activeTab === 'locked' ? "bg-zinc-800 border-zinc-600 ring-1 ring-zinc-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-zinc-400 uppercase tracking-wider">
             <span>Locked</span>
             <UserX className="w-3.5 h-3.5 text-zinc-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-zinc-300">{stats.locked}</div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Awaiting access</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Awaiting access</p>
         </div>
 
         <div 
@@ -588,12 +588,12 @@ export function UsersView() {
             activeTab === 'flagged' ? "bg-amber-500/15 border-amber-500/50 ring-1 ring-amber-500/30" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
-          <div className="flex items-center justify-between text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
             <span>Flagged / Vault</span>
             <TriangleAlert className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-amber-300">{stats.flagged}</div>
-          <p className="text-[10px] text-amber-500/90 mt-0.5 font-medium">Provenance / Sybil</p>
+          <p className="text-xs text-amber-500/90 mt-0.5 font-medium">Provenance / Sybil</p>
         </div>
       </div>
 
@@ -667,7 +667,7 @@ export function UsersView() {
         <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-[10px] tracking-wider font-bold">
+              <thead className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-xs tracking-wider font-bold">
                 <tr>
                   <th className="p-4 w-10">
                     <input 
@@ -742,7 +742,7 @@ export function UsersView() {
                             <div className="flex items-center gap-1.5 pt-0.5">
                               <button
                                 onClick={() => setInspectingUser(u)}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-[10px] hover:bg-amber-500/25 transition-all cursor-pointer"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs hover:bg-amber-500/25 transition-all cursor-pointer"
                                 title="Foreign High-Volume Vault Restored — Click to inspect provenance"
                               >
                                 <TriangleAlert className="w-3 h-3 text-amber-400" />
@@ -764,10 +764,10 @@ export function UsersView() {
 
                         <td className="p-4">
                           <div className="space-y-1">
-                            <Badge variant="outline" className="text-[10px] font-bold border-teal-500/30 text-teal-300 bg-teal-500/5">
+                            <Badge variant="outline" className="text-xs font-bold border-teal-500/30 text-teal-300 bg-teal-500/5">
                               {examInfo.examName}
                             </Badge>
-                            <div className="text-[11px] text-muted-foreground font-medium">
+                            <div className="text-xs text-muted-foreground font-medium">
                               ⏱️ {examInfo.daysLeft} days to exam
                             </div>
                           </div>
@@ -778,11 +778,11 @@ export function UsersView() {
                             <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                             <span>{u.studyStreak || u.streak || 0}-day streak</span>
                           </div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             Registered {u.createdAt?.toDate ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : 'Recently'}
                           </div>
                           {u.referredBy && (
-                            <div className="text-[10px] text-teal-400/80 font-mono mt-0.5 truncate max-w-[140px]" title={`Referred by ${u.referredBy}`}>
+                            <div className="text-xs text-teal-400/80 font-mono mt-0.5 truncate max-w-[140px]" title={`Referred by ${u.referredBy}`}>
                               Ref: {u.referredBy}
                             </div>
                           )}
@@ -791,37 +791,37 @@ export function UsersView() {
                         <td className="p-4">
                           <div className="space-y-1">
                             {u.vaultActivationRequired ? (
-                              <Badge className="text-[10px] font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-amber-500/20 text-amber-300 border-amber-500/40 flex items-center gap-1 w-fit">
                                 <Database className="w-3 h-3 text-amber-400" /> Pass Req. (Vault)
                               </Badge>
                             ) : status === 'active_lifetime' ? (
-                              <Badge className="text-[10px] font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
                                 <ShieldCheck className="w-3 h-3" /> Lifetime Access
                               </Badge>
                             ) : status === 'trial' ? (
-                              <Badge className="text-[10px] font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-amber-500/15 text-amber-300 border-amber-500/30 flex items-center gap-1 w-fit">
                                 <Sparkles className="w-3 h-3 text-amber-400" /> 15d Trial ({daysRemaining}d left)
                               </Badge>
                             ) : status === 'expiring_soon' ? (
-                              <Badge className="text-[10px] font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse flex items-center gap-1 w-fit">
                                 <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
                               </Badge>
                             ) : status === 'active' ? (
-                              <Badge className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
                                 <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
                               </Badge>
                             ) : status === 'expired' ? (
-                              <Badge className="text-[10px] font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
+                              <Badge className="text-xs font-bold bg-rose-500/10 text-rose-400 border-rose-500/20 w-fit">
                                 Expired Pass
                               </Badge>
                             ) : (
-                              <Badge className="text-[10px] font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
+                              <Badge className="text-xs font-semibold bg-zinc-800 text-zinc-400 border-zinc-700 w-fit">
                                 Locked / Pending
                               </Badge>
                             )}
 
                             {u.betaAccessExpiresAt && !u.vaultActivationRequired && (status === 'active' || status === 'trial' || status === 'expiring_soon') && (
-                              <div className="text-[10px] text-muted-foreground">
+                              <div className="text-xs text-muted-foreground">
                                 Expires {formatTimestamp(u.betaAccessExpiresAt, 'MMM d, yyyy', '')}
                               </div>
                             )}
@@ -924,7 +924,7 @@ export function UsersView() {
                   Candidate: <strong className="text-foreground">{grantingUser.displayName || grantingUser.email}</strong>
                 </p>
               </div>
-              <Badge variant="outline" className="text-[10px] font-mono border-teal-500/30 text-teal-400">
+              <Badge variant="outline" className="text-xs font-mono border-teal-500/30 text-teal-400">
                 {grantingUser.targetExam || 'Medical Candidate'}
               </Badge>
             </div>
@@ -982,11 +982,11 @@ export function UsersView() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={cn("text-[10px] font-mono", isSelected ? "border-teal-400 text-teal-300" : "border-border text-muted-foreground")}>
+                        <Badge variant="outline" className={cn("text-xs font-mono", isSelected ? "border-teal-400 text-teal-300" : "border-border text-muted-foreground")}>
                           {opt.tag}
                         </Badge>
                         {isSelected && <Check className="w-4 h-4 text-teal-400 shrink-0" />}
@@ -1016,7 +1016,7 @@ export function UsersView() {
                             Until {exam.examName} Target Date ({exam.daysLeft} Days)
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">Expires on exam day ({format(exam.examDate, 'MMM d, yyyy')})</p>
+                        <p className="text-xs text-muted-foreground">Expires on exam day ({format(exam.examDate, 'MMM d, yyyy')})</p>
                       </div>
                       {isSelected && <Check className="w-4 h-4 text-teal-400 shrink-0" />}
                     </button>
@@ -1048,7 +1048,7 @@ export function UsersView() {
                           type="button"
                           onClick={() => handleCustomDaysChange(step)}
                           className={cn(
-                            "px-2 py-1.5 rounded-lg text-[10px] font-mono font-bold border transition-all",
+                            "px-2 py-1.5 rounded-lg text-xs font-mono font-bold border transition-all",
                             customDays === step 
                               ? "bg-teal-500 text-black border-teal-500" 
                               : "bg-muted/50 border-border/50 text-muted-foreground hover:text-foreground"
@@ -1080,7 +1080,7 @@ export function UsersView() {
 
             {/* Calculated Expiry Preview Box */}
             <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-1">
-              <div className="text-[11px] font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 Live Expiry Simulation
               </div>
@@ -1215,7 +1215,7 @@ export function UsersView() {
                       type="button"
                       onClick={() => setBulkCustomDays(step)}
                       className={cn(
-                        "px-2 py-1 rounded-lg text-[10px] font-mono font-bold border",
+                        "px-2 py-1 rounded-lg text-xs font-mono font-bold border",
                         bulkCustomDays === step ? "bg-teal-500 text-black border-teal-500" : "bg-muted/50 text-muted-foreground border-border/40"
                       )}
                     >
@@ -1288,7 +1288,7 @@ export function UsersView() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-foreground">Vault Provenance & Sybil Inspection</h3>
-                  <p className="text-[11px] text-muted-foreground">Cryptographic provenance envelope and account hopping verification</p>
+                  <p className="text-xs text-muted-foreground">Cryptographic provenance envelope and account hopping verification</p>
                 </div>
               </div>
             </div>
@@ -1299,16 +1299,16 @@ export function UsersView() {
                 <span className="text-muted-foreground font-medium">Candidate Account</span>
                 <span className="font-bold text-foreground">{inspectingUser.displayName || 'Medical Aspirant'}</span>
               </div>
-              <div className="flex items-center justify-between font-mono text-[11px]">
+              <div className="flex items-center justify-between font-mono text-xs">
                 <span className="text-muted-foreground">Candidate Email</span>
                 <span className="text-teal-300">{inspectingUser.email}</span>
               </div>
-              <div className="flex items-center justify-between font-mono text-[10px]">
+              <div className="flex items-center justify-between font-mono text-xs">
                 <span className="text-muted-foreground">Account UID</span>
                 <span className="text-muted-foreground truncate max-w-[220px]">{inspectingUser.id}</span>
               </div>
               {inspectingUser.referredBy && (
-                <div className="flex items-center justify-between text-[11px] border-t border-border/40 pt-1.5 mt-1.5">
+                <div className="flex items-center justify-between text-xs border-t border-border/40 pt-1.5 mt-1.5">
                   <span className="text-muted-foreground">Referred By Code</span>
                   <span className="font-mono text-teal-400 font-bold">{inspectingUser.referredBy}</span>
                 </div>
@@ -1325,7 +1325,7 @@ export function UsersView() {
               <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Original Origin UID</span>
-                  <span className="font-mono text-[11px] text-amber-300 font-bold truncate max-w-[220px]">
+                  <span className="font-mono text-xs text-amber-300 font-bold truncate max-w-[220px]">
                     {inspectingUser.vaultImportProvenance?.foreignOriginUid || 'Self / Unknown UID'}
                   </span>
                 </div>
@@ -1333,20 +1333,20 @@ export function UsersView() {
                 {inspectingUser.vaultImportProvenance?.foreignOriginEmail && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Original Origin Email</span>
-                    <span className="font-mono text-[11px] text-amber-200">
+                    <span className="font-mono text-xs text-amber-200">
                       {inspectingUser.vaultImportProvenance.foreignOriginEmail}
                     </span>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Export Timestamp</span>
                   <span className="text-foreground">
                     {formatTimestamp(inspectingUser.vaultImportProvenance?.exportTimestamp, 'MMM d, yyyy • p', 'N/A')}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Import Timestamp</span>
                   <span className="text-foreground">
                     {formatTimestamp(inspectingUser.vaultImportProvenance?.importedAt, 'MMM d, yyyy • p', 'Recently')}
@@ -1363,28 +1363,28 @@ export function UsersView() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2.5 rounded-xl bg-background border border-border/60">
-                  <div className="text-[10px] text-muted-foreground uppercase">Historical Study Time</div>
+                  <div className="text-xs text-muted-foreground uppercase">Historical Study Time</div>
                   <div className="text-base font-bold text-teal-400 font-mono mt-0.5">
                     {inspectingUser.vaultImportProvenance?.metrics?.totalStudyMinutes || 0} min
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-background border border-border/60">
-                  <div className="text-[10px] text-muted-foreground uppercase">Completed Topics</div>
+                  <div className="text-xs text-muted-foreground uppercase">Completed Topics</div>
                   <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
                     {inspectingUser.vaultImportProvenance?.metrics?.completedTopics || 0}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-background border border-border/60">
-                  <div className="text-[10px] text-muted-foreground uppercase">Mistake Log Entries</div>
+                  <div className="text-xs text-muted-foreground uppercase">Mistake Log Entries</div>
                   <div className="text-base font-bold text-amber-400 font-mono mt-0.5">
                     {inspectingUser.vaultImportProvenance?.metrics?.mistakeLogsCount || 0}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-background border border-border/60">
-                  <div className="text-[10px] text-muted-foreground uppercase">Subjects in Vault</div>
+                  <div className="text-xs text-muted-foreground uppercase">Subjects in Vault</div>
                   <div className="text-base font-bold text-primary font-mono mt-0.5">
                     {inspectingUser.vaultImportProvenance?.metrics?.subjectCount || 19}
                   </div>

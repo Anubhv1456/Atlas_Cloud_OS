@@ -1,5 +1,7 @@
 import { auth } from '@/lib/firebase';
-import { ALL_SUBJECTS as UNIVERSAL_ONTOLOGY, OntologySubject } from '@/data/ontology';
+import { NEETPG_ONTOLOGY, USMLE_ONTOLOGY, GENERAL_ONTOLOGY, OntologySubject } from '@/data/ontology';
+
+const FULL_ONTOLOGY: OntologySubject[] = [...NEETPG_ONTOLOGY, ...USMLE_ONTOLOGY, ...GENERAL_ONTOLOGY];
 
 export interface SanitizedTopic {
   id: string;
@@ -64,7 +66,7 @@ export async function getSubjectOntologyWithFallback(
 
   // Fallback to local ontology data
   const normalized = subjectQuery.trim().toLowerCase();
-  const found = UNIVERSAL_ONTOLOGY.find(
+  const found = FULL_ONTOLOGY.find(
     (sub: OntologySubject) =>
       sub.id.toLowerCase() === normalized ||
       sub.name.toLowerCase() === normalized ||

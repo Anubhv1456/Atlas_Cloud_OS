@@ -209,7 +209,7 @@ export function OpsQueueView() {
             <AlertCircle className="w-4 h-4 text-teal-400" />
           </div>
           <div className="text-2xl font-bold mt-2 text-teal-300">{actionItemsCount}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">Pending items needing review</p>
+          <p className="text-xs text-muted-foreground mt-1">Pending items needing review</p>
         </div>
 
         <div 
@@ -226,7 +226,7 @@ export function OpsQueueView() {
             <CreditCard className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-bold mt-2 text-amber-300">{pendingPayments.length}</div>
-          <p className="text-[11px] text-amber-500/80 mt-1 font-medium">₹{(pendingPayments.length * 499).toLocaleString()} pending verification</p>
+          <p className="text-xs text-amber-500/80 mt-1 font-medium">₹{(pendingPayments.length * 499).toLocaleString()} pending verification</p>
         </div>
 
         <div 
@@ -243,7 +243,7 @@ export function OpsQueueView() {
             <Inbox className="w-4 h-4 text-primary" />
           </div>
           <div className="text-2xl font-bold mt-2 text-purple-300">{unreadSupport.length}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">Student tickets awaiting response</p>
+          <p className="text-xs text-muted-foreground mt-1">Student tickets awaiting response</p>
         </div>
 
         <div 
@@ -260,7 +260,7 @@ export function OpsQueueView() {
             <Shield className="w-4 h-4 text-rose-400" />
           </div>
           <div className="text-2xl font-bold mt-2 text-rose-300">{reportedMarkers.length}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">{pendingMarkers.length} pending submissions</p>
+          <p className="text-xs text-muted-foreground mt-1">{pendingMarkers.length} pending submissions</p>
         </div>
       </div>
 
@@ -290,7 +290,7 @@ export function OpsQueueView() {
             )}
           >
             <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-            Payments Queue {pendingPayments.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-[10px] font-bold">{pendingPayments.length}</span>}
+            Payments Queue {pendingPayments.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-xs font-bold">{pendingPayments.length}</span>}
           </button>
 
           <button
@@ -303,7 +303,7 @@ export function OpsQueueView() {
             )}
           >
             <Inbox className="w-3.5 h-3.5 text-primary" />
-            Support Tickets {unreadSupport.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-purple-500 text-white text-[10px] font-bold">{unreadSupport.length}</span>}
+            Support Tickets {unreadSupport.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-purple-500 text-white text-xs font-bold">{unreadSupport.length}</span>}
           </button>
 
           <button
@@ -316,7 +316,7 @@ export function OpsQueueView() {
             )}
           >
             <MessageSquare className="w-3.5 h-3.5 text-rose-400" />
-            Community Markers {reportedMarkers.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold">{reportedMarkers.length}</span>}
+            Community Markers {reportedMarkers.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-xs font-bold">{reportedMarkers.length}</span>}
           </button>
         </div>
 
@@ -378,7 +378,7 @@ export function OpsQueueView() {
                                 <div className="font-semibold text-sm">{p.userName || p.userEmail}</div>
                                 <div className="text-xs text-muted-foreground font-mono mt-0.5">{p.userEmail}</div>
                               </div>
-                              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[10px]">
+                              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-xs">
                                 ₹{p.amount} · {p.plan}
                               </Badge>
                             </div>
@@ -387,7 +387,7 @@ export function OpsQueueView() {
                               <span>UPI Ref: <strong className="text-foreground">{p.upiReference}</strong></span>
                               <button
                                 onClick={() => copyToClipboard(p.upiReference, p.id)}
-                                className="text-teal-400 hover:text-teal-300 text-[10px] uppercase font-bold"
+                                className="text-teal-400 hover:text-teal-300 text-xs uppercase font-bold"
                               >
                                 {copiedId === p.id ? 'Copied!' : 'Copy'}
                               </button>
@@ -397,7 +397,7 @@ export function OpsQueueView() {
                               {p.proofUrl && (
                                 <button
                                   onClick={() => setPreviewImage(p.proofUrl)}
-                                  className="px-2.5 py-1 rounded-lg border border-border/60 text-[11px] font-medium flex items-center gap-1 hover:bg-muted"
+                                  className="px-2.5 py-1 rounded-lg border border-border/60 text-xs font-medium flex items-center gap-1 hover:bg-muted"
                                 >
                                   <Eye className="w-3 h-3 text-teal-400" /> Proof Screenshot
                                 </button>
@@ -446,13 +446,13 @@ export function OpsQueueView() {
                           <div key={m.id} className="p-4 rounded-xl border border-border/60 bg-background/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
+                                <Badge variant="outline" className="text-xs border-primary/30 text-purple-300">
                                   {m.category}
                                 </Badge>
                                 <span className="font-semibold text-sm">{m.subject}</span>
                               </div>
                               <p className="text-xs text-muted-foreground line-clamp-1">{m.message}</p>
-                              <div className="text-[10px] text-muted-foreground/70 flex items-center gap-2 pt-1">
+                              <div className="text-xs text-muted-foreground/70 flex items-center gap-2 pt-1">
                                 <span>From: {m.name} ({m.email})</span>
                                 <span>•</span>
                                 <span>{m.createdAt?.toDate ? formatDistanceToNow(m.createdAt.toDate(), { addSuffix: true }) : 'Recently'}</span>
@@ -501,10 +501,10 @@ export function OpsQueueView() {
                         {reportedMarkers.slice(0, 4).map(marker => (
                           <div key={marker.id} className="p-4 rounded-xl border border-border/60 bg-background/60 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold text-rose-400 uppercase text-[10px] tracking-wider">
+                              <span className="font-semibold text-rose-400 uppercase text-xs tracking-wider">
                                 {marker.type} · Reported by {(marker.reportedBy || []).length} students
                               </span>
-                              <Badge variant="outline" className="text-[10px]">
+                              <Badge variant="outline" className="text-xs">
                                 {marker.subjectId}
                               </Badge>
                             </div>
@@ -588,7 +588,7 @@ export function OpsQueueView() {
                           <span className="font-bold text-sm">{p.userName || 'Medical Student'}</span>
                           <span className="text-xs text-muted-foreground font-mono">({p.userEmail})</span>
                           <Badge className={cn(
-                            "text-[10px] capitalize",
+                            "text-xs capitalize",
                             p.status === 'pending' && "bg-amber-500/10 text-amber-400 border-amber-500/20",
                             p.status === 'approved' && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
                             p.status === 'rejected' && "bg-rose-500/10 text-rose-400 border-rose-500/20"
@@ -670,7 +670,7 @@ export function OpsQueueView() {
                     <div key={m.id} className="p-4 rounded-xl border border-border/60 bg-card flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
+                          <Badge variant="outline" className="text-xs border-primary/30 text-purple-300">
                             {m.category}
                           </Badge>
                           <span className="font-bold text-sm">{m.subject}</span>
@@ -753,18 +753,18 @@ export function OpsQueueView() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-teal-500/10 text-teal-400 border-teal-500/20 text-[10px] uppercase">
+                            <Badge className="bg-teal-500/10 text-teal-400 border-teal-500/20 text-xs uppercase">
                               {m.type}
                             </Badge>
                             <span className="text-xs text-muted-foreground">Subject ID: {m.subjectId}</span>
                             {(m.reportedBy || []).length > 0 && (
-                              <Badge variant="destructive" className="text-[10px]">
+                              <Badge variant="destructive" className="text-xs">
                                 {m.reportedBy.length} Reports
                               </Badge>
                             )}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-[10px] uppercase">
+                        <Badge variant="outline" className="text-xs uppercase">
                           Status: {m.status}
                         </Badge>
                       </div>
@@ -864,7 +864,7 @@ export function OpsQueueView() {
           <div className="bg-card border border-purple-500/40 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-start justify-between">
               <div>
-                <Badge variant="outline" className="text-[10px] border-primary/30 text-purple-300">
+                <Badge variant="outline" className="text-xs border-primary/30 text-purple-300">
                   {selectedMessage.category}
                 </Badge>
                 <h3 className="font-bold text-lg mt-1">{selectedMessage.subject}</h3>

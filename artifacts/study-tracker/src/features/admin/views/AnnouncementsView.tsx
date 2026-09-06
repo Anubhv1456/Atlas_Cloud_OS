@@ -177,7 +177,7 @@ export function AnnouncementsView() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-lg">{announcement.title}</h3>
                     {announcement.active && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                         Live
                       </span>
                     )}

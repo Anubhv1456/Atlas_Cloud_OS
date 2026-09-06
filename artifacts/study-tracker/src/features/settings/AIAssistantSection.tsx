@@ -175,7 +175,7 @@ export function AIAssistantSection() {
                   href="https://aistudio.google.com/app/apikey"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
                 >
                   <span>Get Free Key</span>
                   <ExternalLink className="w-3 h-3" />
@@ -203,7 +203,7 @@ export function AIAssistantSection() {
                       <button
                         type="button"
                         onClick={handlePasteKey}
-                        className="text-[11px] font-semibold text-primary hover:bg-primary/10 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-xs font-semibold text-primary hover:bg-primary/10 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <ClipboardPaste className="w-3 h-3" />
                         <span>Paste</span>
@@ -246,7 +246,7 @@ export function AIAssistantSection() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
                 <label className="text-xs font-semibold text-foreground">Cognitive Engine Model</label>
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Active: <span className="text-foreground font-semibold">{getModelLabel()}</span>
                 </span>
               </div>
@@ -269,7 +269,7 @@ export function AIAssistantSection() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-semibold text-primary block">{m.tag}</span>
+                        <span className="text-xs font-semibold text-primary block">{m.tag}</span>
                         {active && <Check className="w-3 h-3 text-primary" />}
                       </div>
                       <span className="text-xs font-bold text-foreground block mt-0.5">{m.title}</span>
@@ -284,7 +284,7 @@ export function AIAssistantSection() {
               <div className="flex items-center justify-between p-3.5">
                 <div>
                   <p className="text-[13px] font-medium text-foreground">Mentorship Style</p>
-                  <p className="text-[11px] text-muted-foreground">Guidance technique</p>
+                  <p className="text-xs text-muted-foreground">Guidance technique</p>
                 </div>
                 <Select 
                   value={settings.mentorshipStyle || 'socratic'} 
@@ -303,7 +303,7 @@ export function AIAssistantSection() {
               <div className="flex items-center justify-between p-3.5">
                 <div>
                   <p className="text-[13px] font-medium text-foreground">Clinical Depth</p>
-                  <p className="text-[11px] text-muted-foreground">Explanation verbosity</p>
+                  <p className="text-xs text-muted-foreground">Explanation verbosity</p>
                 </div>
                 <Select 
                   value={settings.clinicalDepth || 'high-yield'} 
@@ -320,7 +320,7 @@ export function AIAssistantSection() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground px-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <span>Keys remain locally on device and connect directly to Google servers.</span>
             </div>

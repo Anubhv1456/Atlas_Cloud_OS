@@ -230,7 +230,7 @@ export default function PrivacyPolicy() {
                   <FileText className="w-3.5 h-3.5 text-primary" />
                   Table of Contents
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">14 Clauses</span>
+                <span className="text-xs font-mono text-muted-foreground">14 Clauses</span>
               </div>
 
               <nav className="space-y-0.5 max-h-[calc(100vh-220px)] overflow-y-auto pr-1 text-xs">
@@ -248,7 +248,7 @@ export default function PrivacyPolicy() {
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className={`font-mono text-[10px] shrink-0 ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>
+                        <span className={`font-mono text-xs shrink-0 ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>
                           {s.number}
                         </span>
                         <span className="truncate">{s.title}</span>

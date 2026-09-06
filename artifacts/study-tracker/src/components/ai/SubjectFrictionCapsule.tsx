@@ -90,7 +90,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-bold text-foreground">Diagnostic Capsule</span>
               <span className={cn(
-                "text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider",
+                "text-xs font-mono font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider",
                 metric.decayUrgency === 'CRITICAL' && "bg-rose-500/15 text-rose-600 dark:text-rose-400",
                 metric.decayUrgency === 'ELEVATED' && "bg-amber-500/15 text-amber-600 dark:text-amber-400",
                 metric.decayUrgency === 'MODERATE' && "bg-blue-500/15 text-blue-600 dark:text-blue-400",
@@ -98,11 +98,11 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
               )}>
                 {metric.decayUrgency === 'CRITICAL' ? 'Decay Alert' : metric.decayUrgency === 'ELEVATED' ? 'Half-Life Due' : metric.decayUrgency === 'MODERATE' ? 'Moderate Friction' : 'Retention Prime'}
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline">
+              <span className="text-xs font-mono text-muted-foreground hidden sm:inline">
                 • {metric.cluster} (~{metric.examWeightage} Qs)
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {metric.daysSinceReview === 1 ? 'Studied recently' : `${metric.daysSinceReview}d elapsed`} • {metric.unresolvedMistakes} active error traps
             </p>
           </div>
@@ -110,7 +110,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
 
         <div className="flex items-center gap-2 shrink-0 ml-2">
           <div className="text-right hidden sm:block">
-            <div className="text-[10px] font-mono font-bold text-muted-foreground uppercase">Friction Index</div>
+            <div className="text-xs font-mono font-bold text-muted-foreground uppercase">Friction Index</div>
             <div className="text-xs font-mono font-bold text-foreground">{metric.frictionScore} pts</div>
           </div>
           <button
@@ -148,7 +148,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
           >
             <div className="p-3.5 sm:p-4 space-y-3 text-xs">
               {/* Directive Diagnosis Text */}
-              <div className="p-2.5 rounded-xl bg-card border border-border/70 text-[11px] text-muted-foreground">
+              <div className="p-2.5 rounded-xl bg-card border border-border/70 text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">Diagnostic Analysis: </span>
                 {metric.recommendedActionText}
               </div>
@@ -156,7 +156,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
               {/* Unresolved Traps in 20th Notebook */}
               {unresolvedMistakes.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1">
                     <BookOpen className="w-3 h-3 text-rose-500" />
                     Active 20th Notebook Bleeding Traps ({unresolvedMistakes.length})
                   </h4>
@@ -164,7 +164,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
                     {unresolvedMistakes.slice(0, 3).map((m) => (
                       <div 
                         key={m.id}
-                        className="p-2 rounded-lg bg-card border border-border/60 text-[11px] text-foreground flex items-center justify-between gap-2"
+                        className="p-2 rounded-lg bg-card border border-border/60 text-xs text-foreground flex items-center justify-between gap-2"
                       >
                         <span className="truncate">{m.title || m.keyTakeaway || 'Volatile trap stem'}</span>
                         <span className="text-[9px] font-mono text-muted-foreground shrink-0 uppercase px-1.5 py-0.5 rounded bg-muted">
@@ -177,7 +177,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
               )}
 
               {/* Memory Half-Life Window */}
-              <div className="p-2.5 rounded-xl bg-card border border-border/70 flex items-center justify-between text-[11px]">
+              <div className="p-2.5 rounded-xl bg-card border border-border/70 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   <span className="text-muted-foreground">
@@ -185,7 +185,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
                   </span>
                 </div>
                 <span className={cn(
-                  "font-bold font-mono text-[10px]",
+                  "font-bold font-mono text-xs",
                   metric.daysSinceReview > metric.subjectHalfLifeDays ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                 )}>
                   {metric.daysSinceReview > metric.subjectHalfLifeDays ? 'OVER HALF-LIFE' : 'WITHIN STABILITY'}

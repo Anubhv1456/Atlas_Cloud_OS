@@ -127,7 +127,7 @@ export function GlobalQuickEntry() {
             onKeyDown={handleKeyDown}
             autoFocus
           />
-          <kbd className="hidden sm:inline-flex ml-2 items-center gap-1 rounded border bg-muted px-2 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+          <kbd className="hidden sm:inline-flex ml-2 items-center gap-1 rounded border bg-muted px-2 font-mono text-xs font-medium text-muted-foreground opacity-100">
             <CornerDownLeft className="w-3 h-3" /> RET
           </kbd>
         </div>

@@ -68,7 +68,7 @@ export function SystemPreferencesCard() {
                   e.stopPropagation();
                   testNotification();
                 }}
-                className="text-[11px] font-semibold text-primary hover:underline px-1 py-0.5 cursor-pointer"
+                className="text-xs font-semibold text-primary hover:underline px-1 py-0.5 cursor-pointer"
               >
                 Test
               </button>
@@ -119,7 +119,7 @@ export function SystemPreferencesCard() {
                     <div className={cn("w-4 h-4 rounded-full shadow-2xs", theme.bgClass)} />
                     <div>
                       <p className="text-[13px] font-medium text-foreground">{theme.label}</p>
-                      <p className="text-[11px] text-muted-foreground">{theme.desc}</p>
+                      <p className="text-xs text-muted-foreground">{theme.desc}</p>
                     </div>
                   </div>
 

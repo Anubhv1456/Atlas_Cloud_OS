@@ -89,7 +89,7 @@ export function OfflineLeaseBanner() {
             <button
               onClick={handleManualCheck}
               disabled={isChecking}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-all duration-150 border border-border/50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-secondary/80 hover:bg-secondary text-secondary-foreground transition-all duration-150 border border-border/50 disabled:opacity-50"
               title="Test connection"
             >
               <RefreshCw className={cn('w-3 h-3', isChecking && 'animate-spin')} />

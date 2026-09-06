@@ -50,17 +50,17 @@ export const DailyFrictionAgenda: React.FC<DailyFrictionAgendaProps> = ({
           <div>
             <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
               <span>Decay Watchlist & Upcoming Queue</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground text-[10px] font-mono">
+              <span className="px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground text-xs font-mono">
                 Next in Line
               </span>
             </h3>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Subdued memory half-life queue prioritized for subsequent study blocks
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 self-start sm:self-auto text-[10px] font-mono">
+        <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs font-mono">
           {criticalCount > 0 && (
             <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-medium">
               {criticalCount} Critical
@@ -90,11 +90,11 @@ export const DailyFrictionAgenda: React.FC<DailyFrictionAgendaProps> = ({
           >
             <div>
               <div className="flex items-center justify-between gap-1 mb-1.5">
-                <span className="text-[10px] font-mono font-semibold text-muted-foreground uppercase tracking-wider bg-muted/60 px-1.5 py-0.5 rounded">
+                <span className="text-xs font-mono font-semibold text-muted-foreground uppercase tracking-wider bg-muted/60 px-1.5 py-0.5 rounded">
                   Upcoming #{idx + 1}
                 </span>
 
-                <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5 text-muted-foreground" />
                   ~{pulse.estimatedMinutes}m
                 </span>
@@ -103,16 +103,16 @@ export const DailyFrictionAgenda: React.FC<DailyFrictionAgendaProps> = ({
               <h4 className="font-semibold text-foreground text-xs line-clamp-1 group-hover:text-primary transition-colors">
                 {pulse.subjectName}
               </h4>
-              <p className="text-[11px] text-muted-foreground line-clamp-1 mb-1.5">
+              <p className="text-xs text-muted-foreground line-clamp-1 mb-1.5">
                 {pulse.topicName}
               </p>
-              <p className="text-[10px] text-muted-foreground/80 line-clamp-2 leading-normal">
+              <p className="text-xs text-muted-foreground/80 line-clamp-2 leading-normal">
                 {pulse.reason}
               </p>
             </div>
 
-            <div className="mt-2.5 pt-2 border-t border-border/30 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-              <span className="flex items-center gap-1 text-[10px] group-hover:text-foreground transition-colors">
+            <div className="mt-2.5 pt-2 border-t border-border/30 flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-1 text-xs group-hover:text-foreground transition-colors">
                 {pulse.urgency === 'CRITICAL' ? (
                   <span className="text-rose-500 font-semibold">Decay intervention</span>
                 ) : (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { ScoreLog } from '@/db/types';
 import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip, XAxis, CartesianGrid } from 'recharts';
@@ -100,7 +100,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
       <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="flex items-center gap-2 text-primary font-bold text-[11px] uppercase tracking-widest mb-2">
+            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-2">
               <Target className="w-3.5 h-3.5" /> Macro Analytics
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Mock Exam Dashboard</h1>
@@ -178,7 +178,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
                         {log.percentage}%
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium mb-2">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mb-2">
                       <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {format(new Date(log.timestamp), 'MMM d, yyyy')}</span>
                       <span className="flex items-center gap-1"><Award className="w-3 h-3" /> {log.score}/{log.total}</span>
                     </div>

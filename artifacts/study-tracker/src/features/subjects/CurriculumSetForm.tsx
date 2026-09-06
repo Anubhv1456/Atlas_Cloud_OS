@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 interface CurriculumSetFormProps {
   isOpen: boolean;
   onClose: () => void;
-  systemId: number;
+  systemId?: number;
   subjectId: number;
   allTopics: OntologyTopic[];
   initialData?: CurriculumSet;

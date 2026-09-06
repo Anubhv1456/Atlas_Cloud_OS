@@ -258,14 +258,14 @@ export function PermissionsDiagnosticsSection() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Microphone Input</p>
-                    <p className="text-[11px] text-muted-foreground">getUserMedia Stream</p>
+                    <p className="text-xs text-muted-foreground">getUserMedia Stream</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   variant={isTestingMic ? "destructive" : "outline"}
                   onClick={handleTestMicrophone}
-                  className="h-7 text-[11px] px-2.5 rounded-lg"
+                  className="h-7 text-xs px-2.5 rounded-lg"
                 >
                   {isTestingMic ? 'Stop Meter' : 'Test Stream'}
                 </Button>
@@ -274,7 +274,7 @@ export function PermissionsDiagnosticsSection() {
               {/* VU Meter */}
               {isTestingMic && (
                 <div className="p-3 bg-muted/20 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
                     <span>Microphone Input Level</span>
                     <span>{dbLevel} dB</span>
                   </div>
@@ -295,7 +295,7 @@ export function PermissionsDiagnosticsSection() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Speech Recognition</p>
-                    <p className="text-[11px] text-muted-foreground">Web Speech STT</p>
+                    <p className="text-xs text-muted-foreground">Web Speech STT</p>
                   </div>
                 </div>
                 <Button
@@ -303,7 +303,7 @@ export function PermissionsDiagnosticsSection() {
                   variant="outline"
                   onClick={handleTestSpeechRecognition}
                   disabled={speechRecState === 'unsupported'}
-                  className="h-7 text-[11px] px-2.5 rounded-lg"
+                  className="h-7 text-xs px-2.5 rounded-lg"
                 >
                   <Sparkles className="w-3 h-3 mr-1 text-primary" />
                   Test Engine
@@ -318,14 +318,14 @@ export function PermissionsDiagnosticsSection() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Voice Speaker</p>
-                    <p className="text-[11px] text-muted-foreground">SpeechSynthesis TTS</p>
+                    <p className="text-xs text-muted-foreground">SpeechSynthesis TTS</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleTestSpeaker}
-                  className="h-7 text-[11px] px-2.5 rounded-lg"
+                  className="h-7 text-xs px-2.5 rounded-lg"
                 >
                   Play Sample
                 </Button>
@@ -347,7 +347,7 @@ export function PermissionsDiagnosticsSection() {
               </button>
 
               {showPwaGuide && (
-                <div className="pt-2 text-[11px] text-muted-foreground space-y-1.5 border-t border-border/40">
+                <div className="pt-2 text-xs text-muted-foreground space-y-1.5 border-t border-border/40">
                   <p>1. <strong>Mobile Chrome:</strong> Long-press icon &gt; App Info &gt; Permissions &gt; Allow Microphone.</p>
                   <p>2. <strong>Desktop Chrome:</strong> Click tune icon in address bar &gt; Site settings &gt; Set Microphone to Allow.</p>
                 </div>

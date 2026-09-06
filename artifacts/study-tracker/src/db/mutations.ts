@@ -559,7 +559,7 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 
 // ── Study Blocks ──────────────────────────────────────────────────────────
 
-export async function createCurriculumSet(data: { subjectId: number; systemId: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
+export async function createCurriculumSet(data: { subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
   const newSet: import('./types').CurriculumSet = {
     id: crypto.randomUUID(),
     ...data,

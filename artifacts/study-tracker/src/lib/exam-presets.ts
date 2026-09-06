@@ -35,20 +35,13 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
   if (!targetExam) {
     targetExam = getLocalExamProfile().targetExam || 'NEET PG';
   }
+
+  // Ensure workspace matches target exam
+  db.switchWorkspace(targetExam);
+
   const activeOntology = getOntologyForExam(targetExam);
 
   try {
-    // Check existing active subjects
-    const existingSubjects = await db.subjects.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
-    
-    // Idempotency: If ontology subjects are already present and we are not forcing, exit cleanly
-    const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
-    const presentActiveSubjects = existingSubjects.filter(s => s.name && activeSubjectNames.has(s.name.toLowerCase()));
-    if (presentActiveSubjects.length >= activeOntology.length && !force) {
-      if (onProgress) onProgress(100, 'Curriculum already loaded');
-      return { success: true, count: existingSubjects.length, reloaded: false };
-    }
-
     if (showToast) {
       toast.info("Configuring Medical Curriculum... Please wait.");
     }
@@ -63,48 +56,59 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
       await db.uiPreferences.clear();
     }
 
-    // Build a map of existing subjects by normalized name so we reuse existing IDs and NEVER duplicate
-    const existingMapByNorm = new Map<string, T.Subject>();
-    if (!force) {
-      const allSubs = await db.subjects.toArray();
-      allSubs.forEach(s => {
-        if (s && s.name && !s.deletedAt) {
-          existingMapByNorm.set(normalizeName(s.name), s);
-        }
-      });
-    }
-
+    // Load existing active entities
+    const existingSubjects = force ? [] : await db.subjects.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
     const existingSystems = force ? [] : await db.systems.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
-    const existingSystemsByKey = new Map<string, T.StudySystem>();
-    existingSystems.forEach(sys => {
-      if (sys && sys.name && sys.subjectId) {
-        existingSystemsByKey.set(`${sys.subjectId}_${normalizeName(sys.name)}`, sys);
+
+    // Build lookup maps for subjects
+    const existingMapByNorm = new Map<string, T.Subject>();
+    const existingMapById = new Map<string, T.Subject>();
+    existingSubjects.forEach(s => {
+      if (s && s.name) {
+        existingMapByNorm.set(normalizeName(s.name), s);
+        if (s.id) existingMapById.set(String(s.id), s);
+        if (s.ontologySubjectId) existingMapById.set(String(s.ontologySubjectId), s);
       }
     });
 
-    const newSubjects: T.Subject[] = [];
-    const newSystems: T.StudySystem[] = [];
-    const newPrefs: T.UIPreference[] = [];
+    // Build lookup maps for systems
+    const existingSystemsByKey = new Map<string, T.StudySystem>();
+    const existingSystemsByOntologyId = new Map<string, T.StudySystem>();
+    existingSystems.forEach(sys => {
+      if (sys && sys.name && sys.subjectId) {
+        existingSystemsByKey.set(`${sys.subjectId}_${normalizeName(sys.name)}`, sys);
+        if (sys.id) existingSystemsByKey.set(`${sys.subjectId}_${sys.id}`, sys);
+        if (sys.ontologySystemId) {
+          existingSystemsByOntologyId.set(`${sys.subjectId}_${sys.ontologySystemId}`, sys);
+        }
+      }
+    });
+
+    const subjectsToUpsert: T.Subject[] = [];
+    const systemsToUpsert: T.StudySystem[] = [];
+    const prefsToUpsert: T.UIPreference[] = [];
 
     let subjectOrder = 0;
 
     for (const sub of activeOntology) {
       const normSubName = normalizeName(sub.name);
-      const existingSub = existingMapByNorm.get(normSubName);
+      let existingSub = existingMapByNorm.get(normSubName) || (sub.id ? existingMapById.get(String(sub.id)) : undefined);
 
-      // Use existing subject ID or deterministic slug ID
+      // Deterministic ID for subject
       const subjectId = existingSub ? existingSub.id! : (sub.id ? `subj_${sub.id.toLowerCase()}` : `subj_${slugify(sub.name)}`);
       
       if (!existingSub) {
-        newSubjects.push({
+        const newSub: T.Subject = {
           id: subjectId as any,
           name: sub.name,
           ontologySubjectId: sub.id,
           createdAt: new Date(),
           updatedAt: new Date()
-        });
+        };
+        subjectsToUpsert.push(newSub);
+        existingMapByNorm.set(normSubName, newSub);
         
-        newPrefs.push({
+        prefsToUpsert.push({
           id: `subject:${subjectId}`,
           type: 'subject',
           entityId: subjectId as any,
@@ -112,20 +116,43 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
           focus: null,
           updatedAt: new Date()
         });
+      } else {
+        // Sync name or ontologySubjectId if changed in updated blueprint
+        let subChanged = false;
+        if (existingSub.name !== sub.name) {
+          existingSub.name = sub.name;
+          subChanged = true;
+        }
+        if (existingSub.ontologySubjectId !== sub.id) {
+          existingSub.ontologySubjectId = sub.id;
+          subChanged = true;
+        }
+        if (subChanged) {
+          existingSub.updatedAt = new Date();
+          subjectsToUpsert.push(existingSub);
+        }
       }
 
       let systemOrder = 0;
       for (const sys of sub.systems) {
         const normSysName = normalizeName(sys.name);
-        const sysKey = `${subjectId}_${normSysName}`;
-        const existingSys = existingSystemsByKey.get(sysKey);
+        const sysKeyByName = `${subjectId}_${normSysName}`;
+        const sysKeyById = sys.id ? `${subjectId}_sys_${sys.id.toLowerCase()}` : '';
+        const sysKeyByOntology = sys.id ? `${subjectId}_${sys.id}` : '';
+
+        const sysId = sys.id ? `sys_${sys.id.toLowerCase()}` : `sys_${slugify(sub.name)}_${slugify(sys.name)}`;
+
+        let existingSys = existingSystemsByKey.get(sysKeyByName) ||
+          (sysKeyById ? existingSystemsByKey.get(sysKeyById) : undefined) ||
+          (sysKeyByOntology ? existingSystemsByOntologyId.get(sysKeyByOntology) : undefined) ||
+          existingSystemsByKey.get(`${subjectId}_${sysId}`);
 
         if (!existingSys) {
-          const sysId = sys.id ? `sys_${sys.id.toLowerCase()}` : `sys_${slugify(sub.name)}_${slugify(sys.name)}`;
-          
-          newSystems.push({
+          // New system from updated blueprint!
+          const newSysRecord: T.StudySystem = {
             id: sysId as any,
             subjectId: subjectId as any,
+            ontologySystemId: sys.id,
             name: sys.name,
             updatedAt: new Date(),
             nextRevisionDate: null,
@@ -146,9 +173,11 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
             qbankDone: false,
             weakAreas: '',
             status: 'Average'
-          } as any);
+          } as any;
 
-          newPrefs.push({
+          systemsToUpsert.push(newSysRecord);
+
+          prefsToUpsert.push({
             id: `system:${sysId}`,
             type: 'system',
             entityId: sysId as any,
@@ -156,6 +185,21 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
             focus: null,
             updatedAt: new Date()
           });
+        } else {
+          // Update existing system with fresh name and ontologySystemId if modified
+          let sysChanged = false;
+          if (existingSys.name !== sys.name) {
+            existingSys.name = sys.name;
+            sysChanged = true;
+          }
+          if (existingSys.ontologySystemId !== sys.id) {
+            existingSys.ontologySystemId = sys.id;
+            sysChanged = true;
+          }
+          if (sysChanged) {
+            existingSys.updatedAt = new Date();
+            systemsToUpsert.push(existingSys);
+          }
         }
       }
     }
@@ -163,15 +207,15 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
     if (onProgress) onProgress(45, 'Writing subjects and organ systems...');
 
     // Bulk put efficiently with idempotent keys
-    if (newSubjects.length > 0) {
-      await db.subjects.bulkPut(newSubjects);
+    if (subjectsToUpsert.length > 0) {
+      await db.subjects.bulkPut(subjectsToUpsert);
     }
     if (onProgress) onProgress(75, 'Configuring system preferences...');
-    if (newSystems.length > 0) {
-      await db.systems.bulkPut(newSystems);
+    if (systemsToUpsert.length > 0) {
+      await db.systems.bulkPut(systemsToUpsert);
     }
-    if (newPrefs.length > 0) {
-      await db.uiPreferences.bulkPut(newPrefs);
+    if (prefsToUpsert.length > 0) {
+      await db.uiPreferences.bulkPut(prefsToUpsert);
     }
 
     dbEvents.emit('change', 'subjects');
@@ -179,7 +223,13 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
     dbEvents.emit('change', 'uiPreferences');
 
     if (onProgress) onProgress(100, 'Curriculum ready');
-    return { success: true, count: newSubjects.length, reloaded: true };
+    return {
+      success: true,
+      count: existingSubjects.length + subjectsToUpsert.length,
+      newSubjectsCount: subjectsToUpsert.length,
+      newSystemsCount: systemsToUpsert.length,
+      reloaded: true
+    };
   } catch (err) {
     console.error("loadUniversalOntology ERROR:", err);
     if (showToast) {

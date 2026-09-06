@@ -180,10 +180,10 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
           </div>
           <div>
             <p className="font-semibold text-xs">Saved to 20th Notebook</p>
-            <p className="text-[10px] opacity-75">Curriculum matrix updated</p>
+            <p className="text-xs opacity-75">Curriculum matrix updated</p>
           </div>
         </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 font-bold">
+        <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 font-bold">
           SYNCED
         </span>
       </motion.div>
@@ -255,7 +255,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
         {/* Action icons & Auto-commit indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
           {countdown > 0 && !isPausedCountdown && (
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+            <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
               {countdown}s
             </span>
           )}
@@ -332,7 +332,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
               )}
 
               {/* Minimal Error Taxonomy Tokens */}
-              <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/80 text-[11px]">
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-800/80 text-xs">
                 <div className="flex items-center gap-1.5">
                   {ERROR_ROOT_CAUSES.map((rc) => (
                     <button
@@ -340,7 +340,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
                       type="button"
                       onClick={() => setDraftAction({ ...mistake, errorType: rc.key })}
                       className={cn(
-                        "px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer",
+                        "px-2 py-0.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
                         mistake.errorType === rc.key
                           ? "bg-zinc-200 text-zinc-950 font-bold"
                           : "bg-zinc-800/80 text-zinc-400 hover:text-zinc-200"
@@ -355,7 +355,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
                   type="button"
                   onClick={() => setDraftAction({ ...mistake, isUrgent: !mistake.isUrgent })}
                   className={cn(
-                    "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer shrink-0",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium transition-colors cursor-pointer shrink-0",
                     mistake.isUrgent
                       ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                       : "text-zinc-500 hover:text-zinc-400"
@@ -393,7 +393,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
                     type="button"
                     onClick={() => setDraftAction({ ...study, durationMinutes: d })}
                     className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer",
+                      "px-2 py-0.5 rounded text-xs font-mono transition-colors cursor-pointer",
                       study.durationMinutes === d
                         ? "bg-teal-400 text-zinc-950 font-bold"
                         : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
@@ -425,9 +425,9 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
 
               {scoreRec.weakSubjects && scoreRec.weakSubjects.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="text-[10px] text-zinc-500">Focus:</span>
+                  <span className="text-xs text-zinc-500">Focus:</span>
                   {scoreRec.weakSubjects.map(ws => (
-                    <span key={ws} className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 text-[10px]">
+                    <span key={ws} className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 text-xs">
                       {ws}
                     </span>
                   ))}
@@ -440,7 +440,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
 
       {/* ── 3. UNIFIED FLAT BOTTOM ACTIONS ── */}
       <div className="px-3.5 py-2.5 bg-zinc-900/60 border-t border-zinc-800/80 flex items-center justify-between gap-2">
-        <span className="text-[10px] text-zinc-500 font-mono">
+        <span className="text-xs text-zinc-500 font-mono">
           Swipe right to save
         </span>
 

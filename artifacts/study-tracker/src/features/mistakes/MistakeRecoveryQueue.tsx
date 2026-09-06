@@ -38,7 +38,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { toast } from 'sonner';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
@@ -82,6 +83,7 @@ export function getTagMeta(tag: string) {
 }
 
 export default function MistakeRecoveryQueue() {
+  const { profile } = useExamProfile();
   const lexicon = useLexicon();
 
   const searchStr = useSearch();
@@ -130,12 +132,20 @@ export default function MistakeRecoveryQueue() {
   const rawMistakes = useLiveQuery(() => db.mistakeLogs?.toArray(), []) || [];
   const dbSubjects = useLiveQuery(() => db.subjects?.filter(s => !s.deletedAt).toArray(), []) || [];
 
+  const currentOntology = useMemo(() => {
+    return getOntologyForExam(profile.targetExam || 'NEET PG');
+  }, [profile.targetExam]);
+
+  const totalSubjectCount = useMemo(() => {
+    return dbSubjects.length > 0 ? dbSubjects.length : currentOntology.length;
+  }, [dbSubjects.length, currentOntology.length]);
+
   const subjectMap = useMemo(() => {
     const map = new Map<string, string>();
-    ALL_SUBJECTS.forEach(s => map.set(String(s.id), s.name));
+    currentOntology.forEach(s => map.set(String(s.id), s.name));
     dbSubjects.forEach(s => map.set(String(s.id), s.name));
     return map;
-  }, [dbSubjects]);
+  }, [currentOntology, dbSubjects]);
 
   // Metrics
   const activeMistakes = useMemo(() => {
@@ -237,7 +247,7 @@ export default function MistakeRecoveryQueue() {
       return;
     }
 
-    let markdown = `# {lexicon.mistakesJournal} — Rapid Pre-GT Revision Sheet\n`;
+    let markdown = `# ${lexicon.mistakesJournal} — Rapid Pre-GT Revision Sheet\n`;
     markdown += `Generated on ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}\n\n`;
 
     groupedMistakes.forEach(group => {
@@ -278,7 +288,7 @@ export default function MistakeRecoveryQueue() {
               <span>Subject Radar</span>
             </Link>
             <span className="text-muted-foreground/40">•</span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
               High-Density Rule Ledger
             </span>
           </div>
@@ -347,14 +357,14 @@ export default function MistakeRecoveryQueue() {
               : "bg-muted/30 border-border/60 hover:bg-muted/50"
           )}
         >
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
             Active Rules
           </span>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-bold font-mono text-foreground">
               {activeMistakes.length}
             </span>
-            <span className="text-[11px] text-muted-foreground">active</span>
+            <span className="text-xs text-muted-foreground">active</span>
           </div>
         </div>
 
@@ -367,7 +377,7 @@ export default function MistakeRecoveryQueue() {
               : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15"
           )}
         >
-          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
             <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
             Volatile Rules
           </span>
@@ -375,12 +385,12 @@ export default function MistakeRecoveryQueue() {
             <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
               {volatileMistakes.length}
             </span>
-            <span className="text-[11px] text-amber-600/80 dark:text-amber-400/80">urgent</span>
+            <span className="text-xs text-amber-600/80 dark:text-amber-400/80">urgent</span>
           </div>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-0.5">
-          <span className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+          <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1">
             <BookOpen className="w-3 h-3" />
             Subjects
           </span>
@@ -388,7 +398,7 @@ export default function MistakeRecoveryQueue() {
             <span className="text-2xl font-bold font-mono text-primary">
               {representedSubjectCount}
             </span>
-            <span className="text-[11px] text-primary/80">of 19</span>
+            <span className="text-xs text-primary/80">of {totalSubjectCount}</span>
           </div>
         </div>
 
@@ -401,7 +411,7 @@ export default function MistakeRecoveryQueue() {
               : "bg-muted/30 border-border/60 hover:bg-muted/50"
           )}
         >
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
             <Archive className="w-3 h-3 text-emerald-500" />
             Archived
           </span>
@@ -409,7 +419,7 @@ export default function MistakeRecoveryQueue() {
             <span className="text-2xl font-bold font-mono text-foreground">
               {archivedMistakes.length}
             </span>
-            <span className="text-[11px] text-muted-foreground">stored</span>
+            <span className="text-xs text-muted-foreground">stored</span>
           </div>
         </div>
       </div>
@@ -500,7 +510,7 @@ export default function MistakeRecoveryQueue() {
 
         {/* Subject Filter Pills */}
         <div className="space-y-1.5 pt-1 border-t border-border/40">
-          <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider">
             <span>Subject Filter</span>
             {selectedSubjectId !== 'all' && (
               <button
@@ -527,7 +537,7 @@ export default function MistakeRecoveryQueue() {
               All Subjects ({filteredMistakes.length})
             </button>
 
-            {ALL_SUBJECTS.map(sub => {
+            {(dbSubjects.length > 0 ? dbSubjects : getOntologyForExam(profile.targetExam || 'NEET PG')).map(sub => {
               const count = rawMistakes.filter(m => !m.deletedAt && !m.resolved && String(m.subjectId) === String(sub.id)).length;
               if (count === 0 && selectedSubjectId !== String(sub.id)) return null;
 
@@ -545,7 +555,7 @@ export default function MistakeRecoveryQueue() {
                 >
                   <span>{sub.name}</span>
                   {count > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-muted text-[10px] font-mono">
+                    <span className="px-1.5 py-0.2 rounded-full bg-muted text-xs font-mono">
                       {count}
                     </span>
                   )}
@@ -612,7 +622,7 @@ export default function MistakeRecoveryQueue() {
           </div>
           <div className="space-y-1 max-w-sm">
             <h3 className="text-base font-bold text-foreground">
-              {statusFilter === 'archived' ? 'No Archived Rules' : 'No {lexicon.mistakesJournal} Rules Found'}
+              {statusFilter === 'archived' ? 'No Archived Rules' : `No ${lexicon.mistakesJournal} Rules Found`}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {searchQuery || selectedSubjectId !== 'all' || selectedTag !== 'all'
@@ -646,7 +656,11 @@ export default function MistakeRecoveryQueue() {
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl shadow-xs gap-1 h-9 px-4 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Add First Rule</span>
+              <span>
+                {selectedSubjectId !== 'all'
+                  ? `Add ${subjectMap.get(selectedSubjectId) || 'Subject'} Rule`
+                  : 'Add First Rule'}
+              </span>
             </Button>
           </div>
         </div>
@@ -685,7 +699,7 @@ export default function MistakeRecoveryQueue() {
                         setEditingMistake(null);
                         setModalOpen(true);
                       }}
-                      className="h-7 px-2 text-[11px] font-bold rounded-lg gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                      className="h-7 px-2 text-xs font-bold rounded-lg gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -760,7 +774,7 @@ export default function MistakeRecoveryQueue() {
       <QuickMistakeModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        defaultSubjectId={modalDefaultSubjectId}
+        defaultSubjectId={selectedSubjectId !== 'all' ? selectedSubjectId : modalDefaultSubjectId}
         editingMistake={editingMistake}
         onDeleteMistake={(m) => {
           if (m.id) {
@@ -829,19 +843,19 @@ function RuleCardRow({
       <div className="space-y-1.5 min-w-0 flex-1">
         {/* Meta badges row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
             {subjectName}
           </span>
 
           {rule.isVolatile && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+            <span className="inline-flex items-center gap-0.5 text-xs font-bold px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
               <Zap className="w-2.5 h-2.5 fill-amber-500" />
               <span>Volatile</span>
             </span>
           )}
 
           {rule.source && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/40">
+            <span className="text-xs font-mono px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/40">
               {rule.source}
             </span>
           )}
@@ -851,7 +865,7 @@ function RuleCardRow({
             return (
               <span 
                 key={t}
-                className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.2 rounded-full border font-semibold", meta.color)}
+                className={cn("inline-flex items-center gap-1 text-xs px-2 py-0.2 rounded-full border font-semibold", meta.color)}
               >
                 {meta.icon && <span>{meta.icon}</span>}
                 <span>#{t}</span>

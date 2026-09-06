@@ -367,11 +367,11 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm sm:text-base font-semibold text-zinc-100 tracking-tight">Atlas Sky</h2>
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
                     {Math.round(globalHealth)}% Luminosity
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 hidden sm:block">
+                <p className="text-xs text-zinc-400 hidden sm:block">
                   Astronomical Map of Medical Retention • 19 MBBS Subjects
                 </p>
               </div>
@@ -603,7 +603,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
                       {/* Smart Radial Label Text */}
                       <span className={cn(
-                        "absolute left-1/2 -translate-x-1/2 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
+                        "absolute left-1/2 -translate-x-1/2 text-xs tracking-wider uppercase font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]",
                         isUpperHemisphere ? "-top-4" : "top-3.5",
                         isSelected ? "text-teal-300 font-bold scale-105" : (isDarkMatter ? "text-zinc-600 opacity-0 group-hover:opacity-100 group-hover:text-zinc-400" : "text-zinc-400 group-hover:text-zinc-100")
                       )}>
@@ -632,7 +632,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-semibold uppercase tracking-wider mb-1">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-1">
                         <Brain className="w-3 h-3" />
                         <span>{selectedStar.phaseLabel}</span>
                       </div>
@@ -690,15 +690,15 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
             <div className="flex items-center justify-center gap-6 py-1 px-4 rounded-xl bg-white/[0.01] border border-white/[0.05] w-fit mx-auto">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-800 border border-zinc-700/50 opacity-60" />
-                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter font-medium">Dark Matter (Unstarted)</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-tighter font-medium">Dark Matter (Unstarted)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
-                <span className="text-[10px] text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
+                <span className="text-xs text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-                <span className="text-[10px] text-amber-400/80 uppercase tracking-tighter font-semibold">Mastered Constellation</span>
+                <span className="text-xs text-amber-400/80 uppercase tracking-tighter font-semibold">Mastered Constellation</span>
               </div>
             </div>
 

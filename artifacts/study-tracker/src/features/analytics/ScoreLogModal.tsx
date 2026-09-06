@@ -75,6 +75,7 @@ export function ScoreLogModal({
   const [dateStr, setDateStr] = useState<string>(getTodayLocalDateStr());
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successData, setSuccessData] = useState<{ name: string; oldDate: string; newDate: string } | null>(null);
   const [autopsyReport, setAutopsyReport] = useState<GtAutopsyReport | null>(null);
   const [isAutopsyOpen, setIsAutopsyOpen] = useState(false);
 
@@ -233,6 +234,15 @@ export function ScoreLogModal({
           const sysUpdates = calibrateSystemSDSR(selectedSys, scoreRatio, selectedSub.name, globalRetentionScore, logTimestamp);
           await db.systems.update(systemId, sysUpdates);
           console.log(`SDSR Calibrated System: ${systemId} -> new interval ${sysUpdates.currentRevisionInterval} days`);
+          
+          const oldDate = selectedSys.nextRevisionDate 
+            ? new Date(selectedSys.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+            : 'None';
+          const newDate = sysUpdates.nextRevisionDate 
+            ? new Date(sysUpdates.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+            : 'None';
+            
+          setSuccessData({ name: selectedSys.name, oldDate, newDate });
         }
       }
 
@@ -262,7 +272,12 @@ export function ScoreLogModal({
       }
 
       if (onSuccess) onSuccess();
-      if (type !== 'gt' && totalNum < 100) {
+      if (type === 'revision' && selectedSys) {
+        setTimeout(() => {
+          setSuccessData(null);
+          onClose();
+        }, 3000);
+      } else if (type !== 'gt' && totalNum < 100) {
         onClose();
       }
     } catch (err) {
@@ -276,6 +291,33 @@ export function ScoreLogModal({
       setIsSubmitting(false);
     }
   };
+
+  if (successData) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-2xl">
+          <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20 shadow-inner">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <h3 className="text-2xl font-bold tracking-tight mb-2">Session Recorded</h3>
+          <p className="text-muted-foreground mb-6">Your schedule has been updated.</p>
+          
+          <div className="w-full space-y-3 text-sm text-left bg-muted/30 p-4 rounded-xl border border-border/50">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">{successData.name}</p>
+                <p className="text-muted-foreground text-xs">
+                  Decay slowed. Next revision: <span className="line-through opacity-70 mr-1">{successData.oldDate}</span> 
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">➔ {successData.newDate}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>
@@ -504,7 +546,7 @@ export function ScoreLogModal({
                 )}
                 <div>
                   <p className="text-xs font-bold leading-none">Percentage Grade</p>
-                  <p className="text-[11px] opacity-80 mt-0.5">
+                  <p className="text-xs opacity-80 mt-0.5">
                     {percentage >= 80 ? 'Excellent performance' : percentage >= 60 ? 'Satisfactory score' : 'Target area for improvement'}
                   </p>
                 </div>

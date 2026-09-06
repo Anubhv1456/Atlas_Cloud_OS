@@ -244,7 +244,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
         <div className="space-y-1.5">
           <Label className="text-xs font-medium text-foreground flex items-center justify-between">
             <span>20th Notebook Golden Rule (Takeaway)</span>
-            <span className="text-[11px] text-muted-foreground">Keep crisp & memorable</span>
+            <span className="text-xs text-muted-foreground">Keep crisp & memorable</span>
           </Label>
           <Textarea
             value={mistake.ruleText}
@@ -273,7 +273,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
                   }`}
                 >
                   <div className="text-xs font-semibold">{errOpt.label}</div>
-                  <div className="text-[10px] text-muted-foreground line-clamp-1">{errOpt.desc}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">{errOpt.desc}</div>
                 </button>
               );
             })}
@@ -298,7 +298,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
                 <Zap className={`w-3.5 h-3.5 ${mistake.isUrgent ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
                 Volatile Trap
               </Label>
-              <p className="text-[10px] text-muted-foreground">High decay rate</p>
+              <p className="text-xs text-muted-foreground">High decay rate</p>
             </div>
             <Switch
               checked={mistake.isUrgent}
@@ -426,7 +426,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
                   }`}
                 >
                   <div className="text-xs font-bold">{c.label}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{c.sub}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{c.sub}</div>
                 </button>
               );
             })}
@@ -505,7 +505,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
               <span className={`font-bold text-sm ${percentage >= 70 ? 'text-emerald-500' : percentage >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
                 {percentage}%
               </span>
-              <Badge variant={percentage >= 70 ? 'default' : 'secondary'} className="text-[10px] py-0">
+              <Badge variant={percentage >= 70 ? 'default' : 'secondary'} className="text-xs py-0">
                 {percentage >= 75 ? 'Target Exceeded 🎯' : percentage >= 60 ? 'Competitive Range' : 'Needs Reinforcement'}
               </Badge>
             </div>
@@ -516,7 +516,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
         <div className="space-y-2">
           <Label className="text-xs font-medium text-foreground flex items-center justify-between">
             <span>Weak Subjects Identified</span>
-            <span className="text-[11px] text-muted-foreground">Will be prioritized in Atlas</span>
+            <span className="text-xs text-muted-foreground">Will be prioritized in Atlas</span>
           </Label>
 
           <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-background rounded-md border">

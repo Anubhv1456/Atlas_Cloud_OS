@@ -72,7 +72,7 @@ export function ConfidenceDialog({
                 <span className="text-2xl leading-none">{opt.emoji}</span>
                 <div>
                   <div className={cn('text-sm font-bold', opt.text)}>{opt.label}</div>
-                  <div className="text-[11px] text-muted-foreground">{opt.detail}</div>
+                  <div className="text-xs text-muted-foreground">{opt.detail}</div>
                 </div>
               </div>
             </button>

@@ -189,17 +189,17 @@ export function UsmleAtlasSkyShareModal({
                     ATLAS SKY
                   </span>
                 </div>
-                <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                <p className="text-xs text-zinc-400 font-mono mt-0.5">
                   Astronomical Map of Medical Retention
                 </p>
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
                   {Math.round(globalHealth)}% LUMINOSITY
                 </span>
                 {completedCount > 0 && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
                     {completedCount}/19 MASTERED
                   </span>
                 )}

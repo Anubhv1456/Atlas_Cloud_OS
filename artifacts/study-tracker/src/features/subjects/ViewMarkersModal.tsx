@@ -190,23 +190,23 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                              {typeIcons[marker.type] || typeIcons['clinical_pearl']}
                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{typeLabels[marker.type] || 'Clinical Pearl'}</span>
                              {isHighYieldTrail && (
-                               <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-500/20">
+                               <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-500/20">
                                  <ShieldCheck className="w-3 h-3" />
                                  High-Yield Trail
                                </span>
                              )}
                            </div>
                            {isOwn ? (
-                             <span className="text-[10px] font-bold text-primary tracking-wider uppercase mt-0.5">YOUR TRAIL MARKER</span>
+                             <span className="text-xs font-bold text-primary tracking-wider uppercase mt-0.5">YOUR TRAIL MARKER</span>
                            ) : (
-                             <span className="text-[10px] font-medium text-muted-foreground/70 mt-0.5">
+                             <span className="text-xs font-medium text-muted-foreground/70 mt-0.5">
                                Left by <span className="text-muted-foreground font-mono font-medium">{marker.authorAlias || 'Wayfinder'}</span>
                              </span>
                            )}
                         </div>
                         <div className="flex items-center gap-2">
                           {marker.createdAt && (
-                            <span className="text-[11px] text-muted-foreground/60 whitespace-nowrap">
+                            <span className="text-xs text-muted-foreground/60 whitespace-nowrap">
                               {formatDistanceToNow(marker.createdAt.toDate ? marker.createdAt.toDate() : new Date(marker.createdAt), { addSuffix: true })}
                             </span>
                           )}
@@ -234,7 +234,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
 
                       <div className="mt-3.5 flex items-center justify-between gap-3 pt-2 border-t border-border/40">
                         {marker.source ? (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/50 text-[11px] text-muted-foreground font-medium border border-border/40 truncate max-w-[180px]">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/50 text-xs text-muted-foreground font-medium border border-border/40 truncate max-w-[180px]">
                             <Bookmark className="w-3 h-3 shrink-0" />
                             <span className="truncate">{marker.source}</span>
                           </div>
@@ -267,7 +267,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                               <Check className={cn("w-3.5 h-3.5", isVerifiedByMe && "text-emerald-500")} />
                               <span>{isVerifiedByMe ? 'Verified' : 'Verify Pearl'}</span>
                               {helpfulByList.length > 0 && (
-                                <span className="font-mono text-[10px] opacity-80">({helpfulByList.length})</span>
+                                <span className="font-mono text-xs opacity-80">({helpfulByList.length})</span>
                               )}
                             </button>
                           </div>

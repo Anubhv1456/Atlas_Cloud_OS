@@ -48,28 +48,28 @@ const CHAPTERS = [
       <div className="space-y-8">
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">1</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold">1</span> 
             The Next Action Card
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">Start your session with the hero recommendation card on the Home Screen. It combines spaced decay math, exam question weighting, and your confidence history.</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">2</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold">2</span> 
             Due Revisions First
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">Always clear your due or decaying revisions before starting brand new curriculum systems. This locks in long-term memory consolidation.</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">3</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold">3</span> 
             External Study
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">Review the recommended topic on your chosen resource (textbook, Q-bank explanation, or lecture notes).</p>
         </section>
         <section className="space-y-3">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold">4</span> 
+            <span className="bg-primary/20 text-primary w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold">4</span> 
             Log & Evaluate
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">Tap <strong>"Log Session"</strong> or tick the system checkboxes in Atlas. Rate your confidence honestly (Weak, Average, Strong) to recalibrate the next revision interval.</p>

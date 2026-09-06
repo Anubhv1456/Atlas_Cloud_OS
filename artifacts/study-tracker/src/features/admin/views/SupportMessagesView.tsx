@@ -230,11 +230,11 @@ export function SupportMessagesView() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm text-foreground truncate">{msg.name}</span>
                       <span className="text-xs text-muted-foreground font-mono truncate">&lt;{msg.email}&gt;</span>
-                      <Badge variant="outline" className="text-[10px] px-2 py-0 rounded-md font-medium">
+                      <Badge variant="outline" className="text-xs px-2 py-0 rounded-md font-medium">
                         {msg.category}
                       </Badge>
                       {isUnread && (
-                        <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0 rounded-md font-bold">
+                        <Badge className="bg-amber-500 text-white text-xs px-1.5 py-0 rounded-md font-bold">
                           NEW
                         </Badge>
                       )}
@@ -249,7 +249,7 @@ export function SupportMessagesView() {
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <span className="text-[11px] text-muted-foreground font-mono mr-2">
+                  <span className="text-xs text-muted-foreground font-mono mr-2">
                     {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Just now'}
                   </span>
                   <Button

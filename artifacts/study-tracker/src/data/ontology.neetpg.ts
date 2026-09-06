@@ -16,12 +16,17 @@ export interface OntologySystem {
   subjectId: string;
   name: string;
   topics: OntologyTopic[];
+  legacyId?: string;
+  legacyIds?: string[];
 }
 
 export interface OntologySubject {
   id: string;
   name: string;
   systems: OntologySystem[];
+  category?: 'Organ Systems' | 'Foundational Disciplines' | 'Clerkship';
+  legacyId?: string;
+  legacyIds?: string[];
 }
 
 export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [

@@ -199,7 +199,7 @@ export default function Contact() {
                         <div className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
                           {label}
                         </div>
-                        <div className="text-[10px] text-muted-foreground truncate font-mono">
+                        <div className="text-xs text-muted-foreground truncate font-mono">
                           {url!.replace(/^https?:\/\/(www\.)?/, '')}
                         </div>
                       </div>
@@ -216,7 +216,7 @@ export default function Contact() {
               </div>
               <div>
                 <div className="text-xs font-semibold text-foreground">Direct Engineering Sync</div>
-                <div className="text-[11px] text-muted-foreground">Submissions route live to Founder Console</div>
+                <div className="text-xs text-muted-foreground">Submissions route live to Founder Console</div>
               </div>
             </div>
 
@@ -318,7 +318,7 @@ export default function Contact() {
                           <Icon className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
                           <div>
                             <div className="font-semibold text-foreground">{label}</div>
-                            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">{description}</div>
+                            <div className="text-xs text-muted-foreground leading-tight mt-0.5">{description}</div>
                           </div>
                         </button>
                       ))}

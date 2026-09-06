@@ -1,9 +1,9 @@
 import { HelpGuideModal } from '@/components/HelpGuideModal';
 import { AtlasSkyPreview } from './AtlasSkyPreview';
 import { NextActionCard } from '@/components/dashboard/NextActionCard';
+import { AILoggerCard } from '@/components/dashboard/AILoggerCard';
 import { SearchWidget } from '@/components/ai';
 import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
-import { ALL_TOPICS, ALL_SUBJECTS } from '@/data/ontology';
 import { CurriculumSet } from '@/db/types';
 import { normalizeName } from '@/lib/exam-presets';
 import { useRef, useState, useMemo } from 'react';
@@ -25,13 +25,15 @@ import { isRevisionDue, isRevisionOverdue, sortSystemsByRevisionPriority, calcul
 import { format } from 'date-fns';
 import { StudySystem, Subject } from '@/db';
 import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progress';
-import { ALL_SYSTEMS } from '@/data/ontology';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
+import { BaselineTriageModal } from '@/components/BaselineTriageModal';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { loadUniversalOntology } from '@/lib/exam-presets';
+import { toast } from 'sonner';
 import { useEffect } from 'react';
 // ── Inline result sub-components ──────────────────────────────────────────────
 
@@ -42,7 +44,7 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
     Weak:    'bg-transparent text-destructive border-destructive/50',
   };
   return (
-    <span className={cn('text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-medium border shrink-0', colors[sys.status])}>
+    <span className={cn('text-xs uppercase tracking-wider px-2 py-0.5 rounded-full font-medium border shrink-0', colors[sys.status])}>
       {sys.status}
     </span>
   );
@@ -52,6 +54,7 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 import { HomeRadarSummaryCard } from '@/features/dashboard/HomeRadarSummaryCard';
+import { ExamCountdownWidget } from '@/components/dashboard/ExamCountdownWidget';
 import { useHomeLogic } from './Home.hooks';
 import { AmbientAIWidget, ChatAssistantDrawer } from '@/components/ai';
 import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingCommandBar';
@@ -69,21 +72,42 @@ export default function Home() {
     handleSetFocus, goToSystem, goToSubject, handleSubjectDragEnd
   } = useHomeLogic();
 
-  const { profile, isConfigured } = useExamProfile();
+  const { profile, isConfigured, updateProfile } = useExamProfile();
   const { settings } = useAISettings();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [triageOpen, setTriageOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
+  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
+
+  const handleSwitchToUSMLE = async () => {
+    try {
+      await updateProfile({
+        targetExam: 'USMLE Step 1',
+        curriculum: 'Organ-System Based (Cardiology, Neurology, etc.)'
+      });
+      db.switchWorkspace('USMLE Step 1');
+      await loadUniversalOntology({ targetExam: 'USMLE Step 1', force: false });
+      toast.success('Switched to USMLE Step 1 Track', {
+        description: '10 Clinical Organ Systems blueprint activated.'
+      });
+    } catch (e) {
+      toast.error('Failed to switch track: ' + String(e));
+    }
+  };
+
   useEffect(() => {
     // Auto trigger onboarding if completed flag is missing
     if (!onboardingLoading && hasOnboarded === false) {
       setOnboardingOpen(true);
+    } else if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
+      setTriageOpen(true);
     }
-  }, [hasOnboarded, onboardingLoading]);
+  }, [hasOnboarded, onboardingLoading, isConfigured, profile.hasCompletedTriage]);
 
   useEffect(() => {
     const handleOpenOnboarding = () => setOnboardingOpen(true);
@@ -108,7 +132,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setExamModalOpen(true)}
-                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group truncate max-w-[180px] sm:max-w-none"
+                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-xs sm:text-xs font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group truncate max-w-[180px] sm:max-w-none"
                   title="Click to recalibrate exam target"
                 >
                   <Target className="w-3.5 h-3.5 shrink-0 text-teal-500 group-hover:scale-110 transition-transform" />
@@ -120,7 +144,7 @@ export default function Home() {
                   </span>
                 </button>
                 {streak > 0 && (
-                  <span className="hidden xs:inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                  <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
                     <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d
                   </span>
                 )}
@@ -138,10 +162,41 @@ export default function Home() {
         {/* ── Main Content Container ─────────────────────────────────────────── */}
         <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 pb-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 min-w-0 flex flex-col relative z-10">
           
+          <ExamCountdownWidget />
+          
+          {/* ── Optional Blueprint Notification Banner if on NEET-PG track ── */}
+          {!isUSMLE && (
+            <div className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-teal-500/10 border border-teal-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground">
+                    USMLE 10 Clinical Organ Systems Blueprint Ready
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Explore CVS, RESP, RENAL, GI, ENDO, REPRO, NEURO, MSK, HEME & PSYCH with 280+ high-yield topics.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleSwitchToUSMLE}
+                className="text-xs font-bold px-3.5 h-8 rounded-xl bg-teal-600 text-white hover:bg-teal-700 active:scale-95 transition-all shrink-0 cursor-pointer shadow-xs"
+              >
+                Switch Track →
+              </Button>
+            </div>
+          )}
+
           {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
         <div className="mb-8">
           <NextActionCard />
         </div>
+        
+        {/* ── AI Logger (Phase 2) ─────────────────────────────── */}
+        <AILoggerCard />
 
         {/* ── Dedicated Subject Radar Entry Card ──────────────────────────────── */}
         <div className="mb-6">
@@ -172,6 +227,7 @@ export default function Home() {
 
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
+      <BaselineTriageModal open={triageOpen} onOpenChange={setTriageOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
       {settings.isAiEnabled && (
         <>

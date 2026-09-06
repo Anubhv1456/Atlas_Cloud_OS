@@ -55,18 +55,18 @@ export function AccountSection() {
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-semibold text-foreground tracking-tight truncate">{name}</h2>
               {hasAccess && (
-                <Badge className="bg-primary/10 text-primary border border-primary/25 text-[10px] px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
+                <Badge className="bg-primary/10 text-primary border border-primary/25 text-xs px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> Beta
                 </Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground truncate">{email}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[11px] font-medium text-teal-600 dark:text-teal-400">
+              <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
                 {isConfigured ? profile.targetExam : 'Set Target Exam'}
               </span>
               {daysRemaining !== null && (
-                <span className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded font-mono">
+                <span className="text-xs text-muted-foreground bg-muted/60 px-1.5 py-0.2 rounded font-mono">
                   {daysRemaining}d left
                 </span>
               )}

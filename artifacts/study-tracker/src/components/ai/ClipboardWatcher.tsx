@@ -202,8 +202,8 @@ export const ClipboardWatcher: React.FC = () => {
                       <ClipboardPaste className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">{rawClips.length} {rawClips.length === 1 ? 'Clip' : 'Clips'} Captured</span>
-                      <span className="text-[10px] text-muted-foreground truncate">{latestClip}</span>
+                      <span className="text-xs font-semibold text-foreground whitespace-nowrap">{rawClips.length} {rawClips.length === 1 ? 'Clip' : 'Clips'} Captured</span>
+                      <span className="text-xs text-muted-foreground truncate">{latestClip}</span>
                     </div>
                   </motion.div>
                 )}

@@ -6,7 +6,7 @@ import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { Button } from '@/components/ui/button';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
 import { loadUniversalOntology } from '@/lib/exam-presets';
-import { ALL_SUBJECTS, USMLE_ONTOLOGY, GENERAL_ONTOLOGY, NEETPG_ONTOLOGY } from '@/data/ontology';
+import { ALL_SUBJECTS, USMLE_ONTOLOGY, GENERAL_ONTOLOGY, NEETPG_ONTOLOGY, getOntologyForExam } from '@/data/ontology';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { isSubjectInProfScope, getPhaseNameForProfile } from '@/lib/curriculumScope';
 import { cn } from '@/lib/utils';
@@ -49,21 +49,31 @@ export function SubjectsGrid({
   // If in MBBS Professional mode and not overridden, strictly isolate subjects of that professional year
   const profFilteredSubjects = useMemo(() => {
     // 1. Find which ontology represents the active exam
-    let activeOntology = NEETPG_ONTOLOGY;
-    if (isUSMLE) activeOntology = USMLE_ONTOLOGY;
-    else if (isCustom) activeOntology = GENERAL_ONTOLOGY;
-
+    const activeOntology = getOntologyForExam(profile.targetExam || 'NEET PG');
     const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
 
-    // 2. Filter out subjects that do not belong to the active exam curriculum AT ALL
-    const activeTrackSubjects = safeSubjects.filter(sub => activeSubjectNames.has(sub.name.toLowerCase()));
+    // Other ontologies to know what belongs to other tracks:
+    const allOtherOntologies = [NEETPG_ONTOLOGY, USMLE_ONTOLOGY, GENERAL_ONTOLOGY]
+      .flat()
+      .filter(s => !activeSubjectNames.has(s.name.toLowerCase()))
+      .map(s => s.name.toLowerCase());
+    const foreignSubjectNames = new Set(allOtherOntologies);
+
+    // 2. Filter out subjects that belong to OTHER exams' default curricula
+    // If a subject is custom (not in any foreign ontology), keep it!
+    const activeTrackSubjects = safeSubjects.filter(sub => {
+      const lower = sub.name.toLowerCase();
+      if (activeSubjectNames.has(lower)) return true;
+      if (foreignSubjectNames.has(lower)) return false;
+      return true; // User's custom added subject
+    });
 
     // 3. Apply year isolation if needed
     if (showAllOverride || !isMBBSProf) {
       return activeTrackSubjects; 
     }
     return activeTrackSubjects.filter(sub => isSubjectInProfScope(sub.name, profile.targetExam, activeYear));
-  }, [safeSubjects, isMBBSProf, showAllOverride, profile.targetExam, activeYear, isUSMLE, isCustom]);
+  }, [safeSubjects, isMBBSProf, showAllOverride, profile.targetExam, activeYear]);
 
   const isSprintActive = opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0;
 
@@ -109,9 +119,9 @@ export function SubjectsGrid({
       if (!sub) return false;
       const lower = sub.name.toLowerCase();
       if (isUSMLE) {
-         if (activeFilter === 'Organ Systems') return lower.includes('system') && !lower.includes('immune');
-         if (activeFilter === 'Multisystem') return lower.includes('immune') || lower.includes('hematology') || lower.includes('musculoskeletal');
-         if (activeFilter === 'General Principles') return lower.includes('principles') || lower.includes('pathology') || lower.includes('microbiology');
+         if (activeFilter === 'Organ Systems') return ['cardio', 'resp', 'renal', 'gastro', 'endo', 'repro', 'neuro', 'psych'].some(k => lower.includes(k));
+         if (activeFilter === 'Multisystem') return ['musculoskeletal', 'hematology', 'immun'].some(k => lower.includes(k));
+         if (activeFilter === 'General Principles') return ['biochem', 'microbiology', 'pathology', 'pharmacology', 'public health'].some(k => lower.includes(k));
          return true;
       }
       if (isCustom) {
@@ -143,7 +153,7 @@ export function SubjectsGrid({
                 <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
                   {getPhaseNameForProfile(profile.targetExam, activeYear)} Syllabus
                 </span>
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20">
                   University Exam Calibrated
                 </span>
               </div>
@@ -186,7 +196,7 @@ export function SubjectsGrid({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-amber-500 dark:text-amber-400">Active Exam Focus</span>
                 {opMode.targetDate && (
-                  <span className="text-[11px] text-muted-foreground font-mono">
+                  <span className="text-xs text-muted-foreground font-mono">
                     Target: {new Date(opMode.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 )}
@@ -224,7 +234,7 @@ export function SubjectsGrid({
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <BookOpen className="w-3.5 h-3.5 text-teal-500" /> Subjects
           </h2>
-          <span className="text-[10px] font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
+          <span className="text-xs font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
             {filteredSubjects.length} {isMBBSProf && !showAllOverride ? `in ${activeYear}` : `/ ${subjects.length}`}
           </span>
         </div>

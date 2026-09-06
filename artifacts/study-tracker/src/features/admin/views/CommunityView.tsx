@@ -93,11 +93,11 @@ export function CommunityView() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-muted text-muted-foreground">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-muted text-muted-foreground">
                       {marker.type}
                     </span>
                     <span className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                      "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider",
                       marker.status === 'published' ? "bg-blue-500/10 text-blue-600" :
                       marker.status === 'trusted' ? "bg-emerald-500/10 text-emerald-600" :
                       marker.status === 'archived' ? "bg-amber-500/10 text-amber-600" :
@@ -107,7 +107,7 @@ export function CommunityView() {
                       {marker.status}
                     </span>
                     {(marker.reportedBy || []).length > 0 && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-600 flex items-center gap-1">
                         <TriangleAlert className="w-3 h-3" />
                         Reported ({(marker.reportedBy || []).length})
                       </span>
@@ -131,23 +131,23 @@ export function CommunityView() {
               <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-2">
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Score</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Score</span>
                     <span className="font-mono text-foreground font-medium">{Math.round(marker.qualityScore || 50)}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Helpful</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Helpful</span>
                     <span className="font-mono text-emerald-500 font-medium">{marker.usefulCount || 0}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Saves</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Saves</span>
                     <span className="font-mono text-amber-500 font-medium">{(marker.savedBy || []).length}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Reads</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Reads</span>
                     <span className="font-mono text-foreground font-medium">{marker.readCount || 0}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Reports</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Reports</span>
                     <span className="font-mono text-red-500 font-medium">{(marker.reportedBy || []).length}</span>
                   </div>
                 </div>

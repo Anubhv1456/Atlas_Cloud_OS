@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ActionLogStudyPayload, AtlasClinicalAction } from '@/lib/ai/actionSchemas';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { Clock, CheckCircle2, ChevronRight, BookOpen } from 'lucide-react';
 
 interface StudyLogActionCardProps {
@@ -15,8 +16,10 @@ export const StudyLogActionCard: React.FC<StudyLogActionCardProps> = ({
   onDismiss,
 }) => {
   const initialPayload = action.payload as ActionLogStudyPayload;
+  const { profile } = useExamProfile();
+  const currentOntology = getOntologyForExam(profile.targetExam || 'NEET PG');
   const [duration, setDuration] = useState<number>(initialPayload.durationMinutes || 45);
-  const [subjectName, setSubjectName] = useState<string>(initialPayload.subjectName || 'Pharmacology');
+  const [subjectName, setSubjectName] = useState<string>(initialPayload.subjectName || currentOntology[0]?.name || 'Pharmacology');
   const [systemName, setSystemName] = useState<string>(initialPayload.systemName || 'General Core');
   const [isCommitted, setIsCommitted] = useState<boolean>(false);
 
@@ -82,7 +85,7 @@ export const StudyLogActionCard: React.FC<StudyLogActionCardProps> = ({
               key={mins}
               type="button"
               onClick={() => setDuration(mins)}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
+              className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
                 duration === mins
                   ? 'bg-primary text-primary-foreground font-semibold'
                   : 'bg-muted hover:bg-muted/80 text-muted-foreground'
@@ -96,15 +99,15 @@ export const StudyLogActionCard: React.FC<StudyLogActionCardProps> = ({
 
       {/* Subject Quick Selector dropdown if needed */}
       <div className="mb-4">
-        <label className="text-[11px] text-muted-foreground block mb-1">Target Subject</label>
+        <label className="text-xs text-muted-foreground block mb-1">Target Subject</label>
         <select
           value={subjectName}
           onChange={(e) => setSubjectName(e.target.value)}
           className="w-full bg-background/80 border border-border/60 rounded-lg px-2.5 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
-          {ALL_SUBJECTS.map((s) => (
+          {currentOntology.map((s) => (
             <option key={s.id} value={s.name}>
-              {s.name} ({s.tier})
+              {s.name}
             </option>
           ))}
         </select>

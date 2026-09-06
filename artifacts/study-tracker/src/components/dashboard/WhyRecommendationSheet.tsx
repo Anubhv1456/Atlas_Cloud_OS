@@ -43,7 +43,7 @@ export function WhyRecommendationSheet({
         <div className="space-y-4 pt-2">
           {/* Target Focus Summary */}
           <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 space-y-1.5">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+            <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
               {subjectName} • {systemName}
             </div>
             <h4 className="text-base font-bold text-foreground">
@@ -58,57 +58,57 @@ export function WhyRecommendationSheet({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {/* Priority Score */}
             <div className="p-3 rounded-2xl bg-primary/10 border border-primary/25 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-primary">
+              <div className="flex items-center justify-between text-xs font-semibold text-primary">
                 <span>Priority</span>
                 <Sparkles className="w-3.5 h-3.5" />
               </div>
               <div className="text-xl font-black font-mono text-primary">
                 {whyBreakdown.priorityScore}
-                <span className="text-[10px] text-muted-foreground font-normal"> / 100</span>
+                <span className="text-xs text-muted-foreground font-normal"> / 100</span>
               </div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 Ranked #1 Candidate
               </div>
             </div>
 
             {/* Exam Yield */}
             <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/25 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-sky-400">
+              <div className="flex items-center justify-between text-xs font-semibold text-sky-400">
                 <span>Exam Yield</span>
                 <Target className="w-3.5 h-3.5" />
               </div>
               <div className="text-xl font-black font-mono text-sky-400">
                 {whyBreakdown.examWeightage}%
               </div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 High Exam ROI
               </div>
             </div>
 
             {/* Retrievability */}
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-amber-500">
+              <div className="flex items-center justify-between text-xs font-semibold text-amber-500">
                 <span>Retention</span>
                 <TrendingDown className="w-3.5 h-3.5" />
               </div>
               <div className="text-xl font-black font-mono text-amber-500">
                 {whyBreakdown.retrievabilityPercent}%
               </div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 Decay: {whyBreakdown.memoryDecayPercent}%
               </div>
             </div>
 
             {/* Cognitive Depth */}
             <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/25 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-teal-400">
+              <div className="flex items-center justify-between text-xs font-semibold text-teal-400">
                 <span>Depth</span>
                 <Sparkles className="w-3.5 h-3.5" />
               </div>
               <div className="text-sm font-bold font-mono text-teal-400 truncate">
                 {whyBreakdown.depthLabel || (recommendation.depth === 'rapid' ? 'Rapid Recall' : recommendation.depth === 'deep' ? 'Deep Focus' : 'Standard')}
               </div>
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 Pass #{whyBreakdown.revisionPass}
               </div>
             </div>
@@ -128,7 +128,7 @@ export function WhyRecommendationSheet({
             <div className="p-2.5 rounded-xl bg-background/90 border border-border/50 font-mono text-xs text-primary leading-relaxed break-all">
               {whyBreakdown.formulaString}
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Calculates marginal recall yield per minute of active retrieval, factoring in subject exam weightage, memory decay, and friction penalties.
             </p>
           </div>
@@ -174,7 +174,7 @@ export function WhyRecommendationSheet({
               <Sun className="w-4 h-4 text-amber-500 shrink-0" />
               <span>Circadian Affinity:</span>
             </div>
-            <span className="font-bold text-foreground font-mono text-[11px]">
+            <span className="font-bold text-foreground font-mono text-xs">
               {whyBreakdown.circadianAffinity}
             </span>
           </div>

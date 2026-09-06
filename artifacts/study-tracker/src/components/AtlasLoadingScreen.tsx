@@ -97,12 +97,12 @@ export function AtlasLoadingScreen({
           transition={{ duration: 0.5, delay: 0.15 }}
           className="mt-5 flex flex-col items-center gap-1.5"
         >
-          <span className="font-mono text-[10px] font-medium tracking-[0.32em] text-muted-foreground/80 uppercase select-none">
+          <span className="font-mono text-xs font-medium tracking-[0.32em] text-muted-foreground/80 uppercase select-none">
             Atlas
           </span>
 
           {message && (
-            <p className="text-[11px] text-muted-foreground font-normal tracking-wide max-w-[220px] text-center mt-0.5">
+            <p className="text-xs text-muted-foreground font-normal tracking-wide max-w-[220px] text-center mt-0.5">
               {message}
             </p>
           )}

@@ -226,7 +226,7 @@ export default function TermsOfService() {
                   <FileText className="w-3.5 h-3.5 text-primary" />
                   Table of Contents
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground">14 Clauses</span>
+                <span className="text-xs font-mono text-muted-foreground">14 Clauses</span>
               </div>
 
               <nav className="space-y-0.5 max-h-[calc(100vh-220px)] overflow-y-auto pr-1 text-xs">
@@ -244,7 +244,7 @@ export default function TermsOfService() {
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className={`font-mono text-[10px] shrink-0 ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>
+                        <span className={`font-mono text-xs shrink-0 ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>
                           {s.number}
                         </span>
                         <span className="truncate">{s.title}</span>
@@ -627,7 +627,7 @@ export default function TermsOfService() {
                 <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
                   Atlas OS is an independent software tool and is NOT affiliated, associated, authorized, endorsed by, or in any way officially connected with any third-party question banks, medical review platforms, educational test-prep providers, publishers, or official examination boards.
                 </p>
-                <p className="text-muted-foreground/80 text-[11px] pt-2 border-t border-border/50 italic">
+                <p className="text-muted-foreground/80 text-xs pt-2 border-t border-border/50 italic">
                   All third-party product names, logos, brands, trademarks, and registered trademarks referenced by candidates or within study materials belong strictly to their respective owners. Mention of any study resources or examination types within Atlas OS is solely for descriptive or organization purposes within candidates' individual study schedules.
                 </p>
               </div>

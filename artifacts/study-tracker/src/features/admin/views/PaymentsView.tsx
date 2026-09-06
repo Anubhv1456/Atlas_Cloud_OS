@@ -193,7 +193,7 @@ export function PaymentsView() {
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
-              Submissions {stats.pending > 0 && <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-[10px] font-bold">{stats.pending}</span>}
+              Submissions {stats.pending > 0 && <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-xs font-bold">{stats.pending}</span>}
             </button>
             <button
               onClick={() => setViewMode('settings')}
@@ -237,7 +237,7 @@ export function PaymentsView() {
                 <Clock className="w-4 h-4 text-amber-400" />
               </div>
               <div className="text-2xl font-bold mt-2 text-amber-400">{stats.pending}</div>
-              <p className="text-[11px] text-muted-foreground mt-1">Awaiting manual verification</p>
+              <p className="text-xs text-muted-foreground mt-1">Awaiting manual verification</p>
             </div>
 
             <div 
@@ -253,7 +253,7 @@ export function PaymentsView() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-2xl font-bold mt-2 text-emerald-400">{stats.approved}</div>
-              <p className="text-[11px] text-emerald-500/80 mt-1 font-medium">₹{stats.revenue.toLocaleString()} total revenue</p>
+              <p className="text-xs text-emerald-500/80 mt-1 font-medium">₹{stats.revenue.toLocaleString()} total revenue</p>
             </div>
 
             <div 
@@ -269,7 +269,7 @@ export function PaymentsView() {
                 <XCircle className="w-4 h-4 text-rose-400" />
               </div>
               <div className="text-2xl font-bold mt-2 text-rose-400">{stats.rejected}</div>
-              <p className="text-[11px] text-muted-foreground mt-1">Invalid reference or proof</p>
+              <p className="text-xs text-muted-foreground mt-1">Invalid reference or proof</p>
             </div>
 
             <div 
@@ -285,7 +285,7 @@ export function PaymentsView() {
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold mt-2 text-foreground">{stats.total}</div>
-              <p className="text-[11px] text-muted-foreground mt-1">Current Plan: ₹{config.price} ({config.durationText})</p>
+              <p className="text-xs text-muted-foreground mt-1">Current Plan: ₹{config.price} ({config.durationText})</p>
             </div>
           </div>
 
@@ -442,38 +442,38 @@ export function PaymentsView() {
                                 </div>
                               </button>
                             ) : (
-                              <span className="text-muted-foreground italic text-[11px]">No proof uploaded</span>
+                              <span className="text-muted-foreground italic text-xs">No proof uploaded</span>
                             )}
                           </td>
 
                           {/* Plan & Amount */}
                           <td className="px-4 py-3">
                             <div className="font-semibold text-foreground">₹{payment.amount || config.price}</div>
-                            <div className="text-[11px] text-muted-foreground">{payment.plan || config.planTitle}</div>
+                            <div className="text-xs text-muted-foreground">{payment.plan || config.planTitle}</div>
                           </td>
 
                           {/* Date */}
                           <td className="px-4 py-3 text-muted-foreground">
                             <div>{format(createdAtDate, 'dd MMM yyyy')}</div>
-                            <div className="text-[10px] text-muted-foreground/70">{format(createdAtDate, 'hh:mm a')}</div>
+                            <div className="text-xs text-muted-foreground/70">{format(createdAtDate, 'hh:mm a')}</div>
                           </td>
 
                           {/* Status Badge */}
                           <td className="px-4 py-3">
                             {payment.status === 'pending' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                 <Clock className="w-3 h-3" />
                                 Pending
                               </span>
                             )}
                             {payment.status === 'approved' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Approved
                               </span>
                             )}
                             {payment.status === 'rejected' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20" title={payment.rejectionNote}>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20" title={payment.rejectionNote}>
                                 <XCircle className="w-3 h-3" />
                                 Rejected
                               </span>
@@ -506,7 +506,7 @@ export function PaymentsView() {
                               )}
 
                               {payment.status === 'approved' && (
-                                <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                                <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
                                   <ShieldCheck className="w-3.5 h-3.5" />
                                   Beta Access Active
                                 </span>
@@ -515,7 +515,7 @@ export function PaymentsView() {
                               {payment.status === 'rejected' && (
                                 <button
                                   onClick={() => handleApprove(payment)}
-                                  className="px-2.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-[11px] font-medium border border-border/50"
+                                  className="px-2.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-medium border border-border/50"
                                 >
                                   Re-Approve
                                 </button>
@@ -576,7 +576,7 @@ export function PaymentsView() {
                     <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider text-teal-400">
                       Cohort Capacity & Live Seat Tracker
                     </h3>
-                    <p className="text-[11px] text-muted-foreground">Adjust cohort seat limit and displayed claimed count across Atlas checkout & invitation pages.</p>
+                    <p className="text-xs text-muted-foreground">Adjust cohort seat limit and displayed claimed count across Atlas checkout & invitation pages.</p>
                   </div>
                 </div>
               </div>
@@ -601,14 +601,14 @@ export function PaymentsView() {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, claimedSeats: Math.max(0, (config.claimedSeats ?? 38) - 1) })}
-                        className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono text-muted-foreground"
+                        className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-xs font-mono text-muted-foreground"
                       >
                         -1
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, claimedSeats: Math.min(config.totalSeats ?? 200, (config.claimedSeats ?? 38) + 1) })}
-                        className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono text-teal-400 font-bold"
+                        className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono text-teal-400 font-bold"
                       >
                         +1
                       </button>
@@ -739,14 +739,14 @@ export function PaymentsView() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] text-muted-foreground">UPI ID / VPA Address</label>
+                    <label className="text-xs text-muted-foreground">UPI ID / VPA Address</label>
                     <Input 
                       value={config.upiId}
                       onChange={(e) => setConfig({ ...config, upiId: e.target.value })}
                       placeholder="atlas@upi"
                       className="bg-muted/40 border-border/50 font-mono text-xs h-9 rounded-xl text-teal-400"
                     />
-                    <p className="text-[10px] text-muted-foreground">Users click one button to copy this ID to their clipboard.</p>
+                    <p className="text-xs text-muted-foreground">Users click one button to copy this ID to their clipboard.</p>
                   </div>
                 </div>
 
@@ -769,7 +769,7 @@ export function PaymentsView() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] text-muted-foreground">Custom QR Image (Optional)</label>
+                    <label className="text-xs text-muted-foreground">Custom QR Image (Optional)</label>
                     <input 
                       type="file" 
                       ref={qrInputRef} 
@@ -781,11 +781,11 @@ export function PaymentsView() {
                     {config.upiQrUrl ? (
                       <div className="flex items-center justify-between p-2 bg-muted/40 rounded-xl border border-border/50">
                         <img src={config.upiQrUrl} alt="Custom QR" className="w-8 h-8 object-contain rounded bg-white p-0.5" />
-                        <span className="text-[10px] text-teal-400 font-medium">Custom QR Attached</span>
+                        <span className="text-xs text-teal-400 font-medium">Custom QR Attached</span>
                         <button 
                           type="button" 
                           onClick={() => setConfig({ ...config, upiQrUrl: '' })}
-                          className="text-[11px] text-rose-400 hover:underline"
+                          className="text-xs text-rose-400 hover:underline"
                         >
                           Clear
                         </button>
@@ -800,7 +800,7 @@ export function PaymentsView() {
                         <span>Upload Custom QR Image</span>
                       </button>
                     )}
-                    <p className="text-[10px] text-muted-foreground">If omitted, an auto-generated vector QR for `{config.upiId}` is shown.</p>
+                    <p className="text-xs text-muted-foreground">If omitted, an auto-generated vector QR for `{config.upiId}` is shown.</p>
                   </div>
                 </div>
 
@@ -823,14 +823,14 @@ export function PaymentsView() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] text-muted-foreground">Payment Link URL</label>
+                    <label className="text-xs text-muted-foreground">Payment Link URL</label>
                     <Input 
                       value={config.paymentLinkUrl}
                       onChange={(e) => setConfig({ ...config, paymentLinkUrl: e.target.value })}
                       placeholder="https://rzp.io/l/YOUR_LINK"
                       className="bg-muted/40 border-border/50 font-mono text-xs h-9 rounded-xl"
                     />
-                    <p className="text-[10px] text-muted-foreground">If set, users can click to pay via Razorpay Payment Link or Netbanking.</p>
+                    <p className="text-xs text-muted-foreground">If set, users can click to pay via Razorpay Payment Link or Netbanking.</p>
                   </div>
                 </div>
               </div>

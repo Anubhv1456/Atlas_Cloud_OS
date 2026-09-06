@@ -1,9 +1,7 @@
 import { useLexicon } from '@/lib/lexicon';
-import { ALL_SUBJECTS } from "@/data/ontology";
 import { isSystemComplete } from '@/lib/progress';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
-import { ALL_SYSTEMS } from '@/data/ontology';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 import { useState, ReactNode, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
@@ -91,7 +89,7 @@ export function useHomeLogic() {
     if (customPrimarySubject || customSecondarySubject) {
       const activeFocusedSub = customPrimarySubject || customSecondarySubject;
       const subSystems = systems.filter(s => s.subjectId === activeFocusedSub?.id);
-      const subIncomplete = subSystems.filter(s => !(isSystemComplete(s, ALL_SUBJECTS.find(sub => sub.id === s.subjectId)?.name || '', curriculumSets)));
+      const subIncomplete = subSystems.filter(s => !(isSystemComplete(s, activeFocusedSub?.name || subjects.find(sub => sub.id === s.subjectId)?.name || '', curriculumSets)));
       
       candidates.push({
         id: `subject-focus-${activeFocusedSub?.id}`,
@@ -116,10 +114,7 @@ export function useHomeLogic() {
           if (targetSet.has(String(sys.subjectId))) return true;
           const sub = subjects.find(s => String(s.id) === String(sys.subjectId));
           if (sub?.ontologySubjectId && targetSet.has(String(sub.ontologySubjectId))) return true;
-          return opMode.targetSubjectIds.some(tid => {
-            const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
-            return onto && sub?.name && onto.name.toLowerCase() === sub.name.toLowerCase();
-          });
+          return false;
         })
       : systems;
 
@@ -166,7 +161,7 @@ export function useHomeLogic() {
     }
 
     // 2. PRIMARY FOCUS STEP AWAY (Confidence: 94)
-    if (primaryFocus && !(isSystemComplete(primaryFocus, ALL_SUBJECTS.find(sub => sub.id === primaryFocus.subjectId)?.name || '', curriculumSets))) {
+    if (primaryFocus && !(isSystemComplete(primaryFocus, subjects.find(sub => sub.id === primaryFocus.subjectId)?.name || '', curriculumSets))) {
       const sub = subjects.find(s => s.id === primaryFocus!.subjectId);
       const missingTask = 'Topics';
       candidates.push({
@@ -249,7 +244,7 @@ export function useHomeLogic() {
     for (const sub of subjects) {
       const subSys = systems.filter(s => s.subjectId === sub.id);
       if (subSys.length > 1) {
-        const incomplete = subSys.filter(s => !(isSystemComplete(s, ALL_SUBJECTS.find(sub => sub.id === s.subjectId)?.name || '', curriculumSets)));
+        const incomplete = subSys.filter(s => !(isSystemComplete(s, sub.name, curriculumSets)));
         if (incomplete.length === 1) {
           const target = incomplete[0];
           candidates.push({

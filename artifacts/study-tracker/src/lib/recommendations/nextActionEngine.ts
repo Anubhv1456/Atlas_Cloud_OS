@@ -10,7 +10,7 @@ import { CurriculumSet, StudySystem, ScoreLog, TopicProgress, MistakeLog, Operat
 import { getDaysSinceLastStudy } from '@/db/queries';
 import { calculateSubjectFriction, SUBJECT_METRICS_PROFILE } from '@/lib/ai/frictionEngine';
 import { StrategyFactory } from './strategies';
-import { getOntologyForExam } from '@/data/ontology';
+import { getOntologyForExam, getSystemsForOntology } from '@/data/ontology';
 
 export type RecommendationArchetype = 
   | 'tactical_strike' 
@@ -963,7 +963,9 @@ export async function getNextActionRecommendation(
   }
 
   const hasAnyCurriculumSets = curriculumSets.length > 0;
-  const totalSyllabusSystemCount = ALL_SYSTEMS.length;
+  const examOntology = getOntologyForExam(targetExam);
+  const examSystems = getSystemsForOntology(examOntology);
+  const totalSyllabusSystemCount = examSystems.length > 0 ? examSystems.length : ALL_SYSTEMS.length;
   const hasPendingSyllabus = systems.some(s => !s.contentCompleted) || systems.length < totalSyllabusSystemCount;
 
   // Compute active sprint summary if tactical sprint is active

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { lazy, Suspense, useRef } from 'react';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { AtlasSkyModal as NeetPgAtlasSkyModal } from './AtlasSkyModal';
-import { UsmleAtlasSkyModal } from './UsmleAtlasSkyModal';
 import { Subject, StudySystem } from '@/db';
 import { CurriculumSet } from '@/db/types';
+
+const NeetPgAtlasSkyModal = lazy(() => import('./AtlasSkyModal').then(m => ({ default: m.AtlasSkyModal })));
+const UsmleAtlasSkyModal = lazy(() => import('./UsmleAtlasSkyModal').then(m => ({ default: m.UsmleAtlasSkyModal })));
 
 interface AtlasSkyControllerProps {
   open: boolean;
@@ -15,12 +16,19 @@ interface AtlasSkyControllerProps {
 
 export function AtlasSkyModal(props: AtlasSkyControllerProps) {
   const { profile } = useExamProfile();
+  const hasMounted = useRef(false);
+  
+  if (props.open) {
+    hasMounted.current = true;
+  }
   
   const isUSMLE = Boolean(profile.targetExam && profile.targetExam.toLowerCase().includes('usmle'));
 
-  if (isUSMLE) {
-    return <UsmleAtlasSkyModal {...props} />;
-  }
+  if (!hasMounted.current) return null;
 
-  return <NeetPgAtlasSkyModal {...props} />;
+  return (
+    <Suspense fallback={null}>
+      {isUSMLE ? <UsmleAtlasSkyModal {...props} /> : <NeetPgAtlasSkyModal {...props} />}
+    </Suspense>
+  );
 }

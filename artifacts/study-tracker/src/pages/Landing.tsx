@@ -171,7 +171,7 @@ const CurriculumVisualization = () => {
        />
 
        {/* Top Header HUD Identifier */}
-       <div className="relative z-10 flex items-center justify-between text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+       <div className="relative z-10 flex items-center justify-between text-xs font-mono tracking-widest text-slate-400 uppercase">
           <div className="flex items-center gap-2">
              <span className="w-1.5 h-1.5 rounded-full bg-[#20b59b] animate-ping" />
              <span className="text-white font-medium">Knowledge Architecture</span>
@@ -481,7 +481,7 @@ const AdaptiveRevisionVisualization = () => {
        />
 
        {/* Top Header HUD Identifier */}
-       <div className="relative z-10 flex items-center justify-between text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+       <div className="relative z-10 flex items-center justify-between text-xs font-mono tracking-widest text-slate-400 uppercase">
           <div className="flex items-center gap-2">
              <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-ping" />
              <span className="text-white font-medium">Memory Retention Synthesis</span>
@@ -755,7 +755,7 @@ const PerformanceTrajectoryVisualization = () => {
        />
 
        {/* HUD Header */}
-       <div className="relative z-10 flex items-center justify-between text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+       <div className="relative z-10 flex items-center justify-between text-xs font-mono tracking-widest text-slate-400 uppercase">
           <div className="flex items-center gap-2">
              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
              <span className="text-white font-medium">Trajectory Synthesis</span>
@@ -1200,7 +1200,7 @@ const HowAtlasThinksVisualization = () => {
        </div>
 
        {/* Top Minimal Headers */}
-       <div className="absolute top-4 left-6 right-6 flex items-center justify-between pointer-events-none z-20 text-[10px] uppercase font-mono tracking-widest text-slate-500">
+       <div className="absolute top-4 left-6 right-6 flex items-center justify-between pointer-events-none z-20 text-xs uppercase font-mono tracking-widest text-slate-500">
           <div className="flex items-center gap-2">
              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
              <span>Scattered Curriculum (300+ Nodes)</span>
@@ -1528,7 +1528,7 @@ const AcademicDirectorVisualization = () => {
        <div className="absolute inset-0 opacity-15" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '1.25rem 1.25rem' }} />
 
        {/* Top Minimal HUD Status Badge */}
-       <div className="absolute top-4 left-6 right-6 flex items-center justify-between pointer-events-none z-20 text-[10px] font-mono tracking-widest text-slate-500 uppercase">
+       <div className="absolute top-4 left-6 right-6 flex items-center justify-between pointer-events-none z-20 text-xs font-mono tracking-widest text-slate-500 uppercase">
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#111318]/90 border border-white/10 backdrop-blur-md">
              <span className="w-1.5 h-1.5 rounded-full bg-[#20b59b] animate-pulse" />
              <span className="text-slate-300 font-semibold">North Locked</span>
@@ -1939,7 +1939,7 @@ const CommunityMarkersSection = () => {
                 <Compass className="w-3.5 h-3.5" />
                 <span>CELESTIAL KNOWLEDGE REPOSITORY</span>
                 <span className="w-1 h-1 rounded-full bg-amber-400/50" />
-                <span className="text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-[10px] tracking-wider">COMING SOON</span>
+                <span className="text-amber-300 font-bold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-xs tracking-wider">COMING SOON</span>
              </div>
              
              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
@@ -1960,7 +1960,7 @@ const CommunityMarkersSection = () => {
           <div className="relative w-full aspect-[21/9] min-h-[500px] max-h-[700px] rounded-[32px] bg-[#030507] border border-white/10 overflow-hidden shadow-2xl relative max-w-[1600px] mx-auto">
              
              {/* HUD Top Corner Labels */}
-             <div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between text-[10px] font-mono tracking-widest uppercase pointer-events-none">
+             <div className="absolute top-4 left-6 right-6 z-20 flex items-center justify-between text-xs font-mono tracking-widest uppercase pointer-events-none">
                 <div className="flex items-center gap-2 text-amber-400 font-semibold">
                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                    <span>RA 14h 29m · DEC +60° [WISDOM SECTOR]</span>
@@ -2125,7 +2125,7 @@ const CommunityMarkersSection = () => {
                    <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                       <div className="flex items-center gap-2">
                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
-                         <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase font-semibold">
+                         <span className="text-xs font-mono tracking-widest text-amber-400 uppercase font-semibold">
                             {currentMarker.system} · {currentMarker.code}
                          </span>
                       </div>
@@ -2140,7 +2140,7 @@ const CommunityMarkersSection = () => {
                       "{currentMarker.pearl}"
                    </p>
 
-                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
+                   <div className="flex items-center justify-between text-xs font-mono text-slate-400 pt-1">
                       <span className="text-teal-400/90 font-medium flex items-center gap-1.5">
                          <span className="w-1 h-1 rounded-full bg-teal-400 animate-pulse" />
                          WISDOM PULSE RELEASED TO 4 NEIGHBORING TOPICS
@@ -2317,7 +2317,7 @@ export default function Landing() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-2xl relative"
           >
-            <div className="hidden lg:flex items-center gap-2 text-[10px] font-semibold tracking-widest text-slate-500 uppercase mb-8">
+            <div className="hidden lg:flex items-center gap-2 text-xs font-semibold tracking-widest text-slate-500 uppercase mb-8">
                <span>[45° 23' N, 12° 32' E]</span>
                <div className="w-8 h-px bg-white/10" />
                <span>Navigation System</span>

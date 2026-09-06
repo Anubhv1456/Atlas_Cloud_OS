@@ -92,8 +92,16 @@ export function useSystemCardLogic({
     }
   }, [false]);
 
-  const ontologySubject = ALL_SUBJECTS.find(s => s.name === subjectName);
-  const ontologySystem = ALL_SYSTEMS.find(s => s.subjectId === ontologySubject?.id && normalizeName(s.name) === normalizeName(system.name));
+  const ontologySubject = ALL_SUBJECTS.find(s => 
+    s.name?.toLowerCase() === subjectName?.toLowerCase() ||
+    (system.subjectId && String(s.id).toLowerCase() === String(system.subjectId).replace(/^subj_/, '').toLowerCase())
+  );
+  const ontologySystem = ALL_SYSTEMS.find(s => 
+    (system.ontologySystemId && s.id === system.ontologySystemId) ||
+    (s.id && system.id && String(s.id).toLowerCase() === String(system.id).replace(/^sys_/, '').toLowerCase()) ||
+    ((ontologySubject ? s.subjectId === ontologySubject.id : true) && 
+    normalizeName(s.name) === normalizeName(system.name))
+  );
   // Merge ontology topics with custom topics
   let mergedTopics = ontologySystem ? [...ontologySystem.topics] : [];
   if (system.customTopics) {

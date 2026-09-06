@@ -194,7 +194,7 @@ export const DynamicIslandCapsule: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-zinc-100">Medical Q-Bank Stem Detected</h4>
-                      <p className="text-[10px] text-zinc-400">Ready for 20th Notebook distillation</p>
+                      <p className="text-xs text-zinc-400">Ready for 20th Notebook distillation</p>
                     </div>
                   </div>
 
@@ -256,7 +256,7 @@ export const DynamicIslandCapsule: React.FC = () => {
                           {distilledPearl.tag}
                         </span>
                       </h4>
-                      <p className="text-[10px] text-zinc-400">Distilled Clinical Takeaway Rule</p>
+                      <p className="text-xs text-zinc-400">Distilled Clinical Takeaway Rule</p>
                     </div>
                   </div>
 
@@ -274,7 +274,7 @@ export const DynamicIslandCapsule: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-1 text-[10px] text-zinc-400 animate-bounce">
+                  <div className="flex items-center gap-1 text-xs text-zinc-400 animate-bounce">
                     <ArrowDown className="w-3 h-3 text-emerald-400" />
                     <span>Swipe down or tap save</span>
                   </div>

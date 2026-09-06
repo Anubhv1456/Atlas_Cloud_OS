@@ -49,7 +49,7 @@ export default function AuditorAnalytics() {
       
       {/* Auditor Header */}
       <div className="pt-2">
-        <div className="flex items-center gap-2 text-primary uppercase tracking-widest text-[11px] font-bold mb-3">
+        <div className="flex items-center gap-2 text-primary uppercase tracking-widest text-xs font-bold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
           Atlas Clinical Intelligence — Cognitive Auditor
         </div>
@@ -96,7 +96,7 @@ export default function AuditorAnalytics() {
                  <div className="flex flex-col gap-1">
                    <span className="font-semibold">{m.subjectName}</span>
                    <div className="flex gap-2 items-center">
-                     <Badge variant="destructive" className="text-[10px] uppercase tracking-wider">{m.mistakeCount} Critical Logs</Badge>
+                     <Badge variant="destructive" className="text-xs uppercase tracking-wider">{m.mistakeCount} Critical Logs</Badge>
                      <span className="text-xs text-muted-foreground font-mono">Decay detected</span>
                    </div>
                  </div>

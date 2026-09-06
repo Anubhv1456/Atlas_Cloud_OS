@@ -23,7 +23,7 @@ export function AtlasSkyPreview() {
       >
         <Sparkles className="w-3.5 h-3.5 text-teal-500 group-hover:text-amber-400 group-hover:scale-110 transition-all" />
         <span className="font-semibold text-foreground">Atlas Sky</span>
-        <span className="text-[10px] font-mono text-teal-500 bg-teal-500/10 px-1.5 py-0.5 rounded-md border border-teal-500/20">
+        <span className="text-xs font-mono text-teal-500 bg-teal-500/10 px-1.5 py-0.5 rounded-md border border-teal-500/20">
           {overallProgress}% Lit
         </span>
       </button>

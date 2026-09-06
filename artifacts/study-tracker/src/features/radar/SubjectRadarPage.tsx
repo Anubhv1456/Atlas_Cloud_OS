@@ -1,6 +1,6 @@
 import { useLexicon } from '@/lib/lexicon';
 import React, { useState } from 'react';
-import { useSubjects, useAllSystems, updateSubjectsOrder } from '@/db';
+import { useSubjects, useAllSystems, updateSubjectsOrder, db } from '@/db';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { DropResult } from '@hello-pangea/dnd';
 import { 
@@ -11,7 +11,9 @@ import {
   Plus, 
   Sparkles, 
   TrendingUp, 
-  ShieldAlert 
+  ShieldAlert,
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { TargetExamModal } from '@/components/TargetExamModal';
@@ -19,6 +21,8 @@ import { MistakesNotebookCard } from '@/features/mistakes/MistakesNotebookCard';
 import { Button } from '@/components/ui/button';
 import { AddDialog } from '@/components/AddDialog';
 import Analytics from '@/features/analytics/Analytics';
+import { loadUniversalOntology } from '@/lib/exam-presets';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function SubjectRadarPage() {
@@ -27,9 +31,12 @@ export default function SubjectRadarPage() {
   const [activeTab, setActiveTab] = useState<'curriculum' | 'diagnostics'>('curriculum');
   const subjects = useSubjects();
   const systems = useAllSystems();
-  const { profile, isConfigured } = useExamProfile();
+  const { profile, isConfigured, updateProfile } = useExamProfile();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [addSubjectOpen, setAddSubjectOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
 
   const handleSubjectDragEnd = (result: DropResult) => {
     if (!result.destination || !subjects) return;
@@ -37,6 +44,47 @@ export default function SubjectRadarPage() {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     updateSubjectsOrder(items);
+  };
+
+  const handleSwitchExamTrack = async (trackName: string) => {
+    try {
+      setIsSyncing(true);
+      await updateProfile({
+        targetExam: trackName,
+        curriculum: trackName.includes('USMLE') 
+          ? 'Organ-System Based (Cardiology, Neurology, etc.)'
+          : 'Subject-Based (Anatomy, Pharmacology, Pathology, etc.)'
+      });
+      db.switchWorkspace(trackName);
+      await loadUniversalOntology({ targetExam: trackName, force: false });
+      toast.success(`Active Track: ${trackName}`, {
+        description: trackName.includes('USMLE') 
+          ? '10 Clinical Organ Systems active with complete 280+ topics.'
+          : 'Curriculum portfolio loaded.'
+      });
+    } catch (e) {
+      toast.error('Failed to switch exam track: ' + String(e));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSyncBlueprint = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await loadUniversalOntology({
+        targetExam: profile.targetExam || 'USMLE Step 1',
+        force: false,
+        showToast: false
+      });
+      toast.success('Curriculum Blueprint Synchronized', {
+        description: `Verified ${res.count} subjects and organ systems against the universal ontology.`
+      });
+    } catch (e) {
+      toast.error('Sync failed: ' + String(e));
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -48,7 +96,7 @@ export default function SubjectRadarPage() {
             <span className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
               <LayoutGrid className="w-4 h-4" />
             </span>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Medical Curriculum
             </div>
           </div>
@@ -60,19 +108,7 @@ export default function SubjectRadarPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setExamModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border/80 hover:border-primary/40 text-xs font-semibold text-foreground transition-all shadow-2xs hover:shadow-xs cursor-pointer"
-            title="Recalibrate Exam Target"
-          >
-            <Target className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="truncate max-w-[140px] sm:max-w-none">
-              {isConfigured ? profile.targetExam : 'Set Target Exam'}
-            </span>
-          </button>
-
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {activeTab === 'curriculum' ? (
             <Button
               size="sm"
@@ -95,6 +131,32 @@ export default function SubjectRadarPage() {
         </div>
       </div>
 
+      {/* ── Optional Blueprint Notification Banner if on NEET-PG track ── */}
+      {!isUSMLE && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-500/10 border border-teal-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-foreground">
+                Looking for the 10 Clinical Organ Systems blueprint?
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                You are currently viewing the subject-based track ({subjects?.length || 0} subjects). Switch to USMLE Step 1 to explore CVS, RESP, RENAL, GI, ENDO, REPRO, NEURO, MSK, HEME, and PSYCH.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => handleSwitchExamTrack('USMLE Step 1')}
+            className="text-xs font-bold px-3.5 h-8 rounded-xl bg-teal-600 text-white hover:bg-teal-700 active:scale-95 transition-all shrink-0 cursor-pointer shadow-xs"
+          >
+            Switch to USMLE Step 1 →
+          </Button>
+        </div>
+      )}
+
       {/* ── Segmented View Switcher ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center p-1 rounded-2xl bg-muted/40 border border-border/80 w-full sm:w-auto">
@@ -110,7 +172,7 @@ export default function SubjectRadarPage() {
           >
             <BookOpen className="w-3.5 h-3.5 text-teal-500" />
             <span>All Subjects</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground ml-1">
+            <span className="text-xs font-mono px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground ml-1">
               {subjects?.length || 0}
             </span>
           </button>

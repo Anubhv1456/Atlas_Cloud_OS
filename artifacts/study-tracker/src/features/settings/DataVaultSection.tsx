@@ -6,7 +6,8 @@ import {
   FileSpreadsheet, 
   RefreshCw, 
   CopyPlus, 
-  Merge
+  Merge,
+  BookOpen
 } from 'lucide-react';
 import { db } from '@/db/schema';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -16,10 +17,13 @@ import { findDuplicateSubjectGroups, mergeAndDeduplicateAllSubjects, DuplicateSu
 import { SettingsRow } from './SettingsLayout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useExamProfile } from '@/hooks/useExamProfile';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
 
 export function DataVaultSection() {
   const { user } = useAuth();
+  const { profile } = useExamProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -156,6 +160,24 @@ export function DataVaultSection() {
     }
   };
 
+  const handleSyncOntology = async () => {
+    try {
+      setLoadingAction('sync-ontology');
+      const res = await loadUniversalOntology({
+        targetExam: profile.targetExam || 'USMLE Step 1',
+        force: false,
+        showToast: false
+      });
+      toast.success('Curriculum Blueprint Synchronized', {
+        description: `Successfully reconciled ${res.count} subjects and organ systems.`
+      });
+    } catch (e) {
+      toast.error('Failed to sync ontology: ' + String(e));
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
   return (
     <>
       <input
@@ -229,7 +251,7 @@ export function DataVaultSection() {
               >
                 <Download className="w-4 h-4 text-primary" />
                 <span className="text-xs font-semibold text-foreground">Backup JSON</span>
-                <span className="text-[10px] text-muted-foreground">Export encrypted vault</span>
+                <span className="text-xs text-muted-foreground">Export encrypted vault</span>
               </button>
 
               <button
@@ -240,7 +262,7 @@ export function DataVaultSection() {
               >
                 <Upload className="w-4 h-4 text-teal-500" />
                 <span className="text-xs font-semibold text-foreground">Restore JSON</span>
-                <span className="text-[10px] text-muted-foreground">Import vault backup</span>
+                <span className="text-xs text-muted-foreground">Import vault backup</span>
               </button>
 
               <button
@@ -251,7 +273,7 @@ export function DataVaultSection() {
               >
                 <RefreshCw className="w-4 h-4 text-amber-500" />
                 <span className="text-xs font-semibold text-foreground">Rehydrate Schedules</span>
-                <span className="text-[10px] text-muted-foreground">Sync revision dates</span>
+                <span className="text-xs text-muted-foreground">Sync revision dates</span>
               </button>
 
               <button
@@ -262,7 +284,18 @@ export function DataVaultSection() {
               >
                 <FileSpreadsheet className="w-4 h-4 text-blue-500" />
                 <span className="text-xs font-semibold text-foreground">Export CSV</span>
-                <span className="text-[10px] text-muted-foreground">Spreadsheet table</span>
+                <span className="text-xs text-muted-foreground">Spreadsheet table</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSyncOntology}
+                disabled={loadingAction !== null}
+                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50 col-span-2 sm:col-span-1"
+              >
+                <BookOpen className="w-4 h-4 text-teal-500" />
+                <span className="text-xs font-semibold text-foreground">Sync Blueprint</span>
+                <span className="text-xs text-muted-foreground">Update medical ontology</span>
               </button>
             </div>
           </div>

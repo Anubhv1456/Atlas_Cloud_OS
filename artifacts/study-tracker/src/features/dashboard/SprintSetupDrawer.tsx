@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Target, Calendar, Clock, Check, Sparkles, X, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { setOperationalMode, resetOperationalMode } from '@/db/mutations';
 import { OperationalModeRecord, Subject } from '@/db/types';
-import { ALL_SUBJECTS } from '@/data/ontology';
+import { getOntologyForExam } from '@/data/ontology';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { toast } from 'sonner';
 import { format, addDays, differenceInDays } from 'date-fns';
 
@@ -23,6 +24,11 @@ export function SprintSetupDrawer({
   currentModeRecord,
   availableSubjects
 }: SprintSetupDrawerProps) {
+  const { profile } = useExamProfile();
+  const examOntology = useMemo(() => {
+    return getOntologyForExam(profile.targetExam || 'NEET PG');
+  }, [profile.targetExam]);
+
   // Combine db subjects and ontology subjects for complete coverage
   const subjectsList = useMemo(() => {
     const list: { id: string | number; name: string }[] = [];
@@ -35,15 +41,17 @@ export function SprintSetupDrawer({
       }
     });
 
-    ALL_SUBJECTS.forEach(s => {
-      if (s.name && !seen.has(s.name.toLowerCase())) {
-        seen.add(s.name.toLowerCase());
-        list.push({ id: s.id, name: s.name });
-      }
-    });
+    if (list.length === 0) {
+      examOntology.forEach(s => {
+        if (s.name && !seen.has(s.name.toLowerCase())) {
+          seen.add(s.name.toLowerCase());
+          list.push({ id: s.id, name: s.name });
+        }
+      });
+    }
 
     return list;
-  }, [availableSubjects]);
+  }, [availableSubjects, examOntology]);
 
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<(string | number)[]>([]);
   const [targetDate, setTargetDate] = useState<string>('');
@@ -164,14 +172,14 @@ export function SprintSetupDrawer({
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-mono flex items-center justify-center font-bold">1</span>
+                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-mono flex items-center justify-center font-bold">1</span>
                 Target Exam Subjects ({selectedSubjectIds.length} selected)
               </label>
               {selectedSubjectIds.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setSelectedSubjectIds([])}
-                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Clear all
                 </button>
@@ -209,7 +217,7 @@ export function SprintSetupDrawer({
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-mono flex items-center justify-center font-bold">2</span>
+                <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-mono flex items-center justify-center font-bold">2</span>
                 Target Exam Date {daysRemaining !== null && `(${daysRemaining} days remaining)`}
               </label>
             </div>
@@ -245,7 +253,7 @@ export function SprintSetupDrawer({
           {/* Step 3: Intensity & Capacity */}
           <div>
             <label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2.5">
-              <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[11px] font-mono flex items-center justify-center font-bold">3</span>
+              <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs font-mono flex items-center justify-center font-bold">3</span>
               Daily Target Commitment
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -265,7 +273,7 @@ export function SprintSetupDrawer({
                   }`}
                 >
                   <div className="text-xs font-medium text-foreground">{opt.label}</div>
-                  <div className="text-[11px] opacity-75">{opt.desc}</div>
+                  <div className="text-xs opacity-75">{opt.desc}</div>
                 </button>
               ))}
             </div>

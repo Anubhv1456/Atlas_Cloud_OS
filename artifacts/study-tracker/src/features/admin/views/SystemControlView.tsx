@@ -252,7 +252,7 @@ export function SystemControlView() {
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Megaphone className="w-4 h-4" /> Broadcast Banners {announcements.filter(a => a.active).length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-black text-[10px] font-bold">{announcements.filter(a => a.active).length} Live</span>}
+          <Megaphone className="w-4 h-4" /> Broadcast Banners {announcements.filter(a => a.active).length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-black text-xs font-bold">{announcements.filter(a => a.active).length} Live</span>}
         </button>
 
         <button
@@ -277,9 +277,9 @@ export function SystemControlView() {
           )}
         >
           <Users className="w-4 h-4" /> Batchmate Referral Engine {referralConfig.enabled ? (
-            <span className="px-1.5 py-0.2 rounded-full bg-teal-400 text-black text-[10px] font-bold">Active</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-teal-400 text-black text-xs font-bold">Active</span>
           ) : (
-            <span className="px-1.5 py-0.2 rounded-full bg-zinc-700 text-zinc-300 text-[10px]">Paused</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-zinc-700 text-zinc-300 text-xs">Paused</span>
           )}
         </button>
 
@@ -504,7 +504,7 @@ export function SystemControlView() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-base">Cohort Capacity Tracker & Beta Pricing</h3>
-                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
+                    <Badge variant="outline" className="text-xs font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
                       Live Dynamic Controls
                     </Badge>
                   </div>
@@ -531,7 +531,7 @@ export function SystemControlView() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-foreground">1. Cohort Capacity Tracker</h4>
-                      <p className="text-[11px] text-muted-foreground">Controls the live seat counter and availability badges across Atlas.</p>
+                      <p className="text-xs text-muted-foreground">Controls the live seat counter and availability badges across Atlas.</p>
                     </div>
                   </div>
                 </div>
@@ -551,7 +551,7 @@ export function SystemControlView() {
                         onChange={(e) => setPaymentConfig(p => ({ ...p, totalSeats: Math.max(1, parseInt(e.target.value) || 0) }))}
                         className="text-xs font-mono font-semibold rounded-xl bg-background/60"
                       />
-                      <p className="text-[10px] text-muted-foreground">e.g. 50, 200, 500 total available seats</p>
+                      <p className="text-xs text-muted-foreground">e.g. 50, 200, 500 total available seats</p>
                     </div>
 
                     {/* Claimed / Displayed Seats */}
@@ -564,7 +564,7 @@ export function SystemControlView() {
                           <button
                             type="button"
                             onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.max(0, (p.claimedSeats ?? 38) - 1) }))}
-                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-[10px] font-mono font-bold text-muted-foreground"
+                            className="px-1.5 py-0.5 rounded bg-muted hover:bg-muted/80 text-xs font-mono font-bold text-muted-foreground"
                             title="Decrease by 1"
                           >
                             -1
@@ -572,7 +572,7 @@ export function SystemControlView() {
                           <button
                             type="button"
                             onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 1) }))}
-                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono font-bold text-teal-400"
+                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
                             title="Increase by 1"
                           >
                             +1
@@ -580,7 +580,7 @@ export function SystemControlView() {
                           <button
                             type="button"
                             onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 5) }))}
-                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-[10px] font-mono font-bold text-teal-400"
+                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
                             title="Increase by 5"
                           >
                             +5
@@ -594,7 +594,7 @@ export function SystemControlView() {
                         onChange={(e) => setPaymentConfig(p => ({ ...p, claimedSeats: Math.max(0, parseInt(e.target.value) || 0) }))}
                         className="text-xs font-mono font-semibold rounded-xl bg-background/60"
                       />
-                      <p className="text-[10px] text-muted-foreground">Manually editable seat counter displayed on checkout</p>
+                      <p className="text-xs text-muted-foreground">Manually editable seat counter displayed on checkout</p>
                     </div>
 
                     {/* Cohort Header Banner Text */}
@@ -608,7 +608,7 @@ export function SystemControlView() {
                         placeholder="CLOSED BETA • 2026 MEDICAL COHORT"
                         className="text-xs rounded-xl bg-background/60"
                       />
-                      <p className="text-[10px] text-muted-foreground">Badge text at the top of the Beta Checkout canvas</p>
+                      <p className="text-xs text-muted-foreground">Badge text at the top of the Beta Checkout canvas</p>
                     </div>
 
                     {/* Invitation Badge Label */}
@@ -622,7 +622,7 @@ export function SystemControlView() {
                         placeholder="200 Closed Beta Seats"
                         className="text-xs rounded-xl bg-background/60"
                       />
-                      <p className="text-[10px] text-muted-foreground">Shown on the invitation confirmation screen (/accept-invitation)</p>
+                      <p className="text-xs text-muted-foreground">Shown on the invitation confirmation screen (/accept-invitation)</p>
                     </div>
                   </div>
 
@@ -630,17 +630,17 @@ export function SystemControlView() {
                   <div className="lg:col-span-5 p-4 rounded-2xl bg-black/50 border border-border/70 flex flex-col justify-between space-y-4">
                     <div>
                       <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-                        <span className="text-[11px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
                           <Eye className="w-3.5 h-3.5" />
                           Live Student Preview
                         </span>
-                        <span className="text-[10px] font-mono text-zinc-500">Real-time Simulation</span>
+                        <span className="text-xs font-mono text-zinc-500">Real-time Simulation</span>
                       </div>
 
                       {/* Preview Box: Invitation Badge */}
                       <div className="mt-3.5 space-y-3">
                         <div>
-                          <span className="text-[10px] font-semibold text-zinc-500 uppercase block mb-1">Invitation Badge</span>
+                          <span className="text-xs font-semibold text-zinc-500 uppercase block mb-1">Invitation Badge</span>
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                             {paymentConfig.cohortBadgeText || `${paymentConfig.totalSeats ?? 200} Closed Beta Seats`}
@@ -649,9 +649,9 @@ export function SystemControlView() {
 
                         {/* Preview Box: Checkout Seat Counter */}
                         <div className="pt-2">
-                          <span className="text-[10px] font-semibold text-zinc-500 uppercase block mb-1">Checkout Header & Capacity</span>
+                          <span className="text-xs font-semibold text-zinc-500 uppercase block mb-1">Checkout Header & Capacity</span>
                           <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-2">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-semibold">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
                               <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                               {paymentConfig.cohortHeaderTitle || 'CLOSED BETA • 2026 MEDICAL COHORT'}
                             </div>
@@ -661,7 +661,7 @@ export function SystemControlView() {
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 <span>{paymentConfig.claimedSeats ?? 38} / {paymentConfig.totalSeats ?? 200} Seats Claimed</span>
                               </div>
-                              <span className="text-[11px] font-mono text-teal-400 font-semibold">
+                              <span className="text-xs font-mono text-teal-400 font-semibold">
                                 {Math.round(((paymentConfig.claimedSeats ?? 38) / Math.max(1, paymentConfig.totalSeats ?? 200)) * 100)}%
                               </span>
                             </div>
@@ -680,7 +680,7 @@ export function SystemControlView() {
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-300 flex items-center justify-between">
+                    <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
                       <span>Remaining available seats:</span>
                       <strong className="font-mono text-teal-200">
                         {Math.max(0, (paymentConfig.totalSeats ?? 200) - (paymentConfig.claimedSeats ?? 38))} Seats
@@ -698,7 +698,7 @@ export function SystemControlView() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-foreground">2. Membership Pricing & Access Details</h4>
-                    <p className="text-[11px] text-muted-foreground">Adjust plan fees, currency, and duration granted upon manual approval.</p>
+                    <p className="text-xs text-muted-foreground">Adjust plan fees, currency, and duration granted upon manual approval.</p>
                   </div>
                 </div>
 
@@ -752,7 +752,7 @@ export function SystemControlView() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-foreground">3. Custom UPI QR Code Image</h4>
-                    <p className="text-[11px] text-muted-foreground">Upload your account's UPI QR code image to display to students.</p>
+                    <p className="text-xs text-muted-foreground">Upload your account's UPI QR code image to display to students.</p>
                   </div>
                 </div>
 
@@ -767,12 +767,12 @@ export function SystemControlView() {
                     )}
                     <div>
                       <p className="text-xs font-semibold text-foreground">Custom UPI Payment QR</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Supports PNG, JPG, or WebP. Auto-compressed.</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Supports PNG, JPG, or WebP. Auto-compressed.</p>
                       {paymentConfig.upiQrUrl && (
                         <button
                           type="button"
                           onClick={() => setPaymentConfig(p => ({ ...p, upiQrUrl: '' }))}
-                          className="text-[10px] text-rose-400 hover:underline mt-1 block"
+                          className="text-xs text-rose-400 hover:underline mt-1 block"
                         >
                           Remove QR Image
                         </button>
@@ -832,9 +832,9 @@ export function SystemControlView() {
                   <div className="font-semibold text-sm flex items-center gap-2">
                     <span>Master Referral Program Switch</span>
                     {referralConfig.enabled ? (
-                      <Badge className="bg-teal-500/20 text-teal-400 border-teal-500/30 text-[10px]">Active</Badge>
+                      <Badge className="bg-teal-500/20 text-teal-400 border-teal-500/30 text-xs">Active</Badge>
                     ) : (
-                      <Badge variant="outline" className="text-zinc-500 text-[10px]">Disabled</Badge>
+                      <Badge variant="outline" className="text-zinc-500 text-xs">Disabled</Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -855,7 +855,7 @@ export function SystemControlView() {
                     <label className="font-semibold text-xs text-foreground block">
                       Referee Pass Duration (Days)
                     </label>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Free trial days provisioned to an invited medical peer upon claiming the pass.
                     </p>
                   </div>
@@ -878,7 +878,7 @@ export function SystemControlView() {
                     <label className="font-semibold text-xs text-foreground block">
                       Referrer Extension Reward (Days)
                     </label>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Days added to the inviter's pass when their referee completes their first study milestone.
                     </p>
                   </div>
@@ -901,7 +901,7 @@ export function SystemControlView() {
                     <label className="font-semibold text-xs text-foreground block">
                       Pass Quota Limit Per Student
                     </label>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Maximum number of batchmate passes allocated to each candidate account.
                     </p>
                   </div>
@@ -924,7 +924,7 @@ export function SystemControlView() {
                     <label className="font-semibold text-xs text-foreground block">
                       Qualification Study Gate (Minutes)
                     </label>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Minimum active revision duration required by referee to prevent Sybil bot abuse.
                     </p>
                   </div>
@@ -946,7 +946,7 @@ export function SystemControlView() {
               <div className="p-4 rounded-xl border border-border/60 bg-background/50 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <span className="font-semibold text-xs block">Allow Downstream Invites</span>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Allow newly referred trial students to also invite their own batchmates.
                   </p>
                 </div>

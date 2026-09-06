@@ -12,8 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CurriculumSetScoreModal } from './CurriculumSetScoreModal';
-import { ALL_SUBJECTS } from '@/data/ontology';
 import { CurriculumSetForm } from './CurriculumSetForm';
+import { AILoggerModal } from '@/components/AILoggerModal';
 import { deleteCurriculumSet } from '@/db/mutations';
 import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { toast } from 'sonner';
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 interface CurriculumSetsProps {
-  systemId: number;
+  systemId?: number;
   subjectId: number;
   topics: OntologyTopic[];
   onLogScore?: (setId: string, setName: string) => void;
@@ -37,6 +37,7 @@ const colorMap = {
 
 export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: CurriculumSetsProps) {
   const [formOpen, setFormOpen] = useState(false);
+  const [aiLoggerOpen, setAiLoggerOpen] = useState(false);
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
   const [scoreModalOpen, setScoreModalOpen] = useState(false);
   const [scoreModalSet, setScoreModalSet] = useState<CurriculumSet | undefined>();
@@ -61,15 +62,15 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
   
   const curriculumSets = useLiveQuery(
     () => {
-      if (!systemId) return [];
+      if (!subjectId && !systemId) return [];
       return (db.curriculumSets || db.revisionSets)
-        .where('systemId')
-        .equals(systemId)
+        .where(systemId ? 'systemId' : 'subjectId')
+        .equals(systemId || subjectId)
         .filter(s => !s.deletedAt)
         .toArray().then(arr => arr.sort((a, b) => (a.order || 0) - (b.order || 0)))
         .then(res => res || []);
     },
-    [systemId]
+    [systemId, subjectId]
   ) || [];
 
   const topicProgresses = useLiveQuery(
@@ -157,9 +158,15 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
-              className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 px-2 py-1 rounded-md transition-colors cursor-pointer"
             >
-              + New Set
+              Manual Form
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setAiLoggerOpen(true); }}
+              className="text-xs font-medium text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+            >
+              Log AI Block
             </button>
           </div>
         </div>
@@ -198,9 +205,15 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(undefined); setFormOpen(true); }}
-            className="text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 px-2 py-1 rounded-md transition-colors cursor-pointer"
           >
-            + New Set
+            Manual Form
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); setAiLoggerOpen(true); }}
+            className="text-xs font-medium text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-md transition-colors cursor-pointer"
+          >
+            Log AI Block
           </button>
         </div>
       </div>
@@ -257,17 +270,17 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                             </div>
                             <span className="font-semibold text-sm text-foreground">{rs.name}</span>
                             {(rs.depth === 'rapid' || (rs.customDurationMinutes && rs.customDurationMinutes <= 15)) && (
-                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              <span className="text-xs font-semibold font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                 ⚡ Rapid Recall
                               </span>
                             )}
                             {(rs.depth === 'deep' || rs.isLengthy) && (
-                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                              <span className="text-xs font-semibold font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
                                 🔬 Deep Focus
                               </span>
                             )}
                             {rs.depth === 'standard' && (
-                              <span className="text-[10px] font-semibold font-mono px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                              <span className="text-xs font-semibold font-mono px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20">
                                 📖 Standard
                               </span>
                             )}
@@ -304,7 +317,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2"> 
- <button onClick={() => togglePhase(rs.id!, "content", rs.contentCompleted)} className={cn("px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.contentCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.contentCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} Content </button> <button onClick={() => togglePhase(rs.id!, "qbank", rs.qbankCompleted)} className={cn("px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.qbankCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.qbankCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} QBank </button>
+ <button onClick={() => togglePhase(rs.id!, "content", rs.contentCompleted)} className={cn("px-2 py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.contentCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.contentCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} Content </button> <button onClick={() => togglePhase(rs.id!, "qbank", rs.qbankCompleted)} className={cn("px-2 py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1 shadow-sm", rs.qbankCompleted ? "bg-primary/10 border-primary/30 text-primary" : "bg-background border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground")} > {rs.qbankCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />} QBank </button>
                             
 
                             <button
@@ -313,7 +326,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                               setScoreModalOpen(true);
                             }}
 className={cn(
-                                "px-2 py-1 text-[11px] font-medium rounded-md border transition-colors flex items-center gap-1",
+                                "px-2 py-1 text-xs font-medium rounded-md border transition-colors flex items-center gap-1",
                                 "bg-transparent border-border text-foreground hover:border-primary/50 hover:bg-primary/10 shadow-sm"
                               )}
                             >
@@ -334,6 +347,8 @@ className={cn(
       </DragDropContext>
 
       <div className="h-px bg-border my-6" />
+
+      <AILoggerModal open={aiLoggerOpen} onOpenChange={setAiLoggerOpen} />
 
       <CurriculumSetForm
         isOpen={formOpen}
