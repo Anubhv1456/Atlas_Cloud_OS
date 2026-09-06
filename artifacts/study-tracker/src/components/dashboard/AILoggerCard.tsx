@@ -8,6 +8,7 @@ import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { AdaptiveLoggerSelector } from './AdaptiveLoggerSelector';
 import { Subject, StudySystem } from '@/db/types';
 
 export function AILoggerCard() {
@@ -16,7 +17,8 @@ export function AILoggerCard() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedBlockId, setSelectedBlockId] = useState<string>('');
+  const [selectedBlockId, setSelectedBlockId] = useState<string>('ad-hoc');
+  const [selectedSystemId, setSelectedSystemId] = useState<string>('');
   
   const [loadingPhase, setLoadingPhase] = useState<number>(-1);
   const [successData, setSuccessData] = useState<{ name: string; oldDate: string; newDate: string } | null>(null);
@@ -26,32 +28,7 @@ export function AILoggerCard() {
   const activeSystems = useLiveQuery(() => db.systems.filter(s => !s.deletedAt).toArray(), []) || [];
   const activeSubjects = useLiveQuery(() => db.subjects.filter(s => !s.deletedAt).toArray(), []) || [];
 
-  // Group systems by subject for the dropdown
-  const groupedSystems = useMemo(() => {
-    const groups: Record<string, { subject: Subject | null, systems: StudySystem[] }> = {
-      ungrouped: { subject: null, systems: [] }
-    };
-    
-    activeSubjects.forEach(sub => {
-      groups[String(sub.id)] = { subject: sub, systems: [] };
-    });
 
-    activeSystems.forEach(sys => {
-      const subId = String(sys.subjectId);
-      if (sys.subjectId && groups[subId]) {
-        groups[subId].systems.push(sys);
-      } else {
-        groups.ungrouped.systems.push(sys);
-      }
-    });
-
-    // Sort systems within groups
-    Object.values(groups).forEach(g => {
-      g.systems.sort((a, b) => a.name.localeCompare(b.name));
-    });
-
-    return groups;
-  }, [activeSystems, activeSubjects]);
 
   const loadingMessages = [
     "Extracting metrics & mistakes...",
@@ -93,14 +70,21 @@ export function AILoggerCard() {
   };
 
   const handleProcess = async () => {
-    if (!selectedBlockId) {
-      alert("Please select a target study block first.");
+    if (!selectedSystemId) {
+      alert("Please select a subject or mixed block first.");
       return;
     }
     if (!text.trim() && !imageFile) return;
     
-    const targetSystem = activeSystems.find(s => String(s.id) === selectedBlockId);
-    if (!targetSystem) return;
+    let targetSystem = null;
+    let isGeneric = false;
+    
+    if (selectedSystemId === 'mixed') {
+      isGeneric = true;
+    } else {
+      targetSystem = activeSystems.find(s => String(s.id) === selectedSystemId);
+      if (!targetSystem) return;
+    }
 
     setLoadingPhase(0);
     
@@ -202,7 +186,8 @@ If max score is not mentioned, assume total is 40.`;
         setSuccessData(null);
         setText('');
         removeImage();
-        setSelectedBlockId('');
+        setSelectedBlockId('ad-hoc');
+        setSelectedSystemId('');
       }, 4000);
 
     } catch (e) {
@@ -264,29 +249,12 @@ If max score is not mentioned, assume total is 40.`;
         </div>
       </div>
 
-      <div className="mb-5">
-        <Select value={selectedBlockId} onValueChange={setSelectedBlockId}>
-          <SelectTrigger className="w-full h-11 bg-background/50 border-border/60 hover:border-border transition-colors rounded-xl shadow-sm">
-            <SelectValue placeholder="-- Select the target Study Block --" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {Object.entries(groupedSystems).map(([subId, group]) => {
-              if (group.systems.length === 0) return null;
-              return (
-                <SelectGroup key={subId}>
-                  {group.subject && <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.subject.name}</SelectLabel>}
-                  {!group.subject && subId === 'ungrouped' && <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</SelectLabel>}
-                  {group.systems.map(sys => (
-                    <SelectItem key={sys.id} value={String(sys.id)} className="cursor-pointer">
-                      {sys.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
+      <AdaptiveLoggerSelector 
+        blockId={selectedBlockId} 
+        onBlockChange={setSelectedBlockId}
+        systemId={selectedSystemId}
+        onSystemChange={setSelectedSystemId}
+      />
 
       <div className={cn(
         "relative mb-6 rounded-xl border-2 border-dashed transition-colors duration-200 overflow-hidden group bg-muted/10",
@@ -352,7 +320,7 @@ If max score is not mentioned, assume total is 40.`;
           )}
           <Button 
             onClick={handleProcess} 
-            disabled={loadingPhase >= 0 || !selectedBlockId || (!text.trim() && !imageFile)} 
+            disabled={loadingPhase >= 0 || !selectedSystemId || (!text.trim() && !imageFile)} 
             className="w-full sm:w-auto gap-2 rounded-xl shadow-md h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 disabled:bg-emerald-600"
           >
             {loadingPhase >= 0 ? <Brain className="w-4 h-4 animate-pulse" /> : <Sparkles className="w-4 h-4" />}

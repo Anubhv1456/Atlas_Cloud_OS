@@ -28,9 +28,9 @@ import { db, dbEvents } from '@/db';
 
 import { lazy } from 'react';
 
+import Home from '@/features/dashboard/Home';
 const NotFound = lazy(() => import('@/pages/not-found'));
 
-const Home = lazy(() => import('@/features/dashboard/Home'));
 const Landing = lazy(() => import('@/pages/Landing'));
 const AcceptInvitation = lazy(() => import('@/pages/AcceptInvitation'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
@@ -309,7 +309,6 @@ function App() {
           <GlobalQuickEntry />
           <AppUpdateCapsule />
           <Toaster />
-          <UpgradePaywallModal />
           <UpgradePaywallModal />
           <SonnerToaster position="top-center" richColors />
         </TooltipProvider>

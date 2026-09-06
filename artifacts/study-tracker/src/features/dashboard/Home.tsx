@@ -1,3 +1,4 @@
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { HelpGuideModal } from '@/components/HelpGuideModal';
 import { AtlasSkyPreview } from './AtlasSkyPreview';
 import { NextActionCard } from '@/components/dashboard/NextActionCard';
@@ -6,7 +7,6 @@ import { SearchWidget } from '@/components/ai';
 import { CurriculumSetScoreModal } from '@/features/subjects/CurriculumSetScoreModal';
 import { CurriculumSet } from '@/db/types';
 import { normalizeName } from '@/lib/exam-presets';
-import { useRef, useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useSubjects, useAllSystems, addSubject, updateSubject, deleteSubject, useCurrentStreak, setFocus, setSubjectFocus, updateSubjectsOrder, useAllPYQs } from '@/db';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
@@ -34,7 +34,13 @@ import { BaselineTriageModal } from '@/components/BaselineTriageModal';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { HomeRadarSummaryCard } from '@/features/dashboard/HomeRadarSummaryCard';
+import { ExamCountdownWidget } from '@/components/dashboard/ExamCountdownWidget';
+import { useHomeLogic } from './Home.hooks';
+import { AmbientAIWidget, ChatAssistantDrawer } from '@/components/ai';
+import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingCommandBar';
+import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+
 // ── Inline result sub-components ──────────────────────────────────────────────
 
 function StatusBadge({ sys }: { sys: StudySystem }) {
@@ -50,15 +56,7 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
   );
 }
 
-
 // ── Main component ────────────────────────────────────────────────────────────
-
-import { HomeRadarSummaryCard } from '@/features/dashboard/HomeRadarSummaryCard';
-import { ExamCountdownWidget } from '@/components/dashboard/ExamCountdownWidget';
-import { useHomeLogic } from './Home.hooks';
-import { AmbientAIWidget, ChatAssistantDrawer } from '@/components/ai';
-import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingCommandBar';
-import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 
 export default function Home() {
   const {
