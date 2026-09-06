@@ -58,7 +58,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     const catMap = new Map<string, string>();
     activeOntology.forEach(s => catMap.set(s.name.toLowerCase(), s.category || 'General'));
     
-    const baseCategories = ['Foundational Disciplines', 'Organ Systems', 'Clerkship', 'General'];
+    const baseCategories = ['Pre-Clinical', 'Para-Clinical', 'Clinical', 'Foundational Disciplines', 'Organ Systems', 'Clerkship', 'General'];
     const activeCategories = Array.from(new Set(subjects.map(s => catMap.get(s.name.toLowerCase()) || 'General')));
     
     const sortedCats = baseCategories.filter(c => activeCategories.includes(c));
@@ -85,7 +85,18 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
          
          const phaseId = cat.toLowerCase().replace(/ /g, '_');
          let shortName = sub.name;
-         if (shortName.length > 15) {
+         const knownAliases: Record<string, string> = {
+            'Forensic Medicine & Toxicology': 'Forensic Med',
+            'Community Medicine (PSM)': 'Community Med',
+            'General Medicine': 'Medicine',
+            'General Surgery': 'Surgery',
+            'Obstetrics & Gynaecology': 'OBGYN',
+            'ENT (Otorhinolaryngology)': 'ENT',
+            'Ophthalmology': 'Ophthal',
+         };
+         if (knownAliases[sub.name]) {
+            shortName = knownAliases[sub.name];
+         } else if (shortName.length > 15) {
              const parts = shortName.split(/\s|-/);
              shortName = parts[0] + (parts[1] ? ' ' + parts[1] : '');
              if (shortName.length > 15) shortName = shortName.substring(0, 15);

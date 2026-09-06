@@ -46,7 +46,7 @@ export function ExamCountdownWidget() {
   if (!stats) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-border/60 bg-card mb-6">
+    <div className="flex p-4 rounded-xl border border-border/60 bg-card mb-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
           <Calendar className="w-5 h-5" />
@@ -58,16 +58,6 @@ export function ExamCountdownWidget() {
           <p className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
             {stats.daysLeft} <span className="text-sm font-medium text-muted-foreground tracking-normal">Days Remaining</span>
           </p>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-3 bg-muted/40 px-4 py-2.5 rounded-lg border border-border/40">
-        <Target className={cn("w-4 h-4", stats.isBehind ? "text-amber-500" : "text-emerald-500")} />
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground font-medium">Required Velocity</span>
-          <span className={cn("text-sm font-bold", stats.isBehind ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400")}>
-            {stats.requiredVelocity} questions / day
-          </span>
         </div>
       </div>
     </div>

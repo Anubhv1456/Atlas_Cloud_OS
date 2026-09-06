@@ -24,7 +24,7 @@ export interface OntologySubject {
   id: string;
   name: string;
   systems: OntologySystem[];
-  category?: 'Organ Systems' | 'Foundational Disciplines' | 'Clerkship';
+  category?: 'Organ Systems' | 'Foundational Disciplines' | 'Clerkship' | 'Pre-Clinical' | 'Para-Clinical' | 'Clinical' | 'General';
   legacyId?: string;
   legacyIds?: string[];
 }
@@ -33,6 +33,7 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
     "id": "SUB_01",
     "name": "Anatomy",
+    "category": "Pre-Clinical",
     "systems": [
       {
         "id": "SYS_01_01",
@@ -1254,6 +1255,7 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
     "id": "SUB_02",
     "name": "Physiology",
+    "category": "Pre-Clinical",
     "systems": [
       {
         "id": "SYS_02_01",
@@ -2038,6 +2040,7 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
     "id": "SUB_03",
     "name": "Biochemistry",
+    "category": "Pre-Clinical",
     "systems": [
       {
         "id": "SYS_03_01",
@@ -2575,6 +2578,7 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
     "id": "SUB_04",
     "name": "Pathology",
+    "category": "Para-Clinical",
     "systems": [
       {
         "id": "SYS_04_01",
@@ -3074,6 +3078,7 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
     "id": "SUB_05",
     "name": "Microbiology",
+    "category": "Para-Clinical",
     "systems": [
       {
         "id": "SYS_05_01",
@@ -3513,7 +3518,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
         "id": "SUB_06",
         "name": "Pharmacology",
-        "systems": [
+    "category": "Para-Clinical",
+    "systems": [
             {
                 "id": "SYS_06_01",
                 "subjectId": "SUB_06",
@@ -4211,7 +4217,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_07",
         "name": "Forensic Medicine & Toxicology",
-        "systems": [
+    "category": "Para-Clinical",
+    "systems": [
             {
                 "id": "SYS_07_01",
                 "subjectId": "SUB_07",
@@ -5619,7 +5626,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_10",
         "name": "Ophthalmology",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_10_01",
                 "subjectId": "SUB_10",
@@ -6067,7 +6075,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
         "id": "SUB_11",
         "name": "General Medicine",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_11_01",
                 "subjectId": "SUB_11",
@@ -6760,7 +6769,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_12",
         "name": "General Surgery",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_12_01",
                 "subjectId": "SUB_12",
@@ -7211,7 +7221,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_13",
         "name": "Obstetrics & Gynaecology",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_13_01",
                 "subjectId": "SUB_13",
@@ -7695,7 +7706,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_14",
         "name": "Pediatrics",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_14_01",
                 "subjectId": "SUB_14",
@@ -8031,7 +8043,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_15",
         "name": "Orthopedics",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_15_01",
                 "subjectId": "SUB_15",
@@ -8324,7 +8337,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
   {
         "id": "SUB_16",
         "name": "Psychiatry",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_16_01",
                 "subjectId": "SUB_16",
@@ -8732,7 +8746,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_17",
         "name": "Dermatology",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_17_01",
                 "subjectId": "SUB_17",
@@ -9008,7 +9023,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_18",
         "name": "Anaesthesiology",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_18_01",
                 "subjectId": "SUB_18",
@@ -9284,7 +9300,8 @@ export const UNIVERSAL_ONTOLOGY: OntologySubject[] = [
     {
         "id": "SUB_19",
         "name": "Radiology",
-        "systems": [
+    "category": "Clinical",
+    "systems": [
             {
                 "id": "SYS_19_01",
                 "subjectId": "SUB_19",
