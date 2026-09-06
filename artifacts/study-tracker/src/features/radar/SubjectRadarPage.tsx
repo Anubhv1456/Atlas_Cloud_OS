@@ -131,32 +131,6 @@ export default function SubjectRadarPage() {
         </div>
       </div>
 
-      {/* ── Optional Blueprint Notification Banner if on NEET-PG track ── */}
-      {!isUSMLE && (
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-500/10 border border-teal-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-bold text-foreground">
-                Looking for the 10 Clinical Organ Systems blueprint?
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                You are currently viewing the subject-based track ({subjects?.length || 0} subjects). Switch to USMLE Step 1 to explore CVS, RESP, RENAL, GI, ENDO, REPRO, NEURO, MSK, HEME, and PSYCH.
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => handleSwitchExamTrack('USMLE Step 1')}
-            className="text-xs font-bold px-3.5 h-8 rounded-xl bg-teal-600 text-white hover:bg-teal-700 active:scale-95 transition-all shrink-0 cursor-pointer shadow-xs"
-          >
-            Switch to USMLE Step 1 →
-          </Button>
-        </div>
-      )}
-
       {/* ── Segmented View Switcher ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center p-1 rounded-2xl bg-muted/40 border border-border/80 w-full sm:w-auto">

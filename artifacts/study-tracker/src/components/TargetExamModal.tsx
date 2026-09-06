@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { loadUniversalOntology } from '@/lib/exam-presets';
 import { 
   DEFAULT_EXAM_OPTIONS, 
   DEFAULT_CURRICULUM_OPTIONS 
@@ -108,10 +109,9 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         currentYear,
       });
 
-      // Auto-loader will handle curriculum sync if workspace is empty
       if (isCurriculumShift) {
-        // Reset local initialization flag so auto-loader knows it can run for the new exam
         localStorage.removeItem(`atlas_initialized_${finalExam.replace(/\s+/g, '_').toLowerCase()}`);
+        await loadUniversalOntology({ targetExam: finalExam, force: true, showToast: true });
       }
 
       toast.success('Exam profile updated successfully.');

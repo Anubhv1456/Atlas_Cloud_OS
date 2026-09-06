@@ -23,10 +23,10 @@ export function getOntologyForExam(targetExam: string): OntologySubject[] {
   if (examLower.includes('step 1') || examLower === 'usmle') {
     return USMLE_STEP1_ONTOLOGY;
   }
-  if (examLower.includes('neet')) {
+  if (examLower.includes('neet') || examLower.includes('ini-cet') || examLower.includes('inicet')) {
     return NEETPG_ONTOLOGY;
   }
-  if (examLower.includes('custom') || examLower.includes('general')) {
+  if (examLower.includes('custom') || examLower.includes('general') || examLower.includes('mbbs') || examLower.includes('professional')) {
     return GENERAL_ONTOLOGY;
   }
   return NEETPG_ONTOLOGY;

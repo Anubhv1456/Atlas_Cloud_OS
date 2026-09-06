@@ -630,10 +630,11 @@ export function getWorkspaceSuffix(exam?: string): string {
   if (lower.includes("step 1")) return "_usmle1";
   if (lower.includes("step 2")) return "_usmle2";
   if (lower.includes("usmle")) return "_usmle";
+  if (lower.includes("neet") || lower.includes("ini-cet") || lower.includes("inicet")) return "_neetpg";
   if (lower.includes("plab")) return "_plab";
   if (lower.includes("amc")) return "_amc";
   if (lower.includes("mccqe")) return "_mccqe";
-  if (lower.includes("custom") || lower.includes("other")) return "_custom";
+  if (lower.includes("custom") || lower.includes("other") || lower.includes("general") || lower.includes("mbbs")) return "_custom";
   return "";
 }
 

@@ -26,7 +26,7 @@ interface AtlasSkyModalProps {
   curriculumSets: CurriculumSet[];
 }
 
-export type PhaseType = 'pre_clinical' | 'para_clinical' | 'clinical';
+export type PhaseType = string;
 
 export interface CelestialSubject {
   name: string;
@@ -39,188 +39,74 @@ export interface CelestialSubject {
   y: number; // calculated percentage y (0..100)
 }
 
-// 19 MBBS / NEET PG Subjects arranged into 3 Concentric Medical Phase Orbits with non-overlapping celestial angles
-const CELESTIAL_CONFIG: Omit<CelestialSubject, 'x' | 'y'>[] = [
-  // --- PRE-CLINICAL FOUNDATION (Orbit 1: r = 18%) ---
-  {
-    name: 'Anatomy',
-    shortName: 'Anatomy',
-    phase: 'pre_clinical',
-    phaseLabel: 'Pre-Clinical Foundation',
-    angle: 270,
-    radiusPercent: 18
-  },
-  {
-    name: 'Physiology',
-    shortName: 'Physiology',
-    phase: 'pre_clinical',
-    phaseLabel: 'Pre-Clinical Foundation',
-    angle: 30,
-    radiusPercent: 18
-  },
-  {
-    name: 'Biochemistry',
-    shortName: 'Biochemistry',
-    phase: 'pre_clinical',
-    phaseLabel: 'Pre-Clinical Foundation',
-    angle: 150,
-    radiusPercent: 18
-  },
 
-  // --- PARA-CLINICAL BRIDGE (Orbit 2: r = 31%) ---
-  {
-    name: 'Pathology',
-    shortName: 'Pathology',
-    phase: 'para_clinical',
-    phaseLabel: 'Para-Clinical Bridge',
-    angle: 220,
-    radiusPercent: 31
-  },
-  {
-    name: 'Pharmacology',
-    shortName: 'Pharmacology',
-    phase: 'para_clinical',
-    phaseLabel: 'Para-Clinical Bridge',
-    angle: 330,
-    radiusPercent: 31
-  },
-  {
-    name: 'Microbiology',
-    shortName: 'Microbiology',
-    phase: 'para_clinical',
-    phaseLabel: 'Para-Clinical Bridge',
-    angle: 35,
-    radiusPercent: 31
-  },
-  {
-    name: 'Forensic Medicine & Toxicology',
-    shortName: 'Forensic Med',
-    phase: 'para_clinical',
-    phaseLabel: 'Para-Clinical Bridge',
-    angle: 90,
-    radiusPercent: 31
-  },
-  {
-    name: 'Community Medicine (PSM)',
-    shortName: 'Community Med',
-    phase: 'para_clinical',
-    phaseLabel: 'Para-Clinical Bridge',
-    angle: 172,
-    radiusPercent: 31
-  },
 
-  // --- CLINICAL SPECIALTIES (Orbit 3: r = 43%) ---
-  {
-    name: 'Medicine',
-    shortName: 'Medicine',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 270,
-    radiusPercent: 43
-  },
-  {
-    name: 'General Surgery',
-    shortName: 'Surgery',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 302.7,
-    radiusPercent: 43
-  },
-  {
-    name: 'Obstetrics & Gynaecology',
-    shortName: 'OBGY',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 335.5,
-    radiusPercent: 43
-  },
-  {
-    name: 'Pediatrics',
-    shortName: 'Pediatrics',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 8.2,
-    radiusPercent: 43
-  },
-  {
-    name: 'Orthopedics',
-    shortName: 'Orthopedics',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 40.9,
-    radiusPercent: 43
-  },
-  {
-    name: 'ENT (Otorhinolaryngology)',
-    shortName: 'ENT',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 73.6,
-    radiusPercent: 43
-  },
-  {
-    name: 'Ophthalmology',
-    shortName: 'Ophthal',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 106.4,
-    radiusPercent: 43
-  },
-  {
-    name: 'Psychiatry',
-    shortName: 'Psychiatry',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 139.1,
-    radiusPercent: 43
-  },
-  {
-    name: 'Dermatology',
-    shortName: 'Dermatology',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 171.8,
-    radiusPercent: 43
-  },
-  {
-    name: 'Radiology',
-    shortName: 'Radiology',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 204.5,
-    radiusPercent: 43
-  },
-  {
-    name: 'Anaesthesiology',
-    shortName: 'Anaesthesia',
-    phase: 'clinical',
-    phaseLabel: 'Clinical Specialty',
-    angle: 237.3,
-    radiusPercent: 43
-  }
-];
-
-// Helper to compute Cartesian percentages from polar angles
-const CELESTIAL_SUBJECTS: CelestialSubject[] = CELESTIAL_CONFIG.map(item => {
-  const rad = (item.angle * Math.PI) / 180;
-  const x = 50 + item.radiusPercent * Math.cos(rad);
-  const y = 50 + item.radiusPercent * Math.sin(rad);
-  return {
-    ...item,
-    x: Number(x.toFixed(2)),
-    y: Number(y.toFixed(2))
-  };
-});
-
+import { getOntologyForExam } from '@/data/ontology';
 export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculumSets }: AtlasSkyModalProps) {
   const [, setLocation] = useLocation();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'prof_year' | 'pre_clinical' | 'para_clinical' | 'clinical' | 'decay'>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [selectedStarName, setSelectedStarName] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { metrics } = useClinicalFrictionEngine();
 
   const { profile } = useExamProfile();
+  const activeOntology = useMemo(() => getOntologyForExam(profile.targetExam || ''), [profile.targetExam]);
+
+  const CELESTIAL_SUBJECTS = useMemo(() => {
+    const config: CelestialSubject[] = [];
+    const catMap = new Map<string, string>();
+    activeOntology.forEach(s => catMap.set(s.name.toLowerCase(), s.category || 'General'));
+    
+    const baseCategories = ['Foundational Disciplines', 'Organ Systems', 'Clerkship', 'General'];
+    const activeCategories = Array.from(new Set(subjects.map(s => catMap.get(s.name.toLowerCase()) || 'General')));
+    
+    const sortedCats = baseCategories.filter(c => activeCategories.includes(c));
+    activeCategories.forEach(c => {
+       if (!sortedCats.includes(c)) sortedCats.push(c);
+    });
+
+    // We'll use orbits 18, 31, 43...
+    const radii = [18, 31, 43, 56, 68];
+
+    sortedCats.forEach((cat, catIdx) => {
+      const catSubjects = subjects.filter(s => (catMap.get(s.name.toLowerCase()) || 'General') === cat);
+      if (catSubjects.length === 0) return;
+      
+      const radius = radii[catIdx % radii.length];
+      const angleStep = 360 / catSubjects.length;
+      
+      catSubjects.forEach((sub, subIdx) => {
+         const startAngle = (catIdx * 30);
+         const angle = (startAngle + (subIdx * angleStep)) % 360;
+         const rad = (angle * Math.PI) / 180;
+         const x = 50 + radius * Math.cos(rad);
+         const y = 50 + radius * Math.sin(rad);
+         
+         const phaseId = cat.toLowerCase().replace(/ /g, '_');
+         let shortName = sub.name;
+         if (shortName.length > 15) {
+             const parts = shortName.split(/\s|-/);
+             shortName = parts[0] + (parts[1] ? ' ' + parts[1] : '');
+             if (shortName.length > 15) shortName = shortName.substring(0, 15);
+         }
+         
+         config.push({
+           name: sub.name,
+           shortName,
+           phase: phaseId,
+           phaseLabel: cat,
+           angle,
+           radiusPercent: radius,
+           x,
+           y
+         });
+      });
+    });
+    
+    return config;
+  }, [subjects, activeOntology]);
+
   const isMBBSProf = Boolean(
     profile.targetExam && 
     (profile.targetExam.toLowerCase().includes('mbbs') || profile.targetExam.toLowerCase().includes('professional exam'))
@@ -529,12 +415,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 } else {
                   if (activeFilter === 'prof_year') {
                     matchesFilter = isSubjectInProfScope(star.name, profile.targetExam, activeYear);
-                  } else if (activeFilter === 'pre_clinical') {
-                    matchesFilter = star.phase === 'pre_clinical';
-                  } else if (activeFilter === 'para_clinical') {
-                    matchesFilter = star.phase === 'para_clinical';
-                  } else if (activeFilter === 'clinical') {
-                    matchesFilter = star.phase === 'clinical';
+                  } else if (activeFilter !== 'all' && activeFilter !== 'prof_year' && activeFilter !== 'decay') {
+                    matchesFilter = star.phase === activeFilter;
                   } else if (activeFilter === 'decay') {
                     matchesFilter = star.state === 'revising' || star.weakSystemsCount > 0;
                   }
