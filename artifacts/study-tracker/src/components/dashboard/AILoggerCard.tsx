@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { db } from '@/db';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
@@ -9,7 +8,6 @@ import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { AdaptiveLoggerSelector } from './AdaptiveLoggerSelector';
-import { Subject, StudySystem } from '@/db/types';
 
 export function AILoggerCard() {
   const { settings } = useAISettings();
@@ -17,18 +15,24 @@ export function AILoggerCard() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Subject-first state hierarchy
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedBlockId, setSelectedBlockId] = useState<string>('ad-hoc');
-  const [selectedSystemId, setSelectedSystemId] = useState<string>('');
   
   const [loadingPhase, setLoadingPhase] = useState<number>(-1);
-  const [successData, setSuccessData] = useState<{ name: string; oldDate: string; newDate: string } | null>(null);
+  const [successData, setSuccessData] = useState<{ 
+    name: string; 
+    oldDate?: string; 
+    newDate?: string;
+    scoreText?: string;
+    detailText?: string;
+  } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeSystems = useLiveQuery(() => db.systems.filter(s => !s.deletedAt).toArray(), []) || [];
   const activeSubjects = useLiveQuery(() => db.subjects.filter(s => !s.deletedAt).toArray(), []) || [];
-
-
 
   const loadingMessages = [
     "Extracting metrics & mistakes...",
@@ -70,42 +74,53 @@ export function AILoggerCard() {
   };
 
   const handleProcess = async () => {
-    if (!selectedSystemId) {
-      alert("Please select a subject or mixed block first.");
+    if (!selectedSubjectId) {
+      alert("Please select a subject or Full-Syllabus Mock first.");
       return;
     }
     if (!text.trim() && !imageFile) return;
-    
-    let targetSystem = null;
-    let isGeneric = false;
-    
-    if (selectedSystemId === 'mixed') {
-      isGeneric = true;
-    } else {
-      targetSystem = activeSystems.find(s => String(s.id) === selectedSystemId);
-      if (!targetSystem) return;
-    }
 
     setLoadingPhase(0);
-    
+
     try {
       const apiKey = settings.geminiApiKey;
       if (!apiKey) {
         throw new Error("Gemini API key is missing. Please configure it in Settings.");
       }
 
-      const prompt = `You are a precision medical extractor. Analyze this text or screenshot of a test result/score report.
-CRITICAL: Only extract the metrics related to this specific block performance. Ignore lifetime/cumulative metrics.
+      const isGt = selectedSubjectId === 'gt-full';
+      const targetSubject = !isGt ? activeSubjects.find(s => String(s.id) === selectedSubjectId) : null;
+      const targetSystem = (!isGt && selectedBlockId && selectedBlockId !== 'ad-hoc' && selectedBlockId !== 'full-syllabus') 
+        ? activeSystems.find(s => String(s.id) === selectedBlockId) 
+        : null;
+
+      let contextDescription = '';
+      let defaultTotal = 40;
+      if (isGt) {
+        contextDescription = 'Grand Test / Full-Syllabus Mock Exam (GT/NBME Comprehensive)';
+        defaultTotal = 200;
+      } else if (targetSystem) {
+        contextDescription = `${targetSubject ? `${targetSubject.name} - ` : ''}${targetSystem.name} Study Block`;
+        defaultTotal = 40;
+      } else if (targetSubject) {
+        contextDescription = `${targetSubject.name} General Practice`;
+        defaultTotal = 50;
+      } else {
+        contextDescription = 'Study Practice Session';
+      }
+
+      const prompt = `You are a precision medical extractor. Analyze this text or screenshot of a test result/score report for ${contextDescription}.
+CRITICAL: Extract only the metrics related to this specific test/session performance. Ignore lifetime or cumulative statistics.
 
 Format your output STRICTLY as a JSON object matching this schema exactly:
 {
   "score": 28,
-  "total": 40,
+  "total": ${defaultTotal},
   "mistakes": [
     "Detailed description of specific medical concept they got incorrect (e.g. 'Atrial Fibrillation anticoagulation guidelines')"
   ]
 }
-If max score is not mentioned, assume total is 40.`;
+If max score is not mentioned, assume total is ${defaultTotal}.`;
 
       const parts: any[] = [{ text: prompt }];
       if (text.trim()) {
@@ -142,53 +157,128 @@ If max score is not mentioned, assume total is 40.`;
       }
 
       const now = new Date();
-      
       const scoreNum = Number(result.score) || 0;
-      const totalNum = Number(result.total) || 40;
-      const scorePercent = scoreNum / totalNum;
-      
-      const updated = calibrateSystemSDSR(targetSystem, scorePercent, 'General', 0.70, now);
-      await db.systems.update(targetSystem.id!, updated);
-      
-      await db.scoreLogs.add({
-        title: `AI Log: ${targetSystem.name}`,
-        score: scoreNum,
-        total: totalNum,
-        percentage: scorePercent * 100,
-        type: 'qbank',
-        systemId: targetSystem.id,
-        timestamp: now,
-        createdAt: now
-      } as any);
+      const totalNum = Number(result.total) || defaultTotal;
+      const scorePercent = totalNum > 0 ? scoreNum / totalNum : 0;
 
-      if (result.mistakes && Array.isArray(result.mistakes)) {
-        for (const mistake of result.mistakes) {
-          await db.mistakeLogs.add({
-            topic: String(mistake).substring(0, 200),
-            subjectId: targetSystem.subjectId || 'general',
-            systemId: targetSystem.id!,
-            errorType: 'Concept Gap',
-            createdAt: now,
-            updatedAt: now
-          } as any);
+      // 1. Full-Syllabus Mock (GT / NBME)
+      if (isGt) {
+        await db.scoreLogs.add({
+          title: `AI Log: Full-Syllabus Mock (GT / NBME)`,
+          score: scoreNum,
+          total: totalNum,
+          percentage: scorePercent * 100,
+          type: 'gt',
+          timestamp: now,
+          createdAt: now
+        } as any);
+
+        if (result.mistakes && Array.isArray(result.mistakes)) {
+          for (const mistake of result.mistakes) {
+            await db.mistakeLogs.add({
+              topic: String(mistake).substring(0, 200),
+              subjectId: 'general',
+              systemId: 'gt',
+              source: 'GT',
+              errorType: 'concept',
+              createdAt: now,
+              updatedAt: now
+            } as any);
+          }
         }
-      }
-      
-      const oldDate = targetSystem.nextRevisionDate 
-        ? new Date(targetSystem.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
-        : 'None';
-      const newDate = updated.nextRevisionDate 
-        ? new Date(updated.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
-        : 'None';
 
-      setSuccessData({ name: targetSystem.name, oldDate, newDate });
+        setSuccessData({
+          name: 'Full-Syllabus Mock (GT / NBME)',
+          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
+          detailText: `Full curriculum mock logged. ${result.mistakes?.length || 0} concept mistakes routed to Recovery Queue.`
+        });
+
+      // 2. Specific Study Block / System in Subject
+      } else if (targetSystem) {
+        const updated = calibrateSystemSDSR(targetSystem, scorePercent, targetSubject?.name || 'General', 0.70, now);
+        await db.systems.update(targetSystem.id!, updated);
+
+        await db.scoreLogs.add({
+          title: `AI Log: ${targetSubject?.name ? `${targetSubject.name} - ` : ''}${targetSystem.name}`,
+          score: scoreNum,
+          total: totalNum,
+          percentage: scorePercent * 100,
+          type: 'qbank',
+          subjectId: targetSubject?.id || targetSystem.subjectId,
+          systemId: targetSystem.id,
+          timestamp: now,
+          createdAt: now
+        } as any);
+
+        if (result.mistakes && Array.isArray(result.mistakes)) {
+          for (const mistake of result.mistakes) {
+            await db.mistakeLogs.add({
+              topic: String(mistake).substring(0, 200),
+              subjectId: targetSubject?.id || targetSystem.subjectId || 'general',
+              systemId: targetSystem.id!,
+              source: 'QBank',
+              errorType: 'concept',
+              createdAt: now,
+              updatedAt: now
+            } as any);
+          }
+        }
+
+        const oldDate = targetSystem.nextRevisionDate 
+          ? new Date(targetSystem.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+          : 'None';
+        const newDate = updated.nextRevisionDate 
+          ? new Date(updated.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+          : 'None';
+
+        setSuccessData({
+          name: `${targetSubject?.name ? `${targetSubject.name}: ` : ''}${targetSystem.name}`,
+          oldDate,
+          newDate,
+          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
+          detailText: `SDSR decay calibrated. Next revision scheduled.`
+        });
+
+      // 3. General Subject Practice (Uncategorized)
+      } else {
+        await db.scoreLogs.add({
+          title: `AI Log: ${targetSubject?.name || 'Subject'} Practice`,
+          score: scoreNum,
+          total: totalNum,
+          percentage: scorePercent * 100,
+          type: 'qbank',
+          subjectId: targetSubject?.id,
+          timestamp: now,
+          createdAt: now
+        } as any);
+
+        if (result.mistakes && Array.isArray(result.mistakes)) {
+          for (const mistake of result.mistakes) {
+            await db.mistakeLogs.add({
+              topic: String(mistake).substring(0, 200),
+              subjectId: targetSubject?.id || 'general',
+              source: 'QBank',
+              errorType: 'concept',
+              createdAt: now,
+              updatedAt: now
+            } as any);
+          }
+        }
+
+        setSuccessData({
+          name: `${targetSubject?.name || 'Subject'} Practice Logged`,
+          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
+          detailText: `Recorded to subject study history. ${result.mistakes?.length || 0} mistakes saved to Recovery Queue.`
+        });
+      }
+
       setTimeout(() => {
         setSuccessData(null);
         setText('');
         removeImage();
+        setSelectedSubjectId('');
         setSelectedBlockId('ad-hoc');
-        setSelectedSystemId('');
-      }, 4000);
+      }, 4500);
 
     } catch (e) {
       console.error(e);
@@ -200,22 +290,35 @@ If max score is not mentioned, assume total is 40.`;
 
   if (successData) {
     return (
-      <div className="bg-card border border-border/40 rounded-2xl p-8 mb-8 flex flex-col items-center justify-center text-center shadow-sm">
+      <div className="bg-card border border-border/40 rounded-2xl p-8 mb-8 flex flex-col items-center justify-center text-center shadow-sm animate-in fade-in duration-300">
         <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-4 border border-emerald-500/20 shadow-inner">
           <CheckCircle2 className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold tracking-tight mb-2">Block Parsed & Logged</h3>
-        <p className="text-muted-foreground mb-6 text-sm">Your SDSR schedule has been updated.</p>
+        <h3 className="text-xl font-bold tracking-tight mb-1 text-foreground">Study Session Logged</h3>
+        <p className="text-muted-foreground mb-5 text-sm">Performance metrics and mistake concepts successfully recorded.</p>
         
         <div className="w-full max-w-lg space-y-3 text-sm text-left bg-muted/30 p-4 rounded-xl border border-border/50">
           <div className="flex items-start gap-3">
             <div className="mt-0.5"><Check className="w-4 h-4 text-emerald-500" /></div>
             <div className="flex-1">
-              <p className="font-semibold text-foreground">{successData.name}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">
-                Decay slowed. Next revision: <span className="line-through opacity-70 mr-1">{successData.oldDate}</span> 
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">➔ {successData.newDate}</span>
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-foreground">{successData.name}</p>
+                {successData.scoreText && (
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md shrink-0">
+                    {successData.scoreText}
+                  </span>
+                )}
+              </div>
+              {successData.oldDate && successData.newDate ? (
+                <p className="text-muted-foreground text-xs mt-1">
+                  Decay calibrated. Next revision: <span className="line-through opacity-70 mr-1">{successData.oldDate}</span> 
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">➔ {successData.newDate}</span>
+                </p>
+              ) : (
+                <p className="text-muted-foreground text-xs mt-1">
+                  {successData.detailText || 'Performance successfully recorded.'}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -245,15 +348,15 @@ If max score is not mentioned, assume total is 40.`;
         </div>
         <div>
           <h3 className="text-xl font-bold tracking-tight text-foreground">Log Study Session</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">Select a block, then paste text or drop a screenshot of your score report.</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Select a subject, choose a study block, then paste text or drop a screenshot of your score report.</p>
         </div>
       </div>
 
       <AdaptiveLoggerSelector 
+        subjectId={selectedSubjectId} 
+        onSubjectChange={setSelectedSubjectId}
         blockId={selectedBlockId} 
         onBlockChange={setSelectedBlockId}
-        systemId={selectedSystemId}
-        onSystemChange={setSelectedSystemId}
       />
 
       <div className={cn(
@@ -320,7 +423,7 @@ If max score is not mentioned, assume total is 40.`;
           )}
           <Button 
             onClick={handleProcess} 
-            disabled={loadingPhase >= 0 || !selectedSystemId || (!text.trim() && !imageFile)} 
+            disabled={loadingPhase >= 0 || !selectedSubjectId || (!text.trim() && !imageFile)} 
             className="w-full sm:w-auto gap-2 rounded-xl shadow-md h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 disabled:bg-emerald-600"
           >
             {loadingPhase >= 0 ? <Brain className="w-4 h-4 animate-pulse" /> : <Sparkles className="w-4 h-4" />}
