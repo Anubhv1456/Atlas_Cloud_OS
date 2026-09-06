@@ -134,7 +134,8 @@ Format your output STRICTLY as a JSON object matching this schema:
 
       if (result.systems && Array.isArray(result.systems)) {
         for (const sysLog of result.systems) {
-          const matchedSys = allSystems.find(s => s.name.toLowerCase() === sysLog.name.toLowerCase());
+          if (!sysLog || typeof sysLog.name !== 'string') continue;
+          const matchedSys = allSystems.find(s => s.name && s.name.toLowerCase() === sysLog.name.toLowerCase());
           
           if (matchedSys) {
             const scoreNum = Number(sysLog.score);
