@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '@/db';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { loadUniversalOntology } from '@/lib/exam-presets';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 
@@ -34,6 +33,7 @@ export function CurriculumInitializationEngine({ children }: { children: React.R
       // Check if blueprint version needs update / reconciliation
       if (currentVersion !== ATLAS_CURRICULUM_VERSION) {
         try {
+          const { loadUniversalOntology } = await import('@/lib/exam-presets');
           await loadUniversalOntology({
             targetExam,
             force: false,
@@ -55,6 +55,7 @@ export function CurriculumInitializationEngine({ children }: { children: React.R
         const currentCount = await db.subjects.count();
         if (currentCount === 0 && isMounted) {
           try {
+            const { loadUniversalOntology } = await import('@/lib/exam-presets');
             await loadUniversalOntology({
               targetExam,
               force: false,

@@ -82,24 +82,6 @@ export default function Home() {
   const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
-  const isUSMLE = profile.targetExam?.toLowerCase().includes('usmle');
-
-  const handleSwitchToUSMLE = async () => {
-    try {
-      await updateProfile({
-        targetExam: 'USMLE Step 1',
-        curriculum: 'Organ-System Based (Cardiology, Neurology, etc.)'
-      });
-      db.switchWorkspace('USMLE Step 1');
-      await loadUniversalOntology({ targetExam: 'USMLE Step 1', force: false });
-      toast.success('Switched to USMLE Step 1 Track', {
-        description: '10 Clinical Organ Systems blueprint activated.'
-      });
-    } catch (e) {
-      toast.error('Failed to switch track: ' + String(e));
-    }
-  };
-
   useEffect(() => {
     // Auto trigger onboarding if completed flag is missing
     if (!onboardingLoading && hasOnboarded === false) {
@@ -164,32 +146,6 @@ export default function Home() {
           
           <ExamCountdownWidget />
           
-          {/* ── Optional Blueprint Notification Banner if on NEET-PG track ── */}
-          {!isUSMLE && (
-            <div className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-teal-500/10 border border-teal-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-foreground">
-                    USMLE 10 Clinical Organ Systems Blueprint Ready
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Explore CVS, RESP, RENAL, GI, ENDO, REPRO, NEURO, MSK, HEME & PSYCH with 280+ high-yield topics.
-                  </p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={handleSwitchToUSMLE}
-                className="text-xs font-bold px-3.5 h-8 rounded-xl bg-teal-600 text-white hover:bg-teal-700 active:scale-95 transition-all shrink-0 cursor-pointer shadow-xs"
-              >
-                Switch Track →
-              </Button>
-            </div>
-          )}
-
           {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
         <div className="mb-8">
           <NextActionCard />
