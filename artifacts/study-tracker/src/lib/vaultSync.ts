@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { db, dbEvents } from '@/db/schema';
 import { User } from 'firebase/auth';
 import { createSignedVaultBackup, verifyVaultBackupProvenance, AtlasVaultEnvelope } from './vaultSignature';
@@ -102,15 +103,91 @@ export interface RestoreVaultResult {
 /**
  * Robust JSON Import with Full Schema Recovery, Date Deserialization & Revision Schedule Rehydration.
  */
+
+// ── Capsule Architecture & Runtime Schemas ──────────────────────────────────────────────
+const ZDate = z.union([
+  z.date(),
+  z.string().transform((str) => {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) throw new Error("Invalid date string: " + str);
+    return d;
+  }),
+]).optional().nullable();
+
+const ZSubjectSchema = z.object({
+  id: z.number().or(z.string()).optional(),
+  name: z.string().min(1),
+  color: z.string().optional(),
+  isCustom: z.boolean().optional(),
+  progress: z.number().optional(),
+  totalTopics: z.number().optional(),
+  createdAt: ZDate,
+  updatedAt: ZDate,
+  deletedAt: ZDate,
+  focusUpdatedAt: ZDate,
+}).passthrough();
+
+const ZSystemSchema = z.object({
+  id: z.number().or(z.string()).optional(),
+  subjectId: z.number().or(z.string()),
+  name: z.string().min(1),
+  status: z.string().optional(),
+  contentCompleted: z.boolean().optional(),
+  qbankDone: z.boolean().optional(),
+  completionDate: ZDate,
+  lastRevisionDate: ZDate,
+  nextRevisionDate: ZDate,
+  revisionStartedAt: ZDate,
+  revisionCount: z.number().optional(),
+  createdAt: ZDate,
+  updatedAt: ZDate,
+  deletedAt: ZDate,
+  focusUpdatedAt: ZDate,
+}).passthrough();
+
+const ZCurriculumSetSchema = z.object({
+  id: z.string().optional(),
+  subjectId: z.number().or(z.string()),
+  systemId: z.number().or(z.string()),
+  name: z.string().min(1),
+  topicIds: z.array(z.string()).optional(),
+  contentCompleted: z.boolean().optional(),
+  qbankCompleted: z.boolean().optional(),
+  nextRevisionDate: ZDate,
+  lastRevisionDate: ZDate,
+}).passthrough();
+
+const ZCapsuleSchema = z.object({
+  schemaVersion: z.number().optional().default(1),
+  appVersion: z.string().optional(),
+  exportDate: z.string().optional(),
+  payload: z.object({
+    subjects: z.array(ZSubjectSchema).optional().default([]),
+    systems: z.array(ZSystemSchema).optional().default([]),
+    curriculumSets: z.array(ZCurriculumSetSchema).optional().default([]),
+    revisionSets: z.array(ZCurriculumSetSchema).optional().default([]),
+    history: z.array(z.any()).optional().default([]),
+    scoreLogs: z.array(z.any()).optional().default([]),
+  })
+});
+
 export async function restoreCompleteVault(
   jsonText: string,
   user: User | null
 ): Promise<RestoreVaultResult> {
   const parsed = JSON.parse(jsonText);
   const verification = await verifyVaultBackupProvenance(parsed, user?.uid || null);
-  const data = verification.payload || {};
+  
+  // 1. Zod Runtime Schema Validation & Coercion (Capsule Checkpoint)
+  const validationResult = ZCapsuleSchema.safeParse(verification);
+  if (!validationResult.success) {
+    console.error("Capsule validation failed:", validationResult.error);
+    throw new Error('Backup file validation failed. The data structure is corrupted or invalid.');
+  }
+  
+  const data = validationResult.data.payload;
 
-  if (!data.subjects && !data.systems && !data.history && !data.curriculumSets) {
+  if (data.subjects.length === 0 && data.systems.length === 0 && data.history.length === 0 && data.curriculumSets.length === 0) {
     throw new Error('Invalid Atlas backup format. Missing core curriculum tables.');
   }
 
