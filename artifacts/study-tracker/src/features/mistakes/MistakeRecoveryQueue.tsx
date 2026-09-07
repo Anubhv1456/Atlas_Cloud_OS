@@ -85,6 +85,7 @@ export function getTagMeta(tag: string) {
 export default function MistakeRecoveryQueue() {
   const { profile } = useExamProfile();
   const lexicon = useLexicon();
+  const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
 
   const searchStr = useSearch();
   const [, setLocation] = useLocation();
@@ -155,6 +156,10 @@ export default function MistakeRecoveryQueue() {
   const volatileMistakes = useMemo(() => {
     return activeMistakes.filter(m => m.isVolatile);
   }, [activeMistakes]);
+
+  const savedHeuristicsCount = useMemo(() => {
+    return rawMistakes.filter(m => !m.deletedAt && Boolean(m.heuristicRule)).length;
+  }, [rawMistakes]);
 
   const archivedMistakes = useMemo(() => {
     return rawMistakes.filter(m => !m.deletedAt && m.resolved);
@@ -289,19 +294,21 @@ export default function MistakeRecoveryQueue() {
             </Link>
             <span className="text-muted-foreground/40">•</span>
             <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-              High-Density Rule Ledger
+              {isUsmle ? "Mechanisms & Vignette Rules" : "High-Density Rule Ledger"}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-            <span>{lexicon.mistakesJournal}</span>
+            <span>{isUsmle ? "High-Yield Takeaways" : "Your 20th Notebook"}</span>
             <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
-              {activeMistakes.length} Active Rules
+              {isUsmle ? `${activeMistakes.length} Objectives Saved` : `${activeMistakes.length} Rules Saved for Exam Day`}
             </span>
           </h1>
 
           <p className="text-xs sm:text-sm text-muted-foreground max-w-xl leading-relaxed">
-            Your personal cheat sheet of confusing twin concepts, drug choices, classic triads, and volatile facts curated across 19 subjects.
+            {isUsmle
+              ? "Distilled mechanistic principles and high-yield differentiators forged from your missed vignette questions."
+              : "The high-yield cheat sheet you build with every mistake. Curated rules, classic traps, and volatile facts for exam day."}
           </p>
         </div>
 
@@ -358,13 +365,13 @@ export default function MistakeRecoveryQueue() {
           )}
         >
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">
-            Active Rules
+            {isUsmle ? "Saved Objectives" : "20th Notebook Rules"}
           </span>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-bold font-mono text-foreground">
-              {activeMistakes.length}
+              {savedHeuristicsCount}
             </span>
-            <span className="text-xs text-muted-foreground">active</span>
+            <span className="text-xs text-muted-foreground">of {activeMistakes.length} rules</span>
           </div>
         </div>
 
@@ -723,6 +730,7 @@ export default function MistakeRecoveryQueue() {
                         rule={rule}
                         subjectName={group.subjectName}
                         isCopied={copiedId === rule.id}
+                        isUsmle={isUsmle}
                         selectionMode={selectionMode}
                         isSelected={rule.id !== undefined && selectedIds.has(rule.id)}
                         onToggleSelection={() => rule.id !== undefined && toggleSelection(rule.id)}
@@ -753,6 +761,7 @@ export default function MistakeRecoveryQueue() {
                 rule={rule}
                 subjectName={subName}
                 isCopied={copiedId === rule.id}
+                isUsmle={isUsmle}
                 selectionMode={selectionMode}
                 isSelected={rule.id !== undefined && selectedIds.has(rule.id)}
                 onToggleSelection={() => rule.id !== undefined && toggleSelection(rule.id)}
@@ -814,6 +823,7 @@ interface RuleCardRowProps {
   rule: MistakeLog;
   subjectName: string;
   isCopied: boolean;
+  isUsmle?: boolean;
   onCopy: () => void;
   onEdit: () => void;
   onToggleVolatile: () => void;
@@ -825,6 +835,7 @@ function RuleCardRow({
   rule,
   subjectName,
   isCopied,
+  isUsmle,
   onCopy,
   onEdit,
   onToggleVolatile,
@@ -833,6 +844,19 @@ function RuleCardRow({
 }: RuleCardRowProps) {
   const ruleText = (rule.keyTakeaway || (rule as any).goldenTakeaway || (rule as any).questionTopic || '').trim();
   const tags = rule.tags || (rule as any).coreLenses || [];
+
+  const [customRule, setCustomRule] = useState(rule.heuristicRule || '');
+  const [isEditingRule, setIsEditingRule] = useState(false);
+
+  const handleSaveHeuristic = async () => {
+    if (!customRule.trim() || !rule.id) return;
+    await db.mistakeLogs.update(rule.id, {
+      heuristicRule: customRule.trim(),
+      updatedAt: new Date()
+    });
+    setIsEditingRule(false);
+    toast.success(isUsmle ? "Key Takeaway Saved!" : "Saved to 20th Notebook!");
+  };
 
   return (
     <div className={cn(
@@ -878,6 +902,74 @@ function RuleCardRow({
         <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed selection:bg-primary/20">
           {ruleText}
         </p>
+
+        {/* 20th Notebook Heuristic Forge / High-Yield Takeaway */}
+        {rule.heuristicRule && !isEditingRule ? (
+          <div className="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 min-w-0">
+              <span className="text-amber-600 dark:text-amber-400 font-bold text-xs shrink-0 mt-0.5">
+                {isUsmle ? "🎯 Key Takeaway:" : "📝 20th Rule:"}
+              </span>
+              <span className="text-xs sm:text-sm font-semibold text-foreground italic">
+                "{rule.heuristicRule}"
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCustomRule(rule.heuristicRule || '');
+                setIsEditingRule(true);
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground shrink-0 underline ml-2 cursor-pointer"
+            >
+              Edit
+            </button>
+          </div>
+        ) : (
+          <div className="mt-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                value={customRule}
+                onChange={(e) => setCustomRule(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveHeuristic();
+                  }
+                }}
+                placeholder={
+                  isUsmle
+                    ? "My key takeaway: e.g. In acute HF, avoid beta-blockers until euvolemic..."
+                    : "My rule for next time: e.g. Trigeminal neuralgia first line is Carbamazepine..."
+                }
+                className="h-8 text-xs rounded-xl bg-muted/40 border-border/80 focus:bg-background font-medium"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 self-end sm:self-auto">
+              <Button
+                size="sm"
+                type="button"
+                onClick={handleSaveHeuristic}
+                disabled={!customRule.trim()}
+                className="h-8 px-3 text-xs rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-2xs cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                <span>{isUsmle ? "Save Takeaway" : "Save Rule"}</span>
+              </Button>
+              {isEditingRule && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setIsEditingRule(false)}
+                  className="h-8 px-2 text-xs rounded-xl text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Toolbar */}

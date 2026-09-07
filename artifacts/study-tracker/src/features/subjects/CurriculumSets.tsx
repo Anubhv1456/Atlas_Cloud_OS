@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target, RefreshCw } from 'lucide-react';
+import { Folder, Edit, Trash2, GripVertical, CheckCircle2, Circle, MoreVertical, Target, RefreshCw, Calendar } from 'lucide-react';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { logCompletion } from '@/db/mutations';
 import { OntologyTopic } from '@/data/ontology';
 import { CurriculumSet } from '@/db/types';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +37,23 @@ const colorMap = {
 };
 
 export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: CurriculumSetsProps) {
+  const { profile } = useExamProfile();
+  const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
+
   const [formOpen, setFormOpen] = useState(false);
   const [aiLoggerOpen, setAiLoggerOpen] = useState(false);
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
   const [scoreModalOpen, setScoreModalOpen] = useState(false);
   const [scoreModalSet, setScoreModalSet] = useState<CurriculumSet | undefined>();
   const [isRehydrating, setIsRehydrating] = useState(false);
+
+  const handleNudgeRevision = async (setId: string, currentRevisionDate?: Date | string | null, daysDelta: number = 3) => {
+    const baseDate = currentRevisionDate ? new Date(currentRevisionDate) : new Date();
+    const newDate = new Date(baseDate.getTime() + daysDelta * 24 * 60 * 60 * 1000);
+    const targetDbTable = (db.curriculumSets || db.revisionSets);
+    await targetDbTable.update(setId, { nextRevisionDate: newDate, updatedAt: new Date() });
+    toast.success(`SDSR spaced to ${newDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} (+${daysDelta}d)`);
+  };
 
   const handleRehydrateDates = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -144,7 +156,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Folder className="w-3.5 h-3.5" /> Study Blocks
+            <Folder className="w-3.5 h-3.5" /> {isUsmle ? "Organ System & QBank Blocks" : "Subject Revision Blocks"}
           </h4>
           <div className="flex items-center gap-2">
             <button
@@ -172,7 +184,9 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
         </div>
         <div className="p-4 rounded-xl border border-dashed border-border/60 bg-muted/20 text-center">
           <p className="text-sm text-muted-foreground">
-            Organize topics the way you revise across your primary QBank, notes, or lecture sets.
+            {isUsmle
+              ? "Organize organ-system topics into tailored UWorld, Amboss, or NBME study blocks."
+              : "Organize subject topics the way you revise across your primary QBank, 20th notebook, or lecture sets."}
           </p>
         </div>
         <CurriculumSetForm
@@ -191,7 +205,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Folder className="w-3.5 h-3.5" /> Study Blocks
+          <Folder className="w-3.5 h-3.5" /> {isUsmle ? "Organ System & QBank Blocks" : "Subject Revision Blocks"}
         </h4>
         <div className="flex items-center gap-2">
           <button
@@ -290,9 +304,15 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                             <DropdownMenuTrigger className="p-1 rounded-md hover:bg-foreground/5 text-muted-foreground transition-colors">
                               <MoreVertical className="w-4 h-4" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditSet(rs); setFormOpen(true); }}>
-                                <Edit className="w-4 h-4 mr-2" /> Edit
+                                <Edit className="w-4 h-4 mr-2" /> Edit Block
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleNudgeRevision(rs.id!, rs.nextRevisionDate, 3)}>
+                                <Calendar className="w-4 h-4 mr-2 text-amber-500" /> Space SDSR (+3 Days)
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleNudgeRevision(rs.id!, rs.nextRevisionDate, 7)}>
+                                <Calendar className="w-4 h-4 mr-2 text-sky-500" /> Space SDSR (+7 Days)
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive focus:bg-destructive/10"

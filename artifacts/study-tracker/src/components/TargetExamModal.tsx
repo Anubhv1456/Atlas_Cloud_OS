@@ -69,8 +69,8 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
   useEffect(() => {
     // Auto-select curriculum based on known exam structures
-    if (targetExam === 'NEET PG' || targetExam === 'INICET' || targetExam === 'NEXT' || targetExam === 'INI-CET') {
-      setCurriculum('Organ-System Based (Cardiology, Neurology, etc.)');
+    if (targetExam.includes('NEET') || targetExam.includes('INI-CET') || targetExam.includes('INICET') || targetExam.includes('NEXT')) {
+      setCurriculum('Subject-Based (Anatomy, Pharmacology, Pathology, etc.)');
     } else if (targetExam.includes('USMLE') || targetExam.includes('PLAB') || targetExam.includes('AMC') || targetExam.includes('MCCQE')) {
       setCurriculum('Organ-System Based (Cardiology, Neurology, etc.)');
     } else if (targetExam === 'MBBS Professional Exams') {

@@ -49,6 +49,7 @@ import { VoiceWaveformVisualizer } from './VoiceWaveformVisualizer';
 import { ParsedAtlasAction } from '@/lib/ai/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useExamProfile } from '@/hooks/useExamProfile';
 
 export interface ChatAssistantDrawerProps {
   open: boolean;
@@ -56,27 +57,25 @@ export interface ChatAssistantDrawerProps {
   initialMode?: 'text' | 'voice';
 }
 
-const DEFAULT_PROMPT_PILLS = [
-  { label: "⚡ Priority decay review", text: "What are my highest priority memory decay topics right now?" },
-  { label: "📝 Log 45m Pharma", text: "Studied Pharmacology Autonomic Nervous System for 45 mins, high recall." },
-  { label: "💡 Add 20th Notebook Pearl", text: "Add pearl: DOC for acute manic episode with psychosis is Atypical Antipsychotic + Lithium." },
-  { label: "🎯 Record GT Mock Score", text: "Recorded Mock GT score 144/200, weak in Microbiology and Pathology." }
-];
-
 export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   open,
   onOpenChange,
   initialMode = 'text'
 }) => {
+  const { profile } = useExamProfile();
+  const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
+
   const { settings } = useAISettings();
   const { metrics, topDailyPulses } = useClinicalFrictionEngine();
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    // Initial welcome message
+    // Initial welcome message tailored to exam profile
     return [
       {
         id: 'msg-init',
         role: 'assistant',
-        content: "👋 Hello Doctor! I'm your **Atlas Study Assistant**. Dictate or type your study sessions, 20th notebook pearls, test scores, or ask high-yield questions based on your live curriculum.",
+        content: isUsmle
+          ? "👋 Hello Doctor! I'm your **Atlas USMLE Co-Pilot**. Dictate or type your UWorld/NBME blocks, high-yield takeaways, or ask diagnostic drill questions based on your organ systems curriculum."
+          : "👋 Hello Doctor! I'm your **Atlas NEET PG Co-Pilot**. Dictate or type your study sessions, 20th notebook pearls, GT mock scores, or ask high-yield recall drills based on your 19-subject curriculum.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -95,7 +94,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           : '';
         pills.push({
           label: `⚡ Review ${topCritical.subjectName}${mistakeText}`,
-          text: `What are my high-yield decay traps and unresolved 20th notebook mistakes in ${topCritical.subjectName}? Give me a rapid diagnostic drill.`
+          text: isUsmle
+            ? `What are my high-yield decay traps and unresolved takeaways in ${topCritical.subjectName}? Give me a rapid 2-step diagnostic drill.`
+            : `What are my high-yield decay traps and unresolved 20th notebook mistakes in ${topCritical.subjectName}? Give me a rapid diagnostic drill.`
         });
       }
 
@@ -115,21 +116,32 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
       if (pulse && !pills.some(p => p.label.includes(pulse.subjectName))) {
         pills.push({
           label: `🎯 ${pulse.subjectName}: ${pulse.topicName}`,
-          text: `Provide high-yield clinical pearls and first-line drugs/investigations of choice for ${pulse.subjectName} (${pulse.topicName}).`
+          text: isUsmle
+            ? `Provide high-yield mechanistic reasoning and distractor differentiators for ${pulse.subjectName} (${pulse.topicName}).`
+            : `Provide high-yield clinical pearls and first-line drugs/investigations of choice for ${pulse.subjectName} (${pulse.topicName}).`
         });
       }
     }
 
-    // 4. Fallback practical actions
-    pills.push(
-      { label: "💡 Log 20th Notebook Pearl", text: "Add 20th notebook pearl: DOC for acute manic episode with psychosis is Atypical Antipsychotic + Lithium." },
-      { label: "🧠 Quiz me on Cranial Nerves", text: "Quiz me on cranial nerve nuclei, exit foramina, and high-yield clinical lesions." },
-      { label: "🫀 Explain Beta-blocker contraindications", text: "Explain absolute and relative contraindications of Beta-blockers in high-yield detail." },
-      { label: "📊 Record GT Score", text: "Recorded Mock GT score 144/200, weak in Microbiology and Pathology." }
-    );
+    // 4. Fallback practical actions based on exam profile
+    if (isUsmle) {
+      pills.push(
+        { label: "💡 Log Key Takeaway", text: "Add takeaway: In acute HF exacerbation, avoid initiating beta-blockers until euvolemic." },
+        { label: "🧬 2-Step Mechanism Drill", text: "Give me a two-step USMLE diagnostic vignette testing cardiovascular pathophysiology." },
+        { label: "🫀 Explain Beta-blocker contraindications", text: "Explain absolute and relative contraindications of Beta-blockers in high-yield detail." },
+        { label: "📊 Record UWorld Block", text: "Recorded UWorld 40Q block: 75% correct in Renal and Pharmacology." }
+      );
+    } else {
+      pills.push(
+        { label: "💡 Log 20th Notebook Pearl", text: "Add 20th notebook pearl: DOC for acute manic episode with psychosis is Atypical Antipsychotic + Lithium." },
+        { label: "🧠 Quiz me on Cranial Nerves", text: "Quiz me on cranial nerve nuclei, exit foramina, and high-yield clinical lesions." },
+        { label: "🫀 Explain Beta-blocker contraindications", text: "Explain absolute and relative contraindications of Beta-blockers in high-yield detail." },
+        { label: "📊 Record GT Score", text: "Recorded Mock GT score 144/200, weak in Microbiology and Pathology." }
+      );
+    }
 
     return pills.slice(0, 5);
-  }, [metrics, topDailyPulses]);
+  }, [metrics, topDailyPulses, isUsmle]);
 
   const [setupStep, setSetupStep] = useState<0 | 1 | 2>(0);
 

@@ -31,7 +31,7 @@ export const DEFAULT_CURRICULUM_OPTIONS = [
 export const DEFAULT_EXAM_PROFILE: ExamProfile = {
   targetExam: 'NEET PG / INI-CET',
   targetExamDate: '',
-  curriculum: 'Organ-System Based (Cardiology, Neurology, etc.)',
+  curriculum: 'Subject-Based (Anatomy, Pharmacology, Pathology, etc.)',
   targetScore: '',
   dailyQuestionGoal: 40,
   currentYear: 'Final MBBS',

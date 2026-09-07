@@ -124,6 +124,7 @@ export interface MistakeLog {
 
   errorType: 'concept' | 'retrieval' | 'misread' | 'fomo';
   keyTakeaway: string;
+  heuristicRule?: string;
   source: 'GT' | 'QBank' | 'Custom';
   sourceExam?: string;
 

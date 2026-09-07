@@ -1,16 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon, Plus, Minus, Trash2, Calendar, ArrowRight } from 'lucide-react';
 import { db } from '@/db';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { AdaptiveLoggerSelector } from './AdaptiveLoggerSelector';
+
+interface StagedMistake {
+  id: string;
+  concept: string;
+  errorTag: string;
+}
+
+interface StagedData {
+  score: number;
+  total: number;
+  mistakes: StagedMistake[];
+  isGt: boolean;
+  targetSubject: any;
+  targetSystem: any;
+  defaultTotal: number;
+  calculatedOptimalDays: number;
+  intervalChoice: 'soon' | 'optimal' | 'extended';
+  subjectName: string;
+}
 
 export function AILoggerCard() {
   const { settings } = useAISettings();
+  const { profile } = useExamProfile();
+  const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
+
   const [text, setText] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -21,6 +44,7 @@ export function AILoggerCard() {
   const [selectedBlockId, setSelectedBlockId] = useState<string>('ad-hoc');
   
   const [loadingPhase, setLoadingPhase] = useState<number>(-1);
+  const [stagedData, setStagedData] = useState<StagedData | null>(null);
   const [successData, setSuccessData] = useState<{ 
     name: string; 
     oldDate?: string; 
@@ -161,124 +185,40 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       const totalNum = Number(result.total) || defaultTotal;
       const scorePercent = totalNum > 0 ? scoreNum / totalNum : 0;
 
-      // 1. Full-Syllabus Mock (GT / NBME)
-      if (isGt) {
-        await db.scoreLogs.add({
-          title: `AI Log: Full-Syllabus Mock (GT / NBME)`,
-          score: scoreNum,
-          total: totalNum,
-          percentage: scorePercent * 100,
-          type: 'gt',
-          timestamp: now,
-          createdAt: now
-        } as any);
-
-        if (result.mistakes && Array.isArray(result.mistakes)) {
-          for (const mistake of result.mistakes) {
-            await db.mistakeLogs.add({
-              topic: String(mistake).substring(0, 200),
-              subjectId: 'general',
-              systemId: 'gt',
-              source: 'GT',
-              errorType: 'concept',
-              createdAt: now,
-              updatedAt: now
-            } as any);
-          }
+      let calculatedOptimalDays = 12;
+      if (targetSystem) {
+        const previewUpdate = calibrateSystemSDSR(targetSystem, scorePercent, targetSubject?.name || 'General', 0.70, now);
+        if (previewUpdate.nextRevisionDate) {
+          const diffMs = new Date(previewUpdate.nextRevisionDate).getTime() - now.getTime();
+          calculatedOptimalDays = Math.max(2, Math.round(diffMs / (1000 * 60 * 60 * 24)));
         }
-
-        setSuccessData({
-          name: 'Full-Syllabus Mock (GT / NBME)',
-          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
-          detailText: `Full curriculum mock logged. ${result.mistakes?.length || 0} concept mistakes routed to Recovery Queue.`
-        });
-
-      // 2. Specific Study Block / System in Subject
-      } else if (targetSystem) {
-        const updated = calibrateSystemSDSR(targetSystem, scorePercent, targetSubject?.name || 'General', 0.70, now);
-        await db.systems.update(targetSystem.id!, updated);
-
-        await db.scoreLogs.add({
-          title: `AI Log: ${targetSubject?.name ? `${targetSubject.name} - ` : ''}${targetSystem.name}`,
-          score: scoreNum,
-          total: totalNum,
-          percentage: scorePercent * 100,
-          type: 'qbank',
-          subjectId: targetSubject?.id || targetSystem.subjectId,
-          systemId: targetSystem.id,
-          timestamp: now,
-          createdAt: now
-        } as any);
-
-        if (result.mistakes && Array.isArray(result.mistakes)) {
-          for (const mistake of result.mistakes) {
-            await db.mistakeLogs.add({
-              topic: String(mistake).substring(0, 200),
-              subjectId: targetSubject?.id || targetSystem.subjectId || 'general',
-              systemId: targetSystem.id!,
-              source: 'QBank',
-              errorType: 'concept',
-              createdAt: now,
-              updatedAt: now
-            } as any);
-          }
-        }
-
-        const oldDate = targetSystem.nextRevisionDate 
-          ? new Date(targetSystem.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
-          : 'None';
-        const newDate = updated.nextRevisionDate 
-          ? new Date(updated.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
-          : 'None';
-
-        setSuccessData({
-          name: `${targetSubject?.name ? `${targetSubject.name}: ` : ''}${targetSystem.name}`,
-          oldDate,
-          newDate,
-          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
-          detailText: `SDSR decay calibrated. Next revision scheduled.`
-        });
-
-      // 3. General Subject Practice (Uncategorized)
+      } else if (isGt) {
+        calculatedOptimalDays = 14;
       } else {
-        await db.scoreLogs.add({
-          title: `AI Log: ${targetSubject?.name || 'Subject'} Practice`,
-          score: scoreNum,
-          total: totalNum,
-          percentage: scorePercent * 100,
-          type: 'qbank',
-          subjectId: targetSubject?.id,
-          timestamp: now,
-          createdAt: now
-        } as any);
-
-        if (result.mistakes && Array.isArray(result.mistakes)) {
-          for (const mistake of result.mistakes) {
-            await db.mistakeLogs.add({
-              topic: String(mistake).substring(0, 200),
-              subjectId: targetSubject?.id || 'general',
-              source: 'QBank',
-              errorType: 'concept',
-              createdAt: now,
-              updatedAt: now
-            } as any);
-          }
-        }
-
-        setSuccessData({
-          name: `${targetSubject?.name || 'Subject'} Practice Logged`,
-          scoreText: `${scoreNum}/${totalNum} (${Math.round(scorePercent * 100)}%)`,
-          detailText: `Recorded to subject study history. ${result.mistakes?.length || 0} mistakes saved to Recovery Queue.`
-        });
+        calculatedOptimalDays = 10;
       }
 
-      setTimeout(() => {
-        setSuccessData(null);
-        setText('');
-        removeImage();
-        setSelectedSubjectId('');
-        setSelectedBlockId('ad-hoc');
-      }, 4500);
+      const defaultTag = isUsmle ? 'mechanism' : 'silly';
+      const stagedMistakes: StagedMistake[] = (result.mistakes && Array.isArray(result.mistakes))
+        ? result.mistakes.map((m: any, idx: number) => ({
+            id: `mistake-${Date.now()}-${idx}`,
+            concept: String(m).substring(0, 200),
+            errorTag: defaultTag
+          }))
+        : [];
+
+      setStagedData({
+        score: scoreNum,
+        total: totalNum,
+        mistakes: stagedMistakes,
+        isGt,
+        targetSubject,
+        targetSystem,
+        defaultTotal,
+        calculatedOptimalDays,
+        intervalChoice: 'optimal',
+        subjectName: targetSubject?.name || (isGt ? (isUsmle ? 'Full NBME Mock' : 'Full Grand Test') : 'Curriculum')
+      });
 
     } catch (e) {
       console.error(e);
@@ -287,6 +227,374 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       setLoadingPhase(-1);
     }
   };
+
+  const handleCommitStaged = async () => {
+    if (!stagedData) return;
+    const { score, total, mistakes, isGt, targetSubject, targetSystem, calculatedOptimalDays, intervalChoice } = stagedData;
+    const scorePercent = total > 0 ? score / total : 0;
+    const now = new Date();
+
+    let finalDays = calculatedOptimalDays;
+    if (intervalChoice === 'soon') {
+      finalDays = Math.max(isUsmle ? 3 : 2, Math.round(calculatedOptimalDays * 0.5));
+    } else if (intervalChoice === 'extended') {
+      finalDays = Math.max(finalDays + 2, Math.round(calculatedOptimalDays * 1.6));
+    }
+
+    const calculatedNextDate = new Date(now.getTime() + finalDays * 24 * 60 * 60 * 1000);
+
+    if (isGt) {
+      await db.scoreLogs.add({
+        title: isUsmle ? `Mock Exam: Full NBME Comprehensive` : `Grand Test: Full-Syllabus Mock (GT)`,
+        score,
+        total,
+        percentage: scorePercent * 100,
+        type: 'gt',
+        timestamp: now,
+        createdAt: now
+      } as any);
+
+      for (const m of mistakes) {
+        await db.mistakeLogs.add({
+          topic: m.concept,
+          keyTakeaway: m.concept,
+          tags: [m.errorTag],
+          subjectId: 'general',
+          systemId: 'gt',
+          source: 'GT',
+          errorType: 'concept',
+          resolved: false,
+          createdAt: now,
+          updatedAt: now
+        } as any);
+      }
+
+      setSuccessData({
+        name: isUsmle ? 'Full NBME Comprehensive' : 'Full Grand Test (GT)',
+        scoreText: `${score}/${total} (${Math.round(scorePercent * 100)}%)`,
+        detailText: `${mistakes.length} mistakes saved to your error notebook.`
+      });
+    } else if (targetSystem) {
+      const updated = calibrateSystemSDSR(targetSystem, scorePercent, targetSubject?.name || 'General', 0.70, now);
+      updated.nextRevisionDate = calculatedNextDate;
+      await db.systems.update(targetSystem.id!, updated);
+
+      await db.scoreLogs.add({
+        title: `${targetSubject?.name ? `${targetSubject.name} - ` : ''}${targetSystem.name}`,
+        score,
+        total,
+        percentage: scorePercent * 100,
+        type: 'qbank',
+        subjectId: targetSubject?.id || targetSystem.subjectId,
+        systemId: targetSystem.id,
+        timestamp: now,
+        createdAt: now
+      } as any);
+
+      for (const m of mistakes) {
+        await db.mistakeLogs.add({
+          topic: m.concept,
+          keyTakeaway: m.concept,
+          tags: [m.errorTag],
+          subjectId: targetSubject?.id || targetSystem.subjectId || 'general',
+          systemId: targetSystem.id!,
+          source: 'QBank',
+          errorType: 'concept',
+          resolved: false,
+          createdAt: now,
+          updatedAt: now
+        } as any);
+      }
+
+      const oldDate = targetSystem.nextRevisionDate 
+        ? new Date(targetSystem.nextRevisionDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+        : 'None';
+      const newDate = calculatedNextDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+
+      setSuccessData({
+        name: `${targetSubject?.name ? `${targetSubject.name}: ` : ''}${targetSystem.name}`,
+        oldDate,
+        newDate,
+        scoreText: `${score}/${total} (${Math.round(scorePercent * 100)}%)`,
+        detailText: `Review scheduled in ${finalDays} days.`
+      });
+    } else {
+      await db.scoreLogs.add({
+        title: `${targetSubject?.name || 'Subject'} Practice`,
+        score,
+        total,
+        percentage: scorePercent * 100,
+        type: 'qbank',
+        subjectId: targetSubject?.id,
+        timestamp: now,
+        createdAt: now
+      } as any);
+
+      for (const m of mistakes) {
+        await db.mistakeLogs.add({
+          topic: m.concept,
+          keyTakeaway: m.concept,
+          tags: [m.errorTag],
+          subjectId: targetSubject?.id || 'general',
+          source: 'QBank',
+          errorType: 'concept',
+          resolved: false,
+          createdAt: now,
+          updatedAt: now
+        } as any);
+      }
+
+      setSuccessData({
+        name: `${targetSubject?.name || 'Subject'} Practice Logged`,
+        scoreText: `${score}/${total} (${Math.round(scorePercent * 100)}%)`,
+        detailText: `${mistakes.length} mistakes saved to your notebook.`
+      });
+    }
+
+    setStagedData(null);
+    setText('');
+    removeImage();
+    setSelectedSubjectId('');
+    setSelectedBlockId('ad-hoc');
+
+    setTimeout(() => {
+      setSuccessData(null);
+    }, 4500);
+  };
+
+  if (stagedData) {
+    const errorTags = isUsmle ? [
+      { id: 'mechanism', label: '🧬 Missed Mechanism', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+      { id: 'distractor', label: '🎯 Distractor Trap', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30' },
+      { id: 'graph', label: '📊 Graph/Table Trap', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30' },
+      { id: 'timing', label: '⏳ Next Best Step', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30' },
+    ] : [
+      { id: 'silly', label: '⚡ Silly Mistake', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+      { id: 'fact', label: '🧠 Forgot Fact', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30' },
+      { id: 'image', label: '🖼️ Image/ECG Trap', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30' },
+      { id: 'guess', label: '🔄 50-50 Guess', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30' },
+    ];
+    const soonDays = Math.max(isUsmle ? 3 : 2, Math.round(stagedData.calculatedOptimalDays * 0.5));
+    const optDays = stagedData.calculatedOptimalDays;
+    const extDays = Math.round(stagedData.calculatedOptimalDays * 1.6);
+    const scorePct = stagedData.total > 0 ? Math.round((stagedData.score / stagedData.total) * 100) : 0;
+
+    return (
+      <div className="bg-card border border-primary/30 shadow-lg rounded-2xl p-6 sm:p-7 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300 relative overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isUsmle ? "Review Your Block" : "Quick Check"}</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+              {stagedData.subjectName}
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              {isUsmle
+                ? "Double-check your score and mark what tripped you up."
+                : "We spotted your score and mistakes. Tap an error tag so your future review targets the right gap."}
+            </p>
+          </div>
+
+          {/* Interactive Score Stepper Pill */}
+          <div className="flex items-center gap-2 bg-muted/40 border border-border/60 p-2 rounded-2xl shrink-0 self-start sm:self-auto">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setStagedData(prev => prev ? { ...prev, score: Math.max(0, prev.score - 1) } : null)}
+                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
+                title="Decrease score"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <div className="px-2.5 py-0.5 text-center min-w-[54px]">
+                <div className="text-base font-bold font-mono text-foreground leading-tight">
+                  {stagedData.score}
+                </div>
+                <div className="text-[10px] text-muted-foreground font-mono">Score</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStagedData(prev => prev ? { ...prev, score: Math.min(prev.total, prev.score + 1) } : null)}
+                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
+                title="Increase score"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="text-muted-foreground/50 text-sm font-light">/</div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setStagedData(prev => prev ? { ...prev, total: Math.max(1, prev.total - 1) } : null)}
+                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
+                title="Decrease total questions"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <div className="px-2 py-0.5 text-center min-w-[44px]">
+                <div className="text-base font-bold font-mono text-foreground leading-tight">
+                  {stagedData.total}
+                </div>
+                <div className="text-[10px] text-muted-foreground font-mono">Total</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStagedData(prev => prev ? { ...prev, total: prev.total + 1 } : null)}
+                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
+                title="Increase total questions"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className={cn(
+              "ml-1 px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold shrink-0 border",
+              scorePct >= 70
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : scorePct >= 50
+                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+            )}>
+              {scorePct}%
+            </div>
+          </div>
+        </div>
+
+        {/* Mistakes Section */}
+        <div className="py-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-semibold uppercase tracking-wider text-foreground">
+              {isUsmle ? "Extracted Missed Questions" : "Extracted Mistakes"} ({stagedData.mistakes.length})
+            </span>
+            <span>Tap tag to classify error</span>
+          </div>
+
+          {stagedData.mistakes.length === 0 ? (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border/40 text-center text-xs text-muted-foreground">
+              No specific mistakes detected in this report. Your overall score and mastery will be logged.
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {stagedData.mistakes.map((mistake) => (
+                <div
+                  key={mistake.id}
+                  className="p-3 rounded-xl bg-muted/20 border border-border/60 hover:border-border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                >
+                  <div className="flex items-start gap-2 min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStagedData(prev => prev ? {
+                          ...prev,
+                          mistakes: prev.mistakes.filter(m => m.id !== mistake.id)
+                        } : null);
+                      }}
+                      className="p-1 rounded-md text-muted-foreground/70 hover:text-rose-500 hover:bg-rose-500/10 transition-colors mt-0.5 cursor-pointer"
+                      title="Remove this mistake"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-xs sm:text-sm font-medium text-foreground leading-snug">
+                      {mistake.concept}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap shrink-0 pl-6 sm:pl-0">
+                    {errorTags.map((tag) => {
+                      const isSelected = mistake.errorTag === tag.id;
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => {
+                            setStagedData(prev => prev ? {
+                              ...prev,
+                              mistakes: prev.mistakes.map(m => m.id === mistake.id ? { ...m, errorTag: tag.id } : m)
+                            } : null);
+                          }}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer select-none active:scale-95",
+                            isSelected
+                              ? cn(tag.color, "ring-2 ring-primary/20 shadow-xs font-bold")
+                              : "bg-background/60 hover:bg-background text-muted-foreground border-border/50"
+                          )}
+                        >
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* SDSR Spacing Choice */}
+        <div className="pt-3 pb-4 border-t border-border/50 space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">
+            {isUsmle
+              ? `${stagedData.subjectName} concepts stick longer once understood. Choose your review pace:`
+              : `${stagedData.subjectName} topics fade quickly without review. Choose your review pace:`}
+          </p>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { key: 'soon' as const, days: soonDays, title: "Review Soon" },
+              { key: 'optimal' as const, days: optDays, title: "Recommended" },
+              { key: 'extended' as const, days: extDays, title: isUsmle ? "Solid Mastery" : "Know This Well" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStagedData(prev => prev ? { ...prev, intervalChoice: opt.key } : null)}
+                className={cn(
+                  "p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 active:scale-95",
+                  stagedData.intervalChoice === opt.key
+                    ? "bg-primary/15 border-primary/50 text-primary ring-2 ring-primary/20 font-bold"
+                    : "bg-muted/20 border-border/60 hover:bg-muted/40 text-muted-foreground"
+                )}
+              >
+                <div className="flex items-center gap-1 text-xs font-bold text-foreground">
+                  <Calendar className="w-3 h-3 text-primary" />
+                  <span>{opt.days} Days</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate">{opt.title}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border/50">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setStagedData(null);
+            }}
+            className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground rounded-xl cursor-pointer"
+          >
+            Discard & Re-upload
+          </Button>
+
+          <Button
+            type="button"
+            onClick={handleCommitStaged}
+            className="w-full sm:w-auto px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md cursor-pointer transition-colors"
+          >
+            <span>{isUsmle ? "Log Block & Save" : "Save & Update Schedule"}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (successData) {
     return (

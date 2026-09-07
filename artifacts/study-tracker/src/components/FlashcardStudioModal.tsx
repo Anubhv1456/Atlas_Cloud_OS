@@ -9,6 +9,7 @@ import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { Settings2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useExamProfile } from '@/hooks/useExamProfile';
 
 interface FlashcardStudioModalProps {
   isOpen: boolean;
@@ -21,13 +22,23 @@ interface FlashcardStudioModalProps {
 
 type Step = 'select' | 'preview_loading' | 'preview_ready' | 'generating' | 'complete';
 
-const PRESETS = [
-  { id: 'vignettes', type: 'vignette', label: 'Clinical Vignettes', desc: 'Short, one-sentence clinical scenarios.', prompt: 'Format as short, one-sentence clinical vignettes.' },
-  { id: 'cloze', type: 'cloze', label: 'Cloze Deletion', desc: 'Fill-in-the-blank cards for high-yield terms.', prompt: 'Create Cloze Deletion (fill-in-the-blank) cards for high-yield terms.' },
-  { id: 'qa', type: 'strict_qa', label: 'Strict Q&A', desc: 'Keep answers under 5 words.', prompt: 'Strict Q&A format. Keep answers under 5 words.' }
+const NEET_PRESETS = [
+  { id: 'doc_ioc', type: 'strict_qa', label: '⚡ Drug / Test of Choice', desc: 'Direct recall for first-line therapies and gold-standard investigations.', prompt: 'Strict Q&A format focusing on Drug of Choice (DOC) and Investigation of Choice (IOC). Keep answers under 5 words.' },
+  { id: 'cloze', type: 'cloze', label: '📝 High-Yield Cloze', desc: 'Fill-in-the-blank cards for criteria, staging, and tricky facts.', prompt: 'Create Cloze Deletion ({{c1::hidden text}}) cards for high-yield criteria, triad, or numerical facts.' },
+  { id: 'vignettes', type: 'vignette', label: '🏥 Clinical Triads & Images', desc: 'Clinical presentation to classic triad or visual buzzword.', prompt: 'Format as short, one-sentence clinical vignettes linking presentation to classic triad or buzzword.' },
+];
+
+const USMLE_PRESETS = [
+  { id: 'mechanism', type: 'vignette', label: '🧬 2-Step Mechanism', desc: 'Tests pathophysiology mechanism rather than simple memorization.', prompt: 'Format as two-step mechanistic reasoning cards: from clinical vignette to underlying cellular/molecular pathophysiology.' },
+  { id: 'next_step', type: 'strict_qa', label: '🎯 Next Best Step', desc: 'Best initial test, diagnostic algorithm, or urgent intervention.', prompt: 'Strict management dilemma format: What is the single next best step in management? Keep answer concise.' },
+  { id: 'cloze', type: 'cloze', label: '📝 Distractor Cloze', desc: 'Cloze deletions specifically designed to differentiate lookalike diseases.', prompt: 'Create Cloze Deletion ({{c1::hidden text}}) cards targeting high-yield differentiators between lookalike diseases.' },
 ];
 
 export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMistakes, selectedMistakes = [], onMarkExported }: FlashcardStudioModalProps) {
+  const { profile } = useExamProfile();
+  const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
+  const presets = isUsmle ? USMLE_PRESETS : NEET_PRESETS;
+
   const [scope, setScope] = useState<'smart' | 'visible' | 'all' | 'selected'>(
     selectedMistakes.length > 0 ? 'selected' : 'smart'
   );
@@ -91,7 +102,7 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
     };
   }, [deckUrl]);
 
-  const handleSelectPreset = async (preset: typeof PRESETS[0]) => {
+  const handleSelectPreset = async (preset: typeof NEET_PRESETS[0]) => {
     setPrompt(preset.prompt);
     setFormatType(preset.type);
     generatePreview(preset.prompt, preset.type);
@@ -219,7 +230,7 @@ return (
                 <div>
                   <h3 className="text-sm font-semibold text-foreground mb-3">Select Format</h3>
                   <div className="flex flex-wrap gap-2 mb-4 bg-muted/30 p-1.5 rounded-xl border">
-                    {PRESETS.map((preset) => (
+                    {presets.map((preset) => (
                       <button
                         key={preset.id}
                         onClick={() => {
@@ -247,13 +258,13 @@ return (
                     {!isCustom ? (
                       <div className="p-4 rounded-xl bg-muted/20 border border-border/60">
                         <p className="text-sm text-muted-foreground mb-4">
-                          {PRESETS.find(p => p.prompt === prompt)?.desc || 'Select a format to preview'}
+                          {presets.find(p => p.prompt === prompt)?.desc || 'Select a format to preview'}
                         </p>
                         <div className="flex justify-end">
                           <Button 
                             size="sm" 
                             onClick={() => {
-                              const preset = PRESETS.find(p => p.prompt === prompt);
+                              const preset = presets.find(p => p.prompt === prompt);
                               if (preset) generatePreview(preset.prompt, preset.type);
                             }}
                             disabled={!prompt}
@@ -370,6 +381,53 @@ return (
                          <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2 pl-2">Back</div>
                          <div className="text-sm pl-2" dangerouslySetInnerHTML={{ __html: previewCard.back }} />
                       </div>
+
+                      {/* 1-Tap Micro Polish */}
+                      <div className="pt-2 border-t border-border/50">
+                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                          1-Tap Quick Polish
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const refinedPrompt = `${prompt} Keep it ultra-concise, under 10 words.`;
+                              setPrompt(refinedPrompt);
+                              generatePreview(refinedPrompt, formatType);
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-background hover:bg-muted border border-border/70 text-foreground transition-all cursor-pointer active:scale-95 shadow-2xs"
+                          >
+                            ✂️ More Concise
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const refinedPrompt = isUsmle
+                                ? `${prompt} Emphasize 2-step mechanistic pathophysiology.`
+                                : `${prompt} Emphasize first-line Drug of Choice (DOC) and Investigation of Choice (IOC).`;
+                              setPrompt(refinedPrompt);
+                              generatePreview(refinedPrompt, formatType);
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-background hover:bg-muted border border-border/70 text-foreground transition-all cursor-pointer active:scale-95 shadow-2xs"
+                          >
+                            {isUsmle ? "🧬 Mechanism Focus" : "💊 DOC / IOC Focus"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const refinedPrompt = `${prompt} Ensure the high-yield term is enclosed in cloze deletion syntax {{c1::keyword}}.`;
+                              setPrompt(refinedPrompt);
+                              setFormatType('cloze');
+                              generatePreview(refinedPrompt, 'cloze');
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-background hover:bg-muted border border-border/70 text-foreground transition-all cursor-pointer active:scale-95 shadow-2xs"
+                          >
+                            📝 Convert to Cloze
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -428,10 +486,14 @@ return (
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 
-                <div className="text-center space-y-1">
-                  <h3 className="text-xl font-bold">Atlas Deck Ready</h3>
+                <div className="text-center space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-semibold mb-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isUsmle ? "Curated by you for USMLE · High-Yield Vignette Deck" : "Curated by you for NEET PG · 20th Notebook Deck"}</span>
+                  </div>
+                  <h3 className="text-xl font-bold">Your Curated Deck is Ready</h3>
                   <p className="text-sm text-muted-foreground">
-                    Successfully generated {generatedCards.length} highly optimized flashcards.
+                    Successfully generated {generatedCards.length} high-yield active recall flashcards.
                     {failedCount > 0 && ` (${failedCount} rules skipped due to network errors).`}
                   </p>
                 </div>
