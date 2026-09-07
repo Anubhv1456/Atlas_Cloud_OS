@@ -136,8 +136,8 @@ export function ScoreLogModal({
   const percentage = isValidScore ? Math.round((scoreNum / totalNum) * 100 * 100) / 100 : 0;
 
   const getPercentageColor = (pct: number) => {
-    if (pct >= 80) return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-    if (pct >= 60) return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+    if (pct >= 80) return 'text-emerald-400 bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30';
+    if (pct >= 60) return 'text-amber-400 bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30';
     return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
   };
 
@@ -296,7 +296,7 @@ export function ScoreLogModal({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-2xl">
-          <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-6 border border-emerald-500/20 shadow-inner">
+          <div className="w-20 h-20 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner">
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <h3 className="text-2xl font-bold tracking-tight mb-2">Session Recorded</h3>
@@ -304,12 +304,12 @@ export function ScoreLogModal({
           
           <div className="w-full space-y-3 text-sm text-left bg-muted/30 p-4 rounded-xl border border-border/50">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></div>
+              <div className="mt-0.5"><CheckCircle2 className="w-4 h-4 text-emerald-400" /></div>
               <div className="flex-1">
                 <p className="font-semibold text-foreground">{successData.name}</p>
                 <p className="text-muted-foreground text-xs">
                   Decay slowed. Next revision: <span className="line-through opacity-70 mr-1">{successData.oldDate}</span> 
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">➔ {successData.newDate}</span>
+                  <span className="font-semibold text-emerald-400 dark:text-emerald-400">➔ {successData.newDate}</span>
                 </p>
               </div>
             </div>
@@ -325,7 +325,7 @@ export function ScoreLogModal({
       <DialogContent className="sm:max-w-[480px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800/40 text-primary flex items-center justify-center shrink-0">
               <Award className="w-5 h-5" />
             </div>
             Log Performance Score
@@ -337,7 +337,7 @@ export function ScoreLogModal({
 
         <form onSubmit={handleSave} className="space-y-4 pt-2">
           {/* AI Shortcut Advertising */}
-          <div className="flex items-center gap-2 p-2.5 rounded-xl border border-primary/20 bg-primary/5 text-primary text-xs font-medium">
+          <div className="flex items-center gap-2 p-2.5 rounded-xl border border-white/5 bg-primary/5 text-primary text-xs font-medium">
             <Sparkles className="w-4 h-4 shrink-0" />
             <span className="leading-snug">Tired of typing? Just copy your Q-Bank score report to your clipboard and open the Atlas AI Assistant to auto-fill this.</span>
           </div>

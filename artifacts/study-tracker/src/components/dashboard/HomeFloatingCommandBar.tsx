@@ -414,7 +414,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
 
                       <div className="flex items-center gap-2">
                         {!isPausedCountdown && (
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs text-emerald-400 font-mono font-semibold">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-950/20 border border-emerald-500/30 rounded-full text-xs text-emerald-400 font-mono font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             <span>Auto-saving in {countdown}s</span>
                           </div>

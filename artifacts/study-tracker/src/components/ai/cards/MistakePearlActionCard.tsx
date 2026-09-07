@@ -50,14 +50,14 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
   };
 
   return (
-    <div className="bg-card/95 backdrop-blur-xl border border-amber-500/20 rounded-2xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+    <div className="bg-card/95 backdrop-blur-xl border border-white/5 border-l-2 border-l-amber-500/30 rounded-2xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
               20th Notebook Pearl
             </span>
             <h4 className="text-sm font-bold text-foreground leading-tight">{subjectName}</h4>
@@ -96,7 +96,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
 
         {/* Pitfall Trap Box */}
         <div className="bg-background/90 border border-border/60 rounded-xl p-2.5 focus-within:ring-1 focus-within:ring-amber-500/50">
-          <div className="flex items-center gap-1 text-xs uppercase font-bold text-amber-500/90 mb-0.5">
+          <div className="flex items-center gap-1 text-xs uppercase font-bold text-amber-400/90 mb-0.5">
             <ShieldAlert className="w-3 h-3" />
             <span>Common Trap / Pitfall</span>
           </div>
@@ -119,7 +119,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
             onClick={() => setErrorType(t.id)}
             className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
               errorType === t.id
-                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/30'
+                ? 'bg-amber-500/20 text-amber-400 dark:text-amber-400 font-semibold border border-amber-500/30'
                 : 'bg-muted/40 text-muted-foreground hover:bg-muted'
             }`}
           >

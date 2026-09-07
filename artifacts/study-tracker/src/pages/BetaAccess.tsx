@@ -230,7 +230,7 @@ export default function BetaAccess() {
             <motion.div 
               animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.05, 1] }} 
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full"
+              className="absolute inset-0 bg-zinc-800/50 blur-xl rounded-full"
             />
             <div className="w-16 h-16 rounded-[1.25rem] border border-white/10 bg-white/[0.02] flex items-center justify-center backdrop-blur-md relative z-10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)]">
               <AtlasEmblem className="w-8 h-8 text-teal-400" glow={true} />
@@ -339,7 +339,7 @@ export default function BetaAccess() {
         {(submitted || paymentStatus === 'pending') && !isResubmitting ? (
           /* ==================== STATE: PAYMENT SUBMITTED / PENDING VERIFICATION ==================== */
           <div className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-[28px] p-6 sm:p-10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               <span>Verification Pending — Manual Review</span>
             </div>
@@ -422,7 +422,7 @@ export default function BetaAccess() {
             
             {/* Vault Provenance Anti-Hopping Notice */}
             {vaultActivationRequired && (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left space-y-2">
+              <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/25 text-left space-y-2">
                 <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
                   <ShieldCheck className="w-4 h-4" />
                   <span>High-Volume Study Vault Restored</span>
@@ -436,7 +436,7 @@ export default function BetaAccess() {
             {/* Top Cohort Header Banner */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-white/[0.06]">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold mb-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                   {cohortHeaderTitle}
                 </div>
@@ -529,7 +529,7 @@ export default function BetaAccess() {
                   {/* Mobile Direct UPI Intent Link */}
                   <a
                     href={upiDeepLink}
-                    className="w-full py-2.5 px-3 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/50 text-teal-300 border border-teal-500/25 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <Smartphone className="w-3.5 h-3.5" />
                     <span>Pay via GPay / PhonePe App</span>
@@ -553,7 +553,7 @@ export default function BetaAccess() {
                     value={upiReference}
                     onChange={(e) => setUpiReference(e.target.value)}
                     placeholder="e.g. 423910842910"
-                    className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/10 px-3.5 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/30 transition-all"
+                    className="w-full h-11 rounded-xl bg-white/[0.03] border border-white/10 px-3.5 text-xs font-mono text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-white/10 focus:ring-1 focus:ring-teal-500/30 transition-all"
                   />
                   <p className="text-xs text-zinc-500 leading-tight">
                     Found in payment app receipt under UTR, Ref ID, or Transaction Reference.
@@ -576,7 +576,7 @@ export default function BetaAccess() {
                   />
 
                   {proofImage ? (
-                    <div className="p-2.5 bg-teal-500/10 border border-teal-500/30 rounded-xl flex items-center justify-between gap-2">
+                    <div className="p-2.5 bg-zinc-800/40 border border-teal-500/30 rounded-xl flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         <img src={proofImage} alt="Uploaded Proof" className="w-8 h-8 rounded-lg object-cover border border-teal-500/30 shrink-0" />
                         <div className="truncate">

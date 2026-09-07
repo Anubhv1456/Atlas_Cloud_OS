@@ -20,12 +20,12 @@ interface ViewMarkersModalProps {
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
-  clinical_pearl: <Stethoscope className="w-4 h-4 text-emerald-500" />,
-  mnemonic: <Lightbulb className="w-4 h-4 text-amber-500" />,
+  clinical_pearl: <Stethoscope className="w-4 h-4 text-emerald-400" />,
+  mnemonic: <Lightbulb className="w-4 h-4 text-amber-400" />,
   pitfall: <TriangleAlert className="w-4 h-4 text-rose-500" />,
-  resource: <Video className="w-4 h-4 text-blue-500" />,
-  high_yield: <Sparkles className="w-4 h-4 text-emerald-500" />,
-  memory_trick: <Lightbulb className="w-4 h-4 text-amber-500" />,
+  resource: <Video className="w-4 h-4 text-zinc-300" />,
+  high_yield: <Sparkles className="w-4 h-4 text-emerald-400" />,
+  memory_trick: <Lightbulb className="w-4 h-4 text-amber-400" />,
 };
 
 const typeLabels: Record<string, string> = {
@@ -111,7 +111,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
             {onLeaveMarker && (
               <button 
                 onClick={() => { onClose(); onLeaveMarker(); }}
-                className="px-3 py-1.5 rounded-full bg-primary/10 text-primary font-bold text-xs transition-colors hover:bg-primary/20 shrink-0 cursor-pointer"
+                className="px-3 py-1.5 rounded-full bg-zinc-800/40 text-primary font-bold text-xs transition-colors hover:bg-primary/20 shrink-0 cursor-pointer"
               >
                 + Leave Trail Marker
               </button>
@@ -125,7 +125,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
         >
           {loading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-white/5 border-t-primary rounded-full animate-spin" />
               <p className="text-xs font-medium">Uncovering trail markers...</p>
             </div>
           ) : markers.length === 0 ? (
@@ -190,7 +190,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                              {typeIcons[marker.type] || typeIcons['clinical_pearl']}
                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{typeLabels[marker.type] || 'Clinical Pearl'}</span>
                              {isHighYieldTrail && (
-                               <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-500/20">
+                               <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-white/5 border-l-2 border-l-emerald-500/30">
                                  <ShieldCheck className="w-3 h-3" />
                                  High-Yield Trail
                                </span>
@@ -247,7 +247,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                               className={cn(
                                 "p-1.5 rounded-lg text-xs font-medium transition-colors border cursor-pointer",
                                 isSaved 
-                                  ? "bg-amber-500/10 text-amber-600 border-amber-500/30" 
+                                  ? "bg-amber-950/20 text-amber-400 border-amber-500/30" 
                                   : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted hover:border-border/50"
                               )}
                               title={isSaved ? "Saved" : "Save this marker"}
@@ -260,11 +260,11 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                               className={cn(
                                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border cursor-pointer",
                                 isVerifiedByMe 
-                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" 
+                                  ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 border-emerald-500/30" 
                                   : "bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground"
                               )}
                             >
-                              <Check className={cn("w-3.5 h-3.5", isVerifiedByMe && "text-emerald-500")} />
+                              <Check className={cn("w-3.5 h-3.5", isVerifiedByMe && "text-emerald-400")} />
                               <span>{isVerifiedByMe ? 'Verified' : 'Verify Pearl'}</span>
                               {helpfulByList.length > 0 && (
                                 <span className="font-mono text-xs opacity-80">({helpfulByList.length})</span>
@@ -274,7 +274,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                         ) : (
                           <div className="flex items-center gap-2">
                             {helpfulByList.length > 0 && (
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
                                 <Check className="w-3.5 h-3.5" />
                                 Verified by {helpfulByList.length} {helpfulByList.length === 1 ? 'candidate' : 'candidates'}
                               </div>

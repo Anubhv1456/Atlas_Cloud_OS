@@ -42,11 +42,11 @@ const ROTATING_PROMPTS = [
 ];
 
 const QUICK_NAV_ITEMS = [
-  { label: '20th Notebook & Clinical Pearls', path: '/mistakes', icon: Flame, color: 'text-amber-500 bg-amber-500/10' },
-  { label: 'Memory Decay Radar', path: '/radar', icon: Zap, color: 'text-primary bg-primary/10' },
+  { label: '20th Notebook & Clinical Pearls', path: '/mistakes', icon: Flame, color: 'text-amber-400 bg-amber-950/20' },
+  { label: 'Memory Decay Radar', path: '/radar', icon: Zap, color: 'text-primary bg-zinc-800/40' },
   { label: 'Mock Test Analytics', path: '/analytics', icon: Trophy, color: 'text-indigo-500 bg-indigo-500/10' },
-  { label: 'Study Timeline & Sprints', path: '/timeline', icon: Calendar, color: 'text-teal-500 bg-teal-500/10' },
-  { label: 'Configure AI Assistant & API Key', path: '/settings', icon: SettingsIcon, color: 'text-primary bg-primary/10' },
+  { label: 'Study Timeline & Sprints', path: '/timeline', icon: Calendar, color: 'text-zinc-300 bg-zinc-800/40' },
+  { label: 'Configure AI Assistant & API Key', path: '/settings', icon: SettingsIcon, color: 'text-primary bg-zinc-800/40' },
 ];
 
 export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
@@ -258,7 +258,7 @@ export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
                       className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-muted/80 text-left text-xs transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                        <div className="w-6 h-6 rounded-lg bg-zinc-800/40 flex items-center justify-center text-primary text-xs font-bold">
                           {sub.name.slice(0, 2).toUpperCase()}
                         </div>
                         <span className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
@@ -375,7 +375,7 @@ export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
             "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300",
             isListening
               ? "bg-rose-500 text-white animate-pulse"
-              : "bg-primary/10 text-primary group-hover:scale-105 group-hover:bg-primary/15"
+              : "bg-zinc-800/40 text-primary group-hover:scale-105 group-hover:bg-primary/15"
           )}>
             {isListening ? (
               <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />

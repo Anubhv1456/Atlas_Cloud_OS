@@ -58,7 +58,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
               <div className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-mono font-bold",
                 report.scoreDelta >= 0 
-                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                  ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 border border-emerald-500/30"
                   : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
               )}>
                 {report.scoreDelta >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -72,7 +72,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
           {/* Cluster Leakage Breakdown */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
               Subject Cluster Breakdown & Leakage Severity
             </h4>
 
@@ -85,7 +85,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
                     cl.leakageSeverity === 'HIGH'
                       ? "bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300"
                       : cl.leakageSeverity === 'MODERATE'
-                      ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300"
+                      ? "bg-amber-950/20 border-amber-500/30 text-amber-700 dark:text-amber-300"
                       : "bg-muted/40 border-border/60 text-foreground"
                   )}
                 >
@@ -109,7 +109,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-emerald-600 dark:text-emerald-400">0 Leakage</span>
+                      <span className="text-emerald-400 dark:text-emerald-400">0 Leakage</span>
                     )}
                   </div>
                 </div>
@@ -130,7 +130,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
                   key={idx}
                   className="p-3 rounded-xl bg-card border border-border/80 flex items-start gap-3 shadow-xs"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary font-mono font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-zinc-800/40 text-primary font-mono font-bold flex items-center justify-center text-xs shrink-0 mt-0.5">
                     {idx + 1}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -157,12 +157,12 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
           {report.highYieldPearlsToAudit.length > 0 && (
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
                 Immediate {lexicon.mistakesJournal} Volatile Pearls to Audit
               </h4>
               <div className="space-y-1.5">
                 {report.highYieldPearlsToAudit.map((pearl, idx) => (
-                  <div key={idx} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs">
+                  <div key={idx} className="p-2.5 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
                     "{pearl}"
                   </div>
                 ))}

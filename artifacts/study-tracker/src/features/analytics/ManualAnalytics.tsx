@@ -108,7 +108,7 @@ export default function ManualAnalytics() {
               {stats.readinessIndex}<span className="text-4xl sm:text-5xl text-muted-foreground font-light">%</span>
             </h1>
             {stats.readinessTrend !== 0 && (
-              <span className={`text-sm sm:text-base font-semibold ${stats.readinessTrend > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+              <span className={`text-sm sm:text-base font-semibold ${stats.readinessTrend > 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
                 {stats.readinessTrend > 0 ? '↗' : '↘'} {Math.abs(stats.readinessTrend)}%
               </span>
             )}
@@ -143,7 +143,7 @@ export default function ManualAnalytics() {
 
       {/* Actionable Priority Recommendation Banner - Clinical Apex Alert */}
       {studyRecommendation && (
-        <div className={`border rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 transition-colors ${studyRecommendation.isCritical ? 'bg-rose-500/5 border-rose-500/20' : 'bg-primary/5 border-primary/20'}`}>
+        <div className={`border rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 transition-colors ${studyRecommendation.isCritical ? 'bg-rose-500/5 border-rose-500/20' : 'bg-primary/5 border-white/5'}`}>
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded border flex items-center gap-1.5 bg-background text-foreground border-border/80 shadow-xs">
@@ -196,7 +196,7 @@ export default function ManualAnalytics() {
                 <h2 className="text-base font-bold text-foreground">
                   The Forgetting Curve & Projection
                 </h2>
-                <Badge variant="secondary" className="text-xs font-mono py-0 h-4 bg-primary/10 text-primary border-0">
+                <Badge variant="secondary" className="text-xs font-mono py-0 h-4 bg-zinc-800/40 text-primary border-0">
                   {activeSubjectName ? `${activeSubjectName} Horizon` : 'Ebbinghaus Engine'}
                 </Badge>
               </div>
@@ -208,7 +208,7 @@ export default function ManualAnalytics() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="text-xs font-mono border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+              <Badge variant="outline" className="text-xs font-mono border-emerald-500/30 text-emerald-400 dark:text-emerald-400 bg-emerald-500/5">
                 Clinical Threshold: 75%
               </Badge>
             </div>
@@ -299,15 +299,15 @@ export default function ManualAnalytics() {
                   if (idx === 0) spanClasses = "col-span-2 row-span-2"; // Apex vulnerability
                   else if (idx === 1) spanClasses = "col-span-2 row-span-1"; // Secondary vulnerability
 
-                  let colorClasses = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
-                  let scoreColor = "text-emerald-600 dark:text-emerald-500";
+                  let colorClasses = "bg-emerald-950/20 text-emerald-700 dark:text-emerald-400";
+                  let scoreColor = "text-emerald-400 dark:text-emerald-400";
                   
                   if (sys.average < 60) {
                     colorClasses = "bg-rose-500/15 text-rose-700 dark:text-rose-400";
                     scoreColor = "text-rose-600 dark:text-rose-500";
                   } else if (sys.average < 75) {
                     colorClasses = "bg-amber-500/15 text-amber-700 dark:text-amber-400";
-                    scoreColor = "text-amber-600 dark:text-amber-500";
+                    scoreColor = "text-amber-400 dark:text-amber-400";
                   }
 
                   const mistakesUrl = sys.subjectId 

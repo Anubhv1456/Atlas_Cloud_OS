@@ -206,7 +206,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                     Target Exam Date
                   </Label>
                   {daysRemaining !== null && (
-                    <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                    <span className="text-xs font-bold text-primary bg-zinc-800/40 px-1.5 py-0.2 rounded border border-white/5">
                       {daysRemaining}d left
                     </span>
                   )}

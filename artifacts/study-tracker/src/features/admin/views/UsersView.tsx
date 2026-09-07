@@ -432,7 +432,7 @@ export function UsersView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+            <div className="p-2 bg-zinc-800/40 border border-white/5 rounded-xl">
               <GraduationCap className="w-5 h-5 text-teal-400" />
             </div>
             <div>
@@ -448,7 +448,7 @@ export function UsersView() {
 
         <div className="flex items-center gap-3">
           {selectedUserIds.length > 0 && (
-            <div className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 p-1 rounded-xl">
+            <div className="flex items-center gap-2 bg-zinc-800/40 border border-teal-500/30 p-1 rounded-xl">
               <span className="text-xs font-bold text-teal-300 px-2">{selectedUserIds.length} Selected</span>
               <button
                 onClick={() => {
@@ -481,7 +481,7 @@ export function UsersView() {
           </button>
 
           {hiddenAdminCount > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-purple-500/20 text-purple-300 text-xs font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/40 border border-white/5 text-purple-300 text-xs font-medium" title="Administrative operator accounts are hidden from student cohort metrics and directory">
               <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
               <span>{hiddenAdminCount} Admin profile{hiddenAdminCount > 1 ? 's' : ''} hidden</span>
             </div>
@@ -510,7 +510,7 @@ export function UsersView() {
           onClick={() => setActiveTab('active')}
           className={cn(
             "p-3.5 rounded-2xl border transition-all cursor-pointer",
-            activeTab === 'active' ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+            activeTab === 'active' ? "bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 uppercase tracking-wider">
@@ -518,14 +518,14 @@ export function UsersView() {
             <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-emerald-400">{stats.active}</div>
-          <p className="text-xs text-emerald-500/80 mt-0.5 font-medium">Cohort active</p>
+          <p className="text-xs text-emerald-400/80 mt-0.5 font-medium">Cohort active</p>
         </div>
 
         <div 
           onClick={() => setActiveTab('trial')}
           className={cn(
             "p-3.5 rounded-2xl border transition-all cursor-pointer",
-            activeTab === 'trial' ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20" : "bg-card/50 border-border/50 hover:bg-card"
+            activeTab === 'trial' ? "bg-amber-950/20 border-amber-500/40 ring-1 ring-amber-500/20" : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
           <div className="flex items-center justify-between text-xs font-semibold text-amber-400 uppercase tracking-wider">
@@ -533,7 +533,7 @@ export function UsersView() {
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-amber-300">{stats.trials}</div>
-          <p className="text-xs text-amber-500/80 mt-0.5 font-medium">Trial evaluation</p>
+          <p className="text-xs text-amber-400/80 mt-0.5 font-medium">Trial evaluation</p>
         </div>
 
         <div 
@@ -593,7 +593,7 @@ export function UsersView() {
             <TriangleAlert className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div className="text-xl font-bold mt-1 text-amber-300">{stats.flagged}</div>
-          <p className="text-xs text-amber-500/90 mt-0.5 font-medium">Provenance / Sybil</p>
+          <p className="text-xs text-amber-400/90 mt-0.5 font-medium">Provenance / Sybil</p>
         </div>
       </div>
 
@@ -677,7 +677,7 @@ export function UsersView() {
                         if (e.target.checked) setSelectedUserIds(filteredUsers.map(u => u.id));
                         else setSelectedUserIds([]);
                       }}
-                      className="rounded border-border/60 bg-background text-teal-500 focus:ring-teal-500"
+                      className="rounded border-border/60 bg-background text-zinc-300 focus:ring-teal-500"
                     />
                   </th>
                   <th className="p-4">Candidate Profile</th>
@@ -719,7 +719,7 @@ export function UsersView() {
                               if (e.target.checked) setSelectedUserIds([...selectedUserIds, u.id]);
                               else setSelectedUserIds(selectedUserIds.filter(id => id !== u.id));
                             }}
-                            className="rounded border-border/60 bg-background text-teal-500 focus:ring-teal-500"
+                            className="rounded border-border/60 bg-background text-zinc-300 focus:ring-teal-500"
                           />
                         </td>
 
@@ -749,7 +749,7 @@ export function UsersView() {
                                 <span>Imported Vault</span>
                               </button>
                               {u.vaultApprovedByAdmin && (
-                                <Badge className="text-[9px] bg-teal-500/10 text-teal-300 border-teal-500/30 font-semibold">
+                                <Badge className="text-[9px] bg-zinc-800/40 text-teal-300 border-teal-500/30 font-semibold">
                                   Ambassador
                                 </Badge>
                               )}
@@ -795,7 +795,7 @@ export function UsersView() {
                                 <Database className="w-3 h-3 text-amber-400" /> Pass Req. (Vault)
                               </Badge>
                             ) : status === 'active_lifetime' ? (
-                              <Badge className="text-xs font-bold bg-teal-500/10 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-zinc-800/40 text-teal-300 border-teal-500/30 flex items-center gap-1 w-fit">
                                 <ShieldCheck className="w-3 h-3" /> Lifetime Access
                               </Badge>
                             ) : status === 'trial' ? (
@@ -807,7 +807,7 @@ export function UsersView() {
                                 <Clock className="w-3 h-3 text-orange-400" /> Expiring in {daysRemaining}d
                               </Badge>
                             ) : status === 'active' ? (
-                              <Badge className="text-xs font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
+                              <Badge className="text-xs font-bold bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30 flex items-center gap-1 w-fit">
                                 <Check className="w-3 h-3" /> Active ({daysRemaining}d left)
                               </Badge>
                             ) : status === 'expired' ? (
@@ -844,7 +844,7 @@ export function UsersView() {
                               /* 15-Day Trial Quick Button */
                               <button
                                 onClick={() => handleGrantAccessWithDuration(u, 15, true)}
-                                className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
+                                className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-950/20 text-amber-300 hover:bg-amber-500/20 font-semibold text-xs transition-all flex items-center gap-1"
                                 title="Grant 15-Day Trial Access immediately"
                               >
                                 <Sparkles className="w-3 h-3 text-amber-400" />
@@ -855,7 +855,7 @@ export function UsersView() {
                             {/* Full Duration / Custom Picker Modal Trigger */}
                             <button
                               onClick={() => openGrantModal(u)}
-                              className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 font-semibold text-xs transition-all"
+                              className="px-2.5 py-1.5 rounded-lg border border-teal-500/30 bg-zinc-800/40 text-teal-300 hover:bg-zinc-800/50 font-semibold text-xs transition-all"
                               title="Open custom duration and presets selector"
                             >
                               <Sliders className="w-3 h-3 inline mr-1" />
@@ -967,7 +967,7 @@ export function UsersView() {
                       className={cn(
                         "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all group",
                         isSelected
-                          ? "border-teal-500 bg-teal-500/10 text-teal-300 shadow-xs"
+                          ? "border-teal-500 bg-zinc-800/40 text-teal-300 shadow-xs"
                           : "border-border/60 bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                       )}
                     >
@@ -1006,7 +1006,7 @@ export function UsersView() {
                       className={cn(
                         "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all",
                         isSelected
-                          ? "border-teal-500 bg-teal-500/10 text-teal-300 shadow-xs"
+                          ? "border-teal-500 bg-zinc-800/40 text-teal-300 shadow-xs"
                           : "border-border/60 bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                       )}
                     >
@@ -1079,7 +1079,7 @@ export function UsersView() {
             )}
 
             {/* Calculated Expiry Preview Box */}
-            <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-1">
+            <div className="p-3 rounded-xl bg-zinc-800/40 border border-white/5 space-y-1">
               <div className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 Live Expiry Simulation
@@ -1178,7 +1178,7 @@ export function UsersView() {
                     className={cn(
                       "w-full p-3 rounded-xl border text-left text-xs font-semibold flex items-center justify-between transition-all",
                       selectedBulkDuration === opt.value
-                        ? "border-teal-500 bg-teal-500/10 text-teal-300"
+                        ? "border-teal-500 bg-zinc-800/40 text-teal-300"
                         : "border-border/60 bg-background text-muted-foreground hover:bg-muted"
                     )}
                   >
@@ -1322,7 +1322,7 @@ export function UsersView() {
                 <span>Restored Cryptographic Envelope Metadata</span>
               </h4>
 
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Original Origin UID</span>
                   <span className="font-mono text-xs text-amber-300 font-bold truncate max-w-[220px]">

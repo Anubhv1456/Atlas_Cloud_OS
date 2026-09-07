@@ -140,7 +140,7 @@ export default function PrivacyPolicy() {
             </Button>
             <div className="h-4 w-px bg-border/60 hidden sm:block" />
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7.5 h-7.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <div className="w-7.5 h-7.5 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center">
                 <Compass className="w-4 h-4 text-primary" />
               </div>
               <span className="font-bold tracking-tight text-sm hidden xs:inline">Atlas OS</span>
@@ -188,11 +188,11 @@ export default function PrivacyPolicy() {
       <div className="border-b border-border/40 bg-gradient-to-b from-muted/30 via-muted/10 to-background py-10 sm:py-14 px-4 sm:px-6 print:py-6">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-primary text-xs font-semibold uppercase tracking-wider">
               <Shield className="w-3.5 h-3.5" />
               Data Sovereignty & Privacy Protocol
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-medium">
+            <span className="px-2.5 py-1 rounded-full bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-400 dark:text-emerald-400 text-xs font-mono font-medium">
               GDPR, CCPA & DPDP Compliant
             </span>
           </div>
@@ -257,7 +257,7 @@ export default function PrivacyPolicy() {
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-mono shrink-0 ml-1 ${
                           isActive
                             ? 'bg-primary-foreground/20 text-primary-foreground'
-                            : 'bg-primary/10 text-primary border border-primary/20'
+                            : 'bg-zinc-800/40 text-primary border border-white/5'
                         }`}>
                           {s.badge}
                         </span>
@@ -336,7 +336,7 @@ export default function PrivacyPolicy() {
             <section id="summary" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
@@ -351,7 +351,7 @@ export default function PrivacyPolicy() {
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                   title="Copy direct section link"
                 >
-                  {copiedSection === 'summary' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'summary' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -362,7 +362,7 @@ export default function PrivacyPolicy() {
               {/* Summary Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5 border-l-2 border-l-emerald-500/30">
                     <HardDrive className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">1. Local-First & Offline First</h3>
@@ -372,7 +372,7 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-purple-600 dark:text-primary flex items-center justify-center border border-purple-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-primary flex items-center justify-center border border-white/5">
                     <Lock className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">2. Zero Commercial Data Sales</h3>
@@ -382,7 +382,7 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-blue-400 flex items-center justify-center border border-white/5">
                     <Cpu className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">3. Voice & AI Privacy Safeguards</h3>
@@ -392,7 +392,7 @@ export default function PrivacyPolicy() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5 border-l-2 border-l-amber-500/30">
                     <Key className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">4. 1-Click Data Portability & Purge</h3>
@@ -407,7 +407,7 @@ export default function PrivacyPolicy() {
             <section id="controller" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
@@ -421,7 +421,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('controller', 'Scope & Data Controller')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'controller' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'controller' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -444,7 +444,7 @@ export default function PrivacyPolicy() {
             <section id="data-collected" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Database className="w-4 h-4" />
                   </div>
                   <div>
@@ -458,7 +458,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('data-collected', 'Categories of Data Collected')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'data-collected' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'data-collected' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -523,7 +523,7 @@ export default function PrivacyPolicy() {
             <section id="legal-basis" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
@@ -537,7 +537,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('legal-basis', 'Purposes & Legal Basis')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'legal-basis' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'legal-basis' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -591,7 +591,7 @@ export default function PrivacyPolicy() {
             <section id="ai-voice" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Cpu className="w-4 h-4" />
                   </div>
                   <div>
@@ -605,11 +605,11 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('ai-voice', 'AI & Voice Processing Safeguards')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'ai-voice' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'ai-voice' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
-              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-3">
+              <div className="bg-primary/5 border border-white/5 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm">
                   <Sparkles className="w-4 h-4" />
                   Strict Zero-Training Pledge for AI & Voice Streams
@@ -619,15 +619,15 @@ export default function PrivacyPolicy() {
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span><strong className="text-foreground">No Foundational Model Training:</strong> Your private study notes, voice transcripts, chat queries, and performance metrics are NEVER used by Google or Atlas OS to train or fine-tune public foundation AI models.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span><strong className="text-foreground">Transient Voice Buffers:</strong> Audio captured during voice co-pilot interaction is processed in volatile memory for acoustic noise reduction (DSP) and real-time intent parsing. Voice audio files are never stored permanently on disk.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span><strong className="text-foreground">Encrypted Transport:</strong> All interactions with AI services occur over HTTPS/TLS 1.3 encrypted pipelines.</span>
                   </li>
                 </ul>
@@ -638,7 +638,7 @@ export default function PrivacyPolicy() {
             <section id="subprocessors" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Server className="w-4 h-4" />
                   </div>
                   <div>
@@ -652,7 +652,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('subprocessors', 'Subprocessors & Infrastructure')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'subprocessors' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'subprocessors' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -678,7 +678,7 @@ export default function PrivacyPolicy() {
                       </td>
                       <td className="p-3">Cloud Firestore Sync, Authentication, Security Rules</td>
                       <td className="p-3 font-mono">United States / Global Regions</td>
-                      <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">SOC 2, ISO 27001, GDPR DPA</td>
+                      <td className="p-3 text-emerald-400 dark:text-emerald-400 font-medium">SOC 2, ISO 27001, GDPR DPA</td>
                     </tr>
                     <tr>
                       <td className="p-3 font-semibold text-foreground flex items-center gap-1.5">
@@ -687,7 +687,7 @@ export default function PrivacyPolicy() {
                       </td>
                       <td className="p-3">AI Co-Pilot Reasoning, Clinical Summaries</td>
                       <td className="p-3 font-mono">United States (Serverless)</td>
-                      <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">Zero Data Retention Agreement</td>
+                      <td className="p-3 text-emerald-400 dark:text-emerald-400 font-medium">Zero Data Retention Agreement</td>
                     </tr>
                     <tr>
                       <td className="p-3 font-semibold text-foreground flex items-center gap-1.5">
@@ -696,7 +696,7 @@ export default function PrivacyPolicy() {
                       </td>
                       <td className="p-3">Edge Application Hosting & CDN Distribution</td>
                       <td className="p-3 font-mono">Global Edge Network</td>
-                      <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">SOC 2 Type II, ISO 27001</td>
+                      <td className="p-3 text-emerald-400 dark:text-emerald-400 font-medium">SOC 2 Type II, ISO 27001</td>
                     </tr>
                   </tbody>
                 </table>
@@ -707,7 +707,7 @@ export default function PrivacyPolicy() {
             <section id="local-first" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <HardDrive className="w-4 h-4" />
                   </div>
                   <div>
@@ -721,7 +721,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('local-first', 'Local-First Storage & Cloud Sync')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'local-first' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'local-first' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -743,7 +743,7 @@ export default function PrivacyPolicy() {
             <section id="data-sharing" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
@@ -757,7 +757,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('data-sharing', 'Data Sharing & Non-Sale Pledge')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'data-sharing' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'data-sharing' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -789,7 +789,7 @@ export default function PrivacyPolicy() {
             <section id="regional-rights" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Globe className="w-4 h-4" />
                   </div>
                   <div>
@@ -803,7 +803,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('regional-rights', 'Regional Privacy Rights')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'regional-rights' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'regional-rights' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -896,7 +896,7 @@ export default function PrivacyPolicy() {
                   {activeRegionTab === 'hipaa' && (
                     <div className="space-y-2">
                       <h4 className="font-bold text-foreground text-sm">HIPAA & Protected Health Information (PHI) Non-Applicability</h4>
-                      <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 p-3 rounded-xl">
+                      <div className="bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 dark:text-amber-400 p-3 rounded-xl">
                         <strong>Important Mandate:</strong> Atlas OS is an educational examination preparation application. It is NOT a Covered Entity or Business Associate under the Health Insurance Portability and Accountability Act (HIPAA). Users are strictly forbidden from uploading or including real patient health information (PHI), clinical medical records, or identifiable patient case details anywhere inside Atlas OS notes or Trail Markers.
                       </div>
                     </div>
@@ -909,7 +909,7 @@ export default function PrivacyPolicy() {
             <section id="retention-erasure" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Key className="w-4 h-4" />
                   </div>
                   <div>
@@ -923,7 +923,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('retention-erasure', 'Data Retention & 1-Click Erasure')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'retention-erasure' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'retention-erasure' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -949,7 +949,7 @@ export default function PrivacyPolicy() {
             <section id="security" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <div>
@@ -963,7 +963,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('security', 'Technical & Organizational Security')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'security' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'security' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -994,7 +994,7 @@ export default function PrivacyPolicy() {
             <section id="children-students" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <UserCheck className="w-4 h-4" />
                   </div>
                   <div>
@@ -1008,7 +1008,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('children-students', 'Student & Youth Privacy')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'children-students' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'children-students' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -1021,7 +1021,7 @@ export default function PrivacyPolicy() {
             <section id="cookies-telemetry" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Info className="w-4 h-4" />
                   </div>
                   <div>
@@ -1035,7 +1035,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('cookies-telemetry', 'Cookies & Local Browser Storage')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'cookies-telemetry' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'cookies-telemetry' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -1058,7 +1058,7 @@ export default function PrivacyPolicy() {
             <section id="updates-contact" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
@@ -1072,7 +1072,7 @@ export default function PrivacyPolicy() {
                   onClick={() => copySectionLink('updates-contact', 'Policy Updates & Contact')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'updates-contact' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'updates-contact' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 

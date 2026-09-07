@@ -33,7 +33,7 @@ export const AppUpdateCapsule: React.FC = () => {
             <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-primary/25 bg-background/90 dark:bg-card/90 backdrop-blur-2xl p-3 sm:p-3.5 transition-all">
               {/* Subtle ambient lighting */}
               <div className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 bg-primary/15 rounded-full blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-10 -left-10 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl" />
+              <div className="pointer-events-none absolute -bottom-10 -left-10 w-28 h-28 bg-emerald-950/20 rounded-full blur-xl" />
 
               <div className="flex items-center gap-3 relative z-10">
                 {/* Apple-style Icon badge */}
@@ -47,7 +47,7 @@ export const AppUpdateCapsule: React.FC = () => {
                     <h4 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
                       Atlas Update Ready
                     </h4>
-                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                    <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-zinc-800/40 text-primary border border-white/5 shrink-0">
                       v{latestVersion}
                     </span>
                   </div>

@@ -65,9 +65,9 @@ export default function AuditorAnalytics() {
       {/* Auditor Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Readiness Confidence Widget */}
-        <div className="bg-card border border-primary/20 rounded-3xl p-6 shadow-sm">
+        <div className="bg-card border border-white/5 rounded-3xl p-6 shadow-sm">
            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-full bg-zinc-800/40 flex items-center justify-center text-primary">
                 <Target className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-lg">Error Profile</h3>
@@ -85,7 +85,7 @@ export default function AuditorAnalytics() {
         {/* Forensic Subject Audit */}
         <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+              <div className="w-10 h-10 rounded-full bg-amber-950/20 flex items-center justify-center text-amber-400">
                 <AlertCircle className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-lg">High Friction Modules</h3>
@@ -105,7 +105,7 @@ export default function AuditorAnalytics() {
                    variant="outline" 
                    onClick={() => handleGenerateRescueBlock(m.subjectId)}
                    disabled={isGenerating === String(m.subjectId)}
-                   className="shrink-0 font-bold border-amber-500/30 text-amber-600 hover:bg-amber-500/10 transition-colors rounded-full"
+                   className="shrink-0 font-bold border-amber-500/30 text-amber-400 hover:bg-amber-950/20 transition-colors rounded-full"
                  >
                    {isGenerating === String(m.subjectId) ? <Sparkles className="w-3.5 h-3.5 animate-pulse" /> : <Play className="w-3.5 h-3.5 mr-1" />}
                    Rescue

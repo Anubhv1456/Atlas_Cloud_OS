@@ -174,7 +174,7 @@ export function CurriculumSetScoreModal({
             {step === 1 ? (
               <><Target className="w-3.5 h-3.5" /> Log Score</>
             ) : (
-              <><TriangleAlert className="w-3.5 h-3.5 text-amber-500" /> Diagnostics</>
+              <><TriangleAlert className="w-3.5 h-3.5 text-amber-400" /> Diagnostics</>
             )}
           </div>
           <DialogTitle className="text-xl font-bold text-foreground">
@@ -197,7 +197,7 @@ export function CurriculumSetScoreModal({
                     <Calendar className="w-3.5 h-3.5 text-primary" /> Revision Date
                   </Label>
                   {datePreset !== 'today' && (
-                    <span className="text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                    <span className="text-xs font-semibold text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5 border-l-2 border-l-amber-500/30">
                       Backdated Log
                     </span>
                   )}

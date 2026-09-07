@@ -123,7 +123,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
             : 'Study Session Synchronized',
           {
             description: result.message || 'Updated local curriculum matrix.',
-            icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />
           }
         );
         onConfirm?.(draftAction, result);
@@ -240,8 +240,8 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
           <div className="flex items-center gap-1.5 text-xs font-semibold truncate min-w-0">
             {draftAction.action === 'ACTION_ADD_MISTAKE' && (
               <>
-                <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="text-amber-600 dark:text-amber-400 font-bold truncate">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-amber-400 dark:text-amber-400 font-bold truncate">
                   {(draftAction as ActionAddMistake).tag || '20th Notebook'}
                 </span>
                 <span className="text-muted-foreground/60">•</span>
@@ -253,8 +253,8 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
 
             {draftAction.action === 'ACTION_LOG_STUDY' && (
               <>
-                <Clock className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-                <span className="text-teal-600 dark:text-teal-400 font-bold truncate">
+                <Clock className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                <span className="text-zinc-300 dark:text-teal-400 font-bold truncate">
                   {(draftAction as ActionLogStudy).durationMinutes}m Logged
                 </span>
                 <span className="text-muted-foreground/60">•</span>
@@ -284,7 +284,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
           {/* Header Controls */}
           <div className="flex items-center gap-1 shrink-0">
             {countdown > 0 && !isPausedCountdown && (
-              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-xs font-mono text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
                 {countdown}s
               </span>
             )}
@@ -486,7 +486,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xl font-bold font-mono text-teal-600 dark:text-teal-400">{study.durationMinutes}m</span>
+                    <span className="text-xl font-bold font-mono text-zinc-300 dark:text-teal-400">{study.durationMinutes}m</span>
                     <span className="text-xs text-muted-foreground">added to {study.subjectName}</span>
                   </div>
 
@@ -548,7 +548,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
                     <span className="text-xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
                       {scoreRec.score} / {total}
                     </span>
-                    <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-mono font-bold text-emerald-400 dark:text-emerald-400">
                       {pct}% Correct
                     </span>
                   </div>

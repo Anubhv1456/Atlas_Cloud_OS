@@ -126,17 +126,17 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
       case 'ACTION_ADD_MISTAKE':
         title = '20th Notebook Mistake Proposal';
         badgeText = 'Clinical Pearl';
-        icon = <Zap className="w-5 h-5 text-amber-500" />;
+        icon = <Zap className="w-5 h-5 text-amber-400" />;
         break;
       case 'ACTION_LOG_STUDY':
         title = 'Study Session Proposal';
         badgeText = 'Spaced Recall';
-        icon = <Clock className="w-5 h-5 text-blue-500" />;
+        icon = <Clock className="w-5 h-5 text-zinc-300" />;
         break;
       case 'ACTION_RECORD_SCORE':
         title = 'Grand Test Score Proposal';
         badgeText = 'Mock Exam';
-        icon = <Award className="w-5 h-5 text-emerald-500" />;
+        icon = <Award className="w-5 h-5 text-emerald-400" />;
         break;
       case 'ACTION_CLINICAL_QUERY':
         title = 'Clinical Coaching Insight';
@@ -268,7 +268,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
                   onClick={() => setDraftAction({ ...mistake, errorType: errOpt.key })}
                   className={`p-2 rounded-lg border text-left transition-all ${
                     isSelected
-                      ? 'bg-primary/10 border-primary text-primary'
+                      ? 'bg-zinc-800/40 border-primary text-primary'
                       : 'bg-card hover:bg-muted/50 border-border text-foreground'
                   }`}
                 >
@@ -295,7 +295,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
           <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0">
             <div className="text-right">
               <Label className="text-xs font-medium flex items-center gap-1 cursor-pointer">
-                <Zap className={`w-3.5 h-3.5 ${mistake.isUrgent ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                <Zap className={`w-3.5 h-3.5 ${mistake.isUrgent ? 'text-amber-400 fill-amber-500' : 'text-muted-foreground'}`} />
                 Volatile Trap
               </Label>
               <p className="text-xs text-muted-foreground">High decay rate</p>
@@ -421,7 +421,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
                   onClick={() => setDraftAction({ ...study, confidenceLevel: c.level })}
                   className={`p-2.5 rounded-lg border text-center transition-all ${
                     isSelected
-                      ? 'bg-primary/10 border-primary text-primary ring-1 ring-primary'
+                      ? 'bg-zinc-800/40 border-primary text-primary ring-1 ring-primary'
                       : 'bg-card hover:bg-muted/50 border-border text-foreground'
                   }`}
                 >
@@ -502,7 +502,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
           <div className="flex items-center justify-between pt-1 border-t border-border/60 text-xs">
             <span className="text-muted-foreground font-medium">Calculated Percentage:</span>
             <div className="flex items-center gap-2">
-              <span className={`font-bold text-sm ${percentage >= 70 ? 'text-emerald-500' : percentage >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+              <span className={`font-bold text-sm ${percentage >= 70 ? 'text-emerald-400' : percentage >= 50 ? 'text-amber-400' : 'text-rose-500'}`}>
                 {percentage}%
               </span>
               <Badge variant={percentage >= 70 ? 'default' : 'secondary'} className="text-xs py-0">
@@ -581,7 +581,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
   const renderClinicalQueryView = (query: ActionClinicalQuery) => {
     return (
       <div className="space-y-4 py-2">
-        <div className="p-3.5 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+        <div className="p-3.5 rounded-lg bg-primary/5 border border-white/5 space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
             <Brain className="w-4 h-4" /> Atlas Clinical Coach
           </div>
@@ -593,7 +593,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
         {query.suggestedAction && (
           <div className="p-3 rounded-md bg-muted/60 border text-xs space-y-1">
             <div className="font-semibold text-foreground flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Recommended Study Step:
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Recommended Study Step:
             </div>
             <p className="text-muted-foreground">{query.suggestedAction}</p>
           </div>

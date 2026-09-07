@@ -80,8 +80,8 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
             metric.decayUrgency === 'CRITICAL' 
               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
               : metric.decayUrgency === 'ELEVATED'
-              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+              ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
+              : "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30"
           )}>
             {metric.decayUrgency === 'CRITICAL' ? <ShieldAlert className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
           </div>
@@ -92,9 +92,9 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
               <span className={cn(
                 "text-xs font-mono font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider",
                 metric.decayUrgency === 'CRITICAL' && "bg-rose-500/15 text-rose-600 dark:text-rose-400",
-                metric.decayUrgency === 'ELEVATED' && "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-                metric.decayUrgency === 'MODERATE' && "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-                metric.decayUrgency === 'STABLE' && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                metric.decayUrgency === 'ELEVATED' && "bg-amber-500/15 text-amber-400 dark:text-amber-400",
+                metric.decayUrgency === 'MODERATE' && "bg-blue-500/15 text-zinc-300 dark:text-blue-400",
+                metric.decayUrgency === 'STABLE' && "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400"
               )}>
                 {metric.decayUrgency === 'CRITICAL' ? 'Decay Alert' : metric.decayUrgency === 'ELEVATED' ? 'Half-Life Due' : metric.decayUrgency === 'MODERATE' ? 'Moderate Friction' : 'Retention Prime'}
               </span>
@@ -186,7 +186,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
                 </div>
                 <span className={cn(
                   "font-bold font-mono text-xs",
-                  metric.daysSinceReview > metric.subjectHalfLifeDays ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+                  metric.daysSinceReview > metric.subjectHalfLifeDays ? "text-rose-600 dark:text-rose-400" : "text-emerald-400 dark:text-emerald-400"
                 )}>
                   {metric.daysSinceReview > metric.subjectHalfLifeDays ? 'OVER HALF-LIFE' : 'WITHIN STABILITY'}
                 </span>

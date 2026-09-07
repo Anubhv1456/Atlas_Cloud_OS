@@ -205,7 +205,7 @@ export function SystemControlView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-primary/10 border border-purple-500/20 rounded-xl">
+            <div className="p-2 bg-zinc-800/40 border border-white/5 rounded-xl">
               <ShieldCheck className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -412,7 +412,7 @@ export function SystemControlView() {
                             className={cn(
                               "px-3 py-1.5 rounded-lg text-xs font-semibold border capitalize transition-all",
                               newType === t
-                                ? "border-purple-500 bg-purple-500/20 text-purple-300"
+                                ? "border-purple-500 bg-zinc-800/50 text-purple-300"
                                 : "border-border/60 bg-background text-muted-foreground"
                             )}
                           >
@@ -471,7 +471,7 @@ export function SystemControlView() {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm">{a.title}</span>
                         {a.active && (
-                          <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[9px] uppercase font-bold">
+                          <Badge className="bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30 text-[9px] uppercase font-bold">
                             Live
                           </Badge>
                         )}
@@ -485,7 +485,7 @@ export function SystemControlView() {
                         "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 self-end md:self-auto",
                         a.active
                           ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                          : "bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30"
+                          : "bg-zinc-800/50 text-purple-300 border border-primary/30 hover:bg-purple-500/30"
                       )}
                     >
                       {a.active ? 'Deactivate' : 'Reactivate'}
@@ -504,7 +504,7 @@ export function SystemControlView() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-base">Cohort Capacity Tracker & Beta Pricing</h3>
-                    <Badge variant="outline" className="text-xs font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
+                    <Badge variant="outline" className="text-xs font-mono font-bold bg-zinc-800/40 text-teal-400 border-teal-500/30">
                       Live Dynamic Controls
                     </Badge>
                   </div>
@@ -526,7 +526,7 @@ export function SystemControlView() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-lg bg-zinc-800/40 border border-teal-500/30 flex items-center justify-center">
                       <Users className="w-3.5 h-3.5 text-teal-400" />
                     </div>
                     <div>
@@ -572,7 +572,7 @@ export function SystemControlView() {
                           <button
                             type="button"
                             onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 1) }))}
-                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
+                            className="px-1.5 py-0.5 rounded bg-zinc-800/50 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
                             title="Increase by 1"
                           >
                             +1
@@ -580,7 +580,7 @@ export function SystemControlView() {
                           <button
                             type="button"
                             onClick={() => setPaymentConfig(p => ({ ...p, claimedSeats: Math.min(p.totalSeats ?? 200, (p.claimedSeats ?? 38) + 5) }))}
-                            className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
+                            className="px-1.5 py-0.5 rounded bg-zinc-800/50 hover:bg-teal-500/30 text-xs font-mono font-bold text-teal-400"
                             title="Increase by 5"
                           >
                             +5
@@ -641,7 +641,7 @@ export function SystemControlView() {
                       <div className="mt-3.5 space-y-3">
                         <div>
                           <span className="text-xs font-semibold text-zinc-500 uppercase block mb-1">Invitation Badge</span>
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                             {paymentConfig.cohortBadgeText || `${paymentConfig.totalSeats ?? 200} Closed Beta Seats`}
                           </div>
@@ -651,7 +651,7 @@ export function SystemControlView() {
                         <div className="pt-2">
                           <span className="text-xs font-semibold text-zinc-500 uppercase block mb-1">Checkout Header & Capacity</span>
                           <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-2">
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold">
                               <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                               {paymentConfig.cohortHeaderTitle || 'CLOSED BETA • 2026 MEDICAL COHORT'}
                             </div>
@@ -680,7 +680,7 @@ export function SystemControlView() {
                       </div>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
+                    <div className="p-2.5 rounded-xl bg-zinc-800/40 border border-white/5 text-xs text-teal-300 flex items-center justify-between">
                       <span>Remaining available seats:</span>
                       <strong className="font-mono text-teal-200">
                         {Math.max(0, (paymentConfig.totalSeats ?? 200) - (paymentConfig.claimedSeats ?? 38))} Seats
@@ -693,7 +693,7 @@ export function SystemControlView() {
               {/* SECTION 2: PLAN PRICING & DURATION */}
               <div className="space-y-4 pt-4 border-t border-border/50">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-zinc-800/40 border border-primary/30 flex items-center justify-center">
                     <CreditCard className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div>
@@ -832,7 +832,7 @@ export function SystemControlView() {
                   <div className="font-semibold text-sm flex items-center gap-2">
                     <span>Master Referral Program Switch</span>
                     {referralConfig.enabled ? (
-                      <Badge className="bg-teal-500/20 text-teal-400 border-teal-500/30 text-xs">Active</Badge>
+                      <Badge className="bg-zinc-800/50 text-teal-400 border-teal-500/30 text-xs">Active</Badge>
                     ) : (
                       <Badge variant="outline" className="text-zinc-500 text-xs">Disabled</Badge>
                     )}

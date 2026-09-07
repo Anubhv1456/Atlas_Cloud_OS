@@ -191,8 +191,8 @@ export function useAnalyticsLogic() {
   };
 
   const getPercentageColorBadge = (pct: number) => {
-    if (pct >= 80) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-    if (pct >= 60) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+    if (pct >= 80) return 'bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/30';
+    if (pct >= 60) return 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/30';
     return 'bg-rose-500/10 text-rose-500 border-rose-500/30';
   };
 
@@ -228,12 +228,12 @@ export function useAnalyticsLogic() {
       } else if (overdue > 0) {
         reason = `Overdue by ${overdue} day${overdue !== 1 ? 's' : ''}. A 15-minute targeted drill will restore retention to >80%.`;
         badge = 'Memory Recall Due';
-        badgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25';
+        badgeColor = 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/25';
         titlePrefix = '';
       } else {
         reason = `Targeted revision scheduled today to maintain peak retention.`;
         badge = 'Scheduled Recall';
-        badgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25';
+        badgeColor = 'bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/25';
         titlePrefix = '';
       }
 
@@ -258,7 +258,7 @@ export function useAnalyticsLogic() {
         title: activeMultiDay.name,
         reason: `Active multi-day revision in progress. Resume block to halt decay.`,
         badge: 'Session In Progress',
-        badgeColor: 'bg-primary/10 text-primary border-primary/30',
+        badgeColor: 'bg-zinc-800/40 text-primary border-primary/30',
         isCritical: false
       };
     }

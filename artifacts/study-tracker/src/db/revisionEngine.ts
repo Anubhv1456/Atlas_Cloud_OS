@@ -110,9 +110,9 @@ export function getRetrievabilityHealth(retrievability: number): {
   colorClass: string;
 } {
   if (retrievability >= 90) {
-    return { label: 'Optimal Recall', status: 'optimal', colorClass: 'text-emerald-600 dark:text-emerald-400' };
+    return { label: 'Optimal Recall', status: 'optimal', colorClass: 'text-emerald-400 dark:text-emerald-400' };
   } else if (retrievability >= 80) {
-    return { label: 'Moderate Decay', status: 'moderate', colorClass: 'text-amber-600 dark:text-amber-400' };
+    return { label: 'Moderate Decay', status: 'moderate', colorClass: 'text-amber-400 dark:text-amber-400' };
   } else if (retrievability >= 70) {
     return { label: 'High Risk', status: 'risk', colorClass: 'text-orange-600 dark:text-orange-400' };
   } else {

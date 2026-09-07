@@ -50,19 +50,19 @@ export function getTagMeta(tag: string) {
 
   const norm = tag.toLowerCase();
   if (norm === 'doc' || norm.includes('pharma') || norm.includes('drug')) {
-    return { icon: '💊', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' };
+    return { icon: '💊', color: 'bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/25' };
   }
   if (norm === 'ioc' || norm.includes('investigation')) {
     return { icon: '🔍', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25' };
   }
   if (norm === 'histopath' || norm === 'biopsy' || norm.includes('pathology')) {
-    return { icon: '🔬', color: 'bg-primary/10 text-purple-600 dark:text-primary border-purple-500/25' };
+    return { icon: '🔬', color: 'bg-zinc-800/40 text-zinc-300 dark:text-primary border-purple-500/25' };
   }
   if (norm === 'imaging' || norm.includes('radiology') || norm === 'x-ray' || norm === 'ct') {
     return { icon: '🩻', color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25' };
   }
   if (norm === 'triad' || norm.includes('sign')) {
-    return { icon: '⚠️', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25' };
+    return { icon: '⚠️', color: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/25' };
   }
   if (norm === 'criteria' || norm === 'staging' || norm === 'score') {
     return { icon: '📊', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25' };
@@ -77,9 +77,9 @@ export function getTagMeta(tag: string) {
     return { icon: '🔄', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/25' };
   }
   if (norm === 'volatile') {
-    return { icon: '⚡', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/35 font-bold' };
+    return { icon: '⚡', color: 'bg-amber-500/15 text-amber-400 dark:text-amber-400 border-amber-500/35 font-bold' };
   }
-  return { icon: null, color: 'bg-primary/10 text-primary border-primary/20 font-semibold' };
+  return { icon: null, color: 'bg-zinc-800/40 text-primary border-white/5 font-semibold' };
 }
 
 export default function MistakeRecoveryQueue() {
@@ -293,14 +293,14 @@ export default function MistakeRecoveryQueue() {
               <span>Subject Radar</span>
             </Link>
             <span className="text-muted-foreground/40">•</span>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 dark:text-amber-400">
               {isUsmle ? "Mechanisms & Vignette Rules" : "High-Density Rule Ledger"}
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
             <span>{isUsmle ? "High-Yield Takeaways" : "Your 20th Notebook"}</span>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+            <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-amber-500/25">
               {isUsmle ? `${activeMistakes.length} Objectives Saved` : `${activeMistakes.length} Rules Saved for Exam Day`}
             </span>
           </h1>
@@ -331,7 +331,7 @@ export default function MistakeRecoveryQueue() {
             size="sm"
             variant="outline"
             onClick={() => setFlashcardModalOpen(true)}
-            className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-primary/30 text-purple-600 dark:text-primary hover:bg-purple-50 dark:hover:bg-primary/10 shadow-2xs"
+            className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-primary/30 text-zinc-300 dark:text-primary hover:bg-purple-50 dark:hover:bg-zinc-800/40 shadow-2xs"
             title="Export Flashcards"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -381,22 +381,22 @@ export default function MistakeRecoveryQueue() {
             "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
             selectedTag === 'volatile'
               ? "bg-amber-500/15 border-amber-500/40 shadow-xs ring-1 ring-amber-500/40"
-              : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15"
+              : "bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 hover:bg-amber-500/15"
           )}
         >
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+          <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <Zap className="w-3 h-3 text-amber-400 fill-amber-500" />
             Volatile Rules
           </span>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+            <span className="text-2xl font-bold font-mono text-amber-400 dark:text-amber-400">
               {volatileMistakes.length}
             </span>
-            <span className="text-xs text-amber-600/80 dark:text-amber-400/80">urgent</span>
+            <span className="text-xs text-amber-400/80 dark:text-amber-400/80">urgent</span>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 space-y-0.5">
+        <div className="p-3.5 rounded-2xl bg-zinc-800/40 border border-white/5 space-y-0.5">
           <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1">
             <BookOpen className="w-3 h-3" />
             Subjects
@@ -419,7 +419,7 @@ export default function MistakeRecoveryQueue() {
           )}
         >
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-            <Archive className="w-3 h-3 text-emerald-500" />
+            <Archive className="w-3 h-3 text-emerald-400" />
             Archived
           </span>
           <div className="flex items-baseline gap-1.5">
@@ -594,7 +594,7 @@ export default function MistakeRecoveryQueue() {
               "inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer",
               selectedTag === 'volatile'
                 ? "bg-amber-500 text-white border-amber-500 shadow-xs"
-                : "bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+                : "bg-amber-950/20 border-amber-500/25 text-amber-400 dark:text-amber-400 hover:bg-amber-500/20"
             )}
           >
             <Zap className="w-3 h-3 fill-current" />
@@ -624,7 +624,7 @@ export default function MistakeRecoveryQueue() {
       {filteredMistakes.length === 0 ? (
         /* Clean Empty State */
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/80 bg-muted/20 space-y-4">
-          <div className="p-3.5 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          <div className="p-3.5 rounded-2xl bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
             <BookOpen className="w-6 h-6" />
           </div>
           <div className="space-y-1 max-w-sm">
@@ -872,7 +872,7 @@ function RuleCardRow({
           </span>
 
           {rule.isVolatile && (
-            <span className="inline-flex items-center gap-0.5 text-xs font-bold px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+            <span className="inline-flex items-center gap-0.5 text-xs font-bold px-2 py-0.2 rounded-full bg-amber-500/15 text-amber-400 dark:text-amber-400 border border-amber-500/30">
               <Zap className="w-2.5 h-2.5 fill-amber-500" />
               <span>Volatile</span>
             </span>
@@ -905,9 +905,9 @@ function RuleCardRow({
 
         {/* 20th Notebook Heuristic Forge / High-Yield Takeaway */}
         {rule.heuristicRule && !isEditingRule ? (
-          <div className="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start justify-between gap-2">
+          <div className="mt-2 p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/25 flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 min-w-0">
-              <span className="text-amber-600 dark:text-amber-400 font-bold text-xs shrink-0 mt-0.5">
+              <span className="text-amber-400 dark:text-amber-400 font-bold text-xs shrink-0 mt-0.5">
                 {isUsmle ? "🎯 Key Takeaway:" : "📝 20th Rule:"}
               </span>
               <span className="text-xs sm:text-sm font-semibold text-foreground italic">
@@ -981,8 +981,8 @@ function RuleCardRow({
           className={cn(
             "p-1.5 rounded-lg border transition-all cursor-pointer",
             rule.isVolatile
-              ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40"
-              : "bg-muted/40 border-border/60 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+              ? "bg-amber-500/20 text-amber-400 dark:text-amber-400 border-amber-500/40"
+              : "bg-muted/40 border-border/60 text-muted-foreground hover:text-amber-400 hover:bg-amber-950/20"
           )}
           title={rule.isVolatile ? "Remove volatile pin" : "Pin as Volatile Trap ⚡"}
         >
@@ -996,7 +996,7 @@ function RuleCardRow({
           className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
           title="Copy rule to clipboard"
         >
-          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
 
         {/* Edit Button */}
@@ -1016,7 +1016,7 @@ function RuleCardRow({
           className="p-1.5 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
           title={rule.resolved ? "Restore to active ledger" : "Archive rule"}
         >
-          {rule.resolved ? <ArchiveRestore className="w-3.5 h-3.5 text-emerald-500" /> : <Archive className="w-3.5 h-3.5" />}
+          {rule.resolved ? <ArchiveRestore className="w-3.5 h-3.5 text-emerald-400" /> : <Archive className="w-3.5 h-3.5" />}
         </button>
 
         {/* Delete Button */}

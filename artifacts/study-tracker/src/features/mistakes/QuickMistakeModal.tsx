@@ -191,7 +191,7 @@ export function QuickMistakeModal({
       <DialogContent className="sm:max-w-xl max-w-[95vw] rounded-2xl p-5 sm:p-6 bg-card border border-border/80 shadow-2xl">
         <DialogHeader className="space-y-1 text-left border-b border-border/60 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <span className="p-1.5 rounded-xl bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
               <BookOpen className="w-4 h-4" />
             </span>
             <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
@@ -297,16 +297,16 @@ export function QuickMistakeModal({
           </div>
 
           {/* Volatile Pin Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30">
             <div className="flex items-center gap-2.5">
-              <span className="p-1 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
+              <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400 dark:text-amber-400">
                 <Zap className="w-4 h-4 fill-amber-500" />
               </span>
               <div>
                 <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block">
                   Mark as Volatile Trap ⚡
                 </span>
-                <span className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                <span className="text-xs text-amber-400/80 dark:text-amber-400/80">
                   Highlight this rule in the pre-GT urgent revision spotlight.
                 </span>
               </div>

@@ -143,7 +143,7 @@ export function AudioPermissionBanner() {
                 'p-2 rounded-xl border shrink-0',
                 micState === 'denied'
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                  : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+                  : 'bg-zinc-800/50 text-teal-300 border-teal-500/30'
               )}
             >
               {micState === 'denied' ? (
@@ -163,7 +163,7 @@ export function AudioPermissionBanner() {
                     'hidden md:inline-block px-1.5 py-0.5 rounded-full text-xs font-mono border',
                     micState === 'denied'
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      : 'bg-teal-500/20 text-teal-300 border-teal-500/30'
+                      : 'bg-zinc-800/50 text-teal-300 border-teal-500/30'
                   )}
                 >
                   {micState === 'denied' ? 'Action Required' : 'Chrome PWA'}
@@ -217,7 +217,7 @@ export function AudioPermissionBanner() {
           <div className="bg-card border border-border shadow-2xl rounded-2xl max-w-md w-full p-6 space-y-5 text-foreground">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
                   <ShieldAlert className="w-5 h-5" />
                 </div>
                 <div>
@@ -237,7 +237,7 @@ export function AudioPermissionBanner() {
             <div className="space-y-3 text-xs">
               <div className="p-3.5 rounded-xl bg-muted/60 border border-border space-y-2.5">
                 <div className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-zinc-800/50 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
                     1
                   </span>
                   <div>
@@ -249,7 +249,7 @@ export function AudioPermissionBanner() {
                 </div>
 
                 <div className="flex items-start gap-2.5 pt-2 border-t border-border/60">
-                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-zinc-800/50 text-teal-400 font-bold text-xs flex items-center justify-center shrink-0">
                     2
                   </span>
                   <div>

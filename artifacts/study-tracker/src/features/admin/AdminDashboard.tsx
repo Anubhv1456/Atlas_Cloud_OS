@@ -86,7 +86,7 @@ export default function AdminDashboard() {
         {/* Brand Header */}
         <div className="h-18 flex items-center px-6 border-b border-border/50 justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-zinc-800/40 border border-teal-500/30 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-teal-400" />
             </div>
             <div>
@@ -115,13 +115,13 @@ export default function AdminDashboard() {
                 className={cn(
                   "w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-left transition-all group relative",
                   isActive 
-                    ? "bg-teal-500/10 border border-teal-500/30 text-teal-300 shadow-sm" 
+                    ? "bg-zinc-800/40 border border-teal-500/30 text-teal-300 shadow-sm" 
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
                 )}
               >
                 <div className={cn(
                   "p-2 rounded-lg transition-colors shrink-0",
-                  isActive ? "bg-teal-500/20 text-teal-300" : "bg-muted/50 text-muted-foreground group-hover:text-foreground"
+                  isActive ? "bg-zinc-800/50 text-teal-300" : "bg-muted/50 text-muted-foreground group-hover:text-foreground"
                 )}>
                   <item.icon className="w-4 h-4" />
                 </div>

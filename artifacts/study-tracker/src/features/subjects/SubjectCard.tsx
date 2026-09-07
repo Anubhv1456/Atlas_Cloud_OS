@@ -151,7 +151,7 @@ export function SubjectCard({
         className={cn(
           "group relative w-full p-4 rounded-2xl border transition-all duration-300 hover:shadow-sm",
           isFullyComplete
-            ? "bg-primary/5 border-primary/20 shadow-[inset_0_0_20px_rgba(var(--primary),0.02)]"
+            ? "bg-primary/5 border-white/5 shadow-[inset_0_0_20px_rgba(var(--primary),0.02)]"
             : "bg-card border-border/40 hover:border-border",
         )}
       >
@@ -170,7 +170,7 @@ export function SubjectCard({
                 {subject.name}
               </h3>
               {isFullyComplete && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20 flex-shrink-0 animate-in fade-in zoom-in duration-300">
+                <span className="px-2 py-0.5 rounded-full bg-zinc-800/40 text-primary text-xs font-bold tracking-widest uppercase border border-white/5 flex-shrink-0 animate-in fade-in zoom-in duration-300">
                   Mastered
                 </span>
               )}
@@ -182,7 +182,7 @@ export function SubjectCard({
                 {safeSystems.length} {safeSystems.length === 1 ? "System" : "Systems"}
               </span>
               {overdueCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 px-2 py-0.5 rounded-full">
                   ⚡ {overdueCount} Due
                 </span>
               )}

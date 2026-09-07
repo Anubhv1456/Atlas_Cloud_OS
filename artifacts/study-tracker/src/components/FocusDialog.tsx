@@ -74,7 +74,7 @@ export function FocusDialog({
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Target className={cn(
                 "w-5 h-5",
-                focusType === 'primary' ? "text-primary" : "text-amber-500"
+                focusType === 'primary' ? "text-primary" : "text-amber-400"
               )} />
               {title}
             </DialogTitle>
@@ -100,7 +100,7 @@ export function FocusDialog({
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer",
                 activeTab === 'all'
-                  ? "bg-primary/10 text-primary border border-primary/20"
+                  ? "bg-zinc-800/40 text-primary border border-white/5"
                   : "text-muted-foreground hover:bg-muted/60"
               )}
             >
@@ -111,7 +111,7 @@ export function FocusDialog({
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer",
                 activeTab === 'subjects'
-                  ? "bg-primary/10 text-primary border border-primary/20"
+                  ? "bg-zinc-800/40 text-primary border border-white/5"
                   : "text-muted-foreground hover:bg-muted/60"
               )}
             >
@@ -122,7 +122,7 @@ export function FocusDialog({
               className={cn(
                 "px-3 py-1 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer",
                 activeTab === 'systems'
-                  ? "bg-primary/10 text-primary border border-primary/20"
+                  ? "bg-zinc-800/40 text-primary border border-white/5"
                   : "text-muted-foreground hover:bg-muted/60"
               )}
             >
@@ -157,7 +157,7 @@ export function FocusDialog({
                       className={cn(
                         "w-full p-3.5 rounded-xl border text-left transition-all group flex items-center justify-between cursor-pointer",
                         isCurrentFocus
-                          ? "bg-primary/10 border-primary/40 ring-1 ring-primary/30"
+                          ? "bg-zinc-800/40 border-primary/40 ring-1 ring-primary/30"
                           : "bg-card hover:bg-muted/40 border-border/80 hover:border-primary/30"
                       )}
                     >
@@ -196,7 +196,7 @@ export function FocusDialog({
             <div className="space-y-2">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between px-1">
                 <span className="flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-amber-500" /> Individual Topics / Systems
+                  <Layers className="w-3.5 h-3.5 text-amber-400" /> Individual Topics / Systems
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">Specific topic focus</span>
               </div>
@@ -213,24 +213,24 @@ export function FocusDialog({
                       className={cn(
                         "w-full p-3 rounded-xl border text-left transition-all group flex items-center justify-between cursor-pointer",
                         isCurrentFocus
-                          ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/30"
+                          ? "bg-amber-950/20 border-amber-500/40 ring-1 ring-amber-500/30"
                           : "bg-card hover:bg-muted/40 border-border/60 hover:border-amber-500/30"
                       )}
                     >
                       <div className="min-w-0 pr-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm text-foreground truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">
+                          <span className="font-medium text-sm text-foreground truncate group-hover:text-amber-400 dark:group-hover:text-amber-400">
                             {sys.name}
                           </span>
                           {isDone && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
                           {subject?.name}
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-amber-500 shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-amber-400 shrink-0" />
                     </button>
                   );
                 })}

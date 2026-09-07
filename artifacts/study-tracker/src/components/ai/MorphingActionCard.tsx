@@ -109,7 +109,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
             : 'Study Session Synchronized',
           {
             description: result.message || 'Updated local curriculum matrix.',
-            icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />
           }
         );
         onCommit?.(draftAction, result);
@@ -172,10 +172,10 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.97, y: -2 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300"
+        className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 dark:text-emerald-400 shrink-0">
             <Check className="w-3.5 h-3.5" />
           </div>
           <div>
@@ -255,7 +255,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
         {/* Action icons & Auto-commit indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
           {countdown > 0 && !isPausedCountdown && (
-            <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+            <span className="text-xs font-mono text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
               {countdown}s
             </span>
           )}

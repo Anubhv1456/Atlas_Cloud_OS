@@ -278,7 +278,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
       <DialogContent className="sm:max-w-[540px] rounded-3xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
         <div className="p-6 md:p-8 relative overflow-hidden min-h-[480px] flex flex-col justify-between">
           {/* Subtle Ambient Background Glow */}
-          <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-zinc-800/40 rounded-full blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
 
           {/* Top Header / Progress Indicator */}
@@ -311,7 +311,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col items-center justify-center text-center my-auto space-y-6 z-10 py-4"
             >
               <div className="relative">
-                <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-md overflow-hidden">
+                <div className="w-20 h-20 rounded-3xl bg-zinc-800/40 border border-white/5 flex items-center justify-center shadow-md overflow-hidden">
                   <img src="/emblem.svg" alt="Atlas Logo" className="w-16 h-16 rounded-2xl object-contain" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 bg-primary text-primary-foreground rounded-full shadow-sm">
@@ -320,7 +320,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               </div>
 
               <div className="space-y-2 max-w-sm">
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs font-bold px-3 py-0.5 rounded-full">
+                <Badge variant="outline" className="bg-zinc-800/40 text-primary border-white/5 text-xs font-bold px-3 py-0.5 rounded-full">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Medical Study Operating System
                 </Badge>
@@ -382,7 +382,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                       className={cn(
                         "p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
                         isSelected
-                          ? "bg-primary/10 border-primary shadow-xs"
+                          ? "bg-zinc-800/40 border-primary shadow-xs"
                           : "bg-background border-border/60 hover:border-border hover:bg-muted/40"
                       )}
                     >
@@ -416,7 +416,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col items-center justify-center space-y-6 z-10 py-6 text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-800/40 border border-white/5 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
               <div className="space-y-2 max-w-xs">
@@ -502,7 +502,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                       className={cn(
                         "p-2.5 rounded-xl border text-xs font-semibold transition-all text-center cursor-pointer",
                         startedStudying === 'yes'
-                          ? "bg-primary/10 border-primary text-primary"
+                          ? "bg-zinc-800/40 border-primary text-primary"
                           : "bg-background border-border/60 text-muted-foreground"
                       )}
                     >
@@ -514,7 +514,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                       className={cn(
                         "p-2.5 rounded-xl border text-xs font-semibold transition-all text-center cursor-pointer",
                         startedStudying === 'fresh'
-                          ? "bg-primary/10 border-primary text-primary"
+                          ? "bg-zinc-800/40 border-primary text-primary"
                           : "bg-background border-border/60 text-muted-foreground"
                       )}
                     >
@@ -581,7 +581,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 </div>
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     Intelligent Direction
                   </div>
                   <p className="text-xs text-muted-foreground leading-snug">
@@ -591,7 +591,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
                 <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                     Active Recall
                   </div>
                   <p className="text-xs text-muted-foreground leading-snug">
@@ -649,7 +649,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col items-center justify-center text-center my-auto space-y-6 z-10 py-6"
             >
               <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center animate-pulse">
+                <div className="w-20 h-20 rounded-full bg-zinc-800/40 border border-primary/30 flex items-center justify-center animate-pulse">
                   <Brain className="w-10 h-10 text-primary" />
                 </div>
                 <div className="absolute inset-0 rounded-full border-2 border-primary/40 border-t-transparent animate-spin" />
@@ -677,7 +677,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     )}
                   >
                     {computingStep > idx ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     ) : computingStep === idx ? (
                       <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
                     ) : (
@@ -698,8 +698,8 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="text-center space-y-1">
-                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs font-bold px-3 py-0.5 rounded-full">
-                  <Sparkles className="w-3 h-3 mr-1 text-emerald-500" />
+                <Badge variant="outline" className="bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30 text-xs font-bold px-3 py-0.5 rounded-full">
+                  <Sparkles className="w-3 h-3 mr-1 text-emerald-400" />
                   Calibration Complete
                 </Badge>
                 <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
@@ -709,8 +709,8 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
               {/* Recommendation Card */}
               <div className="bg-card border-2 border-primary/40 rounded-3xl p-5 shadow-lg space-y-3.5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 bg-primary/10 rounded-bl-2xl border-l border-b border-primary/20 text-primary">
-                  <Flame className="w-5 h-5 text-amber-500" />
+                <div className="absolute top-0 right-0 p-3 bg-zinc-800/40 rounded-bl-2xl border-l border-b border-white/5 text-primary">
+                  <Flame className="w-5 h-5 text-amber-400" />
                 </div>
 
                 <div className="space-y-0.5">

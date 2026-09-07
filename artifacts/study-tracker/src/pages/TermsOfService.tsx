@@ -136,7 +136,7 @@ export default function TermsOfService() {
             </Button>
             <div className="h-4 w-px bg-border/60 hidden sm:block" />
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7.5 h-7.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <div className="w-7.5 h-7.5 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center">
                 <Compass className="w-4 h-4 text-primary" />
               </div>
               <span className="font-bold tracking-tight text-sm hidden xs:inline">Atlas OS</span>
@@ -184,11 +184,11 @@ export default function TermsOfService() {
       <div className="border-b border-border/40 bg-gradient-to-b from-muted/30 via-muted/10 to-background py-10 sm:py-14 px-4 sm:px-6 print:py-6">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-primary text-xs font-semibold uppercase tracking-wider">
               <Compass className="w-3.5 h-3.5" />
               Medical Operating Agreement
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-mono font-medium">
+            <span className="px-2.5 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-zinc-300 dark:text-blue-400 text-xs font-mono font-medium">
               Enterprise Terms v2.4
             </span>
           </div>
@@ -253,7 +253,7 @@ export default function TermsOfService() {
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-mono shrink-0 ml-1 ${
                           isActive
                             ? 'bg-primary-foreground/20 text-primary-foreground'
-                            : 'bg-primary/10 text-primary border border-primary/20'
+                            : 'bg-zinc-800/40 text-primary border border-white/5'
                         }`}>
                           {s.badge}
                         </span>
@@ -332,7 +332,7 @@ export default function TermsOfService() {
             <section id="summary" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
@@ -346,7 +346,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('summary', 'Executive Summary')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'summary' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'summary' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -357,7 +357,7 @@ export default function TermsOfService() {
               {/* Summary Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5 border-l-2 border-l-amber-500/30">
                     <Activity className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">1. Strictly Non-Clinical Study Tool</h3>
@@ -367,7 +367,7 @@ export default function TermsOfService() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5 border-l-2 border-l-emerald-500/30">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">2. High-Yield Peer Wisdom Standards</h3>
@@ -377,7 +377,7 @@ export default function TermsOfService() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-blue-400 flex items-center justify-center border border-white/5">
                     <Layers className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">3. Total Data Ownership</h3>
@@ -387,7 +387,7 @@ export default function TermsOfService() {
                 </div>
 
                 <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-purple-600 dark:text-primary flex items-center justify-center border border-purple-500/20">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-primary flex items-center justify-center border border-white/5">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">4. Fully Independent Platform</h3>
@@ -402,7 +402,7 @@ export default function TermsOfService() {
             <section id="scope-disclaimer" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Activity className="w-4 h-4" />
                   </div>
                   <div>
@@ -416,12 +416,12 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('scope-disclaimer', 'Medical Scope & Disclaimer')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'scope-disclaimer' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'scope-disclaimer' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
               {/* CRITICAL WARNING BANNER */}
-              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 sm:p-6 space-y-3">
+              <div className="bg-primary/5 border border-white/5 rounded-2xl p-5 sm:p-6 space-y-3">
                 <div className="flex items-center gap-2 text-primary font-bold text-base">
                   <AlertTriangle className="w-5 h-5 shrink-0" />
                   Mandatory Non-Clinical Medical Disclaimer
@@ -445,7 +445,7 @@ export default function TermsOfService() {
             <section id="license" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   <div>
@@ -459,7 +459,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('license', 'Operating License')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'license' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'license' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -477,7 +477,7 @@ export default function TermsOfService() {
             <section id="trail-markers" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
@@ -491,7 +491,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('trail-markers', 'Trail Markers Standards')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'trail-markers' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'trail-markers' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -501,7 +501,7 @@ export default function TermsOfService() {
 
               <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 text-xs sm:text-sm">
                 <div className="font-bold text-foreground flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-500" />
+                  <Check className="w-4 h-4 text-emerald-400" />
                   Community Content Mandate:
                 </div>
                 <ul className="space-y-2 text-muted-foreground">
@@ -525,7 +525,7 @@ export default function TermsOfService() {
             <section id="ai-copilot" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
@@ -539,7 +539,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('ai-copilot', 'AI Co-Pilot Usage Terms')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'ai-copilot' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'ai-copilot' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -563,7 +563,7 @@ export default function TermsOfService() {
             <section id="curriculum-ip" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Layers className="w-4 h-4" />
                   </div>
                   <div>
@@ -577,7 +577,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('curriculum-ip', 'Curriculum IP')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'curriculum-ip' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'curriculum-ip' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -596,7 +596,7 @@ export default function TermsOfService() {
             <section id="trademarks" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div>
@@ -610,7 +610,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('trademarks', 'Third-Party Disclaimers')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'trademarks' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'trademarks' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -637,7 +637,7 @@ export default function TermsOfService() {
             <section id="cloud-sync" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Lock className="w-4 h-4" />
                   </div>
                   <div>
@@ -651,7 +651,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('cloud-sync', 'Cloud Sync & Account Security')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'cloud-sync' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'cloud-sync' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -666,7 +666,7 @@ export default function TermsOfService() {
             <section id="prohibited" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Ban className="w-4 h-4" />
                   </div>
                   <div>
@@ -680,7 +680,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('prohibited', 'Prohibited Conduct')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'prohibited' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'prohibited' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -699,7 +699,7 @@ export default function TermsOfService() {
             <section id="disclaimer-warranties" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <AlertTriangle className="w-4 h-4" />
                   </div>
                   <div>
@@ -713,7 +713,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('disclaimer-warranties', 'Disclaimer of Warranties')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'disclaimer-warranties' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'disclaimer-warranties' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -728,7 +728,7 @@ export default function TermsOfService() {
             <section id="limitation-liability" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Scale className="w-4 h-4" />
                   </div>
                   <div>
@@ -742,7 +742,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('limitation-liability', 'Limitation of Liability')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'limitation-liability' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'limitation-liability' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -763,7 +763,7 @@ export default function TermsOfService() {
             <section id="indemnification" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
@@ -777,7 +777,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('indemnification', 'Indemnification')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'indemnification' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'indemnification' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -790,7 +790,7 @@ export default function TermsOfService() {
             <section id="governing-law" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Globe className="w-4 h-4" />
                   </div>
                   <div>
@@ -804,7 +804,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('governing-law', 'Governing Law')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'governing-law' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'governing-law' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 
@@ -817,7 +817,7 @@ export default function TermsOfService() {
             <section id="modifications-contact" className="scroll-mt-28 space-y-4">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
@@ -831,7 +831,7 @@ export default function TermsOfService() {
                   onClick={() => copySectionLink('modifications-contact', 'Term Modifications & Contact')}
                   className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
                 >
-                  {copiedSection === 'modifications-contact' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSection === 'modifications-contact' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </Button>
               </div>
 

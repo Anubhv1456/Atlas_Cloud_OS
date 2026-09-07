@@ -155,7 +155,7 @@ export function AIAssistantSection() {
         <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <Sparkles className="w-4.5 h-4.5 text-purple-500" />
+              <Sparkles className="w-4.5 h-4.5 text-zinc-300" />
               Clinical AI Settings
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -203,7 +203,7 @@ export function AIAssistantSection() {
                       <button
                         type="button"
                         onClick={handlePasteKey}
-                        className="text-xs font-semibold text-primary hover:bg-primary/10 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-xs font-semibold text-primary hover:bg-zinc-800/40 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <ClipboardPaste className="w-3 h-3" />
                         <span>Paste</span>
@@ -232,7 +232,7 @@ export function AIAssistantSection() {
                     {isValidating ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1 text-primary" />
                     ) : isConnected ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mr-1" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-1" />
                     ) : (
                       <RefreshCw className="w-3.5 h-3.5 mr-1 text-muted-foreground" />
                     )}
@@ -264,7 +264,7 @@ export function AIAssistantSection() {
                       onClick={() => handleSelectModel(m.id, m.title, m.tag)}
                       className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                         active
-                          ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary/40'
+                          ? 'border-primary bg-zinc-800/40 text-foreground ring-1 ring-primary/40'
                           : 'border-border/60 bg-card hover:bg-muted/30 text-muted-foreground'
                       }`}
                     >
@@ -321,7 +321,7 @@ export function AIAssistantSection() {
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Keys remain locally on device and connect directly to Google servers.</span>
             </div>
           </div>

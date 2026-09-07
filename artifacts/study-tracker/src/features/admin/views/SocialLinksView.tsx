@@ -144,7 +144,7 @@ export function SocialLinksView() {
 
           <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-4">
             <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Changes apply instantly to the Contact page upon saving.</span>
             </div>
             <Button

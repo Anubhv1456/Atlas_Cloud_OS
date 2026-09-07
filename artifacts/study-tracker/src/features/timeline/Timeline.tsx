@@ -32,12 +32,12 @@ import { useTimelineLogic } from './Timeline.hooks';
 
 // ── Visual config ─────────────────────────────────────────────────────────────
 const EVENT_STYLE: Record<TimelineEvent['eventType'], { bg: string; text: string; Icon: typeof BookOpen }> = {
-  contentCompleted: { bg: 'bg-teal-500/10 border-teal-500/20',     text: 'text-teal-500',         Icon: BookOpen },
+  contentCompleted: { bg: 'bg-zinc-800/40 border-white/5',     text: 'text-zinc-300',         Icon: BookOpen },
   qbankDone:        { bg: 'bg-violet-500/10 border-violet-500/20',   text: 'text-violet-500',       Icon: Layers   },
-  pyqsDone:         { bg: 'bg-amber-500/10 border-amber-500/20',     text: 'text-amber-500',        Icon: BookOpen },
-  revisionSystem:   { bg: 'bg-primary/10 border-primary/20',          text: 'text-primary',          Icon: Clock    },
-  revisionSubject:  { bg: 'bg-primary/10 border-primary/20',          text: 'text-primary',          Icon: Clock    },
-  topicMastered:    { bg: 'bg-emerald-500/10 border-emerald-500/20',  text: 'text-emerald-500',      Icon: CheckCircle2 },
+  pyqsDone:         { bg: 'bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30',     text: 'text-amber-400',        Icon: BookOpen },
+  revisionSystem:   { bg: 'bg-zinc-800/40 border-white/5',          text: 'text-primary',          Icon: Clock    },
+  revisionSubject:  { bg: 'bg-zinc-800/40 border-white/5',          text: 'text-primary',          Icon: Clock    },
+  topicMastered:    { bg: 'bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30',  text: 'text-emerald-400',      Icon: CheckCircle2 },
   topicWeak:        { bg: 'bg-rose-500/10 border-rose-500/20',        text: 'text-rose-500',         Icon: TriangleAlert },
 };
 
@@ -64,7 +64,7 @@ function ActionableCard({
       <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
         <div className={cn(
           "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border",
-          isOverdue ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-amber-500/10 border-amber-500/20 text-amber-500"
+          isOverdue ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 text-amber-400"
         )}>
           {isOverdue ? <AlertCircle className="w-4.5 h-4.5" /> : <Clock className="w-4.5 h-4.5" />}
         </div>
@@ -77,7 +77,7 @@ function ActionableCard({
               </span>
             )}
             {isDueToday && (
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5 border-l-2 border-l-amber-500/30 shrink-0">
                 Due Today
               </span>
             )}
@@ -135,7 +135,7 @@ function EventCard({ event, onRollback }: { event: TimelineEvent; onRollback?: (
       {event.status === 'completed' && (
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs font-mono text-muted-foreground">{format(event.date, 'HH:mm')}</span>
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           {event.dbHistoryId && onRollback && (
             <button
               onClick={(e) => {
@@ -211,7 +211,7 @@ export default function Timeline() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border/40">
             <div className="flex items-center justify-between md:justify-start gap-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <div className="p-1.5 rounded-xl bg-zinc-800/40 text-primary border border-white/5">
                   <CalendarDays className="w-4.5 h-4.5" />
                 </div>
                 <h2 className="text-base sm:text-lg font-bold text-foreground">
@@ -315,7 +315,7 @@ export default function Timeline() {
                 if (count >= 3)  bgClass = 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90';
 
                 if (count === 0 && isTdy) { 
-                   bgClass = 'bg-primary/10 text-primary font-bold ring-1 ring-primary ring-inset';
+                   bgClass = 'bg-zinc-800/40 text-primary font-bold ring-1 ring-primary ring-inset';
                 } else if (isTdy) { 
                    bgClass += ' ring-2 ring-primary ring-offset-2 ring-offset-card';
                 }
@@ -372,14 +372,14 @@ export default function Timeline() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <div className="p-1 rounded-lg bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
                   <Zap className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Actionable Revision Queue
                 </h2>
               </div>
-              <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-bold bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
                 {actionableQueue.length} Due
               </Badge>
             </div>
@@ -397,7 +397,7 @@ export default function Timeline() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                <div className="p-1 rounded-lg bg-zinc-800/40 text-primary border border-white/5">
                   <Clock className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -422,7 +422,7 @@ export default function Timeline() {
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <div className="p-1 rounded-lg bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
                   <History className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">

@@ -213,7 +213,7 @@ export function TopicList({
             {topics.length}
           </span>
           {hasCustomEdits && (
-            <span className="text-xs text-teal-600 dark:text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded font-medium">
+            <span className="text-xs text-zinc-300 dark:text-teal-400 bg-zinc-800/40 px-1.5 py-0.5 rounded font-medium">
               Modified
             </span>
           )}
@@ -236,7 +236,7 @@ export function TopicList({
             <button
               type="button"
               onClick={() => setIsAddingTopic(true)}
-              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-zinc-800/40 hover:bg-primary/15 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
@@ -374,9 +374,9 @@ export function TopicList({
                 {/* Status Indicator Icon */}
                 <div className="shrink-0">
                   {isCompleted ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   ) : isPartiallyDone ? (
-                    <CircleDashed className="w-4 h-4 text-amber-500" />
+                    <CircleDashed className="w-4 h-4 text-amber-400" />
                   ) : (
                     <Circle className="w-4 h-4 text-muted-foreground/30" />
                   )}
@@ -406,7 +406,7 @@ export function TopicList({
                       <button
                         type="button"
                         onClick={() => saveInlineEdit(topic.id)}
-                        className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded-md cursor-pointer shrink-0"
+                        className="p-1 text-emerald-400 hover:bg-emerald-950/20 rounded-md cursor-pointer shrink-0"
                         title="Save"
                       >
                         <Check className="w-3.5 h-3.5" />
@@ -440,7 +440,7 @@ export function TopicList({
                   <button 
                     type="button"
                     onClick={() => onViewMarkers?.(topic.id, topic.name)}
-                    className="p-1.5 text-muted-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 cursor-pointer"
+                    className="p-1.5 text-muted-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-zinc-800/40 cursor-pointer"
                     title={`Trail Markers for ${topic.name}`}
                   >
                     <Compass className="w-3.5 h-3.5" />

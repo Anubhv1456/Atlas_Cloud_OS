@@ -139,8 +139,8 @@ export function SupportMessagesView() {
           <div className="text-2xl font-bold mt-1">{messages.length}</div>
         </div>
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs">
-          <div className="text-xs text-muted-foreground font-medium text-amber-500">Unread Messages</div>
-          <div className="text-2xl font-bold mt-1 text-amber-500">{unreadCount}</div>
+          <div className="text-xs text-muted-foreground font-medium text-amber-400">Unread Messages</div>
+          <div className="text-2xl font-bold mt-1 text-amber-400">{unreadCount}</div>
         </div>
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs">
           <div className="text-xs text-muted-foreground font-medium text-red-400">Bug Reports</div>
@@ -219,9 +219,9 @@ export function SupportMessagesView() {
               >
                 <div className="flex items-start gap-3.5 flex-1 min-w-0">
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
-                    msg.category === 'Bug Report' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                    msg.category === 'Feature Request' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                    'bg-primary/10 text-primary border-primary/20'
+                    msg.category === 'Bug Report' ? 'bg-red-950/20 text-red-400 border-white/5 border-l-2 border-l-red-500/30' :
+                    msg.category === 'Feature Request' ? 'bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30' :
+                    'bg-zinc-800/40 text-primary border-white/5'
                   }`}>
                     <CategoryIcon className="w-4.5 h-4.5" />
                   </div>

@@ -152,7 +152,7 @@ export function SprintSetupDrawer({
         <SheetHeader className="text-left pb-4 border-b border-border/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <div className="w-9 h-9 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center text-primary">
                 <Target className="w-5 h-5" />
               </div>
               <div>
@@ -268,7 +268,7 @@ export function SprintSetupDrawer({
                   onClick={() => setDailyCapacityMinutes(opt.mins)}
                   className={`p-2.5 rounded-xl border text-left transition-all ${
                     dailyCapacityMinutes === opt.mins
-                      ? 'bg-primary/10 border-primary text-primary font-semibold'
+                      ? 'bg-zinc-800/40 border-primary text-primary font-semibold'
                       : 'bg-card/60 hover:bg-secondary/40 border-border/50 text-muted-foreground'
                   }`}
                 >

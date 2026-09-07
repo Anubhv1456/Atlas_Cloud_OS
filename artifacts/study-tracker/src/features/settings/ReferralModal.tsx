@@ -87,7 +87,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
       <DialogContent className="max-w-md sm:max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 bg-card border-border/40 shadow-2xl">
         <DialogHeader className="space-y-2 text-left">
           <div className="flex items-center justify-between">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Study Circle</span>
             </div>
@@ -135,7 +135,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
               variant="outline"
               size="sm"
               onClick={handleShareWhatsApp}
-              className="w-full h-8 text-xs rounded-xl border-border/80 hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/30 gap-1.5 transition-all"
+              className="w-full h-8 text-xs rounded-xl border-border/80 hover:bg-zinc-800/40 hover:text-teal-400 hover:border-teal-500/30 gap-1.5 transition-all"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Share to WhatsApp Study Group</span>
@@ -190,12 +190,12 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
 
                     <div>
                       {isQualified ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-400 text-xs font-semibold border border-teal-500/20">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-800/40 text-teal-400 text-xs font-semibold border border-white/5">
                           <CheckCircle2 className="w-3 h-3" />
                           +14d Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium border border-amber-500/20">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/20 text-amber-400 text-xs font-medium border border-white/5 border-l-2 border-l-amber-500/30">
                           <Clock className="w-3 h-3" />
                           First Session Pending
                         </span>

@@ -32,9 +32,9 @@ export function NextActionCard() {
   const getOntologyIcon = (rec: any) => {
     // Basic dynamic mapping, could be expanded
     if (rec.archetype === 'zenith') return <Target className="w-4 h-4 text-primary" />;
-    if (rec.archetype === 'remediation_clinic') return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-    if (rec.isFreshState) return <Sparkles className="w-4 h-4 text-emerald-500" />;
-    return <Book className="w-4 h-4 text-blue-500" />;
+    if (rec.archetype === 'remediation_clinic') return <AlertTriangle className="w-4 h-4 text-amber-400" />;
+    if (rec.isFreshState) return <Sparkles className="w-4 h-4 text-emerald-400" />;
+    return <Book className="w-4 h-4 text-zinc-300" />;
   };
 
   if (loading || !result) {
@@ -120,9 +120,9 @@ export function NextActionCard() {
                 <div>
                    <div className="flex items-start justify-between gap-2 mb-2">
                      <Badge variant="outline" className={cn("text-[9px] uppercase tracking-wider font-bold shrink-0", 
-                         pulse.archetype === 'remediation_clinic' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 
+                         pulse.archetype === 'remediation_clinic' ? 'bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30' : 
                          pulse.archetype === 'zenith' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                        'bg-primary/10 text-primary border-primary/20'
+                        'bg-zinc-800/40 text-primary border-white/5'
                      )}>
                         {pulse.archetype.replace('_', ' ')}
                      </Badge>
@@ -137,7 +137,7 @@ export function NextActionCard() {
                    <p className="text-xs text-muted-foreground line-clamp-2">{pulse.whyBreakdown.humanizedMessage || pulse.title}</p>
                 </div>
                 <div className="mt-4 flex items-center justify-end">
-                  <div className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground">
+                  <div className="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors bg-zinc-800/40 text-primary group-hover:bg-primary group-hover:text-primary-foreground">
                     {pulse.estimatedMinutes ? `${pulse.estimatedMinutes}m` : 'Review'}
                   </div>
                 </div>

@@ -112,8 +112,8 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
           <div className="flex flex-col items-end">
             <span className={cn(
               "font-mono font-bold text-lg leading-none",
-              log.percentage >= 75 ? 'text-emerald-500' : 
-              log.percentage < 60 ? 'text-rose-500' : 'text-amber-500'
+              log.percentage >= 75 ? 'text-emerald-400' : 
+              log.percentage < 60 ? 'text-rose-500' : 'text-amber-400'
             )}>
               {log.percentage}%
             </span>
@@ -196,7 +196,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {item.volatile.map((vol, vIdx) => (
-                          <span key={vIdx} className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                          <span key={vIdx} className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-950/20 text-amber-700 dark:text-amber-300">
                             {vol}
                           </span>
                         ))}
@@ -207,7 +207,7 @@ export const ScoreAutopsyRow: React.FC<ScoreAutopsyRowProps> = ({
               </div>
             ) : (
               <div className="p-2.5 rounded-lg bg-card border border-border/60 text-muted-foreground text-xs flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <Zap className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>Performance was balanced. Maintain active spaced recall pace.</span>
               </div>
             )}

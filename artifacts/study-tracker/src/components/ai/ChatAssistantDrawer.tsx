@@ -50,6 +50,8 @@ import { ParsedAtlasAction } from '@/lib/ai/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { db } from '@/db';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
 
 export interface ChatAssistantDrawerProps {
   open: boolean;
@@ -68,7 +70,6 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   const { settings } = useAISettings();
   const { metrics, topDailyPulses } = useClinicalFrictionEngine();
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    // Initial welcome message tailored to exam profile
     return [
       {
         id: 'msg-init',
@@ -80,6 +81,39 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
       }
     ];
   });
+
+  useEffect(() => {
+    const fetchPlateau = async () => {
+      const logs = await db.scoreLogs.toArray();
+      const recentLogs = logs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 3);
+      if (recentLogs.length === 3) {
+        const scores = recentLogs.map(l => l.percentage);
+        const max = Math.max(...scores);
+        const min = Math.min(...scores);
+        if ((max - min) < 5 && max < 80) {
+           const avg = Math.round((max + min) / 2);
+           const heuristicCount = await db.mistakeLogs.filter(m => !!m.heuristicRule).count();
+           
+           let plateauMsg = isUsmle 
+              ? `💡 I see your last few scores are hovering around ${avg}%. You're not stuck—you're just hitting the 'vignette wall'. Your foundation is actually really solid (you've made ${heuristicCount} custom rules!). Let's pause content review and just practice 'Next Best Step' questions today.`
+              : `💡 I see your last few GT scores are sitting around ${avg}%. Don't stress, this is a super normal plateau! Your brain is just organizing all that info. You've already created ${heuristicCount} custom rules, which is huge. Let's do some rapid-fire recall today to plug those memory leaks.`;
+              
+           setMessages(prev => {
+             if (prev.length === 1 && prev[0].id === 'msg-init') {
+                return [{
+                  id: 'msg-init',
+                  role: 'assistant',
+                  content: plateauMsg,
+                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }];
+             }
+             return prev;
+           });
+        }
+      }
+    };
+    fetchPlateau();
+  }, [isUsmle]);
 
   // Dynamically compute context-aware high-yield discovery chips based on doctor's actual weakest/decaying subjects
   const dynamicPromptPills = React.useMemo(() => {
@@ -613,7 +647,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-border/60 dark:border-white/10 bg-muted/40 dark:bg-black/30 backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-primary/20">
+                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-white/5">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -796,7 +830,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       <motion.div
                         className={cn(
                           "absolute rounded-full pointer-events-none",
-                          ambientSession.isListening ? "bg-emerald-500/10" : "bg-sky-500/10"
+                          ambientSession.isListening ? "bg-emerald-950/20" : "bg-sky-500/10"
                         )}
                         initial={{ width: 110, height: 110, opacity: 0.5 }}
                         animate={{ width: [110, 160], height: [110, 160], opacity: [0.5, 0] }}
@@ -835,7 +869,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                         ? "bg-amber-500/15 border-amber-500/50 shadow-amber-500/25 text-amber-400 ring-4 ring-amber-500/20"
                         : ambientSession.isSpeakingAI
                         ? "bg-sky-500/15 border-sky-500/50 shadow-sky-500/25 text-sky-400 ring-4 ring-sky-500/20"
-                        : "bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary shadow-primary/10"
+                        : "bg-primary/5 hover:bg-zinc-800/40 border-white/5 text-primary shadow-primary/10"
                     )}
                   >
                     {ambientSession.isListening ? (
@@ -1022,7 +1056,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
             {/* Loading Indicator with Thinking Dots */}
             {isLoading && (
               <div className="flex items-center gap-2 text-muted-foreground text-xs p-2">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-pulse">
+                <div className="w-6 h-6 rounded-full bg-zinc-800/40 flex items-center justify-center text-primary animate-pulse">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div className="flex items-center gap-1 font-mono text-xs">

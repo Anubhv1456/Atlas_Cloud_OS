@@ -253,7 +253,7 @@ export function PermissionsDiagnosticsSection() {
               {/* Mic Input */}
               <div className="p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className={cn("p-1.5 rounded-lg", micState === 'granted' ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500")}>
+                  <div className={cn("p-1.5 rounded-lg", micState === 'granted' ? "bg-emerald-950/20 text-emerald-400" : "bg-amber-950/20 text-amber-400")}>
                     {micState === 'granted' ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                   </div>
                   <div>
@@ -290,7 +290,7 @@ export function PermissionsDiagnosticsSection() {
               {/* Speech Recognition Engine */}
               <div className="p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
+                  <div className="p-1.5 rounded-lg bg-zinc-800/40 text-zinc-300">
                     <Radio className="w-4 h-4" />
                   </div>
                   <div>
@@ -313,7 +313,7 @@ export function PermissionsDiagnosticsSection() {
               {/* Speech Synthesis Speaker */}
               <div className="p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500">
+                  <div className="p-1.5 rounded-lg bg-zinc-800/40 text-zinc-300">
                     <Volume2 className="w-4 h-4" />
                   </div>
                   <div>
@@ -340,7 +340,7 @@ export function PermissionsDiagnosticsSection() {
                 className="w-full flex items-center justify-between text-left cursor-pointer"
               >
                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
                   Chrome PWA Permissions Guide
                 </span>
                 {showPwaGuide ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}

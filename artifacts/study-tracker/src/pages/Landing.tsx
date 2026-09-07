@@ -105,10 +105,10 @@ const HomeDashboardUI = () => (
           <div className="text-xs sm:text-sm font-medium text-white relative z-10">Cardiology</div>
           <div className="text-[7px] sm:text-[9px] text-slate-400 relative z-10">Medicine</div>
         </div>
-        <div className="bg-[#111318] border border-amber-500/20 rounded-lg p-1.5 sm:p-2.5 relative overflow-hidden">
+        <div className="bg-[#111318] border border-white/5 border-l-2 border-l-amber-500/30 rounded-lg p-1.5 sm:p-2.5 relative overflow-hidden">
           <div className="flex items-center justify-between text-[7px] sm:text-[8px] text-slate-400 uppercase mb-0.5">
             <span>SECONDARY FOCUS</span>
-            <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[6px] sm:text-[8px] px-1 rounded font-medium">Overdue 2d</span>
+            <span className="bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30 text-[6px] sm:text-[8px] px-1 rounded font-medium">Overdue 2d</span>
           </div>
           <div className="text-xs sm:text-sm font-medium text-white">Glaucoma</div>
           <div className="text-[7px] sm:text-[9px] text-slate-400">Ophthalmology</div>
@@ -935,7 +935,7 @@ const PerformanceTrajectoryVisualization = () => {
              <span className="w-2 h-2 rounded-full bg-slate-500" />
              <span>PLATEAU CEILING</span>
           </div>
-          <div className="flex items-center gap-2 text-amber-500/70">
+          <div className="flex items-center gap-2 text-amber-400/70">
              <span className="w-2 h-2 rounded-full bg-amber-500/50 stroke-amber-500/30" />
              <span>CRAMMING COLLAPSE</span>
           </div>
@@ -1935,7 +1935,7 @@ const CommunityMarkersSection = () => {
           
           {/* Section Header */}
           <div className="text-center max-w-4xl mx-auto relative z-10 mb-12">
-             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 text-xs font-mono tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                 <Compass className="w-3.5 h-3.5" />
                 <span>CELESTIAL KNOWLEDGE REPOSITORY</span>
                 <span className="w-1 h-1 rounded-full bg-amber-400/50" />
@@ -1946,7 +1946,7 @@ const CommunityMarkersSection = () => {
                 <h2 className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight text-white">
                    Community Markers
                 </h2>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs font-mono font-semibold uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
                    Coming Soon
                 </span>
@@ -2404,7 +2404,7 @@ export default function Landing() {
         {/* Feature 2 */}
         <div className="flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24 relative group">
           <div className="flex-1 lg:pl-12 relative z-10">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-widest uppercase mb-6">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-blue-400 text-xs font-semibold tracking-widest uppercase mb-6">
                 <BookOpen className="w-3 h-3" /> Architecture
              </div>
              <h3 className="text-4xl lg:text-5xl font-medium tracking-tight mb-6 text-white group-hover:text-blue-400 transition-colors duration-500">Architect Your Entire Medical Curriculum</h3>
@@ -2442,7 +2442,7 @@ export default function Landing() {
         {/* Feature 4 */}
         <div className="flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24 relative group">
           <div className="flex-1 lg:pl-12 relative z-10">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-6">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-6">
                 <Activity className="w-3 h-3" /> Trajectory
              </div>
              <h3 className="text-4xl lg:text-5xl font-medium tracking-tight mb-6 text-white group-hover:text-amber-400 transition-colors duration-500">Performance Analytics</h3>

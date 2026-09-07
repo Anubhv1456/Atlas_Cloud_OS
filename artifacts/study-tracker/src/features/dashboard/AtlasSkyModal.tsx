@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { AtlasSkyShareModal } from './AtlasSkyShareModal';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { db } from '@/db';
 import { isSubjectInProfScope, getPhaseNameForProfile } from '@/lib/curriculumScope';
 
 interface AtlasSkyModalProps {
@@ -51,6 +53,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
   const { metrics } = useClinicalFrictionEngine();
 
   const { profile } = useExamProfile();
+  const mistakeLogs = useLiveQuery(() => db.mistakeLogs.toArray(), []) || [];
   const activeOntology = useMemo(() => getOntologyForExam(profile.targetExam || ''), [profile.targetExam]);
 
   const CELESTIAL_SUBJECTS = useMemo(() => {
@@ -151,12 +154,14 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
       let strongSystemsCount = 0;
       let weakSystemsCount = 0;
       let completedAtTime = 0;
+      let heuristicCount = 0;
       const metric = metrics.find(m => m.subjectName === star.name || aliasMap[m.subjectName] === star.name);
       const frictionScore = metric?.frictionScore || 0;
       const decayUrgency = metric?.decayUrgency || 'STABLE';
 
       if (dbSubject) {
         dbSubjectId = dbSubject.id;
+        heuristicCount = mistakeLogs.filter(m => String(m.subjectId) === String(dbSubject.id) && !!m.heuristicRule).length;
         const subSets = curriculumSets.filter(c => c.subjectId === dbSubject.id);
         progress = Math.round(calculateSubjectProgress(dbSubject, systems, subSets));
 
@@ -196,7 +201,8 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
         weakSystemsCount,
         completedAtTime,
         frictionScore,
-        decayUrgency
+        decayUrgency,
+        heuristicCount
       };
     });
 
@@ -264,7 +270,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm sm:text-base font-semibold text-zinc-100 tracking-tight">Atlas Sky</h2>
-                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                  <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400">
                     {Math.round(globalHealth)}% Luminosity
                   </span>
                 </div>
@@ -289,7 +295,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setShareModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 text-xs font-medium transition-all cursor-pointer backdrop-blur-md shadow-xs group"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-teal-500/30 bg-zinc-800/40 hover:bg-zinc-800/50 text-teal-300 text-xs font-medium transition-all cursor-pointer backdrop-blur-md shadow-xs group"
                 title="Share Atlas Sky Constellation"
               >
                 <Share2 className="w-3.5 h-3.5 text-teal-400 group-hover:scale-110 transition-transform" />
@@ -482,7 +488,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
 
                       {/* Selection Aura Highlight */}
                       {isSelected && (
-                        <div className="absolute w-8 h-8 rounded-full bg-teal-500/20 border border-teal-400/60 animate-pulse" />
+                        <div className="absolute w-8 h-8 rounded-full bg-zinc-800/50 border border-teal-400/60 animate-pulse" />
                       )}
 
                       {/* Main Star Node Dot */}
@@ -525,7 +531,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-1">
                         <Brain className="w-3 h-3" />
                         <span>{selectedStar.phaseLabel}</span>
                       </div>
@@ -587,7 +593,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
-                <span className="text-xs text-amber-500/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
+                <span className="text-xs text-amber-400/80 uppercase tracking-tighter font-semibold">Supernova (High-Alert)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
@@ -628,7 +634,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
                   activeFilter === 'pre_clinical'
-                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    ? "bg-zinc-800/50 text-teal-300 border border-teal-500/30 font-semibold"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 )}
               >
@@ -639,7 +645,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
                   activeFilter === 'para_clinical'
-                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    ? "bg-zinc-800/50 text-teal-300 border border-teal-500/30 font-semibold"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 )}
               >
@@ -650,7 +656,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
                   activeFilter === 'clinical'
-                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold"
+                    ? "bg-zinc-800/50 text-teal-300 border border-teal-500/30 font-semibold"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
                 )}
               >
@@ -663,7 +669,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5",
                     activeFilter === 'decay'
                       ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold"
-                      : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
+                      : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-950/20"
                   )}
                 >
                   <ShieldAlert className="w-3 h-3 text-amber-400" />

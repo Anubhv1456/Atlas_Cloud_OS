@@ -32,6 +32,7 @@ import { db } from '@/db';
 import { ALL_SYSTEMS } from '@/data/ontology';
 import { useLexicon } from '@/lib/lexicon';
 import { usePYQSectionLogic, useSubjectDetailLogic } from './SubjectDetail.hooks';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { validateNumberOfYears, validateYearInput } from '@/lib/validation';
 
 
@@ -45,6 +46,8 @@ interface PYQSectionProps {
 }
 
 function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
+  const { profile: pyqProfile } = useExamProfile();
+  const isUsmle = Boolean(pyqProfile?.targetExam?.includes('USMLE') || pyqProfile?.targetExam?.includes('Step'));
   const {
     expanded, setExpanded,
     viewMode, setViewMode,
@@ -87,19 +90,19 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
           {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/70 shrink-0 group-hover:text-foreground transition-colors" />
                     : <ChevronRight className="w-4 h-4 text-muted-foreground/70 shrink-0 group-hover:text-foreground transition-colors" />}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+            <div className="p-1.5 rounded-lg bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30 shrink-0">
               <BookOpen className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-foreground text-sm tracking-tight truncate">
-                  Exam Practice (PYQ)
+                  {isUsmle ? "Mock Assessments" : "Past Papers (PYQ)"}
                 </h3>
                 {total > 0 && (
                   <span className={cn(
                     "text-xs font-mono tabular-nums font-semibold px-2 py-0.5 rounded-full border shrink-0",
                     completed === total
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                      ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/30"
                       : "bg-muted text-muted-foreground border-border/60"
                   )}>
                     {percentage}%
@@ -108,8 +111,8 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 truncate">
                 {total === 0
-                  ? 'No PYQ years configured yet'
-                  : `${completed} / ${total} Years Solved`}
+                  ? isUsmle ? 'No assessments configured yet' : 'No past papers configured yet'
+                  : `${completed} / ${total} ${isUsmle ? "Forms" : "Years"} Solved`}
               </p>
             </div>
           </div>
@@ -155,7 +158,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
             className="h-8 text-xs font-semibold rounded-xl gap-1.5 border-border/60 px-2.5 hidden sm:inline-flex"
             title="Configure PYQ Years / 5-Year Presets"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Grid Presets</span>
           </Button>
 
@@ -183,8 +186,8 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
             {years.length === 0 ? (
               <EmptyStateGraphic
                 icon={BookOpen}
-                title="No PYQ Years Configured"
-                description={`Generate the standard 5-year PYQ grid (e.g. ${currentYearNum-4} to ${currentYearNum}) or add custom years for NEET PG / INI-CET preparation.`}
+                title={isUsmle ? "No Assessments Configured" : "No Past Papers Configured"}
+                description={isUsmle ? "Generate a standard series of practice forms (e.g., Forms 25–31) or add custom mock exams to track your readiness." : `Generate the standard 5-year past paper grid (e.g. ${currentYearNum-4} to ${currentYearNum}) or add custom years for your preparation.`}
                 className="py-6 bg-muted/20 border-border/80"
                 action={
                   <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -194,7 +197,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                       className="rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shadow-2xs"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Generate Last 5 Years ({currentYearNum-4}–{currentYearNum})</span>
+                      <span>{isUsmle ? "Generate Standard Forms (25–31)" : `Generate Last 5 Years (${currentYearNum-4}–${currentYearNum})`}</span>
                     </Button>
                     <Button
                       size="sm"
@@ -203,7 +206,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                       className="rounded-xl text-xs font-semibold border-border/80"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Single Year</span>
+                      <span>{isUsmle ? "Add Custom Assessment" : "Add Single Year"}</span>
                     </Button>
                   </div>
                 }
@@ -219,7 +222,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                       className={cn(
                         "group relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all duration-200 select-none",
                         year.completed
-                          ? "bg-emerald-500/10 border-emerald-500/40 dark:bg-emerald-500/15 text-foreground shadow-2xs"
+                          ? "bg-emerald-950/20 border-emerald-500/40 dark:bg-emerald-500/15 text-foreground shadow-2xs"
                           : "bg-card border-border/70 hover:border-primary/40 hover:bg-muted/40 shadow-2xs"
                       )}
                     >
@@ -282,7 +285,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                       <div className="flex items-center justify-between pt-2 border-t border-border/40 text-muted-foreground">
                         <button
                           onClick={() => setScoreModalPyq(year)}
-                          className="p-1 rounded-lg hover:text-primary hover:bg-primary/10 transition-colors"
+                          className="p-1 rounded-lg hover:text-primary hover:bg-zinc-800/40 transition-colors"
                           title="Log Test Score"
                         >
                           <Award className="w-3.5 h-3.5 text-primary" />
@@ -345,8 +348,8 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                           <span className={cn(
                             "text-xs font-mono tabular-nums font-bold px-2 py-0.5 rounded-md border shrink-0",
                             scoreLog.percentage >= 75
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                              ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/30"
+                              : "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/30"
                           )}>
                             {scoreLog.percentage}% ({scoreLog.score}/{scoreLog.total})
                           </span>
@@ -417,7 +420,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                       onClick={() => setShowPresetModal(true)}
                       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors py-1"
                     >
-                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <Sparkles className="w-3 h-3 text-amber-400" />
                       <span>Configure Range</span>
                     </button>
                   </div>
@@ -434,7 +437,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
         <DialogContent className="sm:max-w-[420px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
+              <Sparkles className="w-5 h-5 text-amber-400" />
               <span>Configure PYQ Year Grid</span>
             </DialogTitle>
           </DialogHeader>
@@ -612,6 +615,8 @@ const STAGES = [
 ];
 
 export default function SubjectDetail() {
+  const { profile: sdProfile } = useExamProfile();
+  const isUsmle = Boolean(sdProfile?.targetExam?.includes('USMLE') || sdProfile?.targetExam?.includes('Step'));
   const lexicon = useLexicon();
 
   const { id } = useParams<{ id: string }>();
@@ -729,10 +734,10 @@ export default function SubjectDetail() {
 
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-500">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">
               Subject Intelligence
             </span>
-            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-zinc-800/40 text-primary border border-white/5">
               High-Yield Focus
             </span>
           </div>
@@ -755,7 +760,7 @@ export default function SubjectDetail() {
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Systems</div>
             </div>
             <div className="p-2 rounded-xl bg-muted/30 border border-border/30 shrink-0 w-[120px] sm:w-auto sm:flex-1 snap-center">
-              <div className={cn("text-lg font-bold leading-none mb-1 font-mono", overdueSystemsCount > 0 ? "text-amber-500" : "text-emerald-500")}>
+              <div className={cn("text-lg font-bold leading-none mb-1 font-mono", overdueSystemsCount > 0 ? "text-amber-400" : "text-emerald-400")}>
                 {overdueSystemsCount}
               </div>
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Needs Attention</div>
@@ -771,14 +776,14 @@ export default function SubjectDetail() {
 
         {/* Recommended Focus Banner or Subject Mastered State */}
         {recommendedFocus ? (
-          <div id="subject-recommended-focus-banner" className="bg-primary/10 border border-primary/25 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+          <div id="subject-recommended-focus-banner" className="bg-zinc-800/40 border border-primary/25 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-3 min-w-0">
               <div className={cn(
                 "p-2.5 rounded-xl shrink-0 border",
                 recommendedFocus.reason === 'overdue_decay'
                   ? "bg-rose-500/10 text-rose-500 border-rose-500/25"
                   : recommendedFocus.reason === 'weak_retention'
-                  ? "bg-amber-500/10 text-amber-500 border-amber-500/25"
+                  ? "bg-amber-950/20 text-amber-400 border-amber-500/25"
                   : recommendedFocus.reason === 'high_yield_incomplete'
                   ? "bg-primary text-primary-foreground border-primary/40 shadow-xs"
                   : "bg-primary/20 text-primary border-primary/30"
@@ -801,7 +806,7 @@ export default function SubjectDetail() {
                     recommendedFocus.reason === 'overdue_decay'
                       ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                       : recommendedFocus.reason === 'weak_retention'
-                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      ? "bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
                       : "bg-muted/60 text-muted-foreground border-border/40"
                   )}>
                     {recommendedFocus.reasonLabel}
@@ -837,14 +842,14 @@ export default function SubjectDetail() {
             </Button>
           </div>
         ) : isSubjectMastered ? (
-          <div id="subject-mastered-banner" className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+          <div id="subject-mastered-banner" className="bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 shrink-0">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                     Subject Mastered
                   </span>
                 </div>
@@ -896,7 +901,7 @@ export default function SubjectDetail() {
           )}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>Exam Practice {pyqTotalCount > 0 ? `(${pyqCompletedCount}/${pyqTotalCount})` : ''}</span>
+          <span>{isUsmle ? 'Mock Assessments' : 'Past Papers'} {pyqTotalCount > 0 ? `(${pyqCompletedCount}/${pyqTotalCount})` : ''}</span>
         </button>
       </div>
 

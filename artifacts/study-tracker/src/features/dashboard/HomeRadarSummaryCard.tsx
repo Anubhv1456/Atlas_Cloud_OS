@@ -39,7 +39,7 @@ export function HomeRadarSummaryCard() {
     <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs space-y-4 transition-all hover:border-border">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+          <span className="p-2 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-teal-400 border border-white/5">
             <LayoutGrid className="w-4 h-4" />
           </span>
           <div>
@@ -74,19 +74,19 @@ export function HomeRadarSummaryCard() {
           </div>
         </div>
 
-        <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 space-y-0.5">
-          <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest block">
+        <div className="p-3 rounded-xl bg-zinc-800/40 border border-white/5 space-y-0.5">
+          <span className="text-xs font-bold text-zinc-300 dark:text-teal-400 uppercase tracking-widest block">
             Subjects
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="text-xl font-bold font-mono text-teal-600 dark:text-teal-400">
+            <span className="text-xl font-bold font-mono text-zinc-300 dark:text-teal-400">
               {rawSubjects.length}
             </span>
-            <span className="text-xs text-teal-600/70 dark:text-teal-400/70">active</span>
+            <span className="text-xs text-zinc-300/70 dark:text-teal-400/70">active</span>
           </div>
         </div>
 
-        <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-0.5">
+        <div className="p-3 rounded-xl bg-zinc-800/40 border border-white/5 space-y-0.5">
           <span className="text-xs font-bold text-primary uppercase tracking-widest block">
             Solid Units
           </span>
@@ -98,15 +98,15 @@ export function HomeRadarSummaryCard() {
           </div>
         </div>
 
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5">
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block">
+        <div className="p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-0.5">
+          <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-widest block">
             {lexicon.mistakesJournal}
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">
+            <span className="text-xl font-bold font-mono text-amber-400 dark:text-amber-400">
               {activeMistakes.length}
             </span>
-            <span className="text-xs text-amber-600/70 dark:text-amber-400/70">rules</span>
+            <span className="text-xs text-amber-400/70 dark:text-amber-400/70">rules</span>
           </div>
         </div>
       </div>

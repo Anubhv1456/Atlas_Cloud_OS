@@ -138,7 +138,7 @@ export const DynamicIslandCapsule: React.FC = () => {
 
       toast.success('Committed to 20th Notebook', {
         description: `Saved under ${distilledPearl.subject} • ${distilledPearl.tag}`,
-        icon: <Sparkles className="w-4 h-4 text-amber-500" />
+        icon: <Sparkles className="w-4 h-4 text-amber-400" />
       });
 
       handleDismiss();

@@ -364,12 +364,12 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
 
   if (stagedData) {
     const errorTags = isUsmle ? [
-      { id: 'mechanism', label: '🧬 Missed Mechanism', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+      { id: 'mechanism', label: '🧬 Missed Mechanism', color: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/30' },
       { id: 'distractor', label: '🎯 Distractor Trap', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30' },
       { id: 'graph', label: '📊 Graph/Table Trap', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30' },
       { id: 'timing', label: '⏳ Next Best Step', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30' },
     ] : [
-      { id: 'silly', label: '⚡ Silly Mistake', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' },
+      { id: 'silly', label: '⚡ Silly Mistake', color: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/30' },
       { id: 'fact', label: '🧠 Forgot Fact', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30' },
       { id: 'image', label: '🖼️ Image/ECG Trap', color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30' },
       { id: 'guess', label: '🔄 50-50 Guess', color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30' },
@@ -384,7 +384,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/40 border border-white/5 text-primary text-xs font-semibold uppercase tracking-wider mb-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isUsmle ? "Review Your Block" : "Quick Check"}</span>
             </div>
@@ -455,9 +455,9 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
             <div className={cn(
               "ml-1 px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold shrink-0 border",
               scorePct >= 70
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30"
                 : scorePct >= 50
-                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
                 : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
             )}>
               {scorePct}%
@@ -599,7 +599,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
   if (successData) {
     return (
       <div className="bg-card border border-border/40 rounded-2xl p-8 mb-8 flex flex-col items-center justify-center text-center shadow-sm animate-in fade-in duration-300">
-        <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-4 border border-emerald-500/20 shadow-inner">
+        <div className="w-16 h-16 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner">
           <CheckCircle2 className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold tracking-tight mb-1 text-foreground">Study Session Logged</h3>
@@ -607,12 +607,12 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         
         <div className="w-full max-w-lg space-y-3 text-sm text-left bg-muted/30 p-4 rounded-xl border border-border/50">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5"><Check className="w-4 h-4 text-emerald-500" /></div>
+            <div className="mt-0.5"><Check className="w-4 h-4 text-emerald-400" /></div>
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-foreground">{successData.name}</p>
                 {successData.scoreText && (
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-xs font-bold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 px-2 py-0.5 rounded-md shrink-0">
                     {successData.scoreText}
                   </span>
                 )}
@@ -620,7 +620,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
               {successData.oldDate && successData.newDate ? (
                 <p className="text-muted-foreground text-xs mt-1">
                   Decay calibrated. Next revision: <span className="line-through opacity-70 mr-1">{successData.oldDate}</span> 
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">➔ {successData.newDate}</span>
+                  <span className="font-semibold text-emerald-400 dark:text-emerald-400">➔ {successData.newDate}</span>
                 </p>
               ) : (
                 <p className="text-muted-foreground text-xs mt-1">
@@ -651,7 +651,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       }}
     >
       <div className="flex items-start sm:items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-inner flex-shrink-0">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner flex-shrink-0">
           <Brain className="w-6 h-6" />
         </div>
         <div>

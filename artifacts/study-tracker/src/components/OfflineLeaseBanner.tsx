@@ -59,8 +59,8 @@ export function OfflineLeaseBanner() {
               className={cn(
                 'w-5 h-5 rounded-full flex items-center justify-center shrink-0 border',
                 isLeaseCritical
-                  ? 'bg-amber-500/10 border-amber-500/25 text-amber-400'
-                  : 'bg-teal-500/10 border-teal-500/25 text-teal-400'
+                  ? 'bg-amber-950/20 border-amber-500/25 text-amber-400'
+                  : 'bg-zinc-800/40 border-teal-500/25 text-teal-400'
               )}
             >
               {isLeaseCritical ? (

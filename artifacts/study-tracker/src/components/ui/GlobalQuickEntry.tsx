@@ -113,7 +113,7 @@ export function GlobalQuickEntry() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-background border-primary/20 shadow-2xl rounded-2xl">
+      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-background border-white/5 shadow-2xl rounded-2xl">
         <DialogTitle className="sr-only">Global Quick Entry</DialogTitle>
         <DialogDescription className="sr-only">Enter clinical friction and tags to log to the knowledge graph</DialogDescription>
         <div className="flex items-center px-4 border-b">

@@ -90,7 +90,7 @@ export function HolidaySetupDrawer({
         <SheetHeader className="text-left pb-4 border-b border-border/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
                 <Palmtree className="w-5 h-5" />
               </div>
               <div>
@@ -110,7 +110,7 @@ export function HolidaySetupDrawer({
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-amber-500" />
+                <Calendar className="w-4 h-4 text-amber-400" />
                 Return Date {daysRemaining !== null && `(${daysRemaining} day break)`}
               </label>
             </div>
@@ -123,7 +123,7 @@ export function HolidaySetupDrawer({
                   onClick={() => setDaysFromNow(days)}
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all text-center ${
                     daysRemaining === days
-                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/50 shadow-xs'
+                      ? 'bg-amber-500/20 text-amber-400 dark:text-amber-400 border-amber-500/50 shadow-xs'
                       : 'bg-card/70 hover:bg-secondary/60 border-border/50 text-foreground/80'
                   }`}
                 >
@@ -142,22 +142,22 @@ export function HolidaySetupDrawer({
           </div>
 
           {/* Guarantees / Peace of Mind */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2.5">
-            <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+          <div className="p-4 rounded-2xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-2.5">
+            <div className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" />
               Atlas Holiday Guarantees
             </div>
             <ul className="text-xs text-muted-foreground space-y-1.5">
               <li className="flex items-start gap-2">
-                <span className="text-amber-500 font-bold">•</span>
+                <span className="text-amber-400 font-bold">•</span>
                 <span><strong>Streak Shield:</strong> Your active study streak is paused and preserved.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-amber-500 font-bold">•</span>
+                <span className="text-amber-400 font-bold">•</span>
                 <span><strong>Zero Overdue Debt:</strong> No red overdue badges or anxiety-inducing review spikes.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-amber-500 font-bold">•</span>
+                <span className="text-amber-400 font-bold">•</span>
                 <span><strong>Soft Recalibration on Return:</strong> Backlog items will be smoothly paced over 10 days upon your return.</span>
               </li>
             </ul>
@@ -181,7 +181,7 @@ export function HolidaySetupDrawer({
                 variant="outline"
                 disabled={isSubmitting}
                 onClick={handleEndHoliday}
-                className="h-11 rounded-xl border-border/80 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+                className="h-11 rounded-xl border-border/80 hover:bg-zinc-800/40 hover:text-primary hover:border-primary/30"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Resume Early (Soft Recalibrate)

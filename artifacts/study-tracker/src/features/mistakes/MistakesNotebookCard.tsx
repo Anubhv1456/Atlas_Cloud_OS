@@ -86,7 +86,7 @@ export function MistakesNotebookCard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span className="p-1.5 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
                 <BookOpen className="w-4 h-4" />
               </span>
               <h2 className="text-base font-bold text-foreground tracking-tight">
@@ -137,20 +137,20 @@ export function MistakesNotebookCard() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-0.5">
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+          <div className="p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-0.5">
+            <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-400 fill-amber-500" />
               Volatile Rules
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+              <span className="text-2xl font-bold font-mono text-amber-400 dark:text-amber-400">
                 {volatileMistakes.length}
               </span>
-              <span className="text-xs text-amber-600/80 dark:text-amber-400/80">urgent</span>
+              <span className="text-xs text-amber-400/80 dark:text-amber-400/80">urgent</span>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-0.5">
+          <div className="p-3 rounded-xl bg-zinc-800/40 border border-white/5 space-y-0.5">
             <span className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               Coverage
@@ -165,16 +165,16 @@ export function MistakesNotebookCard() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-0.5">
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
-              <Archive className="w-3 h-3 text-emerald-500" />
+          <div className="p-3 rounded-xl bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 space-y-0.5">
+            <span className="text-xs font-bold text-emerald-400 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+              <Archive className="w-3 h-3 text-emerald-400" />
               Archived
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              <span className="text-2xl font-bold font-mono text-emerald-400 dark:text-emerald-400">
                 {archivedMistakes.length}
               </span>
-              <span className="text-xs text-emerald-600/80 dark:text-emerald-400/80">mastered</span>
+              <span className="text-xs text-emerald-400/80 dark:text-emerald-400/80">mastered</span>
             </div>
           </div>
         </div>
@@ -216,7 +216,7 @@ export function MistakesNotebookCard() {
           <div className="pt-2 border-t border-border/40 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold flex items-center gap-1.5 text-foreground">
-                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-500" />
                 <span>Pre-GT Volatile Spotlight</span>
               </span>
               <span className="text-xs text-muted-foreground">High-yield revision</span>
@@ -237,7 +237,7 @@ export function MistakesNotebookCard() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs font-bold">
                         <span className="text-primary truncate">{subName}</span>
-                        <span className="text-amber-500 font-mono flex items-center gap-0.5">
+                        <span className="text-amber-400 font-mono flex items-center gap-0.5">
                           <Zap className="w-2.5 h-2.5 fill-amber-500" />
                           Volatile
                         </span>

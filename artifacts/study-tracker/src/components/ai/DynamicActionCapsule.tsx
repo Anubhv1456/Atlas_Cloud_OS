@@ -49,7 +49,7 @@ export const DynamicActionCapsule: React.FC<DynamicActionCapsuleProps> = ({
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-lg transition-all duration-300 pointer-events-auto">
       {/* Morphing Capsule Container */}
-      <div className="bg-background/85 backdrop-blur-2xl border border-primary/20 rounded-3xl p-3 shadow-2xl shadow-primary/10 overflow-hidden ring-1 ring-white/10">
+      <div className="bg-background/85 backdrop-blur-2xl border border-white/5 rounded-3xl p-3 shadow-2xl shadow-primary/10 overflow-hidden ring-1 ring-white/10">
         
         {/* Dynamic Header Pill */}
         <div className="flex items-center justify-between gap-2 px-1 mb-2">

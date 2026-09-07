@@ -169,7 +169,7 @@ export function OpsQueueView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-teal-500/10 border border-teal-500/20 rounded-xl">
+            <div className="p-2 bg-zinc-800/40 border border-white/5 rounded-xl">
               <Activity className="w-5 h-5 text-teal-400" />
             </div>
             <div>
@@ -200,7 +200,7 @@ export function OpsQueueView() {
           className={cn(
             "p-4 rounded-2xl border transition-all cursor-pointer",
             activeQueue === 'action_needed'
-              ? "bg-teal-500/10 border-teal-500/40 ring-1 ring-teal-500/20"
+              ? "bg-zinc-800/40 border-teal-500/40 ring-1 ring-teal-500/20"
               : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
@@ -217,7 +217,7 @@ export function OpsQueueView() {
           className={cn(
             "p-4 rounded-2xl border transition-all cursor-pointer",
             activeQueue === 'payments'
-              ? "bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20"
+              ? "bg-amber-950/20 border-amber-500/40 ring-1 ring-amber-500/20"
               : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
@@ -226,7 +226,7 @@ export function OpsQueueView() {
             <CreditCard className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-bold mt-2 text-amber-300">{pendingPayments.length}</div>
-          <p className="text-xs text-amber-500/80 mt-1 font-medium">₹{(pendingPayments.length * 499).toLocaleString()} pending verification</p>
+          <p className="text-xs text-amber-400/80 mt-1 font-medium">₹{(pendingPayments.length * 499).toLocaleString()} pending verification</p>
         </div>
 
         <div 
@@ -234,7 +234,7 @@ export function OpsQueueView() {
           className={cn(
             "p-4 rounded-2xl border transition-all cursor-pointer",
             activeQueue === 'support'
-              ? "bg-primary/10 border-purple-500/40 ring-1 ring-primary/20"
+              ? "bg-zinc-800/40 border-purple-500/40 ring-1 ring-primary/20"
               : "bg-card/50 border-border/50 hover:bg-card"
           )}
         >
@@ -378,7 +378,7 @@ export function OpsQueueView() {
                                 <div className="font-semibold text-sm">{p.userName || p.userEmail}</div>
                                 <div className="text-xs text-muted-foreground font-mono mt-0.5">{p.userEmail}</div>
                               </div>
-                              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-xs">
+                              <Badge className="bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30 text-xs">
                                 ₹{p.amount} · {p.plan}
                               </Badge>
                             </div>
@@ -468,7 +468,7 @@ export function OpsQueueView() {
                               </button>
                               <button
                                 onClick={() => handleMessageStatus(m.id, 'read')}
-                                className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
+                                className="px-3 py-1.5 rounded-lg bg-zinc-800/50 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
                               >
                                 Mark Read
                               </button>
@@ -518,7 +518,7 @@ export function OpsQueueView() {
                               </button>
                               <button
                                 onClick={() => handleMarkerStatus(marker.id, 'published')}
-                                className="px-3 py-1 rounded-lg bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 text-xs font-semibold"
+                                className="px-3 py-1 rounded-lg bg-zinc-800/50 text-teal-300 hover:bg-teal-500/30 text-xs font-semibold"
                               >
                                 Dismiss Report
                               </button>
@@ -589,8 +589,8 @@ export function OpsQueueView() {
                           <span className="text-xs text-muted-foreground font-mono">({p.userEmail})</span>
                           <Badge className={cn(
                             "text-xs capitalize",
-                            p.status === 'pending' && "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                            p.status === 'approved' && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                            p.status === 'pending' && "bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30",
+                            p.status === 'approved' && "bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30",
                             p.status === 'rejected' && "bg-rose-500/10 text-rose-400 border-rose-500/20"
                           )}>
                             {p.status}
@@ -647,7 +647,7 @@ export function OpsQueueView() {
                     className={cn(
                       "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all",
                       supportFilter === tab
-                        ? "bg-purple-500/20 text-purple-300 border border-primary/30"
+                        ? "bg-zinc-800/50 text-purple-300 border border-primary/30"
                         : "text-muted-foreground hover:bg-muted/50"
                     )}
                   >
@@ -689,7 +689,7 @@ export function OpsQueueView() {
                         {m.status === 'unread' ? (
                           <button
                             onClick={() => handleMessageStatus(m.id, 'read')}
-                            className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
+                            className="px-3 py-1.5 rounded-lg bg-zinc-800/50 text-purple-300 border border-primary/30 hover:bg-purple-500/30 text-xs font-semibold"
                           >
                             Mark Read
                           </button>
@@ -753,7 +753,7 @@ export function OpsQueueView() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-teal-500/10 text-teal-400 border-teal-500/20 text-xs uppercase">
+                            <Badge className="bg-zinc-800/40 text-teal-400 border-white/5 text-xs uppercase">
                               {m.type}
                             </Badge>
                             <span className="text-xs text-muted-foreground">Subject ID: {m.subjectId}</span>

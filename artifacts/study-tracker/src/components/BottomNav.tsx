@@ -186,7 +186,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                       <span className="font-bold text-base tracking-tight text-foreground group-hover:text-primary transition-colors">
                         ATLAS
                       </span>
-                      <span className="text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.2 rounded bg-zinc-800/40 text-primary border border-white/5">
                         OS
                       </span>
                     </div>
@@ -223,7 +223,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="w-10 h-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                  className="w-10 h-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-zinc-800/40 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                   aria-label="Expand sidebar"
                 >
                   <PanelLeftOpen className="w-4 h-4" />
@@ -289,7 +289,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                   className={cn(
                     "relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group cursor-pointer select-none",
                     active
-                      ? "text-primary font-bold bg-primary/10 dark:bg-primary/15 border border-primary/25 shadow-2xs"
+                      ? "text-primary font-bold bg-zinc-800/40 dark:bg-primary/15 border border-primary/25 shadow-2xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
@@ -341,7 +341,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
               className="w-full flex items-center justify-between p-2.5 rounded-xl bg-card hover:bg-muted/40 border border-border/80 transition-all text-left group cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
+                <div className="w-8 h-8 rounded-lg bg-zinc-800/40 flex items-center justify-center shrink-0 border border-white/5 text-primary">
                   <Target className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -359,7 +359,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
           {isCollapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs relative cursor-default border border-primary/20">
+                <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xs relative cursor-default border border-white/5">
                   {user?.email ? user.email[0].toUpperCase() : <User className="w-4 h-4" />}
                   <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card", isOnline ? "bg-emerald-500" : "bg-teal-400")} />
                 </div>
@@ -378,12 +378,12 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                 <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
               </div>
               {isOnline ? (
-                <div className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
                   <ShieldCheck className="w-3 h-3" />
                   <span>Synced</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 text-xs font-medium text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/20" title="All data stored safely in local device storage">
+                <div className="flex items-center gap-1 text-xs font-medium text-teal-400 bg-zinc-800/40 px-1.5 py-0.5 rounded border border-white/5" title="All data stored safely in local device storage">
                   <HardDrive className="w-3 h-3" />
                   <span>On Device</span>
                 </div>

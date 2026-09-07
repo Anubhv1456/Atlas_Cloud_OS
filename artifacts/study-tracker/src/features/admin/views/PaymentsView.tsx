@@ -228,7 +228,7 @@ export function PaymentsView() {
               onClick={() => setActiveTab('pending')}
               className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                 activeTab === 'pending' 
-                  ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/20 shadow-lg shadow-amber-500/5' 
+                  ? 'bg-amber-950/20 border-amber-500/40 ring-1 ring-amber-500/20 shadow-lg shadow-amber-500/5' 
                   : 'bg-card/50 border-border/50 hover:bg-card'
               }`}
             >
@@ -244,7 +244,7 @@ export function PaymentsView() {
               onClick={() => setActiveTab('approved')}
               className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                 activeTab === 'approved' 
-                  ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-lg shadow-emerald-500/5' 
+                  ? 'bg-emerald-950/20 border-emerald-500/40 ring-1 ring-emerald-500/20 shadow-lg shadow-emerald-500/5' 
                   : 'bg-card/50 border-border/50 hover:bg-card'
               }`}
             >
@@ -253,7 +253,7 @@ export function PaymentsView() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="text-2xl font-bold mt-2 text-emerald-400">{stats.approved}</div>
-              <p className="text-xs text-emerald-500/80 mt-1 font-medium">₹{stats.revenue.toLocaleString()} total revenue</p>
+              <p className="text-xs text-emerald-400/80 mt-1 font-medium">₹{stats.revenue.toLocaleString()} total revenue</p>
             </div>
 
             <div 
@@ -461,13 +461,13 @@ export function PaymentsView() {
                           {/* Status Badge */}
                           <td className="px-4 py-3">
                             {payment.status === 'pending' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
                                 <Clock className="w-3 h-3" />
                                 Pending
                               </span>
                             )}
                             {payment.status === 'approved' && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Approved
                               </span>
@@ -566,10 +566,10 @@ export function PaymentsView() {
             </div>
 
             {/* Section 0: Cohort Capacity & Live Seat Tracker */}
-            <div className="space-y-4 p-5 rounded-2xl bg-teal-500/[0.04] border border-teal-500/20">
+            <div className="space-y-4 p-5 rounded-2xl bg-teal-500/[0.04] border border-white/5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-zinc-800/40 border border-teal-500/30 flex items-center justify-center">
                     <Users className="w-3.5 h-3.5 text-teal-400" />
                   </div>
                   <div>
@@ -608,7 +608,7 @@ export function PaymentsView() {
                       <button
                         type="button"
                         onClick={() => setConfig({ ...config, claimedSeats: Math.min(config.totalSeats ?? 200, (config.claimedSeats ?? 38) + 1) })}
-                        className="px-1.5 py-0.5 rounded bg-teal-500/20 hover:bg-teal-500/30 text-xs font-mono text-teal-400 font-bold"
+                        className="px-1.5 py-0.5 rounded bg-zinc-800/50 hover:bg-teal-500/30 text-xs font-mono text-teal-400 font-bold"
                       >
                         +1
                       </button>

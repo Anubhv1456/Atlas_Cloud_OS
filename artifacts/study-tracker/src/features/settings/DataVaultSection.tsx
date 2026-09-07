@@ -202,7 +202,7 @@ export function DataVaultSection() {
         <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <Database className="w-4.5 h-4.5 text-teal-500" />
+              <Database className="w-4.5 h-4.5 text-zinc-300" />
               Storage, Backup & Vault Tools
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -224,7 +224,7 @@ export function DataVaultSection() {
 
             {/* Duplicates Advisory */}
             {duplicateGroups.length > 0 && (
-              <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-zinc-800/40 border border-white/5 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-primary">
                   <CopyPlus className="w-4 h-4 shrink-0" />
                   <span>{duplicateGroups.length} duplicate subject group(s) detected</span>
@@ -260,7 +260,7 @@ export function DataVaultSection() {
                 disabled={loadingAction !== null}
                 className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
-                <Upload className="w-4 h-4 text-teal-500" />
+                <Upload className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Restore JSON</span>
                 <span className="text-xs text-muted-foreground">Import vault backup</span>
               </button>
@@ -271,7 +271,7 @@ export function DataVaultSection() {
                 disabled={loadingAction !== null}
                 className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
-                <RefreshCw className="w-4 h-4 text-amber-500" />
+                <RefreshCw className="w-4 h-4 text-amber-400" />
                 <span className="text-xs font-semibold text-foreground">Rehydrate Schedules</span>
                 <span className="text-xs text-muted-foreground">Sync revision dates</span>
               </button>
@@ -282,7 +282,7 @@ export function DataVaultSection() {
                 disabled={loadingAction !== null}
                 className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
-                <FileSpreadsheet className="w-4 h-4 text-blue-500" />
+                <FileSpreadsheet className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Export CSV</span>
                 <span className="text-xs text-muted-foreground">Spreadsheet table</span>
               </button>
@@ -293,7 +293,7 @@ export function DataVaultSection() {
                 disabled={loadingAction !== null}
                 className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50 col-span-2 sm:col-span-1"
               >
-                <BookOpen className="w-4 h-4 text-teal-500" />
+                <BookOpen className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Sync Blueprint</span>
                 <span className="text-xs text-muted-foreground">Update medical ontology</span>
               </button>

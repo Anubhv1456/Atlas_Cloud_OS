@@ -198,6 +198,19 @@ return (
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4"
               >
+                {targetMistakes.length > 7 && (
+                  <div className="bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-700 dark:text-amber-400 p-4 rounded-xl text-sm leading-relaxed mb-2">
+                    <div className="font-semibold mb-1 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" /> Cognitive Budget Warning
+                    </div>
+                    {isUsmle 
+                      ? `I found ${targetMistakes.length} concepts, but let's be realistic—try to keep under 7 new cards today. Pick the absolute most important mechanisms and toss the minor details.`
+                      : `I found ${targetMistakes.length} facts, but try to keep it under 7 new cards today. Just pick the tricky ones you always mix up so your daily reviews don't pile up.`}
+                    <div className="mt-2 text-xs opacity-80">
+                      Close this and use the checkboxes in the Mistake Queue to curate your export before generating.
+                    </div>
+                  </div>
+                )}
                 <div className="mb-4">
                   <h3 className="text-sm font-semibold mb-3">Export Scope</h3>
                   <div className="flex bg-muted/50 p-1 rounded-lg">
@@ -378,7 +391,7 @@ return (
                       </div>
                       <div className="bg-background rounded-lg p-4 border shadow-sm relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
-                         <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2 pl-2">Back</div>
+                         <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 pl-2">Back</div>
                          <div className="text-sm pl-2" dangerouslySetInnerHTML={{ __html: previewCard.back }} />
                       </div>
 
@@ -482,12 +495,12 @@ return (
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center justify-center pt-4 pb-8 space-y-6"
               >
-                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+                <div className="w-16 h-16 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-2">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 
                 <div className="text-center space-y-1.5">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-semibold mb-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/20 border border-amber-500/25 text-amber-400 dark:text-amber-400 text-xs font-semibold mb-1">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{isUsmle ? "Curated by you for USMLE · High-Yield Vignette Deck" : "Curated by you for NEET PG · 20th Notebook Deck"}</span>
                   </div>
@@ -514,7 +527,7 @@ return (
                 >
                   <div className="absolute -inset-1 bg-gradient-to-r from-primary to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
                   <div className="relative flex items-center gap-4 bg-card border shadow-xl rounded-xl p-4 transition-transform group-hover:-translate-y-1 group-active:translate-y-0 group-active:shadow-md">
-                    <div className="p-3 bg-primary/10 rounded-lg text-primary">
+                    <div className="p-3 bg-zinc-800/40 rounded-lg text-primary">
                       <FileBox className="w-6 h-6" />
                     </div>
                     <div className="flex-1">

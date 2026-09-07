@@ -167,7 +167,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
             <span>1. Subject / Exam Scope</span>
           </label>
           {isGtMode && (
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="text-[10px] font-semibold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-2 py-0.5 rounded-full border border-white/5 border-l-2 border-l-emerald-500/30">
               Full-Syllabus
             </span>
           )}
@@ -208,7 +208,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
             {/* Dedicated Top-Level Option for GT / Full-Syllabus Mock */}
             <SelectItem 
               value="gt-full" 
-              className="font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer border-b border-border/70 mb-1 pb-2 focus:bg-emerald-500/10"
+              className="font-semibold text-emerald-400 dark:text-emerald-400 cursor-pointer border-b border-border/70 mb-1 pb-2 focus:bg-emerald-950/20"
             >
               🏆 Full-Syllabus Mock (GT / NBME Comprehensive)
             </SelectItem>
@@ -237,7 +237,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
       <div className={cn(
         "space-y-1.5 p-3.5 rounded-xl border transition-all duration-200",
         isGtMode 
-          ? "bg-emerald-500/[0.03] border-emerald-500/20" 
+          ? "bg-emerald-500/[0.03] border-white/5 border-l-2 border-l-emerald-500/30" 
           : !subjectId 
             ? "bg-muted/10 border-border/40 opacity-70" 
             : "bg-muted/25 border-border/60 shadow-sm"
@@ -262,7 +262,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
           <div className="space-y-1.5">
             <div className="w-full h-11 px-3.5 rounded-xl bg-background/50 border border-emerald-500/30 flex items-center justify-between text-sm text-foreground/80 cursor-not-allowed">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="font-medium text-emerald-700 dark:text-emerald-300">Full-Syllabus Mock (All Topics Included)</span>
               </div>
               <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
@@ -308,7 +308,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
               {/* Option 3: Custom Study Blocks for this Subject */}
               {availableCustomBlocks.length > 0 && (
                 <SelectGroup>
-                  <SelectLabel className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mt-2 px-2">
+                  <SelectLabel className="text-[11px] font-bold text-amber-400 uppercase tracking-wider mt-2 px-2">
                     Custom Study Blocks ({availableCustomBlocks.length})
                   </SelectLabel>
                   {availableCustomBlocks.map(block => (

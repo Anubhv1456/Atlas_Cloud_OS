@@ -48,7 +48,7 @@ export function ExamCountdownWidget() {
   return (
     <div className="flex p-4 rounded-xl border border-border/60 bg-card mb-6">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+        <div className="w-10 h-10 rounded-xl bg-zinc-800/40 flex items-center justify-center text-primary">
           <Calendar className="w-5 h-5" />
         </div>
         <div>

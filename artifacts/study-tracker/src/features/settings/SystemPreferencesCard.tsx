@@ -86,7 +86,7 @@ export function SystemPreferencesCard() {
         <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <Palette className="w-4.5 h-4.5 text-purple-500" />
+              <Palette className="w-4.5 h-4.5 text-zinc-300" />
               Cognitive Focus Tint
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">

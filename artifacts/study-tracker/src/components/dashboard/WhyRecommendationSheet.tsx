@@ -57,7 +57,7 @@ export function WhyRecommendationSheet({
           {/* Primary Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {/* Priority Score */}
-            <div className="p-3 rounded-2xl bg-primary/10 border border-primary/25 space-y-1">
+            <div className="p-3 rounded-2xl bg-zinc-800/40 border border-primary/25 space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold text-primary">
                 <span>Priority</span>
                 <Sparkles className="w-3.5 h-3.5" />
@@ -86,12 +86,12 @@ export function WhyRecommendationSheet({
             </div>
 
             {/* Retrievability */}
-            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1">
-              <div className="flex items-center justify-between text-xs font-semibold text-amber-500">
+            <div className="p-3 rounded-2xl bg-amber-950/20 border border-amber-500/25 space-y-1">
+              <div className="flex items-center justify-between text-xs font-semibold text-amber-400">
                 <span>Retention</span>
                 <TrendingDown className="w-3.5 h-3.5" />
               </div>
-              <div className="text-xl font-black font-mono text-amber-500">
+              <div className="text-xl font-black font-mono text-amber-400">
                 {whyBreakdown.retrievabilityPercent}%
               </div>
               <div className="text-xs text-muted-foreground">
@@ -100,7 +100,7 @@ export function WhyRecommendationSheet({
             </div>
 
             {/* Cognitive Depth */}
-            <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/25 space-y-1">
+            <div className="p-3 rounded-2xl bg-zinc-800/40 border border-teal-500/25 space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold text-teal-400">
                 <span>Depth</span>
                 <Sparkles className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ export function WhyRecommendationSheet({
 
           {/* Session Budget & Depth Filtering Impact */}
           {whyBreakdown.budgetInfluence && (
-            <div className="p-3.5 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
+            <div className="p-3.5 rounded-2xl bg-primary/5 border border-white/5 space-y-1.5">
               <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                 <Clock className="w-3.5 h-3.5" />
                 <span>Session Budget & Filtering Impact</span>
@@ -171,7 +171,7 @@ export function WhyRecommendationSheet({
           {/* Circadian Chronobiology Factor */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 border border-border/60 text-xs">
             <div className="flex items-center gap-2 text-muted-foreground font-medium">
-              <Sun className="w-4 h-4 text-amber-500 shrink-0" />
+              <Sun className="w-4 h-4 text-amber-400 shrink-0" />
               <span>Circadian Affinity:</span>
             </div>
             <span className="font-bold text-foreground font-mono text-xs">

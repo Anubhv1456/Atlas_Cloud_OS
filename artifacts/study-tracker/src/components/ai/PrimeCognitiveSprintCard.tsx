@@ -55,7 +55,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
               "text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center gap-1",
               topPulse.urgency === 'CRITICAL'
                 ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
-                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                : "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-amber-500/30"
             )}>
               <Zap className="w-3 h-3" />
               {topPulse.urgency === 'CRITICAL' ? 'Decay Alert • High Friction' : 'Prime Focus of the Hour'}

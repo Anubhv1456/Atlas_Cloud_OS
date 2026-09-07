@@ -50,7 +50,7 @@ export function SafeDeleteSubjectDialog({
         <DialogHeader className="space-y-2">
           <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-1 bg-destructive/10 text-destructive border border-destructive/20">
             {hasLoggedProgress ? (
-              <AlertTriangle className="w-6 h-6 text-amber-500" />
+              <AlertTriangle className="w-6 h-6 text-amber-400" />
             ) : (
               <Trash2 className="w-6 h-6" />
             )}
@@ -67,15 +67,15 @@ export function SafeDeleteSubjectDialog({
 
         {/* Progress Breakdown Warning Card */}
         {hasLoggedProgress && progressScore && (
-          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2 text-xs">
-            <div className="flex items-center gap-1.5 font-bold text-amber-500">
+          <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/25 space-y-2 text-xs">
+            <div className="flex items-center gap-1.5 font-bold text-amber-400">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>Active Medical Progress Detected:</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-foreground">
               {progressScore.completedSystemsCount > 0 && (
                 <div className="p-2 rounded-xl bg-background/80 border border-border/40">
-                  <span className="font-bold text-amber-500">{progressScore.completedSystemsCount}</span> completed systems
+                  <span className="font-bold text-amber-400">{progressScore.completedSystemsCount}</span> completed systems
                 </div>
               )}
               {progressScore.completedSetsCount > 0 && (
@@ -90,7 +90,7 @@ export function SafeDeleteSubjectDialog({
               )}
               {progressScore.completedPyqCount > 0 && (
                 <div className="p-2 rounded-xl bg-background/80 border border-border/40">
-                  <span className="font-bold text-emerald-500">{progressScore.completedPyqCount}</span> {lexicon.practiceExams} solved
+                  <span className="font-bold text-emerald-400">{progressScore.completedPyqCount}</span> {lexicon.practiceExams} solved
                 </div>
               )}
             </div>

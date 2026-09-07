@@ -120,7 +120,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                   className={cn(
                     "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all cursor-pointer font-semibold text-xs",
                     depth === 'rapid'
-                      ? "border-amber-500/50 bg-amber-500/10 shadow-xs text-amber-400 font-bold"
+                      ? "border-amber-500/50 bg-amber-950/20 shadow-xs text-amber-400 font-bold"
                       : "border-border/60 bg-muted/20 hover:bg-muted/40 text-muted-foreground"
                   )}
                 >
@@ -134,7 +134,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                   className={cn(
                     "flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border transition-all cursor-pointer font-semibold text-xs",
                     depth === 'standard'
-                      ? "border-teal-500/50 bg-teal-500/10 shadow-xs text-teal-400 font-bold"
+                      ? "border-white/10 bg-zinc-800/40 shadow-xs text-teal-400 font-bold"
                       : "border-border/60 bg-muted/20 hover:bg-muted/40 text-muted-foreground"
                   )}
                 >
@@ -169,10 +169,10 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
                     className={cn(
                       "w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center",
                       color === c ? "border-primary scale-110" : "border-transparent opacity-70 hover:opacity-100",
-                      c === 'teal' && 'bg-teal-500/20 text-teal-600',
-                      c === 'amber' && 'bg-amber-500/20 text-amber-600',
-                      c === 'purple' && 'bg-purple-500/20 text-purple-600',
-                      c === 'blue' && 'bg-blue-500/20 text-blue-600',
+                      c === 'teal' && 'bg-zinc-800/50 text-zinc-300',
+                      c === 'amber' && 'bg-amber-500/20 text-amber-400',
+                      c === 'purple' && 'bg-zinc-800/50 text-zinc-300',
+                      c === 'blue' && 'bg-zinc-800/50 text-zinc-300',
                       c === 'gray' && 'bg-gray-500/20 text-gray-600'
                     )}
                   >

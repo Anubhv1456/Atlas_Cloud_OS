@@ -79,7 +79,7 @@ export function SystemCard(props: SystemCardProps) {
               className="focus:outline-none p-0.5 rounded hover:bg-muted cursor-pointer shrink-0"
               title="Toggle High Yield Focus"
             >
-              <Star className={cn("w-4 h-4 transition-colors", system.isHighYield ? "text-amber-500 fill-amber-500" : "text-muted-foreground/30 hover:text-amber-500/70")} />
+              <Star className={cn("w-4 h-4 transition-colors", system.isHighYield ? "text-amber-400 fill-amber-500" : "text-muted-foreground/30 hover:text-amber-400/70")} />
             </button>
             
             <h3 className="font-bold text-base text-foreground truncate min-w-0 flex-1">
@@ -88,15 +88,15 @@ export function SystemCard(props: SystemCardProps) {
 
             {system.status && (
               <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border shrink-0 hidden sm:inline-block", 
-                system.status === 'Strong' ? "text-emerald-500 border-emerald-500/30 bg-emerald-500/10" : 
-                system.status === 'Average' ? "text-amber-500 border-amber-500/30 bg-amber-500/10" : 
+                system.status === 'Strong' ? "text-emerald-400 border-emerald-500/30 bg-emerald-950/20" : 
+                system.status === 'Average' ? "text-amber-400 border-amber-500/30 bg-amber-950/20" : 
                 "text-rose-500 border-rose-500/30 bg-rose-500/10"
               )}>
                 {system.status}
               </span>
             )}
 
-            <span className="inline-flex px-2 py-0.5 bg-primary/10 text-primary text-xs font-bold font-mono rounded-md shrink-0">
+            <span className="inline-flex px-2 py-0.5 bg-zinc-800/40 text-primary text-xs font-bold font-mono rounded-md shrink-0">
               {progress}%
             </span>
 
@@ -108,7 +108,7 @@ export function SystemCard(props: SystemCardProps) {
                   e.stopPropagation();
                   setShowLogSession(true);
                 }}
-                className="h-7 text-xs font-bold px-2.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 shrink-0 transition-colors gap-1 cursor-pointer"
+                className="h-7 text-xs font-bold px-2.5 rounded-lg bg-amber-500/15 text-amber-400 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 shrink-0 transition-colors gap-1 cursor-pointer"
                 title="Start SDSR Revision"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -163,7 +163,7 @@ export function SystemCard(props: SystemCardProps) {
             </span>
 
             {overdueDays > 0 ? (
-              <span className="text-xs text-amber-500 font-semibold flex items-center gap-1">
+              <span className="text-xs text-amber-400 font-semibold flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 <span>SDSR Due ({overdueDays}d overdue)</span>
               </span>
@@ -190,7 +190,7 @@ export function SystemCard(props: SystemCardProps) {
                 <button
                   type="button"
                   onClick={() => setShowLogSession(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 font-semibold transition-colors cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/40 text-primary hover:bg-primary/20 border border-white/5 font-semibold transition-colors cursor-pointer shrink-0"
                 >
                   <CheckSquare className="w-3.5 h-3.5" />
                   <span>Record Session</span>
@@ -208,19 +208,13 @@ export function SystemCard(props: SystemCardProps) {
                   onClick={() => setShowScoreModal(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/60 text-foreground hover:bg-muted border border-border/60 font-medium transition-colors cursor-pointer shrink-0"
                 >
-                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
                   <span>Log Score</span>
                 </button>
               </div>
 
               {/* Curriculum Modules (Study Blocks) */}
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Folder className="w-3.5 h-3.5 text-primary" />
-                    <span>Curriculum Modules</span>
-                  </h4>
-                </div>
                 <CurriculumSets 
                   systemId={system.id!} 
                   subjectId={system.subjectId} 
@@ -306,7 +300,7 @@ export function SystemCard(props: SystemCardProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <span>SDSR Schedule:</span>
-                <strong className={cn("font-semibold font-mono", overdueDays > 0 ? "text-amber-500" : revisionDue ? "text-amber-400" : "text-emerald-500")}>
+                <strong className={cn("font-semibold font-mono", overdueDays > 0 ? "text-amber-400" : revisionDue ? "text-amber-400" : "text-emerald-400")}>
                   {overdueDays > 0 ? `Overdue by ${overdueDays}d` : revisionDue ? 'Due Today' : 'Optimal Retention'}
                 </strong>
               </span>
@@ -392,7 +386,7 @@ export function SystemCard(props: SystemCardProps) {
                       className={cn(
                         'flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer',
                         insightType === type.id
-                          ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary/30'
+                          ? 'border-primary bg-zinc-800/40 text-foreground ring-1 ring-primary/30'
                           : 'border-border/60 text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border'
                       )}
                     >

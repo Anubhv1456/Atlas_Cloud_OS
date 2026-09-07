@@ -255,12 +255,12 @@
 }
 
 .dark[data-theme="deep-space"] {
-  --background: 0 0% 0%;
-  --foreground: 240 5% 96%;
-  --border: 250 10% 16%;
-  --card: 250 15% 7.5%;
-  --card-foreground: 240 5% 96%;
-  --card-border: 250 10% 16%;
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 240 3.7% 15.9%;
   --sidebar: 250 15% 7.5%;
   --sidebar-foreground: 240 2% 65%;
   --sidebar-border: 250 10% 16%;

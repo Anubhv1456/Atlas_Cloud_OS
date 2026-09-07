@@ -143,17 +143,17 @@ export function SubjectsGrid({
     <section id="subject-portfolio" className="flex-1">
       {/* ── MBBS Professional Year Focus Banner ────────────────────────────── */}
       {isMBBSProf && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/25 text-foreground mb-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-800/40 border border-teal-500/25 text-foreground mb-5 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
+            <div className="p-2 rounded-xl bg-zinc-800/50 text-zinc-300 dark:text-teal-400 border border-teal-500/30 shrink-0">
               <GraduationCap className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
+                <span className="text-xs font-bold text-zinc-300 dark:text-teal-400">
                   {getPhaseNameForProfile(profile.targetExam, activeYear)} Syllabus
                 </span>
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-zinc-300 dark:text-teal-400 border border-white/5">
                   University Exam Calibrated
                 </span>
               </div>
@@ -168,7 +168,7 @@ export function SubjectsGrid({
           <button
             type="button"
             onClick={() => setShowAllOverride(prev => !prev)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-500/30 bg-teal-500/15 hover:bg-teal-500/25 text-teal-600 dark:text-teal-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-500/30 bg-teal-500/15 hover:bg-teal-500/25 text-zinc-300 dark:text-teal-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             {showAllOverride ? (
               <>
@@ -187,14 +187,14 @@ export function SubjectsGrid({
 
       {/* ── Sprint Focus Banner ────────────────────────────────────────────── */}
       {isSprintActive && !isMBBSProf && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-foreground mb-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/25 text-foreground mb-5 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 shrink-0">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
               <Target className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-amber-500 dark:text-amber-400">Active Exam Focus</span>
+                <span className="text-xs font-bold text-amber-400 dark:text-amber-400">Active Exam Focus</span>
                 {opMode.targetDate && (
                   <span className="text-xs text-muted-foreground font-mono">
                     Target: {new Date(opMode.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -212,7 +212,7 @@ export function SubjectsGrid({
           <button
             type="button"
             onClick={() => setShowAllOverride(prev => !prev)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 dark:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             {showAllOverride ? (
               <>
@@ -232,7 +232,7 @@ export function SubjectsGrid({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5 text-teal-500" /> Subjects
+            <BookOpen className="w-3.5 h-3.5 text-zinc-300" /> Subjects
           </h2>
           <span className="text-xs font-mono font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground border border-border/40">
             {filteredSubjects.length} {isMBBSProf && !showAllOverride ? `in ${activeYear}` : `/ ${subjects.length}`}

@@ -114,10 +114,10 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
       <motion.div 
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mt-3 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 shadow-sm"
+        className="mt-3 p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 shadow-sm"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+          <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 dark:text-emerald-400">
             <Check className="w-4 h-4" />
           </div>
           <div>
@@ -164,7 +164,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
         {/* Header Bar */}
         <div className="flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400">
+            <div className="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-400 dark:text-amber-400">
               <Flame className="w-3.5 h-3.5" />
             </div>
             <div>
@@ -266,7 +266,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                     className={cn(
                       "flex flex-col items-start p-1.5 rounded-lg border text-left transition-all cursor-pointer",
                       isSelected
-                        ? "bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-300 font-semibold"
+                        ? "bg-amber-950/20 border-amber-500 text-amber-700 dark:text-amber-300 font-semibold"
                         : "bg-background/60 border-border/60 text-muted-foreground hover:bg-muted"
                     )}
                   >
@@ -299,7 +299,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
           {/* Volatile Fast-Decay Toggle */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
               <span>Mark as volatile for rapid 24h & 72h recall review</span>
             </div>
             <button
@@ -359,7 +359,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
         {/* Header Bar */}
         <div className="flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-teal-500/15 flex items-center justify-center text-teal-600 dark:text-teal-400">
+            <div className="w-6 h-6 rounded-lg bg-teal-500/15 flex items-center justify-center text-zinc-300 dark:text-teal-400">
               <BookOpen className="w-3.5 h-3.5" />
             </div>
             <div>
@@ -438,7 +438,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <div className="px-3 min-w-[70px] text-center font-mono font-bold text-xs text-teal-600 dark:text-teal-400">
+                <div className="px-3 min-w-[70px] text-center font-mono font-bold text-xs text-zinc-300 dark:text-teal-400">
                   {study.durationMinutes}m
                 </div>
                 <button
@@ -565,7 +565,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
           <div className="flex items-center gap-2">
             <span className={cn(
               "px-2 py-0.5 rounded-full font-mono text-xs font-bold",
-              pct >= 70 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+              pct >= 70 ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400" :
               pct >= 55 ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400" :
               "bg-rose-500/15 text-rose-600 dark:text-rose-400"
             )}>

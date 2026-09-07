@@ -151,7 +151,7 @@ const CHAPTERS = [
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            High-Yield Star Tagging <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+            High-Yield Star Tagging <Star className="w-4 h-4 text-amber-400 fill-amber-500" />
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Starring a system as <strong>High-Yield</strong> applies a priority multiplier in the recommendation engine, ensuring essential topics surface frequently during exam sprints.
@@ -224,19 +224,19 @@ const CHAPTERS = [
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
             <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
-              <strong className="text-emerald-500 font-semibold block mb-0.5">💊 DOC</strong>
+              <strong className="text-emerald-400 font-semibold block mb-0.5">💊 DOC</strong>
               Drug of Choice & First-Line Regimens
             </div>
             <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
-              <strong className="text-blue-500 font-semibold block mb-0.5">🔍 IOC</strong>
+              <strong className="text-zinc-300 font-semibold block mb-0.5">🔍 IOC</strong>
               Investigation of Choice & Gold Standards
             </div>
             <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
-              <strong className="text-amber-500 font-semibold block mb-0.5">⚠️ Triad</strong>
+              <strong className="text-amber-400 font-semibold block mb-0.5">⚠️ Triad</strong>
               Classic Triads & Pathognomonic Signs
             </div>
             <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
-              <strong className="text-purple-500 font-semibold block mb-0.5">📊 Criteria</strong>
+              <strong className="text-zinc-300 font-semibold block mb-0.5">📊 Criteria</strong>
               Diagnostic Criteria & Staging Systems
             </div>
             <div className="p-2.5 rounded-lg bg-card border border-border/70 text-xs">
@@ -387,7 +387,7 @@ const CHAPTERS = [
     searchTerms: 'medical disclaimer legal clinical patient care doctor device liability terms education exam',
     content: (
       <div className="space-y-6">
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 space-y-1.5">
+        <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/25 text-amber-400 dark:text-amber-400 space-y-1.5">
           <h4 className="font-bold text-sm uppercase tracking-wider flex items-center gap-1.5">
             <ShieldAlert className="w-4 h-4" /> Strictly an Educational Revision Aid
           </h4>
@@ -504,7 +504,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
                 return (
                   <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-center gap-3 mb-8">
-                      <div className="p-2.5 bg-primary/10 rounded-xl text-primary border border-primary/20">
+                      <div className="p-2.5 bg-zinc-800/40 rounded-xl text-primary border border-white/5">
                         <Icon className="w-6 h-6" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">{activeChapter.title}</h2>

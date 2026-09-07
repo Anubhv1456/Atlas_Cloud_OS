@@ -144,19 +144,19 @@ export function BaselineTriageModal({ open, onOpenChange }: BaselineTriageModalP
                       </button>
                       <button
                         onClick={() => setConfidence(idStr, 'weak')}
-                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'weak' ? "bg-red-500/15 text-red-600 dark:text-red-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'weak' ? "bg-red-500/15 text-red-400 dark:text-red-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
                       >
                         Weak
                       </button>
                       <button
                         onClick={() => setConfidence(idStr, 'average')}
-                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'average' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'average' ? "bg-amber-500/15 text-amber-400 dark:text-amber-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
                       >
                         Average
                       </button>
                       <button
                         onClick={() => setConfidence(idStr, 'strong')}
-                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'strong' ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all", current === 'strong' ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 shadow-sm" : "text-muted-foreground hover:text-foreground")}
                       >
                         Strong
                       </button>

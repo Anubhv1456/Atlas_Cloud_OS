@@ -38,10 +38,10 @@ export function UpgradePaywallModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[500px] border-amber-500/20 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] border-white/5 border-l-2 border-l-amber-500/30 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden">
         <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 p-6 border-b border-border/50 flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4 border border-amber-200 dark:border-amber-500/30">
-            <Lock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            <Lock className="w-8 h-8 text-amber-400 dark:text-amber-400" />
           </div>
           <DialogTitle className="text-2xl font-bold text-foreground mb-2">Unlock Atlas Intelligence</DialogTitle>
           <DialogDescription className="text-base text-muted-foreground max-w-sm mx-auto">
@@ -52,7 +52,7 @@ export function UpgradePaywallModal() {
         <div className="p-6 space-y-6">
           <div className="space-y-4">
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-full bg-zinc-800/40 flex items-center justify-center shrink-0 mt-0.5">
                 <CreditCard className="w-4 h-4 text-primary" />
               </div>
               <div>
@@ -76,8 +76,8 @@ export function UpgradePaywallModal() {
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <div className="w-8 h-8 rounded-full bg-emerald-950/20 flex items-center justify-center shrink-0 mt-0.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
               </div>
               <div>
                 <h4 className="font-semibold text-sm">3. Absolute Privacy</h4>

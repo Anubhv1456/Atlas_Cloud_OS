@@ -248,7 +248,7 @@ export const ClipboardWatcher: React.FC = () => {
                     exit={{ opacity: 0, scale: 0.8 }}
                     className="flex items-center gap-2"
                   >
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 dark:text-emerald-400">
                       <Check className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-medium text-foreground whitespace-nowrap pr-1">

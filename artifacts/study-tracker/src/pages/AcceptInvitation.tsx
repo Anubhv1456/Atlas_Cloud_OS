@@ -165,7 +165,7 @@ export default function AcceptInvitation() {
         {/* Content Card */}
         <div className="w-full bg-[#0a0a0a]/75 backdrop-blur-2xl border border-white/[0.08] rounded-[32px] p-7 sm:p-9 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] flex flex-col items-center text-center">
           
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold mb-5 max-w-[320px] truncate">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold mb-5 max-w-[320px] truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse shrink-0" />
             <span className="truncate">{badgeText}</span>
           </div>

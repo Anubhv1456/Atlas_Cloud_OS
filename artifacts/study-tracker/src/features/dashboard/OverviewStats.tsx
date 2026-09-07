@@ -29,8 +29,8 @@ export function OverviewStats({
         {/* Active Streak */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-amber-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-amber-500 transition-colors">Streak</span>
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-amber-400 transition-colors">Streak</span>
+            <div className="p-1.5 rounded-lg bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
               <Flame className="w-4 h-4" />
             </div>
           </div>
@@ -46,7 +46,7 @@ export function OverviewStats({
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-primary/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">Completion</span>
-            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+            <div className="p-1.5 rounded-lg bg-zinc-800/40 text-primary border border-white/5">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -62,7 +62,7 @@ export function OverviewStats({
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-purple-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">Learning</span>
-            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-purple-500/20">
+            <div className="p-1.5 rounded-lg bg-zinc-800/40 text-primary border border-white/5">
               <BookOpen className="w-4 h-4" />
             </div>
           </div>
@@ -77,8 +77,8 @@ export function OverviewStats({
         {/* Mastered Topics */}
         <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-emerald-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-emerald-500 transition-colors">Solid</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-emerald-400 transition-colors">Solid</span>
+            <div className="p-1.5 rounded-lg bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
               <Award className="w-4 h-4" />
             </div>
           </div>

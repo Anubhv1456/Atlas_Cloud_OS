@@ -59,7 +59,7 @@ export function BatchTriageDrawer({
                   <Button variant="ghost" size="sm" onClick={() => onDiscard(i)} className="text-muted-foreground hover:text-destructive text-xs">
                     <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Discard
                   </Button>
-                  <Button variant="default" size="sm" onClick={() => onCommit(pearl)} className="text-xs bg-primary/10 text-primary hover:bg-primary/20 shadow-none border border-primary/20">
+                  <Button variant="default" size="sm" onClick={() => onCommit(pearl)} className="text-xs bg-zinc-800/40 text-primary hover:bg-primary/20 shadow-none border border-white/5">
                     <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Commit to Notebook
                   </Button>
                 </div>

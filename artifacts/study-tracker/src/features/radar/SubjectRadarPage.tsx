@@ -93,7 +93,7 @@ export default function SubjectRadarPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+            <span className="p-1.5 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-teal-400 border border-white/5">
               <LayoutGrid className="w-4 h-4" />
             </span>
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -144,7 +144,7 @@ export default function SubjectRadarPage() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <BookOpen className="w-3.5 h-3.5 text-teal-500" />
+            <BookOpen className="w-3.5 h-3.5 text-zinc-300" />
             <span>All Subjects</span>
             <span className="text-xs font-mono px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground ml-1">
               {subjects?.length || 0}

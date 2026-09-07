@@ -44,7 +44,7 @@ export const DailyFrictionAgenda: React.FC<DailyFrictionAgendaProps> = ({
       {/* Header with Watchlist & Queue Context */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-border/40">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-zinc-800/40 text-primary flex items-center justify-center shrink-0">
             <Activity className="w-3.5 h-3.5" />
           </div>
           <div>
@@ -67,7 +67,7 @@ export const DailyFrictionAgenda: React.FC<DailyFrictionAgendaProps> = ({
             </span>
           )}
           {elevatedCount > 0 && (
-            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-medium">
+            <span className="px-2 py-0.5 rounded-md bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30 font-medium">
               {elevatedCount} Approaching Half-Life
             </span>
           )}

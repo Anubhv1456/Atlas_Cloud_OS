@@ -98,9 +98,9 @@ export default function Contact() {
     { key: 'twitter' as const, label: 'Twitter / X', icon: Twitter, ...socials.twitter, color: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
     { key: 'discord' as const, label: 'Discord Community', icon: MessageSquare, ...socials.discord, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
     { key: 'github' as const, label: 'GitHub', icon: Github, ...socials.github, color: 'text-slate-300 bg-slate-500/10 border-slate-500/20' },
-    { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, ...socials.linkedin, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, ...socials.linkedin, color: 'text-blue-400 bg-zinc-800/40 border-white/5' },
     { key: 'telegram' as const, label: 'Telegram Broadcast', icon: SendIcon, ...socials.telegram, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-    { key: 'youtube' as const, label: 'YouTube', icon: Youtube, ...socials.youtube, color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+    { key: 'youtube' as const, label: 'YouTube', icon: Youtube, ...socials.youtube, color: 'text-red-400 bg-red-950/20 border-white/5 border-l-2 border-l-red-500/30' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, ...socials.instagram, color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
   ].filter(c => c.enabled && c.url);
 
@@ -128,7 +128,7 @@ export default function Contact() {
             </Button>
             <div className="h-4 w-px bg-border/60 hidden sm:block" />
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-zinc-800/40 border border-white/5 flex items-center justify-center">
                 <Compass className="w-4 h-4 text-primary" />
               </div>
               <span className="font-bold tracking-tight text-sm">Atlas OS</span>
@@ -148,7 +148,7 @@ export default function Contact() {
       {/* Hero Header */}
       <div className="border-b border-border/40 bg-muted/15 py-12 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-primary text-xs font-semibold uppercase tracking-wider">
             <MessageSquare className="w-3.5 h-3.5" />
             Product & Engineering Support
           </div>
@@ -211,7 +211,7 @@ export default function Contact() {
             )}
 
             <div className="bg-card border border-border/80 rounded-2xl p-4 flex items-center gap-3 shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 border border-emerald-500/20">
+              <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 flex items-center justify-center shrink-0 border border-white/5 border-l-2 border-l-emerald-500/30">
                 <Clock className="w-4.5 h-4.5" />
               </div>
               <div>
@@ -251,7 +251,7 @@ export default function Contact() {
 
               {submitted ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-400 flex items-center justify-center">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <div className="space-y-1">
@@ -311,7 +311,7 @@ export default function Contact() {
                           onClick={() => setFormData({ ...formData, category: label })}
                           className={`flex items-start gap-3 p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                             formData.category === label
-                              ? 'bg-primary/10 border-primary text-primary shadow-xs'
+                              ? 'bg-zinc-800/40 border-primary text-primary shadow-xs'
                               : 'border-border/60 hover:border-border text-muted-foreground hover:text-foreground bg-muted/20'
                           }`}
                         >

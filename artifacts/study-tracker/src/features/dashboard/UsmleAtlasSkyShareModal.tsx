@@ -146,7 +146,7 @@ export function UsmleAtlasSkyShareModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center text-teal-400 shadow-xs">
               <Share2 className="w-4 h-4" />
             </div>
             <div>
@@ -195,11 +195,11 @@ export function UsmleAtlasSkyShareModal({
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400">
                   {Math.round(globalHealth)}% LUMINOSITY
                 </span>
                 {completedCount > 0 && (
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400">
                     {completedCount}/19 MASTERED
                   </span>
                 )}
@@ -339,7 +339,7 @@ export function UsmleAtlasSkyShareModal({
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.8)]" />
-                <span className="text-[7px] text-amber-500/80 uppercase tracking-tighter">Supernova</span>
+                <span className="text-[7px] text-amber-400/80 uppercase tracking-tighter">Supernova</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -364,7 +364,7 @@ export function UsmleAtlasSkyShareModal({
 
         {/* Success Alert Feedback */}
         {exportSuccessText && (
-          <div className="mb-3 px-3 py-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs text-center font-medium animate-in fade-in">
+          <div className="mb-3 px-3 py-2 rounded-lg bg-zinc-800/40 border border-white/5 text-teal-400 text-xs text-center font-medium animate-in fade-in">
             {exportSuccessText}
           </div>
         )}

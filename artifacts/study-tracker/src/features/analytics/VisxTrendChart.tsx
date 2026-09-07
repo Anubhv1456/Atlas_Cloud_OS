@@ -293,7 +293,7 @@ const BaseChart = withTooltip<
             <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2">
               <span className="font-bold text-foreground truncate">{tooltipData.title}</span>
               {tooltipData.isProjected ? (
-                <Badge className="text-[9px] px-1.5 py-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                <Badge className="text-[9px] px-1.5 py-0 bg-amber-500/15 text-amber-400 dark:text-amber-400 border-amber-500/30">
                   Forecast
                 </Badge>
               ) : tooltipData.isRealPoint ? (
@@ -310,7 +310,7 @@ const BaseChart = withTooltip<
                 </span>
                 <span className={cn(
                   "font-mono font-bold text-2xl tracking-tighter leading-none",
-                  tooltipData.percentage >= 75 ? "text-emerald-500" : tooltipData.percentage >= 60 ? "text-amber-500" : "text-rose-500"
+                  tooltipData.percentage >= 75 ? "text-emerald-400" : tooltipData.percentage >= 60 ? "text-amber-400" : "text-rose-500"
                 )}>
                   {tooltipData.percentage}%
                 </span>

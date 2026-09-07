@@ -41,7 +41,7 @@ export function MockExamsWidget() {
         <div className="flex items-start justify-between relative z-10 mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <div className="p-1.5 rounded-lg bg-zinc-800/40 text-primary">
                 <Target className="w-4 h-4" />
               </div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Mock Exams (GT/NBME)</h3>
@@ -55,7 +55,7 @@ export function MockExamsWidget() {
               <div className="text-xl font-semibold text-muted-foreground mt-1">No exams logged</div>
             )}
           </div>
-          <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:bg-zinc-800/40 group-hover:text-primary transition-colors">
             <ChevronRight className="w-5 h-5" />
           </div>
         </div>
@@ -171,8 +171,8 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
                       <div className="font-bold text-foreground text-sm truncate pr-2">{log.testName || 'Mock Exam'}</div>
                       <div className={cn(
                         "px-2 py-0.5 rounded-md text-xs font-bold font-mono shrink-0",
-                        log.percentage >= 70 ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
-                        log.percentage >= 50 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" :
+                        log.percentage >= 70 ? "bg-emerald-500/15 text-emerald-400 dark:text-emerald-400" :
+                        log.percentage >= 50 ? "bg-amber-500/15 text-amber-400 dark:text-amber-400" :
                         "bg-rose-500/15 text-rose-600 dark:text-rose-400"
                       )}>
                         {log.percentage}%

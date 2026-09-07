@@ -91,7 +91,7 @@ export function CohortTelemetryView() {
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
               Cohort Telemetry & Habit Velocity
             </h1>
-            <Badge variant="outline" className="text-xs font-mono font-bold bg-teal-500/10 text-teal-400 border-teal-500/30">
+            <Badge variant="outline" className="text-xs font-mono font-bold bg-zinc-800/40 text-teal-400 border-teal-500/30">
               Live Ground Truth
             </Badge>
           </div>
@@ -123,7 +123,7 @@ export function CohortTelemetryView() {
         <div className="p-5 rounded-2xl border border-border/60 bg-card/60 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Engine Accuracy</span>
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+            <div className="p-2 rounded-xl bg-zinc-800/40 text-teal-400 border border-white/5">
               <Zap className="w-4 h-4" />
             </div>
           </div>
@@ -167,7 +167,7 @@ export function CohortTelemetryView() {
         <div className="p-5 rounded-2xl border border-border/60 bg-card/60 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mistake Drill Clear</span>
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-zinc-800/40 text-primary border border-white/5">
               <Brain className="w-4 h-4" />
             </div>
           </div>
@@ -189,7 +189,7 @@ export function CohortTelemetryView() {
         <div className="p-5 rounded-2xl border border-border/60 bg-card/60 relative overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Storage & Ops</span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-2 rounded-xl bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
@@ -276,7 +276,7 @@ export function CohortTelemetryView() {
               variant="outline" 
               className={cn(
                 "text-xs font-mono",
-                isDynamicGaps ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" : "text-muted-foreground border-border/40"
+                isDynamicGaps ? "text-emerald-400 border-emerald-500/30 bg-emerald-950/20" : "text-muted-foreground border-border/40"
               )}
             >
               {isDynamicGaps ? 'Live Cohort Gaps' : 'Awaiting Mistakes'}
@@ -349,13 +349,13 @@ export function CohortTelemetryView() {
               <p className="text-xs text-muted-foreground">Knew the concept, blanked in exam</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-1">
+            <div className="p-4 rounded-xl border border-white/5 border-l-2 border-l-amber-500/30 bg-amber-500/5 space-y-1">
               <span className="text-xs font-bold uppercase text-amber-400">Execution Slip (Misread)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.misread || 0}</div>
               <p className="text-xs text-muted-foreground">Rushed reading / missed 'EXCEPT'</p>
             </div>
 
-            <div className="p-4 rounded-xl border border-purple-500/20 bg-primary/5 space-y-1">
+            <div className="p-4 rounded-xl border border-white/5 bg-primary/5 space-y-1">
               <span className="text-xs font-bold uppercase text-primary">Overthinking (FOMO)</span>
               <div className="text-2xl font-bold text-foreground font-mono">{errorTaxonomy.fomo || 0}</div>
               <p className="text-xs text-muted-foreground">Second-guessed the right answer</p>
@@ -425,7 +425,7 @@ export function CohortTelemetryView() {
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 leading-relaxed flex items-center gap-2">
+          <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 text-xs text-emerald-300 leading-relaxed flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
               <strong>Budget Safety Buffer</strong>: Operating at <strong>extreme headroom</strong> below all free quotas. Batch buffers keep Firestore writes and database reads at $0.00 cost.

@@ -98,7 +98,7 @@ export function AnnouncementsView() {
                     onClick={() => setNewType(t)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium border capitalize ${
                       newType === t 
-                        ? 'border-primary bg-primary/10 text-primary' 
+                        ? 'border-primary bg-zinc-800/40 text-primary' 
                         : 'border-border/50 bg-background text-muted-foreground hover:bg-muted'
                     }`}
                   >
@@ -163,10 +163,10 @@ export function AnnouncementsView() {
             >
               <div className="flex items-start gap-4">
                 <div className={`p-3 rounded-full mt-1 shrink-0 ${
-                  announcement.type === 'info' ? 'bg-blue-500/10 text-blue-500' :
-                  announcement.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
-                  announcement.type === 'warning' ? 'bg-amber-500/10 text-amber-500' :
-                  'bg-red-500/10 text-red-500'
+                  announcement.type === 'info' ? 'bg-zinc-800/40 text-zinc-300' :
+                  announcement.type === 'success' ? 'bg-emerald-950/20 text-emerald-400' :
+                  announcement.type === 'warning' ? 'bg-amber-950/20 text-amber-400' :
+                  'bg-red-950/20 text-red-400'
                 }`}>
                   {announcement.type === 'info' && <Info className="w-6 h-6" />}
                   {announcement.type === 'success' && <CheckCircle2 className="w-6 h-6" />}
@@ -177,7 +177,7 @@ export function AnnouncementsView() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-lg">{announcement.title}</h3>
                     {announcement.active && (
-                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
                         Live
                       </span>
                     )}
@@ -195,7 +195,7 @@ export function AnnouncementsView() {
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                     announcement.active 
                       ? 'bg-muted text-muted-foreground hover:bg-muted/80' 
-                      : 'bg-primary/10 text-primary hover:bg-primary/20'
+                      : 'bg-zinc-800/40 text-primary hover:bg-primary/20'
                   }`}
                 >
                   {announcement.active ? 'Deactivate' : 'Reactivate'}

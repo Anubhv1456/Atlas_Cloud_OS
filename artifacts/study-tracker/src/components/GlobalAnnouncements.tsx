@@ -41,24 +41,24 @@ export function GlobalAnnouncements() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className={`pointer-events-auto max-w-lg w-full p-4 rounded-2xl shadow-lg border backdrop-blur-md flex items-start gap-3 relative ${
-              announcement.type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-100 dark:text-blue-50' :
-              announcement.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100 dark:text-emerald-50' :
-              announcement.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-100 dark:text-amber-50' :
-              'bg-red-500/10 border-red-500/20 text-red-100 dark:text-red-50'
+              announcement.type === 'info' ? 'bg-zinc-800/40 border-white/5 text-blue-100 dark:text-blue-50' :
+              announcement.type === 'success' ? 'bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-100 dark:text-emerald-50' :
+              announcement.type === 'warning' ? 'bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 text-amber-100 dark:text-amber-50' :
+              'bg-red-950/20 border-white/5 border-l-2 border-l-red-500/30 text-red-100 dark:text-red-50'
             }`}
           >
             <div className="shrink-0 mt-0.5">
-              {announcement.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
-              {announcement.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-              {announcement.type === 'warning' && <TriangleAlert className="w-5 h-5 text-amber-500" />}
-              {announcement.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
+              {announcement.type === 'info' && <Info className="w-5 h-5 text-zinc-300" />}
+              {announcement.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+              {announcement.type === 'warning' && <TriangleAlert className="w-5 h-5 text-amber-400" />}
+              {announcement.type === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
             </div>
             <div className="flex-1 pr-6">
               <h4 className={`font-semibold text-sm mb-0.5 ${
-                announcement.type === 'info' ? 'text-blue-600 dark:text-blue-400' :
-                announcement.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' :
-                announcement.type === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                'text-red-600 dark:text-red-400'
+                announcement.type === 'info' ? 'text-zinc-300 dark:text-blue-400' :
+                announcement.type === 'success' ? 'text-emerald-400 dark:text-emerald-400' :
+                announcement.type === 'warning' ? 'text-amber-400 dark:text-amber-400' :
+                'text-red-400 dark:text-red-400'
               }`}>{announcement.title}</h4>
               <p className="text-sm opacity-90 text-foreground">{announcement.message}</p>
             </div>

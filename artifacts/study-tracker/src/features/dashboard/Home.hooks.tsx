@@ -1,6 +1,7 @@
 import { useLexicon } from '@/lib/lexicon';
 import { isSystemComplete } from '@/lib/progress';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { db } from '@/db';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 import { useState, ReactNode, useMemo, useEffect } from 'react';
@@ -20,6 +21,7 @@ import { DropResult } from '@hello-pangea/dnd';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 export function useHomeLogic() {
+  const { profile } = useExamProfile();
   const lexicon = useLexicon();
 
 
@@ -95,7 +97,7 @@ export function useHomeLogic() {
         id: `subject-focus-${activeFocusedSub?.id}`,
         confidence: 96,
         badge: customPrimarySubject ? 'PRIMARY SUBJECT FOCUS' : 'SECONDARY SUBJECT FOCUS',
-        badgeClass: 'bg-primary/10 text-primary border-primary/20',
+        badgeClass: 'bg-zinc-800/40 text-primary border-white/5',
         icon: <BookOpen className="w-4 h-4 text-primary shrink-0" />,
         text: (
           <span>
@@ -127,7 +129,7 @@ export function useHomeLogic() {
       const isDueToday = isRevisionDue(topDecaySystem, curriculumSets, now) && overdue === 0;
 
       let badge = 'REVISION DUE';
-      let badgeClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      let badgeClass = 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30';
       let statusText = 'due today';
 
       if (overdue > 0) {
@@ -136,7 +138,7 @@ export function useHomeLogic() {
         statusText = `${overdue}d overdue`;
       } else if (topDecaySystem.revisionState === 'in_progress') {
         badge = 'ACTIVE SESSION';
-        badgeClass = 'bg-primary/10 text-primary border-primary/20';
+        badgeClass = 'bg-zinc-800/40 text-primary border-white/5';
         statusText = `Day ${topDecaySystem.revisionDaysLogged || 1} logged`;
       } else if (!isDueToday && topDecaySystem.status === 'Weak') {
         badge = 'WEAK CONFIDENCE';
@@ -168,7 +170,7 @@ export function useHomeLogic() {
         id: 'primary-focus-near',
         confidence: 94,
         badge: 'PRIMARY FOCUS',
-        badgeClass: 'bg-primary/10 text-primary border-primary/20',
+        badgeClass: 'bg-zinc-800/40 text-primary border-white/5',
         icon: <Target className="w-4 h-4 text-primary shrink-0" />,
         text: (
           <span>
@@ -198,8 +200,8 @@ export function useHomeLogic() {
           id: 'coverage-imbalance',
           confidence: 88,
           badge: 'COVERAGE GAP',
-          badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-          icon: <Activity className="w-4 h-4 text-amber-500 shrink-0" />,
+          badgeClass: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30',
+          icon: <Activity className="w-4 h-4 text-amber-400 shrink-0" />,
           text: (
             <span>
               Study focus is skewed: <strong className="text-foreground">{highest.sub.name}</strong> is {Math.round(highest.ratio * 100)}% complete, while <strong className="text-foreground">{lowest.sub.name}</strong> lags at {Math.round(lowest.ratio * 100)}%.
@@ -251,8 +253,8 @@ export function useHomeLogic() {
             id: `milestone-${sub.id}`,
             confidence: 82,
             badge: 'MASTERY MILESTONE',
-            badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-            icon: <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />,
+            badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30',
+            icon: <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />,
             text: (
               <span>
                 Only 1 system (<strong className="text-foreground">{target.name}</strong>) left to reach 100% completion in <strong className="text-foreground">{sub.name}</strong>!
@@ -275,13 +277,33 @@ export function useHomeLogic() {
       d.setHours(0,0,0,0);
       return d < nowTime;
     }).length;
-    if (overdueCount === 0 && streak > 0) {
+    const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
+    const isTriageMode = overdueCount > 10;
+    
+    if (isTriageMode) {
+      candidates.push({
+        id: 'triage-mode',
+        confidence: 100,
+        badge: 'TRIAGE PROTOCOL ACTIVE',
+        badgeClass: 'bg-red-950/20 text-red-400 border-white/5 border-l-2 border-l-red-500/30',
+        icon: <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />,
+        text: (
+          <span>
+            {isUsmle 
+              ? `Don't worry about the ${overdueCount} overdue blocks today. Let's just focus on rescuing your weakest systems so you don't lose the concepts you've built.`
+              : `You have ${overdueCount} overdue blocks, but don't panic. Let's just focus on high-yield subjects like Pathology and PSM today to secure easy points.`}
+          </span>
+        ),
+        actionLabel: 'Launch Triage',
+        onAction: () => setLocation('/timeline'),
+      });
+    } else if (overdueCount === 0 && streak > 0) {
       candidates.push({
         id: 'perfect-momentum',
         confidence: 70,
         badge: 'PEAK MOMENTUM',
-        badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-        icon: <Flame className="w-4 h-4 text-amber-500 shrink-0" />,
+        badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30',
+        icon: <Flame className="w-4 h-4 text-amber-400 shrink-0" />,
         text: (
           <span>
             Zero overdue revisions and an active <strong className="text-foreground">{streak}-day streak</strong>! All your scheduled revisions are up to date.

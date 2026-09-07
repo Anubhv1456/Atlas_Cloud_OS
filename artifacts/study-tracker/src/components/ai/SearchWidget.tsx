@@ -36,7 +36,7 @@ export function SearchWidget({ onOpenChat, className }: SearchWidgetProps) {
           e.stopPropagation();
           onOpenChat?.('voice');
         }}
-        className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all cursor-pointer active:scale-95"
+        className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-zinc-800/40 transition-all cursor-pointer active:scale-95"
       >
         <Mic className="w-5 h-5" />
       </button>

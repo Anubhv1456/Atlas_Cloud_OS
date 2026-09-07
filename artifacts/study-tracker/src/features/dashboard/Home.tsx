@@ -112,10 +112,10 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setExamModalOpen(true)}
-                  className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 hover:text-teal-500 text-xs sm:text-xs font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group truncate max-w-[180px] sm:max-w-none"
+                  className="flex items-center gap-1.5 text-zinc-300 dark:text-teal-400 hover:text-zinc-300 text-xs sm:text-xs font-semibold uppercase tracking-wider shrink-0 transition-colors cursor-pointer group truncate max-w-[180px] sm:max-w-none"
                   title="Click to recalibrate exam target"
                 >
-                  <Target className="w-3.5 h-3.5 shrink-0 text-teal-500 group-hover:scale-110 transition-transform" />
+                  <Target className="w-3.5 h-3.5 shrink-0 text-zinc-300 group-hover:scale-110 transition-transform" />
                   <span className="truncate">
                     {profile.targetExam 
                       ? `${profile.targetExam} ${profile.currentYear ? `• ${profile.currentYear}` : ''}`
@@ -124,7 +124,7 @@ export default function Home() {
                   </span>
                 </button>
                 {streak > 0 && (
-                  <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                  <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 shrink-0">
                     <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d
                   </span>
                 )}

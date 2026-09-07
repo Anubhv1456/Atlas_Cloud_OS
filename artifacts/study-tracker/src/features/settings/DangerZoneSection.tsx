@@ -91,9 +91,9 @@ export function DangerZoneSection() {
 
       {/* Completion Dialog */}
       <Dialog open={showCompletionCard} onOpenChange={setShowCompletionCard}>
-        <DialogContent className="sm:max-w-[460px] rounded-2xl mx-4 w-[calc(100%-2rem)] border-emerald-500/20 bg-background/95 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-[460px] rounded-2xl mx-4 w-[calc(100%-2rem)] border-white/5 border-l-2 border-l-emerald-500/30 bg-background/95 backdrop-blur-xl">
           <DialogHeader>
-            <div className="mx-auto w-12 h-12 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-3">
+            <div className="mx-auto w-12 h-12 bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30 rounded-2xl flex items-center justify-center mb-3">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Database Reset Complete</DialogTitle>
@@ -110,7 +110,7 @@ export function DangerZoneSection() {
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> Storage Cleared</span>
-                <span className="font-semibold text-emerald-500">100% purged</span>
+                <span className="font-semibold text-emerald-400">100% purged</span>
               </div>
             </div>
           )}

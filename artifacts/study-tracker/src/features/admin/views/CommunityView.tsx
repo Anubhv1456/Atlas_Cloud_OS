@@ -98,16 +98,16 @@ export function CommunityView() {
                     </span>
                     <span className={cn(
                       "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider",
-                      marker.status === 'published' ? "bg-blue-500/10 text-blue-600" :
-                      marker.status === 'trusted' ? "bg-emerald-500/10 text-emerald-600" :
-                      marker.status === 'archived' ? "bg-amber-500/10 text-amber-600" :
-                      marker.status === 'low_quality' ? "bg-red-500/10 text-red-600" :
+                      marker.status === 'published' ? "bg-zinc-800/40 text-zinc-300" :
+                      marker.status === 'trusted' ? "bg-emerald-950/20 text-emerald-400" :
+                      marker.status === 'archived' ? "bg-amber-950/20 text-amber-400" :
+                      marker.status === 'low_quality' ? "bg-red-950/20 text-red-400" :
                       "bg-muted text-muted-foreground"
                     )}>
                       {marker.status}
                     </span>
                     {(marker.reportedBy || []).length > 0 && (
-                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-600 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-950/20 text-red-400 flex items-center gap-1">
                         <TriangleAlert className="w-3 h-3" />
                         Reported ({(marker.reportedBy || []).length})
                       </span>
@@ -136,11 +136,11 @@ export function CommunityView() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs uppercase font-bold tracking-wider opacity-70">Helpful</span>
-                    <span className="font-mono text-emerald-500 font-medium">{marker.usefulCount || 0}</span>
+                    <span className="font-mono text-emerald-400 font-medium">{marker.usefulCount || 0}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs uppercase font-bold tracking-wider opacity-70">Saves</span>
-                    <span className="font-mono text-amber-500 font-medium">{(marker.savedBy || []).length}</span>
+                    <span className="font-mono text-amber-400 font-medium">{(marker.savedBy || []).length}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs uppercase font-bold tracking-wider opacity-70">Reads</span>
@@ -148,35 +148,35 @@ export function CommunityView() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs uppercase font-bold tracking-wider opacity-70">Reports</span>
-                    <span className="font-mono text-red-500 font-medium">{(marker.reportedBy || []).length}</span>
+                    <span className="font-mono text-red-400 font-medium">{(marker.reportedBy || []).length}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleUpdateStatus(marker.id, 'published')}
-                    className="p-2 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors tooltip-trigger"
+                    className="p-2 rounded-lg bg-zinc-800/40 text-zinc-300 hover:bg-zinc-800/50 transition-colors tooltip-trigger"
                     title="Publish"
                   >
                     <Check className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleUpdateStatus(marker.id, 'trusted')}
-                    className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition-colors tooltip-trigger"
+                    className="p-2 rounded-lg bg-emerald-950/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors tooltip-trigger"
                     title="Mark as Trusted"
                   >
                     <Shield className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleUpdateStatus(marker.id, 'archived')}
-                    className="p-2 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors tooltip-trigger"
+                    className="p-2 rounded-lg bg-amber-950/20 text-amber-400 hover:bg-amber-500/20 transition-colors tooltip-trigger"
                     title="Archive"
                   >
                     <Archive className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleUpdateStatus(marker.id, 'low_quality')}
-                    className="p-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors tooltip-trigger"
+                    className="p-2 rounded-lg bg-red-950/20 text-red-400 hover:bg-red-500/20 transition-colors tooltip-trigger"
                     title="Mark as Low Quality"
                   >
                     <X className="w-4 h-4" />

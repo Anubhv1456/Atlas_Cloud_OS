@@ -28,7 +28,7 @@ export function DashboardOverview() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-6 rounded-2xl border border-border/50 bg-card">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-primary/10 rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
+              <div className="p-2 bg-zinc-800/40 rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
               <h3 className="font-medium">Active Users</h3>
             </div>
             <p className="text-3xl font-bold">{stats.users}</p>
@@ -36,7 +36,7 @@ export function DashboardOverview() {
           
           <div className="p-6 rounded-2xl border border-border/50 bg-card">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-emerald-500/10 rounded-lg"><Activity className="w-5 h-5 text-emerald-500" /></div>
+              <div className="p-2 bg-emerald-950/20 rounded-lg"><Activity className="w-5 h-5 text-emerald-400" /></div>
               <h3 className="font-medium">Today's Signups</h3>
             </div>
             <p className="text-3xl font-bold">{stats.signups}</p>
@@ -44,7 +44,7 @@ export function DashboardOverview() {
 
           <div className="p-6 rounded-2xl border border-border/50 bg-card">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-primary/10 rounded-lg"><MessageSquare className="w-5 h-5 text-primary" /></div>
+              <div className="p-2 bg-zinc-800/40 rounded-lg"><MessageSquare className="w-5 h-5 text-primary" /></div>
               <h3 className="font-medium">Pending Markers</h3>
             </div>
             <p className="text-3xl font-bold">{stats.pendingMarkers}</p>
@@ -52,7 +52,7 @@ export function DashboardOverview() {
 
           <div className="p-6 rounded-2xl border border-border/50 bg-card">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-red-500/10 rounded-lg"><AlertCircle className="w-5 h-5 text-red-500" /></div>
+              <div className="p-2 bg-red-950/20 rounded-lg"><AlertCircle className="w-5 h-5 text-red-400" /></div>
               <h3 className="font-medium">Reported Markers</h3>
             </div>
             <p className="text-3xl font-bold">{stats.reportedMarkers}</p>
