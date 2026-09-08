@@ -1,20 +1,39 @@
 export * from './SettingsLayout';
-export * from './AppearanceSection';
+
+
 export * from './PWASection';
+
 export * from './NotificationsSection';
+
 export * from './DangerZoneSection';
+
 export * from './ExamProfileSection';
+
 export * from './AccountSection';
+
 export * from './LegacyDataSection';
+
 export * from './FirebaseSyncSection';
+
 export * from './FaqSection';
+
 export * from './FeedbackSection';
+
 export * from './ContactSection';
+
 export * from './ReferralSection';
+
 export * from './ReferralModal';
+
 export * from './AboutSection';
+
 export * from './DataExportSection';
+
 export * from './SystemPreferencesCard';
+
 export * from './AIAssistantSection';
+
 export * from './PermissionsDiagnosticsSection';
+
 export * from './DataVaultSection';
+

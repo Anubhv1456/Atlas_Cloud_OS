@@ -16,7 +16,7 @@ const TINT_THEMES = [
 ] as const;
 
 export function SystemPreferencesCard() {
-  const { isDark, toggleTheme, accent, changeAccent } = useTheme();
+  const { accent, changeAccent } = useTheme();
   const { notifSettings, permissionStatus, toggleNotif, testNotification } = useNotifications();
   const [tintModalOpen, setTintModalOpen] = useState(false);
 
@@ -25,18 +25,6 @@ export function SystemPreferencesCard() {
 
   return (
     <>
-      <SettingsRow
-        icon={isDark ? Moon : Sun}
-        iconBg={isDark ? "bg-amber-500" : "bg-sky-500"}
-        label="Appearance"
-        sublabel={isDark ? 'Dark Mode (OLED pitch)' : 'Light Mode (Porcelain)'}
-        control={
-          <Switch 
-            checked={isDark} 
-            onCheckedChange={toggleTheme}
-          />
-        }
-      />
 
       <SettingsRow
         icon={Palette}

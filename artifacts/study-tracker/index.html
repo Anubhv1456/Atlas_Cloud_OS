@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0, viewport-fit=cover">
@@ -17,26 +17,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" crossorigin="anonymous">
-    <meta name="theme-color" content="#FBFBFD" media="(prefers-color-scheme: light)">
+    
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Atlas">
+    
     <script>
       (function() {
         try {
-          var isDark = localStorage.getItem('theme') === 'dark';
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
           var savedMode = localStorage.getItem('atlas_theme_mode') || 'atlas';
           document.documentElement.setAttribute('data-theme', savedMode);
         } catch (e) {}
       })();
     </script>
+
     <style>
       /* Zero-Flicker Native Launch Screen Canvas */
       html, body {

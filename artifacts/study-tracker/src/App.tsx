@@ -54,18 +54,12 @@ const queryClient = new QueryClient();
 const initTheme = () => {
   if (typeof window !== 'undefined') {
     try {
-      const isDark = localStorage.getItem('theme') === 'dark';
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      
+      document.documentElement.classList.add('dark');
       const savedMode = localStorage.getItem('atlas_theme_mode') || 'atlas';
       document.documentElement.setAttribute('data-theme', savedMode);
     } catch (e) {
-      console.warn('localStorage access fallback to light theme', e);
-      document.documentElement.classList.remove('dark');
+      console.warn('localStorage access fallback', e);
+      document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'atlas');
     }
   }

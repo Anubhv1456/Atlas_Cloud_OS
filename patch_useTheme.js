@@ -1,4 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+const fs = require('fs');
+let hook = fs.readFileSync('./artifacts/study-tracker/src/hooks/useTheme.ts', 'utf8');
+
+// Replace the entire hook body
+const newHook = `import { useState, useEffect, useCallback } from 'react';
 
 export type CognitiveMode = 'atlas' | 'deep-space' | 'system-blue' | 'graphite' | 'amber';
 
@@ -35,3 +39,6 @@ export function useTheme() {
 
   return { isDark: true, toggleTheme, accent, changeAccent };
 }
+`;
+
+fs.writeFileSync('./artifacts/study-tracker/src/hooks/useTheme.ts', newHook);
