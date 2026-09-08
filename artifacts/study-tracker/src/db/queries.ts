@@ -36,8 +36,8 @@ export function useSubject(id: number | string) {
       sub = all.find(s => 
         String(s.id).toLowerCase() === strId ||
         (s.ontologySubjectId && String(s.ontologySubjectId).toLowerCase() === strId) ||
-        (s.name && s.name.toLowerCase() === strId) ||
-        (s.name && s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === strId.replace(/[^a-z0-9]/g, ''))
+        (s.name && ((s.name || '').toLowerCase()) === strId) ||
+        (s.name && ((s.name || '').toLowerCase()).replace(/[^a-z0-9]/g, '') === strId.replace(/[^a-z0-9]/g, ''))
       );
     }
     if (!sub || sub.deletedAt) return undefined;

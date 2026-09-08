@@ -3,6 +3,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import ReactMarkdown from "react-markdown";
+import { MarkdownErrorBoundary } from "./MarkdownErrorBoundary";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, 
@@ -1017,7 +1018,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
                       )}>
-                        <div className={`prose prose-sm max-w-none break-words font-medium ${isAssistant ? "dark:prose-invert" : "text-primary-foreground prose-p:text-primary-foreground prose-headings:text-primary-foreground prose-strong:text-primary-foreground"}`}><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>{msg.attachedImageBase64 && <div className="mt-2"><img src={msg.attachedImageBase64} alt="Attached" className="max-h-48 w-auto object-contain rounded-lg border border-border/30" /></div>}</div>
+                        <div className={`prose prose-sm max-w-none break-words font-medium ${isAssistant ? "dark:prose-invert" : "text-primary-foreground prose-p:text-primary-foreground prose-headings:text-primary-foreground prose-strong:text-primary-foreground"}`}><MarkdownErrorBoundary fallbackText={msg.content}><ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[ [rehypeKatex, { throwOnError: false, strict: 'ignore' }] ]}>{msg.content}</ReactMarkdown></MarkdownErrorBoundary>{msg.attachedImageBase64 && <div className="mt-2"><img src={msg.attachedImageBase64} alt="Attached" className="max-h-48 w-auto object-contain rounded-lg border border-border/30" /></div>}</div>
                       </div>
                     ) : null}
 

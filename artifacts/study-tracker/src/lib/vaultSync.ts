@@ -372,7 +372,7 @@ export async function restoreCompleteVault(
       if (h.subjectId && sys.subjectId && String(h.subjectId) !== String(sys.subjectId)) return false;
       if (h.subjectName && sysSubName && h.subjectName.toLowerCase() !== sysSubName.toLowerCase()) return false;
       if (h.systemId === sys.id) return true;
-      if (h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase()) {
+      if (h.systemName && h.systemName.toLowerCase() === ((sys.name || '').toLowerCase())) {
         return (h.subjectId && String(h.subjectId) === String(sys.subjectId)) ||
                (h.subjectName && h.subjectName.toLowerCase() === sysSubName.toLowerCase());
       }
@@ -389,7 +389,7 @@ export async function restoreCompleteVault(
       let topicIds: string[] = [];
       const activeOntology = getOntologyForExam(getLocalExamProfile().targetExam || 'NEET PG');
       for (const sub of activeOntology) {
-        const foundSys = sub.systems.find(s => s.name.toLowerCase() === sys.name.toLowerCase());
+        const foundSys = sub.systems.find(s => ((s.name || '').toLowerCase()) === ((sys.name || '').toLowerCase()));
         if (foundSys && foundSys.topics.length > 0) {
           topicIds = foundSys.topics.map(t => t.id);
           break;
@@ -637,8 +637,8 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
       }
 
       // If matching by name or taskLabel, subject MUST match
-      const nameMatches = (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()) ||
-                          (h.taskLabel && h.taskLabel.toLowerCase().includes(set.name.toLowerCase()));
+      const nameMatches = (h.systemName && h.systemName.toLowerCase() === ((set.name || '').toLowerCase())) ||
+                          (h.taskLabel && h.taskLabel.toLowerCase().includes(((set.name || '').toLowerCase())));
       if (nameMatches) {
         const matchesSubject = (h.subjectId && String(h.subjectId) === String(set.subjectId)) ||
                                (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
@@ -735,8 +735,8 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
         if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) return false;
         if (h.curriculumSetId && h.curriculumSetId === set.id) return true;
         if (h.systemId && set.systemId && Number(h.systemId) === Number(set.systemId)) return true;
-        const nameMatches = (h.systemName && h.systemName.toLowerCase() === set.name.toLowerCase()) ||
-                            (h.taskLabel && h.taskLabel.toLowerCase().includes(set.name.toLowerCase()));
+        const nameMatches = (h.systemName && h.systemName.toLowerCase() === ((set.name || '').toLowerCase())) ||
+                            (h.taskLabel && h.taskLabel.toLowerCase().includes(((set.name || '').toLowerCase())));
         if (nameMatches) {
           return (h.subjectId && String(h.subjectId) === String(set.subjectId)) ||
                  (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
@@ -808,7 +808,7 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
       if (h.subjectId && sys.subjectId && String(h.subjectId) !== String(sys.subjectId)) return false;
       if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) return false;
       if (h.systemId && Number(h.systemId) === Number(sys.id)) return true;
-      const nameMatches = h.systemName && h.systemName.toLowerCase() === sys.name.toLowerCase();
+      const nameMatches = h.systemName && h.systemName.toLowerCase() === ((sys.name || '').toLowerCase());
       if (nameMatches) {
         return (h.subjectId && String(h.subjectId) === String(sys.subjectId)) ||
                (h.subjectName && h.subjectName.toLowerCase() === subjectName.toLowerCase());
@@ -830,7 +830,7 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
         let topicIds: string[] = [];
         const activeOntology = getOntologyForExam(getLocalExamProfile().targetExam || 'NEET PG');
       for (const sub of activeOntology) {
-          const foundSys = sub.systems.find(s => s.name.toLowerCase() === sys.name.toLowerCase());
+          const foundSys = sub.systems.find(s => ((s.name || '').toLowerCase()) === ((sys.name || '').toLowerCase()));
           if (foundSys && foundSys.topics.length > 0) {
             topicIds = foundSys.topics.map(t => t.id);
             break;

@@ -161,7 +161,7 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     
     // Check ontology high yield flag and metric profile
-    const ontMatch = ALL_SUBJECTS.find(o => String(o.id) === String(subId) || o.name.toLowerCase() === sub.name.toLowerCase());
+    const ontMatch = ALL_SUBJECTS.find(o => String(o.id) === String(subId) || ((o.name || '').toLowerCase()) === ((sub.name || '').toLowerCase()));
     const isHighYield = ontMatch ? ontMatch.tier === 'T1' : false;
     const metricProfile = SUBJECT_METRICS_PROFILE[sub.name];
     const halfLife = metricProfile?.halfLifeDays || 14;

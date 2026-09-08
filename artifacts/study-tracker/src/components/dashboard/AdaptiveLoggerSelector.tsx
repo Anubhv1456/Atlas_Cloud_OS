@@ -79,7 +79,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
       };
 
       activeSubjects.forEach(sub => {
-        const n = sub.name.toLowerCase();
+        const n = (sub.name || '').toLowerCase();
         if (['cardio', 'respir', 'renal', 'nephro', 'gastro', 'gi', 'endo', 'repro', 'nervous', 'neuro', 'musculo', 'skelet', 'derm', 'skin', 'hemat', 'immune'].some(kw => n.includes(kw))) {
           groups['Organ Systems'].items.push({ id: String(sub.id), name: sub.name });
         } else if (['biochem', 'path', 'pharm', 'micro', 'psych', 'public health', 'epidemi', 'stat', 'genet', 'physio', 'anat', 'behavior'].some(kw => n.includes(kw))) {
@@ -98,7 +98,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
       };
 
       activeSubjects.forEach(sub => {
-        const n = sub.name.toLowerCase();
+        const n = (sub.name || '').toLowerCase();
         if (['anat', 'physio', 'biochem'].some(kw => n.includes(kw))) {
           groups['Pre-Clinical'].items.push({ id: String(sub.id), name: sub.name });
         } else if (['path', 'pharm', 'micro', 'forensic', 'fmt'].some(kw => n.includes(kw))) {

@@ -99,7 +99,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
       [
         ...STANDARD_MEDICAL_SUBJECTS.map(s => ({ id: s.id, name: s.name })),
         ...dbSubjects.map(s => ({ id: s.id ?? s.name, name: s.name }))
-      ].map(item => [item.name.toLowerCase(), item])
+      ].map(item => [((item.name || '').toLowerCase()), item])
     ).values()
   );
 

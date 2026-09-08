@@ -5,7 +5,8 @@ import { getOntologyForExam } from '@/data/ontology';
 import { generateHLC } from '@/lib/hlc';
 import * as T from '@/db/types';
 
-export function normalizeName(name: string): string {
+export function normalizeName(name: string | undefined | null): string {
+  if (!name) return '';
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
@@ -15,7 +16,8 @@ export function normalizeName(name: string): string {
 /**
  * Creates a clean, deterministic slug for primary keys
  */
-export function slugify(text: string): string {
+export function slugify(text: string | undefined | null): string {
+  if (!text) return '';
   return text
     .toLowerCase()
     .trim()

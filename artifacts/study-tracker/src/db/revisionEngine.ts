@@ -504,9 +504,9 @@ export async function recordStudyBlockRevision(params: RecordStudyBlockRevisionP
   const allSystems = await db.systems.where('subjectId').equals(subjectId).toArray().then(res => res.filter(s => !s.deletedAt));
   const cleanSysName = (systemName || '').trim().toLowerCase();
   const matchedSys = allSystems.find(s => 
-    s.name.toLowerCase() === cleanSysName || 
-    (cleanSysName && s.name.toLowerCase().includes(cleanSysName)) || 
-    (cleanSysName && cleanSysName.includes(s.name.toLowerCase()))
+    ((s.name || '').toLowerCase()) === cleanSysName || 
+    (cleanSysName && ((s.name || '').toLowerCase()).includes(cleanSysName)) || 
+    (cleanSysName && cleanSysName.includes(((s.name || '').toLowerCase())))
   );
 
   let targetSystemId: number | string = matchedSys?.id || 0;

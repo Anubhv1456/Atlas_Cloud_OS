@@ -154,7 +154,7 @@ export function useHomeLogic() {
         icon: <AlertCircle className="w-4 h-4 text-destructive shrink-0" />,
         text: (
           <span>
-            <strong className="text-foreground">{topDecaySystem.name}</strong> ({sub?.name}) requires attention ({statusText}, {topDecaySystem.status.toLowerCase()} confidence).
+            <strong className="text-foreground">{topDecaySystem.name}</strong> ({sub?.name}) requires attention ({statusText}, {((topDecaySystem.status || '').toLowerCase())} confidence).
           </span>
         ),
         actionLabel: 'Review Now',

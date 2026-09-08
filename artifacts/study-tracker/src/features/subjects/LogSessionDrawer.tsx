@@ -23,7 +23,7 @@ export function LogSessionDialog({ isOpen, onOpenChange, system, subjectId, topi
 
   const filteredTopics = useMemo(() => {
     if (!search.trim()) return topics;
-    return topics.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
+    return topics.filter(t => ((t.name || '').toLowerCase()).includes(search.toLowerCase()));
   }, [topics, search]);
 
   const toggleTopic = (id: string) => {

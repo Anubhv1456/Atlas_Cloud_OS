@@ -190,7 +190,7 @@ export function useSubjectDetailLogic(id: string | undefined) {
   const allTopicIds = systems.flatMap(sys => {
     const ontologySubject = subject ? ALL_SUBJECTS.find(s => 
       (subject.ontologySubjectId && String(s.id) === String(subject.ontologySubjectId)) ||
-      s.name.toLowerCase() === subject.name.toLowerCase()
+      ((s.name || '').toLowerCase()) === ((subject.name || '').toLowerCase())
     ) : undefined;
     const os = ALL_SYSTEMS.find(s => 
       ((sys as any).ontologySystemId && s.id === (sys as any).ontologySystemId) ||

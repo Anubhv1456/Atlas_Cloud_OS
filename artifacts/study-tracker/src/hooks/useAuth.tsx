@@ -28,13 +28,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       
       if (currentUser && firestoreDb) {
-        // Non-blocking fire-and-forget background sync for user metadata
-        setDoc(doc(firestoreDb, 'users', currentUser.uid), {
+        // Retrieve affiliate ID if present
+        const affiliateId = localStorage.getItem('atlas_affiliate_id');
+        const updateData: any = {
           email: currentUser.email,
           displayName: currentUser.displayName,
           lastLoginAt: serverTimestamp(),
           createdAt: currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime) : serverTimestamp()
-        }, { merge: true }).catch((e) => {
+        };
+        
+        if (affiliateId) {
+          updateData.affiliateId = affiliateId;
+        }
+
+        // Non-blocking fire-and-forget background sync for user metadata
+        setDoc(doc(firestoreDb, 'users', currentUser.uid), updateData, { merge: true }).catch((e) => {
           console.warn("User metadata background sync deferred (offline):", e);
         });
       }

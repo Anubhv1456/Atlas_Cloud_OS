@@ -92,7 +92,7 @@ export function SupportMessagesView() {
 
   const filteredMessages = messages.filter(m => {
     const matchesSearch = 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ((m.name || '').toLowerCase()).includes(searchQuery.toLowerCase()) ||
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.message.toLowerCase().includes(searchQuery.toLowerCase());

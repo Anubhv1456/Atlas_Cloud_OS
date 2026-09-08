@@ -111,7 +111,7 @@ export function QuickMistakeModal({
         if (defaultSubjectId) {
           const match = subjectOptions.find(
             s => String(s.id).toLowerCase() === String(defaultSubjectId).toLowerCase() ||
-                 s.name.toLowerCase() === String(defaultSubjectId).toLowerCase()
+                 ((s.name || '').toLowerCase()) === String(defaultSubjectId).toLowerCase()
           );
           setSubjectId(match ? match.id : (defaultSubjectId || subjectOptions[0]?.id || 1));
         } else {

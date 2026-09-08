@@ -50,19 +50,19 @@ export function SubjectsGrid({
   const profFilteredSubjects = useMemo(() => {
     // 1. Find which ontology represents the active exam
     const activeOntology = getOntologyForExam(profile.targetExam || 'NEET PG');
-    const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
+    const activeSubjectNames = new Set(activeOntology.map(s => ((s.name || '').toLowerCase())));
 
     // Other ontologies to know what belongs to other tracks:
     const allOtherOntologies = [NEETPG_ONTOLOGY, USMLE_ONTOLOGY, GENERAL_ONTOLOGY]
       .flat()
-      .filter(s => !activeSubjectNames.has(s.name.toLowerCase()))
-      .map(s => s.name.toLowerCase());
+      .filter(s => !activeSubjectNames.has(((s.name || '').toLowerCase())))
+      .map(s => ((s.name || '').toLowerCase()));
     const foreignSubjectNames = new Set(allOtherOntologies);
 
     // 2. Filter out subjects that belong to OTHER exams' default curricula
     // If a subject is custom (not in any foreign ontology), keep it!
     const activeTrackSubjects = safeSubjects.filter(sub => {
-      const lower = sub.name.toLowerCase();
+      const lower = ((sub.name || '').toLowerCase());
       if (activeSubjectNames.has(lower)) return true;
       if (foreignSubjectNames.has(lower)) return false;
       return true; // User's custom added subject
@@ -87,7 +87,7 @@ export function SubjectsGrid({
       }
       const match = opMode.targetSubjectIds?.some(tid => {
         const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
-        return onto && s.name && onto.name.toLowerCase() === s.name.toLowerCase();
+        return onto && s.name && ((onto.name || '').toLowerCase()) === ((s.name || '').toLowerCase());
       });
       if (match && s.id !== undefined) {
         set.add(String(s.id));
@@ -117,7 +117,7 @@ export function SubjectsGrid({
     if (activeFilter === 'All') return candidateSubjects;
     return candidateSubjects.filter(sub => {
       if (!sub) return false;
-      const lower = sub.name.toLowerCase();
+      const lower = ((sub.name || '').toLowerCase());
       if (isUSMLE) {
          if (activeFilter === 'Organ Systems') return ['cardio', 'resp', 'renal', 'gastro', 'endo', 'repro', 'neuro', 'psych'].some(k => lower.includes(k));
          if (activeFilter === 'Multisystem') return ['musculoskeletal', 'hematology', 'immun'].some(k => lower.includes(k));

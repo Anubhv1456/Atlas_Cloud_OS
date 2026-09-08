@@ -35,7 +35,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
       if (dbSub) return dbSub.name;
       const ontoSub = ALL_SUBJECTS.find(s => String(s.id) === String(id));
       if (ontoSub) return ontoSub.name;
-      const fuzzy = availableSubjects.find(s => s.name && s.name.toLowerCase().includes(String(id).toLowerCase()));
+      const fuzzy = availableSubjects.find(s => s.name && ((s.name || '').toLowerCase()).includes(String(id).toLowerCase()));
       return fuzzy ? fuzzy.name : null;
     }).filter(Boolean) as string[];
 

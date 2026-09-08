@@ -69,9 +69,9 @@ export async function getSubjectOntologyWithFallback(
   const found = FULL_ONTOLOGY.find(
     (sub: OntologySubject) =>
       sub.id.toLowerCase() === normalized ||
-      sub.name.toLowerCase() === normalized ||
-      sub.name.toLowerCase().includes(normalized) ||
-      normalized.includes(sub.name.toLowerCase())
+      ((sub.name || '').toLowerCase()) === normalized ||
+      ((sub.name || '').toLowerCase()).includes(normalized) ||
+      normalized.includes(((sub.name || '').toLowerCase()))
   );
 
   if (!found) return null;

@@ -22,12 +22,12 @@ export interface OptimisticMutationResult {
 async function resolveSubjectId(subjectName: string): Promise<{ subjectId: number | string; canonicalName: string }> {
   const clean = subjectName.trim().toLowerCase();
   const dbSubjects = await db.subjects.toArray();
-  const match = dbSubjects.find(s => s.name.toLowerCase() === clean);
+  const match = dbSubjects.find(s => ((s.name || '').toLowerCase()) === clean);
   if (match && match.id !== undefined) {
     return { subjectId: match.id, canonicalName: match.name };
   }
 
-  const ont = ALL_SUBJECTS.find(o => o.name.toLowerCase() === clean || o.id.toLowerCase() === clean);
+  const ont = ALL_SUBJECTS.find(o => ((o.name || '').toLowerCase()) === clean || o.id.toLowerCase() === clean);
   if (ont) {
     return { subjectId: ont.id, canonicalName: ont.name };
   }
@@ -43,13 +43,13 @@ async function resolveSystemId(subjectId: number | string, systemName?: string):
   const clean = systemName.trim().toLowerCase();
   
   const systems = await db.systems.where('subjectId').equals(subjectId as any).toArray();
-  const match = systems.find(s => s.name.toLowerCase().includes(clean) || clean.includes(s.name.toLowerCase()));
+  const match = systems.find(s => ((s.name || '').toLowerCase()).includes(clean) || clean.includes(((s.name || '').toLowerCase())));
   if (match && match.id !== undefined) {
     return { systemId: match.id, canonicalName: match.name };
   }
 
   const curriculums = await db.curriculumSets.toArray();
-  const cMatch = curriculums.find(c => c.name.toLowerCase().includes(clean));
+  const cMatch = curriculums.find(c => ((c.name || '').toLowerCase()).includes(clean));
   if (cMatch && cMatch.id !== undefined) {
     return { systemId: cMatch.id, canonicalName: cMatch.name };
   }

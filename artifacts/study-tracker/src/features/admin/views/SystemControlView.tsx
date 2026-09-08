@@ -51,7 +51,6 @@ export function SystemControlView() {
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
   const [savingPaymentConfig, setSavingPaymentConfig] = useState(false);
   const [newBenefit, setNewBenefit] = useState('');
-  const qrInputRef = useRef<HTMLInputElement>(null);
 
   // 4. Social Links State
   const [socials, setSocials] = useState<SocialLinks>({});
@@ -146,20 +145,6 @@ export function SystemControlView() {
     } finally {
       setSavingPaymentConfig(false);
     }
-  };
-
-  const handleQrUpload = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (PNG, JPG, WEBP)');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPaymentConfig(prev => ({ ...prev, upiQrUrl: result }));
-      toast.success('Custom QR code image attached');
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSaveSocials = async (e?: React.FormEvent) => {
@@ -723,16 +708,6 @@ export function SystemControlView() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">UPI VPA ID</label>
-                    <Input
-                      value={paymentConfig.upiId}
-                      onChange={(e) => setPaymentConfig(p => ({ ...p, upiId: e.target.value }))}
-                      placeholder="atlas@upi"
-                      className="text-xs rounded-xl font-mono bg-background/60"
-                    />
-                  </div>
-
-                  <div>
                     <label className="text-xs font-semibold text-muted-foreground uppercase block mb-1">Duration Text</label>
                     <Input
                       value={paymentConfig.durationText}
@@ -741,59 +716,6 @@ export function SystemControlView() {
                       className="text-xs rounded-xl bg-background/60"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: QR UPLOAD */}
-              <div className="space-y-4 pt-4 border-t border-border/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center">
-                    <QrCode className="w-3.5 h-3.5 text-sky-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-foreground">3. Custom UPI QR Code Image</h4>
-                    <p className="text-xs text-muted-foreground">Upload your account's UPI QR code image to display to students.</p>
-                  </div>
-                </div>
-
-                <div className="p-4 border border-border/60 rounded-xl bg-background/50 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-                  <div className="flex items-center gap-4">
-                    {paymentConfig.upiQrUrl ? (
-                      <img src={paymentConfig.upiQrUrl} alt="UPI QR" className="w-20 h-20 object-contain rounded-lg border border-border/60 bg-black/40" />
-                    ) : (
-                      <div className="w-20 h-20 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-muted-foreground text-xs">
-                        No QR Image
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">Custom UPI Payment QR</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Supports PNG, JPG, or WebP. Auto-compressed.</p>
-                      {paymentConfig.upiQrUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setPaymentConfig(p => ({ ...p, upiQrUrl: '' }))}
-                          className="text-xs text-rose-400 hover:underline mt-1 block"
-                        >
-                          Remove QR Image
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <input
-                    type="file"
-                    ref={qrInputRef}
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleQrUpload(e.target.files[0])}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => qrInputRef.current?.click()}
-                    className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted flex items-center gap-2 shrink-0 self-start sm:self-auto"
-                  >
-                    <Upload className="w-4 h-4 text-teal-400" /> Upload QR Image
-                  </button>
                 </div>
               </div>
             </form>

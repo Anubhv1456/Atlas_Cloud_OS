@@ -89,7 +89,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
     }
   };
 
-  const filteredTopics = allTopics.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredTopics = allTopics.filter(t => ((t.name || '').toLowerCase()).includes(search.toLowerCase()));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

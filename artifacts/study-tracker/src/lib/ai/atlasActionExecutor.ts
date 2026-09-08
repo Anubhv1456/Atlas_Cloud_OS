@@ -37,9 +37,9 @@ export async function executeAtlasAction(action: ParsedAtlasAction): Promise<Act
             .then(res => res.filter(s => !s.deletedAt));
           
           const matched = sysList.find(s => 
-            s.name.toLowerCase() === cleanSys || 
-            s.name.toLowerCase().includes(cleanSys) || 
-            cleanSys.includes(s.name.toLowerCase())
+            ((s.name || '').toLowerCase()) === cleanSys || 
+            ((s.name || '').toLowerCase()).includes(cleanSys) || 
+            cleanSys.includes(((s.name || '').toLowerCase()))
           );
           if (matched && matched.id !== undefined) {
             resolvedSystemId = matched.id;

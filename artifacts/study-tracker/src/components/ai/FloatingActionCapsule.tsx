@@ -89,7 +89,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
   const subjectList = React.useMemo(() => {
     const list = [...(dbSubjects || [])];
     STANDARD_MEDICAL_SUBJECTS.forEach(s => {
-      if (!list.some(d => d.name.toLowerCase() === s.name.toLowerCase())) {
+      if (!list.some(d => ((d.name || '').toLowerCase()) === ((s.name || '').toLowerCase()))) {
         list.push({ id: s.id as any, name: s.name } as any);
       }
     });

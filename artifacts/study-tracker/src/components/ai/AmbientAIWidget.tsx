@@ -156,7 +156,7 @@ export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
 
   // Filtered Subjects for Quick Navigation (0ms instant search)
   const filteredSubjects = currentOntology.filter((s) => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ((s.name || '').toLowerCase()).includes(searchQuery.toLowerCase())
   ).slice(0, 6);
 
   const handleNavigate = (path: string) => {

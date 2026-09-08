@@ -68,13 +68,13 @@ export async function resolveSubject(subjectQuery: string): Promise<{ id: string
 
   try {
     const dbSubjects = await db.subjects.toArray().then((res) => res.filter((s) => !s.deletedAt));
-    const exactDb = dbSubjects.find((s) => s.name.toLowerCase() === clean);
+    const exactDb = dbSubjects.find((s) => ((s.name || '').toLowerCase()) === clean);
     if (exactDb && exactDb.id !== undefined) {
       return { id: exactDb.id, name: exactDb.name };
     }
 
     const partialDb = dbSubjects.find(
-      (s) => s.name.toLowerCase().includes(clean) || clean.includes(s.name.toLowerCase())
+      (s) => ((s.name || '').toLowerCase()).includes(clean) || clean.includes(((s.name || '').toLowerCase()))
     );
     if (partialDb && partialDb.id !== undefined) {
       return { id: partialDb.id, name: partialDb.name };
@@ -85,13 +85,13 @@ export async function resolveSubject(subjectQuery: string): Promise<{ id: string
 
   // Ontology Alias Search
   for (const s of STANDARD_MEDICAL_SUBJECTS) {
-    if (s.name.toLowerCase() === clean || s.aliases.some((a) => clean.includes(a) || a.includes(clean))) {
+    if (((s.name || '').toLowerCase()) === clean || s.aliases.some((a) => clean.includes(a) || a.includes(clean))) {
       return { id: s.id, name: s.name };
     }
   }
 
   const matchOnt = ALL_SUBJECTS.find(
-    (s) => s.name.toLowerCase().includes(clean) || clean.includes(s.name.toLowerCase())
+    (s) => ((s.name || '').toLowerCase()).includes(clean) || clean.includes(((s.name || '').toLowerCase()))
   );
   if (matchOnt) {
     return { id: matchOnt.id, name: matchOnt.name };

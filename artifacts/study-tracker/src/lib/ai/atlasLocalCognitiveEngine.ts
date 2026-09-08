@@ -161,7 +161,7 @@ export async function executeLocalMedicalCognitiveEngine(
   if (isDrillRequest) {
     const subjectCandidate = fastLookupSubject(input);
     const matchingPearls = HIGH_YIELD_CLINICAL_KNOWLEDGE.filter(
-      p => p.subject.toLowerCase() === subjectCandidate.name.toLowerCase() ||
+      p => p.subject.toLowerCase() === ((subjectCandidate.name || '').toLowerCase()) ||
            lowerInput.includes(p.subject.toLowerCase()) ||
            lowerInput.includes(p.topic.toLowerCase())
     );

@@ -35,16 +35,16 @@ export function SprintSetupDrawer({
     const seen = new Set<string>();
 
     availableSubjects.forEach(s => {
-      if (s.name && !seen.has(s.name.toLowerCase())) {
-        seen.add(s.name.toLowerCase());
+      if (s.name && !seen.has(((s.name || '').toLowerCase()))) {
+        seen.add((s.name || '').toLowerCase());
         list.push({ id: s.id, name: s.name });
       }
     });
 
     if (list.length === 0) {
       examOntology.forEach(s => {
-        if (s.name && !seen.has(s.name.toLowerCase())) {
-          seen.add(s.name.toLowerCase());
+        if (s.name && !seen.has(((s.name || '').toLowerCase()))) {
+          seen.add((s.name || '').toLowerCase());
           list.push({ id: s.id, name: s.name });
         }
       });

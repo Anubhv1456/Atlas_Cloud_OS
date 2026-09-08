@@ -59,10 +59,10 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
   const CELESTIAL_SUBJECTS = useMemo(() => {
     const config: CelestialSubject[] = [];
     const catMap = new Map<string, string>();
-    activeOntology.forEach(s => catMap.set(s.name.toLowerCase(), s.category || 'General'));
+    activeOntology.forEach(s => catMap.set(((s.name || '').toLowerCase()), s.category || 'General'));
     
     const baseCategories = ['Pre-Clinical', 'Para-Clinical', 'Clinical', 'Foundational Disciplines', 'Organ Systems', 'Clerkship', 'General'];
-    const activeCategories = Array.from(new Set(subjects.map(s => catMap.get(s.name.toLowerCase()) || 'General')));
+    const activeCategories = Array.from(new Set(subjects.map(s => catMap.get(((s.name || '').toLowerCase())) || 'General')));
     
     const sortedCats = baseCategories.filter(c => activeCategories.includes(c));
     activeCategories.forEach(c => {
@@ -73,7 +73,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
     const radii = [18, 31, 43, 56, 68];
 
     sortedCats.forEach((cat, catIdx) => {
-      const catSubjects = subjects.filter(s => (catMap.get(s.name.toLowerCase()) || 'General') === cat);
+      const catSubjects = subjects.filter(s => (catMap.get(((s.name || '').toLowerCase())) || 'General') === cat);
       if (catSubjects.length === 0) return;
       
       const radius = radii[catIdx % radii.length];
@@ -359,7 +359,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     renderChain = mappedStars.filter(star => {
                         if (q.includes('#volatile') || q.includes('#rescue')) return star.decayUrgency === 'CRITICAL' || star.decayUrgency === 'ELEVATED';
                         if (q.includes('#highyield')) return star.state !== 'not_started';
-                        return star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                        return ((star.name || '').toLowerCase()).includes(q) || ((star.shortName || '').toLowerCase()).includes(q);
                     });
                  }
                  return renderChain.map((currStar, index) => {
@@ -427,7 +427,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                   } else if (q.includes('#highyield')) {
                     matchesFilter = star.state !== 'not_started';
                   } else {
-                    matchesFilter = star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                    matchesFilter = ((star.name || '').toLowerCase()).includes(q) || ((star.shortName || '').toLowerCase()).includes(q);
                   }
                 } else {
                   if (activeFilter === 'prof_year') {

@@ -373,7 +373,7 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
                     renderChain = mappedStars.filter(star => {
                         if (q.includes('#volatile') || q.includes('#rescue')) return star.decayUrgency === 'CRITICAL' || star.decayUrgency === 'ELEVATED';
                         if (q.includes('#highyield')) return star.state !== 'not_started';
-                        return star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                        return ((star.name || '').toLowerCase()).includes(q) || ((star.shortName || '').toLowerCase()).includes(q);
                     });
                  }
                  return renderChain.map((currStar, index) => {
@@ -441,7 +441,7 @@ export function UsmleAtlasSkyModal({ open, onOpenChange, subjects, systems, curr
                   } else if (q.includes('#highyield')) {
                     matchesFilter = star.state !== 'not_started';
                   } else {
-                    matchesFilter = star.name.toLowerCase().includes(q) || star.shortName.toLowerCase().includes(q);
+                    matchesFilter = ((star.name || '').toLowerCase()).includes(q) || ((star.shortName || '').toLowerCase()).includes(q);
                   }
                 } else {
                   if (activeFilter === 'principles') {

@@ -79,7 +79,7 @@ export function SubjectCard({
       return logs.filter(m => !m.deletedAt && (
         String(m.subjectId) === String(subject.id) ||
         (subject.ontologySubjectId && String(m.subjectId) === String(subject.ontologySubjectId)) ||
-        (m.subjectId && typeof m.subjectId === 'string' && m.subjectId.toLowerCase() === subject.name.toLowerCase())
+        (m.subjectId && typeof m.subjectId === 'string' && m.subjectId.toLowerCase() === ((subject.name || '').toLowerCase()))
       ));
     },
     [subject?.id, subject?.name, subject?.ontologySubjectId]

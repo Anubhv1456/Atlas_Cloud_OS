@@ -107,7 +107,7 @@ export function TopicList({
   const [topicSearch, setTopicSearch] = useState('');
 
   const filteredTopics = topics.filter(t => 
-    !topicSearch.trim() || t.name.toLowerCase().includes(topicSearch.trim().toLowerCase())
+    !topicSearch.trim() || ((t.name || '').toLowerCase()).includes(topicSearch.trim().toLowerCase())
   );
 
   const topicProgresses = useLiveQuery(

@@ -284,8 +284,8 @@ export async function getNextActionRecommendation(
   const isCustom = activeExam?.toLowerCase().includes('custom') || activeExam?.toLowerCase().includes('general');
   let activeOntology = getOntologyForExam(activeExam || 'NEET PG');
   
-  const activeSubjectNames = new Set(activeOntology.map(s => s.name.toLowerCase()));
-  const cleanRoomSubjects = allDbSubjects.filter(sub => activeSubjectNames.has(sub.name.toLowerCase()));
+  const activeSubjectNames = new Set(activeOntology.map(s => ((s.name || '').toLowerCase())));
+  const cleanRoomSubjects = allDbSubjects.filter(sub => activeSubjectNames.has(((sub.name || '').toLowerCase())));
   
   // Strategy Injection
   const strategy = StrategyFactory.get(activeExam);
@@ -331,7 +331,7 @@ export async function getNextActionRecommendation(
       if (s.ontologySubjectId && sprintSubjectIds.has(String(s.ontologySubjectId))) return true;
       const matchesTarget = operationalMode.targetSubjectIds?.some(tid => {
         const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
-        return onto && s.name && onto.name.toLowerCase() === s.name.toLowerCase();
+        return onto && s.name && ((onto.name || '').toLowerCase()) === ((s.name || '').toLowerCase());
       });
       return Boolean(matchesTarget);
     });
@@ -719,7 +719,7 @@ export async function getNextActionRecommendation(
     for (const sub of subjects) {
       const subFriction = subjectFrictionMap.get(sub.name);
       if (subFriction && (subFriction.decayUrgency === 'CRITICAL' || subFriction.daysSinceReview >= 25)) {
-        const alreadyHasHighCandidate = rawCandidates.some(c => c.subjectName.toLowerCase() === sub.name.toLowerCase() && c.priorityScore >= 80);
+        const alreadyHasHighCandidate = rawCandidates.some(c => c.subjectName.toLowerCase() === ((sub.name || '').toLowerCase()) && c.priorityScore >= 80);
         if (!alreadyHasHighCandidate) {
           const subSystems = systems.filter(sys => String(sys.subjectId) === String(sub.id));
           const targetSys = subSystems.find(s => !s.contentCompleted) || subSystems[0];
@@ -976,7 +976,7 @@ export async function getNextActionRecommendation(
           if (dbSub) return dbSub.name;
           const ontoSub = ALL_SUBJECTS.find(sub => String(sub.id) === String(id));
           if (ontoSub) return ontoSub.name;
-          const fuzzy = allDbSubjects.find(sub => sub.name && sub.name.toLowerCase().includes(String(id).toLowerCase()));
+          const fuzzy = allDbSubjects.find(sub => sub.name && ((sub.name || '').toLowerCase()).includes(String(id).toLowerCase()));
           return fuzzy ? fuzzy.name : null;
         }).filter(Boolean) as string[],
         targetDate: operationalMode.targetDate || null

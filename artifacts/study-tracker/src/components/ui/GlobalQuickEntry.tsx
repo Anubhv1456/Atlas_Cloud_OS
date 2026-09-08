@@ -52,7 +52,7 @@ export function GlobalQuickEntry() {
           // Auto-tag subjects by simple substring match
           const allSubjects = await db.subjects.toArray();
           const matchedSubjectIds = allSubjects
-            .filter(sub => text.toLowerCase().includes(sub.name.toLowerCase()))
+            .filter(sub => text.toLowerCase().includes(((sub.name || '').toLowerCase())))
             .map(sub => String(sub.id));
           
           await db.scoreLogs.add({

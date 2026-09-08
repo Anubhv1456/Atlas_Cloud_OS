@@ -56,7 +56,7 @@ export function fastLookupSubject(text: string): { id: string; name: string } {
 
   // 1. Direct exact & alias check
   for (const s of STANDARD_MEDICAL_SUBJECTS) {
-    if (s.name.toLowerCase() === clean) {
+    if (((s.name || '').toLowerCase()) === clean) {
       return { id: s.id, name: s.name };
     }
     for (const alias of s.aliases) {

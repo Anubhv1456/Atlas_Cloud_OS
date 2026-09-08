@@ -79,6 +79,8 @@ export function UsersView() {
   const [customDate, setCustomDate] = useState<string>(format(addDays(new Date(), 15), 'yyyy-MM-dd'));
   
   const [isBulkGrantOpen, setIsBulkGrantOpen] = useState(false);
+  const [isEmailBatchOpen, setIsEmailBatchOpen] = useState(false);
+  const [batchEmails, setBatchEmails] = useState('');
   const [bulkCustomMode, setBulkCustomMode] = useState(false);
   const [bulkCustomDays, setBulkCustomDays] = useState<number>(15);
   const [selectedBulkDuration, setSelectedBulkDuration] = useState<number | null>(90);
@@ -247,6 +249,42 @@ export function UsersView() {
       setIsBulkGrantOpen(false);
     } catch (error) {
       toast.error('Failed to apply bulk beta access.');
+    }
+  };
+
+  const handleEmailBatchUnlock = async () => {
+    const emailsToUnlock = batchEmails.split(',').map(e => e.trim().toLowerCase()).filter(e => e);
+    if (emailsToUnlock.length === 0) return;
+
+    const targetIds = users
+      .filter(u => u.email && emailsToUnlock.includes(u.email.toLowerCase()) && !u.isAdmin && u.id !== currentAuthUser?.uid)
+      .map(u => u.id);
+
+    if (targetIds.length === 0) {
+      toast.error('No matching accounts found for provided emails.');
+      return;
+    }
+
+    try {
+      await bulkUpdateUserBetaAccess(targetIds, true, null, false);
+      const now = Date.now();
+      setUsers(users.map(u => {
+        if (targetIds.includes(u.id)) {
+          return {
+            ...u,
+            betaAccess: true,
+            isTrial: false,
+            betaAccessExpiresAt: null
+          };
+        }
+        return u;
+      }));
+      toast.success(`Lifetime Access granted to ${targetIds.length} candidates`);
+      setIsEmailBatchOpen(false);
+      setBatchEmails('');
+      setSelectedUserIds([]);
+    } catch (error) {
+      toast.error('Failed to apply batch beta access.');
     }
   };
 
@@ -472,6 +510,13 @@ export function UsersView() {
           )}
 
           <button
+            onClick={() => setIsEmailBatchOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-zinc-800 border border-teal-500/30 text-teal-300 hover:bg-zinc-700 hover:text-white text-xs font-semibold flex items-center gap-2 transition-all active:scale-95"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Batch Unlock</span>
+          </button>
+          <button
             onClick={fetchUsers}
             disabled={refreshing}
             className="px-3.5 py-2 rounded-xl border border-border/60 bg-card hover:bg-muted text-xs font-semibold flex items-center gap-2 transition-all active:scale-95"
@@ -681,6 +726,7 @@ export function UsersView() {
                     />
                   </th>
                   <th className="p-4">Candidate Profile</th>
+                  <th className="p-4">Affiliate</th>
                   <th className="p-4">Target Exam Cohort</th>
                   <th className="p-4">Study Engagement</th>
                   <th className="p-4">Beta Access & Expiry</th>
@@ -690,7 +736,7 @@ export function UsersView() {
               <tbody className="divide-y divide-border/40">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-muted-foreground">
+                    <td colSpan={7} className="py-16 text-center text-muted-foreground">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <GraduationCap className="w-8 h-8 text-muted-foreground/30" />
                         <p className="font-semibold text-sm text-foreground">No candidate accounts found</p>
@@ -759,6 +805,17 @@ export function UsersView() {
                                 </Badge>
                               )}
                             </div>
+                          )}
+                        </td>
+
+                        <td className="p-4">
+                          {u.affiliateId ? (
+                            <div className="flex items-center gap-1.5 font-mono text-teal-300 text-xs bg-teal-500/10 border border-teal-500/20 px-2 py-1 rounded-md w-fit">
+                              <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                              <span>{u.affiliateId}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/50 text-xs italic">Organic</span>
                           )}
                         </td>
 
@@ -1124,6 +1181,50 @@ export function UsersView() {
               >
                 <Check className="w-4 h-4" />
                 Confirm & Apply Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EMAIL BATCH UNLOCK MODAL */}
+      {isEmailBatchOpen && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-card border border-teal-500/40 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
+              <div>
+                <h3 className="font-bold text-lg text-foreground">Batch Unlock by Emails</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Paste comma-separated email addresses to grant lifetime access.
+                </p>
+              </div>
+            </div>
+            
+            <textarea
+              value={batchEmails}
+              onChange={(e) => setBatchEmails(e.target.value)}
+              placeholder="user1@gmail.com, user2@gmail.com..."
+              className="w-full h-40 bg-zinc-900/50 border border-white/10 rounded-xl p-3 text-sm font-mono text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-teal-500/50 resize-none"
+            />
+            
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEmailBatchOpen(false);
+                  setBatchEmails('');
+                }}
+                className="px-4 py-2 border border-border/60 rounded-xl text-xs font-semibold hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEmailBatchUnlock}
+                className="px-5 py-2 bg-teal-500 text-black font-bold rounded-xl text-xs hover:bg-teal-400 flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                Unlock All
               </button>
             </div>
           </div>

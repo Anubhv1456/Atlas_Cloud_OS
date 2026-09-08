@@ -33,15 +33,15 @@ export function FocusDialog({
   const filteredSubjects = useMemo(() => {
     return subjects.filter(sub => {
       if (!q) return true;
-      return sub.name.toLowerCase().includes(q);
+      return (sub.name || '').toLowerCase().includes(q);
     });
   }, [subjects, q]);
 
   const filteredSystems = useMemo(() => {
     return systems.filter(sys => {
       if (!q) return true;
-      const subName = subjects.find(s => s.id === sys.subjectId)?.name.toLowerCase() || '';
-      return sys.name.toLowerCase().includes(q) || subName.includes(q);
+      const subName = (subjects.find(s => s.id === sys.subjectId)?.name || '').toLowerCase();
+      return (sys.name || '').toLowerCase().includes(q) || subName.includes(q);
     });
   }, [systems, subjects, q]);
 

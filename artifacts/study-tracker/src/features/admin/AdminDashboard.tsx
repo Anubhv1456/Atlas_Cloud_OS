@@ -25,7 +25,7 @@ const navItems = [
   { 
     id: 'ops' as const, 
     label: 'Live Ops Triage', 
-    subtitle: 'Payments, Support & Markers', 
+    subtitle: 'Support & Markers', 
     icon: Activity 
   },
   { 

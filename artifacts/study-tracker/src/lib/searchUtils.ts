@@ -55,16 +55,16 @@ export function runSearch(
 
   // Subjects — only matched by free text
   const matchedSubjects = ft
-    ? subjects.filter(s => s.name.toLowerCase().includes(ft))
+    ? subjects.filter(s => ((s.name || '').toLowerCase()).includes(ft))
     : [];
 
   // Systems — must match free text (if any) AND all keywords (if any)
   const matchedSystems = systems
     .filter(sys => {
       const sub = subjects.find(s => s.id === sys.subjectId);
-      const subName = sub?.name.toLowerCase() ?? '';
+      const subName = (sub?.name || '').toLowerCase();
       const nameMatch = ft
-        ? sys.name.toLowerCase().includes(ft) || subName.includes(ft)
+        ? ((sys.name || '').toLowerCase()).includes(ft) || subName.includes(ft)
         : true;
       return nameMatch && systemMatchesKeywords(sys, keywords, curriculumSets);
     })
