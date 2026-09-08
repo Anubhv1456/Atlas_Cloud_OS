@@ -54,7 +54,7 @@ export async function updateUserBetaAccess(userId: string, betaAccess: boolean, 
   }
 }
 
-export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null, isTrial?: boolean) {
+export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null, isTrial?: boolean, referredBy?: string) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const now = Date.now();
   const promises = userIds.map(userId => {
@@ -65,7 +65,8 @@ export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: bo
         betaAccess: true,
         betaAccessExpiresAt,
         betaGrantedAt: new Date(),
-        isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15)
+        isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
+        ...(referredBy ? { referredBy } : {})
       }, { merge: true });
     } else {
       return setDoc(userRef, {
@@ -481,3 +482,16 @@ export async function rejectPayment(paymentId: string, userId: string, rejection
 }
 
 
+
+
+export async function updateAffiliateStatus(userId: string, isAffiliate: boolean) {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const userRef = doc(firestoreDb, 'users', userId);
+  const updateData: any = { isAffiliate };
+  
+  if (isAffiliate) {
+    updateData.affiliateCode = `affiliate_${userId.slice(0, 6)}`;
+  }
+  
+  await setDoc(userRef, updateData, { merge: true });
+}

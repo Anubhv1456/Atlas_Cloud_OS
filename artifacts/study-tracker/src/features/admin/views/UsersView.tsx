@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, deleteUserAsAdmin } from '@/lib/admin';
+import { getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, deleteUserAsAdmin, updateAffiliateStatus } from '@/lib/admin';
 import { useAuth } from '@/hooks/useAuth';
 import { firestoreDb } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -66,6 +66,8 @@ export function UsersView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [examFilter, setExamFilter] = useState<ExamFilter>('all');
+  const [affiliateFilter, setAffiliateFilter] = useState<string>('all');
+  const [selectedBatchAffiliate, setSelectedBatchAffiliate] = useState<string>('none');
   
   // Selection state for bulk actions
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -214,7 +216,8 @@ export function UsersView() {
   const handleRevokeAccess = async (user: any) => {
     try {
       await updateUserBetaAccess(user.id, false);
-      setUsers(users.map(u => u.id === user.id ? { ...u, betaAccess: false, betaAccessExpiresAt: null, isTrial: false } : u));
+      setUsers(users.map(u => u.id === user.id ? { ...u, betaAccess: false, betaAccessExpiresAt: null,
+            ...(selectedBatchAffiliate !== "none" ? { referredBy: selectedBatchAffiliate } : {}), isTrial: false } : u));
       toast.success(`Beta access revoked for ${user.displayName || 'candidate'}`);
     } catch (error) {
       toast.error('Failed to revoke beta access.');
@@ -266,7 +269,7 @@ export function UsersView() {
     }
 
     try {
-      await bulkUpdateUserBetaAccess(targetIds, true, null, false);
+      await bulkUpdateUserBetaAccess(targetIds, true, null, false, selectedBatchAffiliate !== "none" ? selectedBatchAffiliate : undefined);
       const now = Date.now();
       setUsers(users.map(u => {
         if (targetIds.includes(u.id)) {
@@ -283,6 +286,7 @@ export function UsersView() {
       setIsEmailBatchOpen(false);
       setBatchEmails('');
       setSelectedUserIds([]);
+      setSelectedBatchAffiliate('none');
     } catch (error) {
       toast.error('Failed to apply batch beta access.');
     }
@@ -356,6 +360,24 @@ export function UsersView() {
       console.error(e);
       toast.error('Failed to approve ambassador access');
     }
+  };
+
+  
+  const handleToggleAffiliate = async (user: any, isAffiliate: boolean) => {
+    try {
+      await updateAffiliateStatus(user.id, isAffiliate);
+      setUsers(users.map(u => u.id === user.id ? { ...u, isAffiliate, affiliateCode: isAffiliate ? `affiliate_${user.id.slice(0, 6)}` : undefined } : u));
+      toast.success(`Affiliate status ${isAffiliate ? 'granted' : 'revoked'} for ${user.displayName || user.email}`);
+      if (inspectingUser?.id === user.id) setInspectingUser(null);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update affiliate status');
+    }
+  };
+
+  const handleImpersonate = (user: any) => {
+    toast.success(`Impersonation mode engaged for ${user.displayName || user.email}`);
+    if (inspectingUser?.id === user.id) setInspectingUser(null);
   };
 
   const handleClearVaultFlag = async (targetUser: any) => {
@@ -434,7 +456,8 @@ export function UsersView() {
       (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.id || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesTab && matchesExam && matchesSearch;
+    const matchesAffiliate = affiliateFilter === 'all' ? true : user.referredBy === affiliateFilter;
+    return matchesTab && matchesExam && matchesSearch && matchesAffiliate;
   });
 
   const stats = {
@@ -669,6 +692,27 @@ export function UsersView() {
                 {tab.label}
               </button>
             ))}
+          </div>
+
+          
+          {/* Affiliate Filter */}
+          <div className="relative min-w-[140px]">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Users className="w-3.5 h-3.5 text-muted-foreground/70" />
+            </div>
+            <select
+              value={affiliateFilter}
+              onChange={(e) => setAffiliateFilter(e.target.value)}
+              className="w-full bg-background/50 border border-border/50 text-foreground text-xs rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-teal-500/50 appearance-none font-semibold transition-all hover:bg-muted/30"
+            >
+              <option value="all">All Affiliates</option>
+              {users.filter(u => u.isAffiliate).map(a => (
+                <option key={a.id} value={a.affiliateCode}>{a.displayName || a.email} ({a.affiliateCode})</option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+              <ChevronDown className="w-3 h-3 text-muted-foreground/70" />
+            </div>
           </div>
 
           {/* Exam Filter */}
