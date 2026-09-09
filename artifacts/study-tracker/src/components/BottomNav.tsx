@@ -11,12 +11,15 @@ import {
   HardDrive,
   PanelLeftClose,
   PanelLeftOpen,
+  Award,
+  ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { useSidebar } from '@/hooks/useSidebar';
+import { useAffiliate } from '@/hooks/useAffiliate';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import {
   Tooltip,
@@ -33,6 +36,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
   const [location, setLocation] = useLocation();
   const { profile, isConfigured } = useExamProfile();
   const { user } = useAuth();
+  const { isAffiliate, affiliateCode } = useAffiliate();
   const { isCollapsed, toggleSidebar } = useSidebar();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(
@@ -317,6 +321,44 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
 
         {/* Footer / Exam Target & Profile */}
         <div className={cn("space-y-3 pt-4 border-t border-border/50 flex flex-col", isCollapsed ? "items-center w-full" : "w-full")}>
+          {/* Partner Hub Shortcut (Visible only to Affiliates) */}
+          {isAffiliate && (
+            isCollapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/partner"
+                    className="w-11 h-11 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group active:scale-95 transition-all cursor-pointer"
+                    aria-label="Partner Hub"
+                  >
+                    <Award className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={14}>
+                  <p className="font-semibold text-xs text-indigo-300">Partner Hub</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Link
+                href="/partner"
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 transition-all text-left group cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30 text-indigo-400">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Partner Hub</p>
+                    <p className="text-xs font-semibold text-foreground truncate group-hover:text-indigo-300 transition-colors">
+                      {affiliateCode || 'Active'}
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-indigo-400/60 group-hover:text-indigo-400 transition-colors shrink-0" />
+              </Link>
+            )
+          )}
+
           {/* Target Exam Badge */}
           {isCollapsed ? (
             <Tooltip>

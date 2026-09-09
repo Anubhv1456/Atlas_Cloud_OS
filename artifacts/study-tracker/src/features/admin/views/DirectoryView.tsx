@@ -323,7 +323,7 @@ export function DirectoryView() {
               </thead>
               <tbody className="divide-y divide-border/30">
                 {affiliatesList.map(aff => {
-                  const clients = users.filter(u => u.referredBy === aff.affiliateCode && !u.isAdmin && u.id !== aff.id);
+                  const clients = users.filter(u => (u.referredBy === aff.affiliateCode || u.affiliateId === aff.affiliateCode) && !u.isAdmin && u.id !== aff.id);
                   const activeClients = clients.filter(c => {
                     if (!c.betaAccess) return false;
                     const expiresAt = typeof c.betaAccessExpiresAt === 'number' ? c.betaAccessExpiresAt : c.betaAccessExpiresAt?.toMillis?.();

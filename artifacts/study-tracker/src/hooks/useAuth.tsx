@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (affiliateId) {
           updateData.affiliateId = affiliateId;
+          updateData.referredBy = affiliateId;
         }
 
         // Non-blocking fire-and-forget background sync for user metadata

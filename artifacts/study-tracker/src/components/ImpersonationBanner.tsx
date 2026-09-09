@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useLocation } from 'wouter';
-import { Eye, ShieldAlert, LogOut, Info, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Eye, ShieldAlert, LogOut, Info, RefreshCw, CheckCircle2, XCircle, Clock, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -78,6 +78,18 @@ export function ImpersonationBanner() {
             {impersonatedUser.referredBy && (
               <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-400 border-indigo-500/30 font-mono">
                 Ref: {impersonatedUser.referredBy}
+              </Badge>
+            )}
+
+            {impersonatedUser.isAffiliate && (
+              <Badge 
+                variant="outline" 
+                onClick={() => setLocation('/partner')}
+                className="text-[10px] bg-indigo-500/15 text-indigo-300 border-indigo-500/40 font-mono cursor-pointer hover:bg-indigo-500/25 flex items-center gap-1"
+                title="Click to view candidate's Partner Hub"
+              >
+                <Award className="w-3 h-3 text-indigo-400" />
+                Affiliate Hub ↗
               </Badge>
             )}
           </div>
@@ -189,6 +201,21 @@ export function ImpersonationBanner() {
                 Refresh State
               </Button>
             </div>
+
+            {impersonatedUser.isAffiliate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowInfoModal(false);
+                  setLocation('/partner');
+                }}
+                className="w-full text-xs border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/15 bg-indigo-500/10 h-8.5 gap-1.5 font-semibold"
+              >
+                <Award className="w-3.5 h-3.5 text-indigo-400" />
+                Open Candidate's Partner Portal (/partner)
+              </Button>
+            )}
           </div>
 
           <DialogFooter>

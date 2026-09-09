@@ -13,6 +13,7 @@ import {
   FeedbackSection,
   ContactSection,
   ReferralSection,
+  AffiliateSection,
   AboutSection,
   DangerZoneSection,
 } from '.';
@@ -61,6 +62,7 @@ export default function Settings() {
       {/* ── Section 6: Community & Support ───────────────────────────────── */}
       <SettingsSection title="Community & Support">
         <ReferralSection />
+        <AffiliateSection />
         <PWASection />
         <FaqSection />
         <FeedbackSection />

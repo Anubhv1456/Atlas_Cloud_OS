@@ -38,6 +38,7 @@ const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const BetaAccess = lazy(() => import('@/pages/BetaAccess'));
 const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
+const AffiliatePartnerPage = lazy(() => import('@/features/affiliate/AffiliatePartnerPage'));
 const Analytics = lazy(() => import('@/features/analytics/Analytics'));
 const Settings = lazy(() => import('@/features/settings/Settings'));
 const Timeline = lazy(() => import('@/features/timeline/Timeline'));
@@ -215,6 +216,8 @@ function ProtectedApp() {
                 <Route path="/analytics" component={Analytics} />
                 <Route path="/mistakes" component={MistakeRecoveryQueue} />
                 <Route path="/settings" component={Settings} />
+                <Route path="/partner" component={AffiliatePartnerPage} />
+                <Route path="/affiliate" component={AffiliatePartnerPage} />
                 <Route path="/privacy" component={PrivacyPolicy} />
                 <Route path="/terms" component={TermsOfService} />
                 <Route path="/contact" component={Contact} />
@@ -233,6 +236,21 @@ import { CurriculumInitializationEngine } from '@/components/CurriculumInitializ
 import { AppUpdateCapsule } from '@/components/AppUpdateCapsule';
 
 function App() {
+  useEffect(() => {
+    // Capture partner/affiliate referral parameter across any landing route
+    if (typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const via = searchParams.get('via') || searchParams.get('ref') || searchParams.get('affiliate');
+        if (via) {
+          localStorage.setItem('atlas_affiliate_id', via);
+        }
+      } catch {
+        // Ignore URL parsing fallback
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let hasRun = false;
     const checkOntologyAndRehydrate = async () => {

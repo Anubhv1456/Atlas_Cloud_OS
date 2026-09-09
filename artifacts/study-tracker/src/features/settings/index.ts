@@ -23,6 +23,8 @@ export * from './ContactSection';
 
 export * from './ReferralSection';
 
+export * from './AffiliateSection';
+
 export * from './ReferralModal';
 
 export * from './AboutSection';
