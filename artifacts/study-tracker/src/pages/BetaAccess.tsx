@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Check, ArrowRight, Loader2, Users, LogOut, 
   Copy, Upload, RefreshCw, AlertCircle, ExternalLink,
-  Smartphone, Brain, Target, ShieldCheck, Sparkles, Zap
+  Smartphone, Brain, Target, ShieldCheck, Sparkles, Zap, Clock
 } from 'lucide-react';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +29,19 @@ export default function BetaAccess() {
   const lexicon = useLexicon();
 
 
-  const { hasAccess, paymentStatus, paymentRejectionNote, vaultActivationRequired, vaultProvenance, loading: accessLoading } = useBetaAccess();
+  const { 
+    hasAccess, 
+    paymentStatus, 
+    paymentRejectionNote, 
+    vaultActivationRequired, 
+    vaultProvenance, 
+    isTrial,
+    hasClaimedTrial,
+    isTrialExpired,
+    trialDaysRemaining,
+    claimTrial,
+    loading: accessLoading 
+  } = useBetaAccess();
   const { user, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -39,6 +51,27 @@ export default function BetaAccess() {
 
   const [transitioning, setTransitioning] = useState(false);
   const [transitionStep, setTransitionStep] = useState(0);
+  const [claimingTrial, setClaimingTrial] = useState(false);
+
+  const isAffiliateReferred = typeof window !== 'undefined' && Boolean(localStorage.getItem('atlas_affiliate_id'));
+  const trialDays = isAffiliateReferred ? 14 : 7;
+
+  const handleClaimTrial = async () => {
+    setClaimingTrial(true);
+    try {
+      const ok = await claimTrial(trialDays);
+      if (ok) {
+        toast.success(`🎉 ${trialDays}-Day Clinical Trial Activated!`);
+      } else {
+        toast.error('Unable to activate trial right now. Please retry or contact support.');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to activate trial');
+    } finally {
+      setClaimingTrial(false);
+    }
+  };
 
   // Load live Payment Config from Firestore
   useEffect(() => {
@@ -198,6 +231,130 @@ export default function BetaAccess() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="z-10 w-full max-w-2xl"
       >
+        {isTrialExpired || (hasClaimedTrial && !hasAccess) ? (
+          /* Trial Concluded Card */
+          <div className="w-full bg-[#0a0a0a] border border-amber-500/20 rounded-[28px] p-6 sm:p-10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] text-center space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-amber-500/10 blur-[60px] pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium relative z-10">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Trial Concluded</span>
+            </div>
+
+            <div className="space-y-3 relative z-10">
+              <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-zinc-100">
+                Your Clinical Trial Has Concluded
+              </h1>
+              <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+                All your logged study blocks, mistake bookmarks, and FSRS memory metrics are safely preserved in your Atlas Vault. To unlock lifetime access, connect with your campus representative or administrator.
+              </p>
+            </div>
+
+            {/* Account Info Brief */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 text-left space-y-2.5 text-xs text-zinc-400 relative z-10">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500">Candidate Email</span>
+                <span className="text-zinc-200 font-mono font-medium">{user?.email}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-white/5 pt-2.5">
+                <span className="text-zinc-500">Vault Data Status</span>
+                <span className="text-emerald-400 font-medium flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Study Metrics Encrypted & Intact
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10">
+              <button 
+                onClick={() => window.location.reload()}
+                className="flex-1 h-12 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs flex items-center justify-center gap-2 transition-all border border-white/10 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Check Verification Status</span>
+              </button>
+            </div>
+          </div>
+        ) : !hasClaimedTrial ? (
+          /* Instant Trial Claim Card */
+          <div className="w-full bg-[#0a0a0a] border border-teal-500/30 rounded-[28px] p-6 sm:p-10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] text-center space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-teal-500/15 blur-[60px] pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-950/40 border border-teal-500/40 text-teal-300 text-xs font-semibold relative z-10">
+              <Zap className="w-3.5 h-3.5 text-teal-400" />
+              <span>{isAffiliateReferred ? 'AMBASSADOR INVITATION (14-DAY PASS)' : 'INSTANT ACCESS AVAILABLE'}</span>
+            </div>
+
+            <div className="space-y-3 relative z-10">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-100">
+                Start Your {trialDays}-Day Clinical Trial
+              </h1>
+              <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
+                Begin studying immediately with full unrestricted access to the medical syllabus, active recall engines, and progress tracker. No credit card required.
+              </p>
+            </div>
+
+            {/* Trial Feature Highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left relative z-10">
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
+                <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                  <Brain className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-medium text-zinc-200">19 Medical Disciplines</div>
+                <div className="text-[11px] text-zinc-500">First Aid aligned question taxonomy and subject trackers.</div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
+                <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-medium text-zinc-200">Mistake Recovery</div>
+                <div className="text-[11px] text-zinc-500">Auto-prioritizes high-yield knowledge gaps and review queues.</div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
+                <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="text-xs font-medium text-zinc-200">FSRS Repetition</div>
+                <div className="text-[11px] text-zinc-500">Adaptive scheduling algorithm built specifically for med students.</div>
+              </div>
+            </div>
+
+            {/* Action CTA */}
+            <div className="pt-2 flex flex-col gap-3 relative z-10">
+              <button 
+                onClick={handleClaimTrial}
+                disabled={claimingTrial}
+                className="w-full h-12 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-black font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_24px_rgba(20,184,166,0.3)] cursor-pointer"
+              >
+                {claimingTrial ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Activating {trialDays}-Day Pass...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 fill-black" />
+                    <span>Activate {trialDays}-Day Instant Trial</span>
+                  </>
+                )}
+              </button>
+
+              <button 
+                onClick={() => window.location.reload()}
+                className="h-10 rounded-xl bg-transparent hover:bg-white/5 text-zinc-400 hover:text-zinc-200 font-medium text-xs flex items-center justify-center gap-2 transition-colors border border-white/10 cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Already Purchased? Check Verification Status</span>
+              </button>
+            </div>
+            
+            <p className="text-[11px] text-zinc-500 relative z-10">
+              Trial runs for {trialDays} days from activation. All progress transfers seamlessly upon upgrading.
+            </p>
+          </div>
+        ) : (
+          /* Default Pending Activation Card */
           <div className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-[28px] p-6 sm:p-10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] text-center space-y-6 relative overflow-hidden">
             {/* Ambient inner glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-teal-500/10 blur-[60px] pointer-events-none" />
@@ -248,6 +405,7 @@ export default function BetaAccess() {
               This page will automatically update as soon as your access is granted. Please allow up to 12 hours for manual verification.
             </p>
           </div>
+        )}
       </motion.div>
     </div>
   );

@@ -16,6 +16,9 @@ export function useBetaAccess() {
   const [vaultProvenance, setVaultProvenance] = useState<any | null>(null);
   const [offlineLeaseValid, setOfflineLeaseValid] = useState(true);
   const [offlineHoursRemaining, setOfflineHoursRemaining] = useState(72);
+  const [isTrial, setIsTrial] = useState(false);
+  const [hasClaimedTrial, setHasClaimedTrial] = useState(false);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const snapshotHandledRef = useRef(false);
 
@@ -26,8 +29,13 @@ export function useBetaAccess() {
       const isExpired = exp && exp < Date.now();
       const hasCandidateAccess = Boolean(impersonatedUser.betaAccess && !isExpired);
 
+      const isTrialCandidate = Boolean(impersonatedUser.isTrial);
+
       setHasAccess(hasCandidateAccess);
       setExpiresAt(exp);
+      setIsTrial(isTrialCandidate);
+      setHasClaimedTrial(Boolean(impersonatedUser.hasClaimedTrial || impersonatedUser.isTrial));
+      setIsTrialExpired(Boolean(isTrialCandidate && isExpired));
       setPaymentStatus((impersonatedUser.paymentStatus as any) || null);
       setPaymentRejectionNote(null);
       setVaultActivationRequired(false);
@@ -41,6 +49,9 @@ export function useBetaAccess() {
     if (!user) {
       setHasAccess(false);
       setExpiresAt(null);
+      setIsTrial(false);
+      setHasClaimedTrial(false);
+      setIsTrialExpired(false);
       setPaymentStatus(null);
       setPaymentRejectionNote(null);
       setVaultActivationRequired(false);
@@ -114,6 +125,11 @@ export function useBetaAccess() {
           setVaultActivationRequired(Boolean(data.vaultActivationRequired));
           setVaultProvenance(data.vaultImportProvenance || null);
 
+          const isTrialAcc = Boolean(data.isTrial);
+          const hasClaimed = Boolean(data.hasClaimedTrial || data.isTrial);
+          setIsTrial(isTrialAcc);
+          setHasClaimedTrial(hasClaimed);
+
           if (data.betaAccess === true) {
             const expTime = data.betaAccessExpiresAt?.toMillis
               ? data.betaAccessExpiresAt.toMillis()
@@ -126,11 +142,12 @@ export function useBetaAccess() {
               revokeOfflineLease(user.uid);
               setHasAccess(false);
               setExpiresAt(null);
+              setIsTrialExpired(Boolean(isTrialAcc || hasClaimed));
               setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
             } else {
-              // Valid active access -> Issue / refresh 72h offline lease
+              // Valid active access -> Issue / refresh bounded offline lease
               localStorage.setItem(`beta_access_${user.uid}`, 'true');
-              issueOfflineLease(user.uid);
+              issueOfflineLease(user.uid, expTime);
               setOfflineLeaseValid(true);
               setOfflineHoursRemaining(72);
 
@@ -140,6 +157,7 @@ export function useBetaAccess() {
               } else {
                 setExpiresAt(null); // Lifetime
               }
+              setIsTrialExpired(false);
               setHasAccess(true);
             }
           } else {
@@ -149,6 +167,7 @@ export function useBetaAccess() {
             revokeOfflineLease(user.uid);
             setHasAccess(false);
             setExpiresAt(null);
+            setIsTrialExpired(Boolean(isTrialAcc || hasClaimed));
           }
         } else {
           localStorage.removeItem(`beta_access_${user.uid}`);
@@ -156,6 +175,9 @@ export function useBetaAccess() {
           revokeOfflineLease(user.uid);
           setHasAccess(false);
           setExpiresAt(null);
+          setIsTrial(false);
+          setHasClaimedTrial(false);
+          setIsTrialExpired(false);
           setPaymentStatus(null);
           setPaymentRejectionNote(null);
           setVaultActivationRequired(false);
@@ -207,6 +229,57 @@ export function useBetaAccess() {
     setExpiresAt(expTime);
   };
 
+  /**
+   * Activates an instant clinical trial pass for a candidate (e.g. 7 or 14 days)
+   */
+  const claimTrial = async (customDays?: number): Promise<boolean> => {
+    if (!user || !firestoreDb) return false;
+    try {
+      const days = customDays || 7;
+      const expTime = Date.now() + (days * 24 * 60 * 60 * 1000);
+      const userRef = doc(firestoreDb, 'users', user.uid);
+
+      let affiliateId: string | undefined;
+      if (typeof window !== 'undefined') {
+        affiliateId = localStorage.getItem('atlas_affiliate_id') || undefined;
+      }
+
+      const payload: any = {
+        betaAccess: true,
+        isTrial: true,
+        hasClaimedTrial: true,
+        trialStartedAt: new Date(),
+        paymentStatus: 'pending',
+        betaAccessExpiresAt: expTime,
+        vaultActivationRequired: false,
+        updatedAt: new Date()
+      };
+      if (affiliateId) {
+        payload.referredBy = affiliateId;
+        payload.affiliateId = affiliateId;
+      }
+
+      await setDoc(userRef, payload, { merge: true });
+
+      localStorage.setItem(`beta_access_${user.uid}`, 'true');
+      localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
+      issueOfflineLease(user.uid, expTime);
+      setHasAccess(true);
+      setExpiresAt(expTime);
+      setIsTrial(true);
+      setHasClaimedTrial(true);
+      setIsTrialExpired(false);
+      return true;
+    } catch (err) {
+      console.error("Failed to claim trial:", err);
+      return false;
+    }
+  };
+
+  const trialDaysRemaining = expiresAt && isTrial && hasAccess
+    ? Math.max(0, Math.ceil((expiresAt - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   const clearVaultActivationFlag = async () => {
     if (!user || !firestoreDb) return;
     try {
@@ -230,8 +303,13 @@ export function useBetaAccess() {
     vaultProvenance,
     offlineLeaseValid,
     offlineHoursRemaining,
+    isTrial,
+    hasClaimedTrial,
+    isTrialExpired,
+    trialDaysRemaining,
     loading, 
     grantAccess,
+    claimTrial,
     clearVaultActivationFlag
   };
 }

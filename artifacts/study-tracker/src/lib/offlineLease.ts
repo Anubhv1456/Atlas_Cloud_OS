@@ -45,11 +45,15 @@ function computeLeaseChecksum(uid: string, grantedAt: number, expiresAt: number)
 }
 
 /**
- * Creates and persists a fresh 72-Hour offline lease for a verified user
+ * Creates and persists a fresh 72-Hour offline lease for a verified user.
+ * If maxExpiry is specified (e.g. for trial accounts), bounds the lease to not exceed trial expiry.
  */
-export function issueOfflineLease(uid: string): OfflineLease {
+export function issueOfflineLease(uid: string, maxExpiry?: number | null): OfflineLease {
   const now = Date.now();
-  const expiresAt = now + OFFLINE_LEASE_DURATION_MS;
+  let expiresAt = now + OFFLINE_LEASE_DURATION_MS;
+  if (maxExpiry && typeof maxExpiry === 'number') {
+    expiresAt = Math.min(expiresAt, maxExpiry);
+  }
   const monotonic = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
 
   const lease: OfflineLease = {

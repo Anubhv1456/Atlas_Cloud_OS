@@ -4,13 +4,13 @@ import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAffiliate } from '@/hooks/useAffiliate';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Sparkles, User as UserIcon, Award } from 'lucide-react';
+import { ChevronRight, Sparkles, User as UserIcon, Award, Clock } from 'lucide-react';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { differenceInDays, parseISO } from 'date-fns';
 
 export function AccountSection() {
   const { user } = useAuth();
-  const { hasAccess } = useBetaAccess();
+  const { hasAccess, isTrial, trialDaysRemaining } = useBetaAccess();
   const { isAffiliate } = useAffiliate();
   const { profile, isConfigured } = useExamProfile();
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,9 +57,15 @@ export function AccountSection() {
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-semibold text-foreground tracking-tight truncate">{name}</h2>
               {hasAccess && (
-                <Badge className="bg-zinc-800/40 text-primary border border-primary/25 text-xs px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5" /> Beta
-                </Badge>
+                isTrial ? (
+                  <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" /> Trial {trialDaysRemaining !== null ? `(${trialDaysRemaining}d)` : ''}
+                  </Badge>
+                ) : (
+                  <Badge className="bg-zinc-800/40 text-primary border border-primary/25 text-xs px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5" /> Beta
+                  </Badge>
+                )
               )}
               {isAffiliate && (
                 <Badge className="bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-xs px-1.5 py-0 rounded-md font-semibold shrink-0 flex items-center gap-1">
