@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -23,7 +24,6 @@ export function DirectoryView() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [affiliateFilter, setAffiliateFilter] = useState('all');
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Batch Grant State
   const [isBatchOpen, setIsBatchOpen] = useState(false);
@@ -52,7 +52,6 @@ export function DirectoryView() {
       await updateAffiliateStatus(userId, isAffiliate);
       setUsers(users.map(u => u.id === userId ? { ...u, isAffiliate, affiliateCode: isAffiliate ? `affiliate_${userId.slice(0, 6)}` : undefined } : u));
       toast.success(`Affiliate status ${isAffiliate ? 'granted' : 'revoked'}`);
-      setOpenDropdownId(null);
     } catch (e) {
       toast.error('Failed to update status');
     }
@@ -66,7 +65,6 @@ export function DirectoryView() {
         ...u, betaAccess: true, isTrial, betaAccessExpiresAt: days ? now + days * 24 * 60 * 60 * 1000 : null 
       } : u));
       toast.success('Access granted');
-      setOpenDropdownId(null);
     } catch (e) {
       toast.error('Failed to grant access');
     }
@@ -77,7 +75,6 @@ export function DirectoryView() {
       await updateUserBetaAccess(userId, false);
       setUsers(users.map(u => u.id === userId ? { ...u, betaAccess: false, isTrial: false, betaAccessExpiresAt: null } : u));
       toast.success('Access revoked');
-      setOpenDropdownId(null);
     } catch (e) {
       toast.error('Failed to revoke access');
     }
@@ -89,7 +86,6 @@ export function DirectoryView() {
       await deleteUserAsAdmin(userId);
       setUsers(users.filter(u => u.id !== userId));
       toast.success('User deleted');
-      setOpenDropdownId(null);
     } catch (e) {
       toast.error('Failed to delete user');
     }
@@ -243,41 +239,39 @@ export function DirectoryView() {
                         <td className="py-3 px-4 text-xs text-muted-foreground font-mono">
                           {user.referredBy || '-'}
                         </td>
-                        <td className="py-3 px-4 text-right relative">
-                          <button 
-                            onClick={() => setOpenDropdownId(openDropdownId === user.id ? null : user.id)}
-                            className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                          >
-                            <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                          </button>
-
-                          {openDropdownId === user.id && (
-                            <div className="absolute right-8 top-10 w-48 bg-card border border-border rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-in zoom-in-95 duration-100">
-                              <button onClick={() => { toast.info('Impersonation simulated'); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-xs hover:bg-muted flex items-center gap-2">
+                        <td className="py-3 px-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1.5 hover:bg-muted rounded-md transition-colors outline-none focus:ring-2 focus:ring-teal-500/50 focus:ring-offset-1 focus:ring-offset-background">
+                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-card border-border/50">
+                              <DropdownMenuItem onClick={() => toast.info('Impersonation simulated')} className="text-xs flex items-center gap-2 cursor-pointer">
                                 <Eye className="w-3.5 h-3.5" /> Impersonate View
-                              </button>
-                              <div className="h-px bg-border my-1"></div>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-border/50" />
                               {!user.isAffiliate ? (
-                                <button onClick={() => handleToggleAffiliate(user.id, true)} className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-500/10 text-indigo-400 flex items-center gap-2">
+                                <DropdownMenuItem onClick={() => handleToggleAffiliate(user.id, true)} className="text-xs text-indigo-400 focus:text-indigo-400 focus:bg-indigo-500/10 flex items-center gap-2 cursor-pointer">
                                   <Award className="w-3.5 h-3.5" /> Upgrade to Affiliate
-                                </button>
+                                </DropdownMenuItem>
                               ) : (
-                                <button onClick={() => handleToggleAffiliate(user.id, false)} className="w-full text-left px-4 py-2 text-xs hover:bg-rose-500/10 text-rose-400 flex items-center gap-2">
+                                <DropdownMenuItem onClick={() => handleToggleAffiliate(user.id, false)} className="text-xs text-rose-400 focus:text-rose-400 focus:bg-rose-500/10 flex items-center gap-2 cursor-pointer">
                                   <ShieldCheck className="w-3.5 h-3.5" /> Revoke Affiliate
-                                </button>
+                                </DropdownMenuItem>
                               )}
-                              <div className="h-px bg-border my-1"></div>
-                              <button onClick={() => handleGrantAccess(user.id, null)} className="w-full text-left px-4 py-2 text-xs hover:bg-teal-500/10 text-teal-400 flex items-center gap-2">
+                              <DropdownMenuSeparator className="bg-border/50" />
+                              <DropdownMenuItem onClick={() => handleGrantAccess(user.id, null)} className="text-xs text-teal-400 focus:text-teal-400 focus:bg-teal-500/10 flex items-center gap-2 cursor-pointer">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Grant Lifetime Access
-                              </button>
-                              <button onClick={() => handleRevokeAccess(user.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-rose-500/10 text-rose-400 flex items-center gap-2">
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRevokeAccess(user.id)} className="text-xs text-rose-400 focus:text-rose-400 focus:bg-rose-500/10 flex items-center gap-2 cursor-pointer">
                                 <Lock className="w-3.5 h-3.5" /> Revoke Access
-                              </button>
-                              <button onClick={() => handleDelete(user.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-rose-500/20 text-rose-500 font-bold flex items-center gap-2">
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(user.id)} className="text-xs text-rose-500 font-bold focus:text-rose-500 focus:bg-rose-500/20 flex items-center gap-2 cursor-pointer">
                                 <Trash2 className="w-3.5 h-3.5" /> Delete User
-                              </button>
-                            </div>
-                          )}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     )
