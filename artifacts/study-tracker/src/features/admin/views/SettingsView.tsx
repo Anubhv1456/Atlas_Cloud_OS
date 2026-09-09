@@ -286,25 +286,6 @@ export function SettingsView() {
           <Share2 className="w-4 h-4 text-indigo-400" /> Affiliate & Partner Program
         </h2>
         <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">Partner Commission Rate ($)</label>
-              <Input 
-                type="number" 
-                value={affiliateConfig.commissionRateUsd ?? 50} 
-                onChange={e => setAffiliateConfig({...affiliateConfig, commissionRateUsd: Number(e.target.value)})} 
-                className="bg-background" 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">Minimum Payout Threshold ($)</label>
-              <Input 
-                type="number" 
-                value={affiliateConfig.payoutThresholdUsd ?? 50} 
-                onChange={e => setAffiliateConfig({...affiliateConfig, payoutThresholdUsd: Number(e.target.value)})} 
-                className="bg-background" 
-              />
-            </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Cookie Attribution Window (Days)</label>
               <Input 
@@ -314,7 +295,6 @@ export function SettingsView() {
                 className="bg-background" 
               />
             </div>
-          </div>
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSaveAffiliateConfig} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30">
               <Save className="w-4 h-4 mr-2"/> Save Affiliate Config

@@ -422,7 +422,7 @@ export function DirectoryView() {
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Code</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-center">Seats Provisioned</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-center">Active Seats</th>
-                  <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-right">Est. Commission</th>
+                  
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">

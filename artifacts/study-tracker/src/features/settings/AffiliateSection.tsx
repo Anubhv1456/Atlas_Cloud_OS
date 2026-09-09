@@ -26,9 +26,9 @@ export function AffiliateSection() {
           iconBg="bg-indigo-500"
           label={
             <div className="flex items-center gap-2 flex-wrap">
-              <span>Partner & Affiliate Hub</span>
+              <span>Partner & Ambassador Hub</span>
               <Badge variant="outline" className="text-xs px-1.5 py-0 border-indigo-500/30 text-indigo-400 font-semibold bg-indigo-500/10">
-                {stats.activeSeats > 0 ? `$${stats.earnedCommission} Accrued` : 'Verified Partner'}
+                'Verified Partner'
               </Badge>
             </div>
           }
@@ -51,7 +51,7 @@ export function AffiliateSection() {
         iconBg="bg-muted text-muted-foreground"
         label={
           <div className="flex items-center gap-2 flex-wrap">
-            <span>Ambassador & Affiliate Guild</span>
+            <span>Medical Ambassador Program</span>
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
               Apply
             </Badge>
@@ -84,14 +84,15 @@ export function AffiliateSection() {
                 <span>Partner Privileges</span>
               </div>
               <ul className="list-disc list-inside space-y-1 pl-1">
-                <li>${config?.commissionRateUsd || 50} referral bounty for every enrolled candidate</li>
+                <li>Free lifetime premium access for you and selected peers</li>
                 <li>Exclusive early access to experimental USMLE/NEET question sets</li>
                 <li>Direct liaison channel with the clinical engineering team</li>
+                <li>Official resume-building experience and certificate of contribution</li>
               </ul>
             </div>
 
             <p>
-              Affiliate status is granted by administrators to qualified class representatives, medical tutors, and academic society leads.
+              Ambassador status is granted by administrators to qualified class representatives, medical tutors, and academic society leads.
             </p>
           </div>
 

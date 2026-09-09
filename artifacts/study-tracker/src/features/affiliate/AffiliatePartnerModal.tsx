@@ -113,7 +113,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
             Partner Revenue & Referral Hub
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Share Atlas with candidates and medical batchmates. Track live seat activations and accrued revenue commissions.
+            Share Atlas with candidates and medical batchmates. Track live seat activations and batchmate progress.
           </DialogDescription>
         </DialogHeader>
 
@@ -143,17 +143,6 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
             <span className="text-[10px] text-muted-foreground mt-0.5">Qualified licenses</span>
           </div>
 
-          {/* Accrued Commission */}
-          <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-indigo-400 mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Earned</span>
-              <DollarSign className="w-3.5 h-3.5 text-indigo-400" />
-            </div>
-            <div className="text-2xl font-black text-indigo-400 tracking-tight">
-              ${stats.earnedCommission}
-            </div>
-            <span className="text-[10px] text-indigo-400/80 mt-0.5">${stats.commissionRate} / active seat</span>
-          </div>
 
           {/* Pending Pipeline */}
           <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/50 flex flex-col justify-between">
@@ -276,7 +265,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
               </div>
               <p className="text-sm font-semibold text-foreground">No candidate referrals logged yet</p>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                When students register or activate study passes through your partner link, their anonymous enrollment status and earned commissions appear here automatically.
+                When students register or activate study passes through your partner link, their anonymous enrollment status appears here automatically.
               </p>
             </div>
           ) : (
@@ -312,37 +301,22 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
                     </p>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className={cn(
-                      "text-xs font-bold font-mono",
-                      cand.commissionEarned > 0 ? "text-emerald-400" : "text-muted-foreground"
-                    )}>
-                      {cand.commissionEarned > 0 ? `+$${cand.commissionEarned}.00` : '$0.00'}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground">
-                      {cand.commissionEarned > 0 ? 'Accrued' : 'Awaiting'}
-                    </p>
                   </div>
-                </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* ── Partner Payout & Operational Terms ─────────────────────────── */}
+        {/* ── Partner Operational Terms ─────────────────────────── */}
         <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1.5">
           <div className="flex items-center gap-1.5 font-semibold text-foreground">
             <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span>Commission & Payout Policy</span>
+            <span>Operational Guidelines</span>
           </div>
           <p>
-            Commissions are accrued at <strong>${config?.commissionRateUsd || 50}.00 USD</strong> per candidate who secures an unexpired active beta license or annual pass. Balances are reconciled on the 1st of every month and disbursed via wire transfer.
-          </p>
-          <p className="text-[11px] text-muted-foreground/70">
-            Self-referrals are strictly prohibited by Atlas cloud security rules. Questions regarding payouts can be directed to the administrator via Settings &gt; Contact.
+            Self-referrals are strictly prohibited by Atlas cloud security rules. Questions regarding payouts or enrollment tracking can be directed to the administrator via Settings &gt; Contact.
           </p>
         </div>
-
       </DialogContent>
     </Dialog>
   );

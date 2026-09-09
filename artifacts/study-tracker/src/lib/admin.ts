@@ -457,15 +457,11 @@ export async function savePaymentConfig(config: Partial<PaymentConfig>): Promise
 }
 
 export interface AffiliateConfig {
-  commissionRateUsd: number;
-  payoutThresholdUsd: number;
-  cookieWindowDays: number;
+      cookieWindowDays: number;
 }
 
 export const DEFAULT_AFFILIATE_CONFIG: AffiliateConfig = {
-  commissionRateUsd: 50,
-  payoutThresholdUsd: 50,
-  cookieWindowDays: 60,
+      cookieWindowDays: 60,
 };
 
 export async function getAffiliateConfig(): Promise<AffiliateConfig> {

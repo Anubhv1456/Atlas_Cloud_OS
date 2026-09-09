@@ -17,17 +17,16 @@ export interface ReferredCandidate {
   emailMasked: string;
   joinedAt: Date | null;
   status: 'active' | 'trial' | 'expired';
-  commissionEarned: number;
+  
 }
 
 export interface AffiliateStats {
   totalReferrals: number;
   activeSeats: number;
   pendingSeats: number;
-  earnedCommission: number;
-  potentialCommission: number;
-  commissionRate: number; // e.g. $50/active student
-}
+  
+  
+  }
 
 export function useAffiliate() {
   const { user } = useAuth();
@@ -40,7 +39,7 @@ export function useAffiliate() {
   const [referredCandidates, setReferredCandidates] = useState<ReferredCandidate[]>([]);
   
   // Real-time Affiliate Config State
-  const [config, setConfig] = useState({ commissionRateUsd: 50, payoutThresholdUsd: 50, cookieWindowDays: 60 });
+  const [config, setConfig] = useState({ cookieWindowDays: 60 });
 
   // 1. Resolve Affiliate Status & Code (Supporting Observer Mode)
   useEffect(() => {
@@ -72,8 +71,8 @@ export function useAffiliate() {
       if (snap.exists()) {
         const data = snap.data();
         setConfig({
-          commissionRateUsd: data.commissionRateUsd ?? 50,
-          payoutThresholdUsd: data.payoutThresholdUsd ?? 50,
+          
+          
           cookieWindowDays: data.cookieWindowDays ?? 60
         });
       }
@@ -174,7 +173,7 @@ export function useAffiliate() {
           emailMasked: maskEmail(d.email),
           joinedAt: joinedDate,
           status: isActive ? 'active' : isTrial ? 'trial' : 'expired',
-          commissionEarned: isActive ? (config?.commissionRateUsd || 50) : 0
+          
         });
       });
 
@@ -191,7 +190,7 @@ export function useAffiliate() {
     } finally {
       setReferralsLoading(false);
     }
-  }, [affiliateCode, isImpersonating, impersonatedUser, user, config?.commissionRateUsd]);
+  }, [affiliateCode, isImpersonating, impersonatedUser, user]);
 
   useEffect(() => {
     if (isAffiliate && affiliateCode) {
@@ -206,19 +205,13 @@ export function useAffiliate() {
     const totalReferrals = referredCandidates.length;
     const activeSeats = referredCandidates.filter(c => c.status === 'active').length;
     const pendingSeats = totalReferrals - activeSeats;
-    const commissionRate = config.commissionRateUsd; // using dynamic rate from config
-    const earnedCommission = activeSeats * commissionRate;
-    const potentialCommission = totalReferrals * commissionRate;
-
+            
     return {
       totalReferrals,
       activeSeats,
       pendingSeats,
-      earnedCommission,
-      potentialCommission,
-      commissionRate
-    };
-  }, [referredCandidates, config.commissionRateUsd]);
+      };
+  }, [referredCandidates, config.cookieWindowDays]);
 
   // 4. Link Generators
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas.app';

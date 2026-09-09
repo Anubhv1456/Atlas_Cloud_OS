@@ -131,10 +131,10 @@ export default function AffiliatePartnerPage() {
           <span>Ambassador Guild</span>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-          Partner Revenue & Referral Hub
+          Partner & Ambassador Hub
         </h1>
         <p className="text-sm text-muted-foreground">
-          Distribute your unique clinical study pass. Earn ${config?.commissionRateUsd || 50} for every medical candidate who completes qualification.
+          Distribute your unique clinical study pass. 
         </p>
       </header>
 
@@ -156,15 +156,6 @@ export default function AffiliatePartnerPage() {
           </div>
           <div className="text-3xl font-black text-emerald-400">{stats.activeSeats}</div>
           <span className="text-xs text-muted-foreground mt-1">Qualified passes</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/25 flex flex-col justify-between shadow-xs">
-          <div className="flex items-center justify-between text-indigo-400 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider">Earned</span>
-            <DollarSign className="w-4 h-4 text-indigo-400" />
-          </div>
-          <div className="text-3xl font-black text-indigo-400">${stats.earnedCommission}</div>
-          <span className="text-xs text-indigo-400/80 mt-1">${stats.commissionRate} / active seat</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-card border border-border flex flex-col justify-between shadow-xs">
@@ -309,18 +300,7 @@ export default function AffiliatePartnerPage() {
                   </p>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <span className={cn(
-                    "text-sm font-bold font-mono",
-                    cand.commissionEarned > 0 ? "text-emerald-400" : "text-muted-foreground"
-                  )}>
-                    {cand.commissionEarned > 0 ? `+$${cand.commissionEarned}.00` : '$0.00'}
-                  </span>
-                  <p className="text-[10px] text-muted-foreground">
-                    {cand.commissionEarned > 0 ? 'Accrued' : 'Awaiting'}
-                  </p>
                 </div>
-              </div>
             ))}
           </div>
         )}
@@ -330,13 +310,12 @@ export default function AffiliatePartnerPage() {
       <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1">
         <div className="flex items-center gap-1.5 font-semibold text-foreground">
           <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-          <span>Affiliate Reconcile & Payout Schedule</span>
+          <span>Operational Guidelines</span>
         </div>
         <p>
-          Reconciled on the 1st of every month. Minimum payout threshold is ${config?.payoutThresholdUsd || 50}.00. Payout inquiries can be submitted via Settings &gt; Contact.
+          Self-referrals are strictly prohibited by Atlas cloud security rules. Questions regarding enrollment tracking can be directed to the administrator via Settings &gt; Contact.
         </p>
       </div>
-
     </div>
   );
 }
