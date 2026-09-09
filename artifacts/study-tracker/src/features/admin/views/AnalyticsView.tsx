@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   BarChart3, Activity, Zap, ShieldCheck, TrendingUp,
-  Database, Flame, Layers, Clock, CheckCircle2, AlertTriangle, Users
+  Database, Flame, Layers, Clock, CheckCircle2, AlertTriangle, Users, Brain
 } from 'lucide-react';
 import { fetchCohortTelemetryLogs } from '@/lib/telemetry';
 import { getAllUsersForAdmin } from '@/lib/admin';
@@ -138,7 +138,7 @@ export function AnalyticsView() {
         {/* COLUMN B: AI HEALTH */}
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <BrainIcon className="w-4 h-4 text-emerald-400" /> AI Engine Health
+            <Brain className="w-4 h-4 text-emerald-400" /> AI Engine Health
           </h2>
           <div className="bg-card/40 border border-border/50 rounded-2xl p-5 space-y-5">
             <div className="flex justify-between items-center">
