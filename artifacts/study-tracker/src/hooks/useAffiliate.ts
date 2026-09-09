@@ -38,6 +38,9 @@ export function useAffiliate() {
   const [loading, setLoading] = useState<boolean>(true);
   const [referralsLoading, setReferralsLoading] = useState<boolean>(false);
   const [referredCandidates, setReferredCandidates] = useState<ReferredCandidate[]>([]);
+  
+  // Real-time Affiliate Config State
+  const [config, setConfig] = useState({ commissionRateUsd: 50, payoutThresholdUsd: 50, cookieWindowDays: 60 });
 
   // 1. Resolve Affiliate Status & Code (Supporting Observer Mode)
   useEffect(() => {
@@ -63,8 +66,21 @@ export function useAffiliate() {
       return;
     }
 
+    // Subscribe to admin configuration
+    const configRef = doc(firestoreDb, 'config', 'affiliate_config');
+    const unsubscribeConfig = onSnapshot(configRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setConfig({
+          commissionRateUsd: data.commissionRateUsd ?? 50,
+          payoutThresholdUsd: data.payoutThresholdUsd ?? 50,
+          cookieWindowDays: data.cookieWindowDays ?? 60
+        });
+      }
+    });
+
     const userRef = doc(firestoreDb, 'users', user.uid);
-    const unsubscribe = onSnapshot(
+    const unsubscribeUser = onSnapshot(
       userRef,
       (snap) => {
         if (snap.exists()) {
@@ -85,7 +101,10 @@ export function useAffiliate() {
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeConfig();
+      unsubscribeUser();
+    };
   }, [user, isImpersonating, impersonatedUser]);
 
   // Helper to safely mask email (e.g., "alex.miller@gmail.com" -> "a***r@gmail.com")
@@ -155,7 +174,7 @@ export function useAffiliate() {
           emailMasked: maskEmail(d.email),
           joinedAt: joinedDate,
           status: isActive ? 'active' : isTrial ? 'trial' : 'expired',
-          commissionEarned: isActive ? 50 : 0
+          commissionEarned: isActive ? (config?.commissionRateUsd || 50) : 0
         });
       });
 
@@ -172,7 +191,7 @@ export function useAffiliate() {
     } finally {
       setReferralsLoading(false);
     }
-  }, [affiliateCode, isImpersonating, impersonatedUser, user]);
+  }, [affiliateCode, isImpersonating, impersonatedUser, user, config?.commissionRateUsd]);
 
   useEffect(() => {
     if (isAffiliate && affiliateCode) {
@@ -187,7 +206,7 @@ export function useAffiliate() {
     const totalReferrals = referredCandidates.length;
     const activeSeats = referredCandidates.filter(c => c.status === 'active').length;
     const pendingSeats = totalReferrals - activeSeats;
-    const commissionRate = 50; // $50 per active candidate
+    const commissionRate = config.commissionRateUsd; // using dynamic rate from config
     const earnedCommission = activeSeats * commissionRate;
     const potentialCommission = totalReferrals * commissionRate;
 
@@ -199,7 +218,7 @@ export function useAffiliate() {
       potentialCommission,
       commissionRate
     };
-  }, [referredCandidates]);
+  }, [referredCandidates, config.commissionRateUsd]);
 
   // 4. Link Generators
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas.app';
@@ -224,6 +243,7 @@ export function useAffiliate() {
     stats,
     referredCandidates,
     referralLinks,
+    config,
     refresh: fetchReferrals
   };
 }

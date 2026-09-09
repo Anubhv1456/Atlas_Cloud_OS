@@ -1,6 +1,6 @@
 {
   "name": "Atlas Cloud",
-  "description": "Intelligent Medical Study Operating System for MBBS, NEET PG, and INICET entrance preparation featuring Adaptive Operational Modes, Active Recall, and Memory Decay Calibration",
+  "description": "Intelligent Medical Study Operating System for USMLE Step 1, Step 2 CK, NEET PG, and INI-CET preparation featuring Adaptive Operational Modes, Active Recall, and Memory Decay Calibration",
   "requestFramePermissions": [
     "web-share",
     "microphone"

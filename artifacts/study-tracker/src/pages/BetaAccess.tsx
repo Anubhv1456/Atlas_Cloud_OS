@@ -286,11 +286,35 @@ export default function BetaAccess() {
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10">
+              {payConfig.paymentLinkUrl && profile.targetExam?.includes('USMLE') ? (
+                <button 
+                  onClick={() => window.open(payConfig.paymentLinkUrl, '_blank')}
+                  className="flex-1 h-12 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_24px_rgba(20,184,166,0.3)] cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4 text-black" />
+                  <span>Unlock 2026 Pass (${payConfig.usdPrice || 39})</span>
+                </button>
+              ) : (
+                <>
+                  {payConfig.paymentLinkUrl && (
+                    <button 
+                      onClick={() => window.open(payConfig.paymentLinkUrl, '_blank')}
+                      className="flex-1 h-12 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Pay via Card (${payConfig.usdPrice || 39})</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10 mt-2">
               <button 
                 onClick={() => window.location.reload()}
-                className="flex-1 h-12 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs flex items-center justify-center gap-2 transition-all border border-white/10 cursor-pointer"
+                className="w-full h-10 rounded-xl bg-transparent hover:bg-white/5 text-zinc-400 font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className="w-3 h-3" />
                 <span>Check Verification Status</span>
               </button>
             </div>

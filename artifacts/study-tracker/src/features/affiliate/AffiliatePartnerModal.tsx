@@ -45,6 +45,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
     referralLinks,
     referralsLoading,
     refresh,
+    config
   } = useAffiliate();
 
   const [copiedCode, setCopiedCode] = useState(false);
@@ -173,12 +174,12 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Your Dedicated Partner Attribution
             </h3>
-            <span className="text-xs text-muted-foreground font-mono">Cookie Window: 60 Days</span>
+            <span className="text-xs text-muted-foreground font-mono">Cookie Window: {config?.cookieWindowDays || 60} Days</span>
           </div>
 
           {/* Link Box */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="flex-1 px-3.5 py-2 rounded-xl bg-background border border-border font-mono text-xs text-foreground truncate select-all">
+            <div className="flex-1 min-w-0 px-3.5 py-2 rounded-xl bg-background border border-border font-mono text-xs text-foreground truncate select-all">
               {referralLinks.primaryLink}
             </div>
             <Button
@@ -335,7 +336,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
             <span>Commission & Payout Policy</span>
           </div>
           <p>
-            Commissions are accrued at <strong>${stats.commissionRate}.00 USD</strong> per candidate who secures an unexpired active beta license or annual pass. Balances are reconciled on the 1st of every month and disbursed via wire transfer or UPI.
+            Commissions are accrued at <strong>${config?.commissionRateUsd || 50}.00 USD</strong> per candidate who secures an unexpired active beta license or annual pass. Balances are reconciled on the 1st of every month and disbursed via wire transfer.
           </p>
           <p className="text-[11px] text-muted-foreground/70">
             Self-referrals are strictly prohibited by Atlas cloud security rules. Questions regarding payouts can be directed to the administrator via Settings &gt; Contact.

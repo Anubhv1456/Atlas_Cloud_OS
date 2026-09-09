@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   Users, Award, ShieldCheck, Mail, Search, ChevronDown, CheckCircle2, 
-  Trash2, X, MoreVertical, Eye, Lock, Clock, CalendarPlus, Sparkles
+  Trash2, X, MoreVertical, Eye, Lock, Clock, CalendarPlus, Sparkles, RefreshCw
 } from 'lucide-react';
 import { 
   getAllUsersForAdmin, updateUserBetaAccess, bulkUpdateUserBetaAccess, 
@@ -24,6 +24,7 @@ export function DirectoryView() {
   const [, setLocation] = useLocation();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('candidates');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -39,22 +40,24 @@ export function DirectoryView() {
   const [customTrialTarget, setCustomTrialTarget] = useState<any | null>(null);
   const [customDays, setCustomDays] = useState<number>(14);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    setLoading(true);
+  const loadUsers = useCallback(async (force = false) => {
+    if (force) setIsRefreshing(true);
+    else setLoading(true);
     try {
-      const data = await getAllUsersForAdmin();
+      const data = await getAllUsersForAdmin(force);
       setUsers(data);
     } catch (e) {
       console.error(e);
       toast.error('Failed to load directory');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleToggleAffiliate = async (userId: string, isAffiliate: boolean) => {
     try {
@@ -201,6 +204,15 @@ export function DirectoryView() {
           <p className="text-muted-foreground text-sm mt-1">CRM for Students, Trial Passes, Licenses, and Affiliates.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => loadUsers(true)}
+            disabled={isRefreshing}
+            variant="outline" 
+            className="border-border/50 text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} /> 
+            {isRefreshing ? 'Syncing...' : 'Force Sync'}
+          </Button>
           <Button onClick={() => setIsBatchOpen(true)} className="bg-teal-500 text-black hover:bg-teal-400 font-bold">
             <Mail className="w-4 h-4 mr-2" /> Email Batch Unlock
           </Button>
@@ -427,7 +439,7 @@ export function DirectoryView() {
                       <td className="py-3 px-4 text-xs text-indigo-400 font-mono">{aff.affiliateCode}</td>
                       <td className="py-3 px-4 text-center font-medium">{clients.length}</td>
                       <td className="py-3 px-4 text-center"><Badge variant="outline" className="bg-teal-500/10 text-teal-400">{activeClients.length}</Badge></td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-400">₹{(activeClients.length * 100).toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-4 text-right font-bold text-emerald-400">${(activeClients.length * 12).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">(₹{(activeClients.length * 100).toLocaleString('en-IN')})</span></td>
                     </tr>
                   );
                 })}

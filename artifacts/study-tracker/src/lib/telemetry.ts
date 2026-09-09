@@ -303,8 +303,26 @@ function createLocalBufferDoc() {
 }
 
 /** Fetch Cohort Telemetry logs for Admin Panel - Ground Truth Only */
-export async function fetchCohortTelemetryLogs() {
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+export async function fetchCohortTelemetryLogs(forceRefresh = false) {
   try {
+    const cacheKey = 'atlas_admin_telemetry_cache';
+    const cachedDataStr = localStorage.getItem(cacheKey);
+
+    if (!forceRefresh && cachedDataStr) {
+      try {
+        const cached = JSON.parse(cachedDataStr);
+        if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          console.log('[Telemetry] Serving from 12-hour cache.');
+          return cached.data;
+        }
+      } catch (e) {
+        console.warn('Failed to parse telemetry cache:', e);
+      }
+    }
+
+    console.log('[Telemetry] Fetching fresh data from Firestore...');
     const colRef = collection(firestoreDb, 'telemetry_logs');
     const q = query(colRef, orderBy('timestamp', 'desc'), limit(100));
     const snap = await getDocs(q);
@@ -313,7 +331,9 @@ export async function fetchCohortTelemetryLogs() {
 
     if (snap.empty) {
       if (localDoc.length > 0) {
-        return processTelemetryDocs(localDoc);
+        const processed = processTelemetryDocs(localDoc);
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: processed }));
+        return processed;
       }
       return getEmptyTelemetryData();
     }
@@ -322,7 +342,9 @@ export async function fetchCohortTelemetryLogs() {
     if (localDoc.length > 0) {
       docs.unshift(...localDoc);
     }
-    return processTelemetryDocs(docs);
+    const processed = processTelemetryDocs(docs);
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: processed }));
+    return processed;
   } catch (e) {
     console.warn('Failed to fetch telemetry from Firestore, checking local buffer or returning fresh state', e);
     if (eventBuffer.length > 0) {

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   BarChart3, Activity, Zap, ShieldCheck, TrendingUp,
-  Database, Flame, Layers, Clock, CheckCircle2, AlertTriangle, Users, Brain
+  Database, Flame, Layers, Clock, CheckCircle2, AlertTriangle, Users, Brain, RefreshCw
 } from 'lucide-react';
 import { fetchCohortTelemetryLogs } from '@/lib/telemetry';
 import { getAllUsersForAdmin } from '@/lib/admin';
@@ -12,24 +12,29 @@ export function AnalyticsView() {
   const [data, setData] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadData = useCallback(async (force = false) => {
+    if (force) setIsRefreshing(true);
+    else setLoading(true);
+    try {
+      const [res, u] = await Promise.all([
+        fetchCohortTelemetryLogs(force),
+        getAllUsersForAdmin(force)
+      ]);
+      setData(res);
+      setUsers(u);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [res, u] = await Promise.all([
-          fetchCohortTelemetryLogs(),
-          getAllUsersForAdmin()
-        ]);
-        setData(res);
-        setUsers(u);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
-  }, []);
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -60,32 +65,27 @@ export function AnalyticsView() {
   const drillsTotal = data?.drillsTotal ?? 0;
   const avgSessionDepth = recentLogins.length > 0 ? (drillsCleared / recentLogins.length).toFixed(1) : '0';
   
-  // --- COLUMN B: AI HEALTH ---
-  const s10Speed = data?.s10AvgSeconds ?? 0;
-  const acceptanceRate = data?.acceptanceRate ?? 0;
-  const skipReasons = data?.skipReasons || {};
-  const errorTaxonomy = data?.errorCategories || {};
-
-  // --- COLUMN C: QUOTA & COST ---
-  const rawLogs: any[] = data?.rawLogs || [];
-  const totalLoggedBatches = rawLogs.length;
-  const estDailyReads = Math.max(150, totalLoggedBatches * 5); // Example proxy for app usage + telemetry overhead
-  const estDailyWrites = Math.max(50, totalLoggedBatches * 2);
-  
-  const readsPct = Math.min(100, Math.max(1, Math.round((estDailyReads / 50000) * 100)));
-  const writesPct = Math.min(100, Math.max(1, Math.round((estDailyWrites / 20000) * 100)));
-
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-teal-500" />
-          Analytics & Telemetry
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">Behavior mapping, AI Engine health, and Infrastructure quota tracking.</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-teal-500" />
+            Analytics & Telemetry
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">Behavior mapping and user retention tracking.</p>
+        </div>
+        <button
+          onClick={() => loadData(true)}
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 transition-colors disabled:opacity-50 border border-border/50"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+          {isRefreshing ? 'Syncing...' : 'Force Sync'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-md">
         
         {/* COLUMN A: BEHAVIOR */}
         <div className="space-y-4">
@@ -132,91 +132,6 @@ export function AnalyticsView() {
                 <span>Retained</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* COLUMN B: AI HEALTH */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Brain className="w-4 h-4 text-emerald-400" /> AI Engine Health
-          </h2>
-          <div className="bg-card/40 border border-border/50 rounded-2xl p-5 space-y-5">
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Acceptance Rate</div>
-                <div className="text-2xl font-bold text-emerald-400">{acceptanceRate}%</div>
-              </div>
-              <CheckCircle2 className="w-5 h-5 text-emerald-500/50" />
-            </div>
-            
-            <div className="flex justify-between items-center border-t border-border/40 pt-4">
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">S10 Generation Latency</div>
-                <div className="text-lg font-bold text-foreground">{s10Speed}s</div>
-              </div>
-              <Clock className="w-5 h-5 text-amber-500" />
-            </div>
-
-            <div className="border-t border-border/40 pt-4 space-y-2">
-              <div className="text-xs text-muted-foreground font-semibold">Top Skip Reasons</div>
-              {Object.keys(skipReasons).length > 0 ? Object.entries(skipReasons).slice(0,3).map(([reason, count]) => (
-                <div key={reason} className="flex justify-between items-center text-xs">
-                  <span className="text-foreground truncate max-w-[150px]">{reason}</span>
-                  <span className="font-mono text-muted-foreground">{String(count)}</span>
-                </div>
-              )) : (
-                <div className="text-xs text-muted-foreground">No skip data recorded.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* COLUMN C: QUOTA */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Database className="w-4 h-4 text-rose-400" /> Quota & Cost
-          </h2>
-          <div className="bg-card/40 border border-border/50 rounded-2xl p-5 space-y-5">
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Reads (Est.)</div>
-                  <div className="text-sm font-bold text-foreground">{estDailyReads.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ 50k Free</span></div>
-                </div>
-                <div className="text-xs font-mono font-bold text-teal-400">{readsPct}%</div>
-              </div>
-              <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
-                <div 
-                  className={cn("h-full transition-all duration-1000", readsPct > 80 ? "bg-rose-500" : "bg-teal-500")}
-                  style={{ width: `${readsPct}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-border/40 pt-4">
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Writes (Est.)</div>
-                  <div className="text-sm font-bold text-foreground">{estDailyWrites.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ 20k Free</span></div>
-                </div>
-                <div className="text-xs font-mono font-bold text-indigo-400">{writesPct}%</div>
-              </div>
-              <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
-                <div 
-                  className={cn("h-full transition-all duration-1000", writesPct > 80 ? "bg-rose-500" : "bg-indigo-500")}
-                  style={{ width: `${writesPct}%` }}
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center border-t border-border/40 pt-4">
-              <div>
-                <div className="text-xs text-muted-foreground font-semibold">Est. Cost Per Active Student</div>
-                <div className="text-lg font-bold text-emerald-400">₹3.50 <span className="text-xs text-muted-foreground font-normal">(~$0.04)</span></div>
-              </div>
-              <Flame className="w-5 h-5 text-rose-500/50" />
-            </div>
-
           </div>
         </div>
 

@@ -86,7 +86,11 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   useEffect(() => {
     const fetchPlateau = async () => {
       const logs = await db.scoreLogs.toArray();
-      const recentLogs = logs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 3);
+      const recentLogs = logs.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
+      }).slice(0, 3);
       if (recentLogs.length === 3) {
         const scores = recentLogs.map(l => l.percentage);
         const max = Math.max(...scores);

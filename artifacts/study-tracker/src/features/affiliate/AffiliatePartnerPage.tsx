@@ -33,6 +33,7 @@ export default function AffiliatePartnerPage() {
     referralsLoading,
     refresh,
     loading,
+    config
   } = useAffiliate();
 
   const [copiedCode, setCopiedCode] = React.useState(false);
@@ -133,7 +134,7 @@ export default function AffiliatePartnerPage() {
           Partner Revenue & Referral Hub
         </h1>
         <p className="text-sm text-muted-foreground">
-          Distribute your unique clinical study pass. Earn $50 for every medical candidate who completes qualification.
+          Distribute your unique clinical study pass. Earn ${config?.commissionRateUsd || 50} for every medical candidate who completes qualification.
         </p>
       </header>
 
@@ -182,11 +183,11 @@ export default function AffiliatePartnerPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Dedicated Referral Link
           </h2>
-          <span className="text-xs text-muted-foreground font-mono">Cookie Attribution: 60 Days</span>
+          <span className="text-xs text-muted-foreground font-mono">Cookie Attribution: {config?.cookieWindowDays || 60} Days</span>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div className="flex-1 px-4 py-2.5 rounded-xl bg-background border border-border font-mono text-xs text-foreground truncate select-all">
+          <div className="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-background border border-border font-mono text-xs text-foreground truncate select-all">
             {referralLinks.primaryLink}
           </div>
           <Button
@@ -332,7 +333,7 @@ export default function AffiliatePartnerPage() {
           <span>Affiliate Reconcile & Payout Schedule</span>
         </div>
         <p>
-          Reconciled on the 1st of every month. Minimum payout threshold is $50.00 (1 qualified candidate). Payout inquiries can be submitted via Settings &gt; Contact.
+          Reconciled on the 1st of every month. Minimum payout threshold is ${config?.payoutThresholdUsd || 50}.00. Payout inquiries can be submitted via Settings &gt; Contact.
         </p>
       </div>
 

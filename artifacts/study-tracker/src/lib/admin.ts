@@ -87,8 +87,29 @@ export async function deleteUserAsAdmin(userId: string) {
   await deleteDoc(userRef);
 }
 
-export async function getAllUsersForAdmin() {
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+export async function getAllUsersForAdmin(forceRefresh = false) {
   if (!firestoreDb) return [];
+  
+  const cacheKey = 'atlas_admin_users_cache';
+  
+  if (!forceRefresh) {
+    const cachedDataStr = localStorage.getItem(cacheKey);
+    if (cachedDataStr) {
+      try {
+        const cached = JSON.parse(cachedDataStr);
+        if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          console.log('[Admin] Serving users from 12-hour cache.');
+          return cached.data;
+        }
+      } catch (e) {
+        console.warn('Failed to parse admin users cache:', e);
+      }
+    }
+  }
+
+  console.log('[Admin] Fetching fresh users from Firestore...');
   const usersCol = collection(firestoreDb, 'users');
   const q = query(usersCol, limit(500));
   const snapshot = await getDocs(q);
@@ -102,7 +123,7 @@ export async function getAllUsersForAdmin() {
     // Graceful fallback if admins collection cannot be read
   }
 
-  return snapshot.docs.map(doc => {
+  const users = snapshot.docs.map(doc => {
     const data = doc.data();
     const isAdmin = adminUids.has(doc.id) || Boolean((data as any).isAdmin) || (data as any).role === 'admin';
     return {
@@ -111,6 +132,9 @@ export async function getAllUsersForAdmin() {
       ...data
     };
   });
+  
+  localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: users }));
+  return users;
 }
 
 export async function getDashboardStats() {
@@ -369,6 +393,7 @@ export async function submitPaymentProof(data: {
 export interface PaymentConfig {
   planTitle: string;
   price: number;
+  usdPrice?: number;
   currencySymbol: string;
   durationText: string;
   durationDays: number;
@@ -389,6 +414,7 @@ export interface PaymentConfig {
 export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   planTitle: 'Closed Beta Membership',
   price: 499,
+  usdPrice: 39,
   currencySymbol: '₹',
   durationText: '3 Months',
   durationDays: 90,
@@ -427,6 +453,38 @@ export async function getPaymentConfig(): Promise<PaymentConfig> {
 export async function savePaymentConfig(config: Partial<PaymentConfig>): Promise<void> {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const docRef = doc(firestoreDb, 'config', 'payment_settings');
+  await setDoc(docRef, config, { merge: true });
+}
+
+export interface AffiliateConfig {
+  commissionRateUsd: number;
+  payoutThresholdUsd: number;
+  cookieWindowDays: number;
+}
+
+export const DEFAULT_AFFILIATE_CONFIG: AffiliateConfig = {
+  commissionRateUsd: 50,
+  payoutThresholdUsd: 50,
+  cookieWindowDays: 60,
+};
+
+export async function getAffiliateConfig(): Promise<AffiliateConfig> {
+  if (!firestoreDb) return DEFAULT_AFFILIATE_CONFIG;
+  try {
+    const docRef = doc(firestoreDb, 'config', 'affiliate_config');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { ...DEFAULT_AFFILIATE_CONFIG, ...snap.data() };
+    }
+  } catch (e) {
+    console.error('Error fetching affiliate config:', e);
+  }
+  return DEFAULT_AFFILIATE_CONFIG;
+}
+
+export async function saveAffiliateConfig(config: Partial<AffiliateConfig>): Promise<void> {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const docRef = doc(firestoreDb, 'config', 'affiliate_config');
   await setDoc(docRef, config, { merge: true });
 }
 

@@ -7,7 +7,8 @@ import {
   getFeatureFlags, setFeatureFlags, FeatureFlags,
   getAnnouncements, createAnnouncement, setAnnouncementActive, Announcement,
   getPaymentConfig, savePaymentConfig, PaymentConfig, DEFAULT_PAYMENT_CONFIG,
-  getSocialLinks, setSocialLinks, SocialLinks
+  getSocialLinks, setSocialLinks, SocialLinks,
+  getAffiliateConfig, saveAffiliateConfig, AffiliateConfig, DEFAULT_AFFILIATE_CONFIG
 } from '@/lib/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ export function SettingsView() {
   });
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
+  const [affiliateConfig, setAffiliateConfig] = useState<AffiliateConfig>(DEFAULT_AFFILIATE_CONFIG);
   const [socials, setSocials] = useState<SocialLinks>({});
 
   // Forms
@@ -32,13 +34,14 @@ export function SettingsView() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [f, a, p, s] = await Promise.all([
-          getFeatureFlags(), getAnnouncements(), getPaymentConfig(), getSocialLinks()
+        const [f, a, p, s, aff] = await Promise.all([
+          getFeatureFlags(), getAnnouncements(), getPaymentConfig(), getSocialLinks(), getAffiliateConfig()
         ]);
         setFlags(f);
         setAnnouncements(a);
         setPaymentConfig(p || DEFAULT_PAYMENT_CONFIG);
         setSocials(s || {});
+        setAffiliateConfig(aff || DEFAULT_AFFILIATE_CONFIG);
       } catch (e) {
         toast.error('Failed to load settings');
       } finally {
@@ -47,6 +50,15 @@ export function SettingsView() {
     }
     loadData();
   }, []);
+
+  const handleSaveAffiliateConfig = async () => {
+    try {
+      await saveAffiliateConfig(affiliateConfig);
+      toast.success('Affiliate config saved');
+    } catch (e) {
+      toast.error('Failed to save affiliate config');
+    }
+  };
 
   const handleSaveFlags = async () => {
     try {
@@ -141,7 +153,7 @@ export function SettingsView() {
           <PaymentIcon className="w-4 h-4 text-amber-400" /> Pricing & Cohort Settings
         </h2>
         <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Plan Title</label>
               <Input 
@@ -157,6 +169,15 @@ export function SettingsView() {
                 type="number" 
                 value={paymentConfig.price ?? 499} 
                 onChange={e => setPaymentConfig({...paymentConfig, price: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Global USD Price ($)</label>
+              <Input 
+                type="number" 
+                value={paymentConfig.usdPrice ?? 39} 
+                onChange={e => setPaymentConfig({...paymentConfig, usdPrice: Number(e.target.value)})} 
                 className="bg-background" 
               />
             </div>
@@ -220,50 +241,16 @@ export function SettingsView() {
             </div>
           </div>
 
-          {/* UPI & Payment Gateway Parameters */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/30 pt-6">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">UPI ID (VPA)</label>
-              <Input 
-                value={paymentConfig.upiId || ''} 
-                onChange={e => setPaymentConfig({...paymentConfig, upiId: e.target.value})} 
-                className="bg-background font-mono text-xs" 
-                placeholder="e.g. yourname@upi"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">UPI QR Image URL (Optional)</label>
-              <Input 
-                value={paymentConfig.upiQrUrl || ''} 
-                onChange={e => setPaymentConfig({...paymentConfig, upiQrUrl: e.target.value})} 
-                className="bg-background text-xs" 
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">External Payment Link (Optional)</label>
+          {/* External Payment Link */}
+          <div className="border-t border-border/30 pt-6">
+            <div className="space-y-2 max-w-sm">
+              <label className="text-xs font-semibold text-muted-foreground">External Payment Link (Stripe/Razorpay)</label>
               <Input 
                 value={paymentConfig.paymentLinkUrl || ''} 
                 onChange={e => setPaymentConfig({...paymentConfig, paymentLinkUrl: e.target.value})} 
                 className="bg-background text-xs" 
-                placeholder="https://rzp.io/..."
+                placeholder="https://..."
               />
-            </div>
-          </div>
-
-          {/* Tab Visibility Toggles */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/30 pt-4">
-            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
-              <span className="text-xs font-medium">Show UPI ID Tab</span>
-              <Switch checked={paymentConfig.enableUpiTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableUpiTab: v})} />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
-              <span className="text-xs font-medium">Show QR Code Tab</span>
-              <Switch checked={paymentConfig.enableQrTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableQrTab: v})} />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
-              <span className="text-xs font-medium">Show External Link Tab</span>
-              <Switch checked={paymentConfig.enableLinkTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableLinkTab: v})} />
             </div>
           </div>
 
@@ -288,6 +275,49 @@ export function SettingsView() {
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSavePayments} className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">
               <Save className="w-4 h-4 mr-2"/> Save Pricing & Cohort
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5 Affiliate Partner Program */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Share2 className="w-4 h-4 text-indigo-400" /> Affiliate & Partner Program
+        </h2>
+        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Partner Commission Rate ($)</label>
+              <Input 
+                type="number" 
+                value={affiliateConfig.commissionRateUsd ?? 50} 
+                onChange={e => setAffiliateConfig({...affiliateConfig, commissionRateUsd: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Minimum Payout Threshold ($)</label>
+              <Input 
+                type="number" 
+                value={affiliateConfig.payoutThresholdUsd ?? 50} 
+                onChange={e => setAffiliateConfig({...affiliateConfig, payoutThresholdUsd: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Cookie Attribution Window (Days)</label>
+              <Input 
+                type="number" 
+                value={affiliateConfig.cookieWindowDays ?? 60} 
+                onChange={e => setAffiliateConfig({...affiliateConfig, cookieWindowDays: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleSaveAffiliateConfig} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30">
+              <Save className="w-4 h-4 mr-2"/> Save Affiliate Config
             </Button>
           </div>
         </div>

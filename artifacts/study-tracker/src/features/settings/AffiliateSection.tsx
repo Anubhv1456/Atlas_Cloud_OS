@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 export function AffiliateSection() {
-  const { isAffiliate, stats } = useAffiliate();
+  const { isAffiliate, stats, config } = useAffiliate();
   const [partnerModalOpen, setPartnerModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
 
@@ -84,7 +84,7 @@ export function AffiliateSection() {
                 <span>Partner Privileges</span>
               </div>
               <ul className="list-disc list-inside space-y-1 pl-1">
-                <li>$50 referral bounty for every enrolled candidate</li>
+                <li>${config?.commissionRateUsd || 50} referral bounty for every enrolled candidate</li>
                 <li>Exclusive early access to experimental USMLE/NEET question sets</li>
                 <li>Direct liaison channel with the clinical engineering team</li>
               </ul>

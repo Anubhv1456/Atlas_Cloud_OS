@@ -1,5 +1,5 @@
 import { useLexicon } from '@/lib/lexicon';
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useSubjects, useAllSystems, updateSubjectsOrder, db } from '@/db';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { DropResult } from '@hello-pangea/dnd';
@@ -20,10 +20,11 @@ import { TargetExamModal } from '@/components/TargetExamModal';
 import { MistakesNotebookCard } from '@/features/mistakes/MistakesNotebookCard';
 import { Button } from '@/components/ui/button';
 import { AddDialog } from '@/components/AddDialog';
-import Analytics from '@/features/analytics/Analytics';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const Analytics = lazy(() => import('@/features/analytics/Analytics'));
 
 export default function SubjectRadarPage() {
   const lexicon = useLexicon();
@@ -184,7 +185,9 @@ export default function SubjectRadarPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <Analytics />
+          <Suspense fallback={<div className="p-8 text-center text-muted-foreground animate-pulse">Loading diagnostics module...</div>}>
+            <Analytics />
+          </Suspense>
         </div>
       )}
 
