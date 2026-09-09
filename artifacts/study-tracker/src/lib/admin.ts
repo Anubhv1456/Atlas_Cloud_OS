@@ -495,3 +495,51 @@ export async function updateAffiliateStatus(userId: string, isAffiliate: boolean
   
   await setDoc(userRef, updateData, { merge: true });
 }
+
+export interface ImpersonationAuditLog {
+  id?: string;
+  adminId: string;
+  adminEmail: string;
+  targetUserId: string;
+  targetUserEmail: string;
+  action: 'start' | 'exit';
+  timestamp: Date;
+  userAgent?: string;
+}
+
+export async function logImpersonationEvent(
+  adminId: string,
+  adminEmail: string,
+  targetUserId: string,
+  targetUserEmail: string,
+  action: 'start' | 'exit'
+): Promise<void> {
+  if (!firestoreDb) return;
+  try {
+    const auditCol = collection(firestoreDb, 'adminAuditLogs');
+    await setDoc(doc(auditCol), {
+      adminId,
+      adminEmail: adminEmail || 'unknown',
+      targetUserId,
+      targetUserEmail: targetUserEmail || 'unknown',
+      action,
+      timestamp: new Date(),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    });
+  } catch (err) {
+    console.warn('[AuditLog] Failed to record impersonation event:', err);
+  }
+}
+
+export async function getCandidateCloudProfile(userId: string) {
+  if (!firestoreDb) return null;
+  try {
+    const userRef = doc(firestoreDb, 'users', userId);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  } catch (err) {
+    console.warn('[Admin] Failed to fetch candidate profile:', err);
+    return null;
+  }
+}

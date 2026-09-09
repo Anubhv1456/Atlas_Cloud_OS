@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { db } from '@/db';
 import { generateHLC } from '@/lib/hlc';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 interface CurriculumSetScoreModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function CurriculumSetScoreModal({
   curriculumSet,
   allTopics,
 }: CurriculumSetScoreModalProps) {
+  const { assertReadOnly } = useImpersonation();
   const [step, setStep] = useState<1 | 2>(1);
   const [score, setScore] = useState<number>(70);
   const [datePreset, setDatePreset] = useState<DatePreset>('today');
@@ -115,6 +117,10 @@ export function CurriculumSetScoreModal({
   };
 
   const saveScoreAndClose = async () => {
+    if (assertReadOnly('Log Study Block Score')) {
+      onClose();
+      return;
+    }
     setIsSubmitting(true);
     try {
       let subjectName = 'General';

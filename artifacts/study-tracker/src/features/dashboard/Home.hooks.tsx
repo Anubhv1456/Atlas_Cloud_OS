@@ -19,8 +19,10 @@ import { calculateSubjectProgress } from '@/lib/progress';
 import { determineFocusSystems } from '@/features/dashboard/homeUtils';
 import { DropResult } from '@hello-pangea/dnd';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 export function useHomeLogic() {
+  const { assertReadOnly } = useImpersonation();
   const { profile } = useExamProfile();
   const lexicon = useLexicon();
 
@@ -72,6 +74,7 @@ export function useHomeLogic() {
   const aiInsight = null;
 
   const handleSubjectDragEnd = async (result: DropResult) => {
+    if (assertReadOnly('Reorder Curriculum Cards')) return;
     if (!result.destination) return;
     const items = Array.from(subjects);
     const [reorderedItem] = items.splice(result.source.index, 1);
@@ -319,6 +322,7 @@ export function useHomeLogic() {
   }, [systems, subjects, curriculumSets, pyqs, primaryFocus, customPrimarySubject, customSecondarySubject, streak, setLocation]);
 
   const handleSetFocus = (systemId: number) => {
+    if (assertReadOnly('Update Subject Focus')) return;
     if (focusDialogType) {
       setFocus(systemId, focusDialogType);
     }

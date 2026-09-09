@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease } from '@/lib/offlineLease';
 
 export function useBetaAccess() {
   const { user } = useAuth();
+  const { isImpersonating, impersonatedUser } = useImpersonation();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
@@ -18,6 +20,24 @@ export function useBetaAccess() {
   const snapshotHandledRef = useRef(false);
 
   useEffect(() => {
+    if (isImpersonating && impersonatedUser) {
+      const rawExp = impersonatedUser.betaAccessExpiresAt;
+      const exp = typeof rawExp === 'number' ? rawExp : rawExp?.toMillis ? rawExp.toMillis() : rawExp ? new Date(rawExp).getTime() : null;
+      const isExpired = exp && exp < Date.now();
+      const hasCandidateAccess = Boolean(impersonatedUser.betaAccess && !isExpired);
+
+      setHasAccess(hasCandidateAccess);
+      setExpiresAt(exp);
+      setPaymentStatus((impersonatedUser.paymentStatus as any) || null);
+      setPaymentRejectionNote(null);
+      setVaultActivationRequired(false);
+      setVaultProvenance(null);
+      setOfflineLeaseValid(true);
+      setOfflineHoursRemaining(72);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setHasAccess(false);
       setExpiresAt(null);

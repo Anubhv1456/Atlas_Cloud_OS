@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -18,6 +20,8 @@ type Tab = 'candidates' | 'affiliates';
 type StatusFilter = 'all' | 'active' | 'trial' | 'expired';
 
 export function DirectoryView() {
+  const { startImpersonation } = useImpersonation();
+  const [, setLocation] = useLocation();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('candidates');
@@ -110,6 +114,24 @@ export function DirectoryView() {
     } catch (e) {
       toast.error('Batch unlock failed');
     }
+  };
+
+  const handleImpersonate = async (targetUser: any) => {
+    await startImpersonation({
+      id: targetUser.id,
+      email: targetUser.email,
+      displayName: targetUser.displayName,
+      betaAccess: targetUser.betaAccess,
+      betaAccessExpiresAt: targetUser.betaAccessExpiresAt,
+      isTrial: targetUser.isTrial,
+      referredBy: targetUser.referredBy,
+      paymentStatus: targetUser.paymentStatus,
+      createdAt: targetUser.createdAt,
+      lastLoginAt: targetUser.lastLoginAt,
+      isAffiliate: targetUser.isAffiliate,
+      affiliateCode: targetUser.affiliateCode
+    });
+    setLocation('/');
   };
 
   const affiliatesList = users.filter(u => u.isAffiliate);
@@ -247,7 +269,7 @@ export function DirectoryView() {
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48 bg-card border-border/50">
-                              <DropdownMenuItem onClick={() => toast.info('Impersonation simulated')} className="text-xs flex items-center gap-2 cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleImpersonate(user)} className="text-xs flex items-center gap-2 cursor-pointer text-amber-400 focus:text-amber-400 focus:bg-amber-500/10">
                                 <Eye className="w-3.5 h-3.5" /> Impersonate View
                               </DropdownMenuItem>
                               <DropdownMenuSeparator className="bg-border/50" />

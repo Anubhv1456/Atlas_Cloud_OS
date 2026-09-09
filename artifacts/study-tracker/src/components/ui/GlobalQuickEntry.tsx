@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Sparkles, Hash, CornerDownLeft } from 'lucide-react';
 import { db } from '@/db';
 import { toast } from 'sonner';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 export function GlobalQuickEntry() {
+  const { assertReadOnly } = useImpersonation();
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +38,10 @@ export function GlobalQuickEntry() {
   };
 
   const processQuickEntry = async (text: string) => {
+    if (assertReadOnly('Quick Entry Score Logging')) {
+      setOpen(false);
+      return;
+    }
     try {
       // 1. QBank Block Parsing Heuristic
       // E.g., "Did a 40q block, got 65%. Struggled with Cardio and Renal."

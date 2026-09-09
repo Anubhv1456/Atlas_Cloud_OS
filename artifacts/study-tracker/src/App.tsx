@@ -48,6 +48,8 @@ import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';
+import { ImpersonationProvider, useImpersonation } from '@/contexts/ImpersonationContext';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 
 const queryClient = new QueryClient();
 
@@ -69,6 +71,7 @@ initTheme();
 function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
   const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
+  const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
   const [location, setLocation] = useLocation();
 
@@ -93,8 +96,8 @@ function ProtectedApp() {
           setLocation('/');
         }
       } else if (user) {
-        // Admin routes are completely separate from student beta-access and onboarding flow
-        if (isAdminRoute) {
+        // Admin routes are completely separate from student beta-access and onboarding flow (unless impersonating)
+        if (isAdminRoute && !isImpersonating) {
           return;
         }
         if (!hasAccess) {
@@ -106,7 +109,7 @@ function ProtectedApp() {
         }
       }
     }
-  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation]);
+  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation, isImpersonating]);
 
   if (authLoading || accessLoading) {
     return <AtlasLoadingScreen fullScreen message="Calibrating study schedule..." />;
@@ -138,17 +141,23 @@ function ProtectedApp() {
 
   if (location.startsWith('/admin')) {
     return (
-      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
-        <AdminDashboard />
-      </Suspense>
+      <div className="min-h-dvh flex flex-col w-full">
+        {isImpersonating && <ImpersonationBanner />}
+        <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
+          <AdminDashboard />
+        </Suspense>
+      </div>
     );
   }
 
   if (location === '/accept-invitation' || location === '/join') {
     return (
-      <Suspense fallback={<AtlasLoadingScreen fullScreen message="Verifying study pass..." />}>
-        <AcceptInvitation />
-      </Suspense>
+      <div className="min-h-dvh flex flex-col w-full">
+        {isImpersonating && <ImpersonationBanner />}
+        <Suspense fallback={<AtlasLoadingScreen fullScreen message="Verifying study pass..." />}>
+          <AcceptInvitation />
+        </Suspense>
+      </div>
     );
   }
 
@@ -162,52 +171,58 @@ function ProtectedApp() {
 
   if (location === '/beta-access' || !hasAccess) {
     return (
-      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
-        <BetaAccess />
-      </Suspense>
+      <div className="min-h-dvh flex flex-col w-full">
+        {isImpersonating && <ImpersonationBanner />}
+        <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
+          <BetaAccess />
+        </Suspense>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-dvh w-full relative bg-background text-foreground overflow-x-hidden">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
-      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
-      <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
-      <GlobalAnnouncements />
-      <AutoSyncEngine />
-      <DynamicIslandCapsule />
-      <BottomNav />
-      <div
-        className={cn(
-          "flex-1 min-w-0 w-full relative z-10 transition-[padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col min-h-dvh",
-          isCollapsed ? "md:pl-[72px]" : "md:pl-64 lg:pl-72"
-        )}
-      >
-        <AudioPermissionBanner />
-        <OfflineLeaseBanner />
-        <motion.main
-          key={location}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="w-full flex-1 flex flex-col"
+    <div className="flex flex-col min-h-dvh w-full relative bg-background text-foreground overflow-x-hidden">
+      {isImpersonating && <ImpersonationBanner />}
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 w-full relative">
+        <div className="pointer-events-none fixed inset-0 z-0 bg-meridian opacity-40 mix-blend-overlay dark:opacity-20 max-w-full overflow-hidden" />
+        <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
+        <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
+        <GlobalAnnouncements />
+        <AutoSyncEngine />
+        <DynamicIslandCapsule />
+        <BottomNav />
+        <div
+          className={cn(
+            "flex-1 min-w-0 w-full relative z-10 transition-[padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col min-h-dvh",
+            isCollapsed ? "md:pl-[72px]" : "md:pl-64 lg:pl-72"
+          )}
         >
-          <Suspense fallback={<AtlasLoadingScreen />}>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/subjects/:id" component={SubjectDetail} />
-              <Route path="/timeline" component={Timeline} />
-              <Route path="/radar" component={SubjectRadarPage} />
-              <Route path="/analytics" component={Analytics} />
-              <Route path="/mistakes" component={MistakeRecoveryQueue} />
-              <Route path="/settings" component={Settings} />
-              <Route path="/privacy" component={PrivacyPolicy} />
-              <Route path="/terms" component={TermsOfService} />
-              <Route path="/contact" component={Contact} />
-              <Route component={NotFound} />
-            </Switch>
-          </Suspense>
-        </motion.main>
+          <AudioPermissionBanner />
+          <OfflineLeaseBanner />
+          <motion.main
+            key={location}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="w-full flex-1 flex flex-col"
+          >
+            <Suspense fallback={<AtlasLoadingScreen />}>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/subjects/:id" component={SubjectDetail} />
+                <Route path="/timeline" component={Timeline} />
+                <Route path="/radar" component={SubjectRadarPage} />
+                <Route path="/analytics" component={Analytics} />
+                <Route path="/mistakes" component={MistakeRecoveryQueue} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/privacy" component={PrivacyPolicy} />
+                <Route path="/terms" component={TermsOfService} />
+                <Route path="/contact" component={Contact} />
+                <Route component={NotFound} />
+              </Switch>
+            </Suspense>
+          </motion.main>
+        </div>
       </div>
     </div>
   );
@@ -291,22 +306,24 @@ function App() {
   return (
     <AuthProvider>
       <FeatureFlagsProvider>
-        <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ErrorBoundary>
-            <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
-              <CurriculumInitializationEngine>
-                <ProtectedApp />
-              </CurriculumInitializationEngine>
-            </WouterRouter>
-          </ErrorBoundary>
-          <GlobalQuickEntry />
-          <AppUpdateCapsule />
-          <Toaster />
-          <UpgradePaywallModal />
-          <SonnerToaster position="top-center" richColors />
-        </TooltipProvider>
-        </QueryClientProvider>
+        <ImpersonationProvider>
+          <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <ErrorBoundary>
+              <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
+                <CurriculumInitializationEngine>
+                  <ProtectedApp />
+                </CurriculumInitializationEngine>
+              </WouterRouter>
+            </ErrorBoundary>
+            <GlobalQuickEntry />
+            <AppUpdateCapsule />
+            <Toaster />
+            <UpgradePaywallModal />
+            <SonnerToaster position="top-center" richColors />
+          </TooltipProvider>
+          </QueryClientProvider>
+        </ImpersonationProvider>
       </FeatureFlagsProvider>
     </AuthProvider>
   );
