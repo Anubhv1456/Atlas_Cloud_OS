@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { 
   Check, ArrowRight, Loader2, Users, LogOut, 
   Copy, Upload, RefreshCw, AlertCircle, ExternalLink,
-  Smartphone, Brain, Target, ShieldCheck, Sparkles, Zap, Clock
+  Smartphone, Brain, Target, ShieldCheck, Sparkles, Zap, Clock,
+  Calendar, Sliders
 } from 'lucide-react';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAuth } from '@/hooks/useAuth';
+import { useExamProfile } from '@/hooks/useExamProfile';
 import { useLocation } from 'wouter';
 import { AtlasEmblem } from '@/components/AtlasEmblem';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
@@ -44,6 +46,25 @@ export default function BetaAccess() {
   } = useBetaAccess();
   const { user, loading: authLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { profile } = useExamProfile();
+
+  const daysUntilExam = React.useMemo(() => {
+    if (!profile.targetExamDate) return null;
+    const target = new Date(profile.targetExamDate);
+    if (isNaN(target.getTime())) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = target.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : null;
+  }, [profile.targetExamDate]);
+
+  const formattedExamDate = React.useMemo(() => {
+    if (!profile.targetExamDate) return null;
+    const d = new Date(profile.targetExamDate);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }, [profile.targetExamDate]);
 
   // Dynamic Payment Settings Config
   const [payConfig, setPayConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
@@ -275,13 +296,19 @@ export default function BetaAccess() {
             </div>
           </div>
         ) : !hasClaimedTrial ? (
-          /* Instant Trial Claim Card */
+          /* Instant Trial Claim Card - Calibrated & Personalized */
           <div className="w-full bg-[#0a0a0a] border border-teal-500/30 rounded-[28px] p-6 sm:p-10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.8)] text-center space-y-6 relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-teal-500/15 blur-[60px] pointer-events-none" />
 
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-950/40 border border-teal-500/40 text-teal-300 text-xs font-semibold relative z-10">
               <Zap className="w-3.5 h-3.5 text-teal-400" />
-              <span>{isAffiliateReferred ? 'AMBASSADOR INVITATION (14-DAY PASS)' : 'INSTANT ACCESS AVAILABLE'}</span>
+              <span>
+                {isAffiliateReferred 
+                  ? `AMBASSADOR INVITATION (${trialDays}-DAY PASS)` 
+                  : profile.targetExam 
+                    ? `${profile.targetExam.toUpperCase()} CALIBRATION READY` 
+                    : 'INSTANT ACCESS AVAILABLE'}
+              </span>
             </div>
 
             <div className="space-y-3 relative z-10">
@@ -289,9 +316,40 @@ export default function BetaAccess() {
                 Start Your {trialDays}-Day Clinical Trial
               </h1>
               <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
-                Begin studying immediately with full unrestricted access to the medical syllabus, active recall engines, and progress tracker. No credit card required.
+                {profile.targetExam ? (
+                  <>Your personalized <span className="text-zinc-200 font-medium">{profile.targetExam}</span> study roadmap is calibrated and ready. Begin studying immediately with full unrestricted access to your medical syllabus and active recall engines.</>
+                ) : (
+                  <>Begin studying immediately with full unrestricted access to the medical syllabus, active recall engines, and progress tracker. No credit card required.</>
+                )}
               </p>
             </div>
+
+            {/* Personalized Calibration Snapshot */}
+            {profile.targetExam && (
+              <div className="bg-white/[0.02] border border-teal-500/20 rounded-2xl p-4 text-left grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">Target Exam</span>
+                  <span className="text-xs font-bold text-teal-300 truncate block">{profile.targetExam}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">Timeline</span>
+                  <span className="text-xs font-bold text-zinc-200 block">
+                    {daysUntilExam ? `${daysUntilExam} Days Left` : 'Self-Paced'}
+                  </span>
+                  {formattedExamDate && (
+                    <span className="text-[10px] text-zinc-500 block truncate">{formattedExamDate}</span>
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">Academic Stage</span>
+                  <span className="text-xs font-bold text-zinc-200 truncate block">{profile.currentYear || 'MBBS Candidate'}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">Daily Target</span>
+                  <span className="text-xs font-bold text-zinc-200 block">{profile.dailyQuestionGoal || 40} Qs / Day</span>
+                </div>
+              </div>
+            )}
 
             {/* Trial Feature Highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left relative z-10">
@@ -299,7 +357,9 @@ export default function BetaAccess() {
                 <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
                   <Brain className="w-4 h-4" />
                 </div>
-                <div className="text-xs font-medium text-zinc-200">19 Medical Disciplines</div>
+                <div className="text-xs font-medium text-zinc-200">
+                  {profile.targetExam?.includes('USMLE') ? 'Organ Systems & Sciences' : '19 Medical Disciplines'}
+                </div>
                 <div className="text-[11px] text-zinc-500">First Aid aligned question taxonomy and subject trackers.</div>
               </div>
 
@@ -316,7 +376,7 @@ export default function BetaAccess() {
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="text-xs font-medium text-zinc-200">FSRS Repetition</div>
-                <div className="text-[11px] text-zinc-500">Adaptive scheduling algorithm built specifically for med students.</div>
+                <div className="text-[11px] text-zinc-500">Adaptive scheduling algorithm calibrated specifically for med students.</div>
               </div>
             </div>
 
@@ -335,18 +395,28 @@ export default function BetaAccess() {
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-black" />
-                    <span>Activate {trialDays}-Day Instant Trial</span>
+                    <span>Activate {trialDays}-Day {profile.targetExam ? `${profile.targetExam} ` : ''}Instant Trial</span>
                   </>
                 )}
               </button>
 
-              <button 
-                onClick={() => window.location.reload()}
-                className="h-10 rounded-xl bg-transparent hover:bg-white/5 text-zinc-400 hover:text-zinc-200 font-medium text-xs flex items-center justify-center gap-2 transition-colors border border-white/10 cursor-pointer"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>Already Purchased? Check Verification Status</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
+                <button 
+                  onClick={() => setLocation('/onboarding')}
+                  className="text-xs text-zinc-400 hover:text-zinc-200 font-medium transition-colors flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-white/5 cursor-pointer"
+                >
+                  <Sliders className="w-3 h-3 text-teal-400" />
+                  <span>Adjust Calibration Settings</span>
+                </button>
+
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 font-medium transition-colors flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-white/5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Already Purchased? Check Status</span>
+                </button>
+              </div>
             </div>
             
             <p className="text-[11px] text-zinc-500 relative z-10">

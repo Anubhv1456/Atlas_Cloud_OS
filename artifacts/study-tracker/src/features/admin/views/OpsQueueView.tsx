@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { 
-   
-   
-   
-  
   getContactMessages,
   updateContactMessageStatus,
   deleteContactMessage,
   ContactMessage,
   getAllMarkersForAdmin,
   updateMarkerStatusAdmin,
-  getDashboardStats
+  getDashboardStats,
+  getPaymentSubmissions,
+  approvePayment,
+  rejectPayment,
+  PaymentSubmission
 } from '@/lib/admin';
 import { Marker, MarkerStatus } from '@/lib/markers';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-type QueueTab = 'action_needed' | 'support' | 'markers';
+type QueueTab = 'action_needed' | 'payments' | 'support' | 'markers';
 type PaymentFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type SupportFilter = 'all' | 'unread' | 'read' | 'archived';
 type MarkerFilter = 'all' | 'pending' | 'reported' | 'published';
@@ -41,15 +41,20 @@ export function OpsQueueView() {
   // Data collections
   const [supportMessages, setSupportMessages] = useState<ContactMessage[]>([]);
   const [markers, setMarkers] = useState<Marker[]>([]);
+  const [paymentSubmissions, setPaymentSubmissions] = useState<PaymentSubmission[]>([]);
   const [stats, setStats] = useState({ users: 0, signups: 0, pendingMarkers: 0, reportedMarkers: 0 });
 
   // Filters
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('pending');
   const [supportFilter, setSupportFilter] = useState<SupportFilter>('unread');
   const [markerFilter, setMarkerFilter] = useState<MarkerFilter>('reported');
 
-  // Preview Modals
+  // Preview Modals & Actions
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<PaymentSubmission | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
 
   // Copied item ID feedback
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -57,14 +62,16 @@ export function OpsQueueView() {
   const fetchAllData = async () => {
     setRefreshing(true);
     try {
-      const [supportData, markersData, statsData] = await Promise.all([
+      const [supportData, markersData, statsData, paymentData] = await Promise.all([
         getContactMessages(),
         getAllMarkersForAdmin(),
-        getDashboardStats()
+        getDashboardStats(),
+        getPaymentSubmissions()
       ]);
       setSupportMessages(supportData);
       setMarkers(markersData);
       setStats(statsData);
+      setPaymentSubmissions(paymentData);
     } catch (e) {
       console.error('OpsQueue load error:', e);
       toast.error('Failed to sync live ops data.');
@@ -122,12 +129,57 @@ export function OpsQueueView() {
     }
   };
 
+  // Payment Handlers
+  const handleApprovePayment = async (payment: PaymentSubmission) => {
+    setProcessingPaymentId(payment.id);
+    try {
+      await approvePayment(payment.id, payment.userId, user?.email || undefined);
+      setPaymentSubmissions(prev => prev.map(p => p.id === payment.id ? { 
+        ...p, 
+        status: 'approved', 
+        reviewedAt: new Date(), 
+        reviewedBy: user?.email || 'admin' 
+      } : p));
+      toast.success(`Access granted to ${payment.userEmail}!`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to approve payment');
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectTarget) return;
+    setProcessingPaymentId(rejectTarget.id);
+    try {
+      const reason = rejectionReason.trim() || 'Verification unsuccessful.';
+      await rejectPayment(rejectTarget.id, rejectTarget.userId, reason, user?.email || undefined);
+      setPaymentSubmissions(prev => prev.map(p => p.id === rejectTarget.id ? { 
+        ...p, 
+        status: 'rejected', 
+        rejectionNote: reason, 
+        reviewedAt: new Date(), 
+        reviewedBy: user?.email || 'admin' 
+      } : p));
+      toast.success(`Payment rejected for ${rejectTarget.userEmail}`);
+      setRejectTarget(null);
+      setRejectionReason('');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to reject payment');
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
   // Metric counts
+  const pendingPayments = paymentSubmissions.filter(p => p.status === 'pending');
   const unreadSupport = supportMessages.filter(m => m.status === 'unread');
   const pendingMarkers = markers.filter(m => m.status === 'pending');
   const reportedMarkers = markers.filter(m => (m.reportedBy || []).length > 0);
 
-  const actionItemsCount = unreadSupport.length + reportedMarkers.length;
+  const actionItemsCount = pendingPayments.length + unreadSupport.length + reportedMarkers.length;
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -159,7 +211,7 @@ export function OpsQueueView() {
         </button>
       </div>
 
-      {/* KPI Highlights Strip */}
+      {/* KPI Highlights Strip (4 Symmetrical Columns) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <div 
           onClick={() => { setActiveQueue('action_needed'); }}
@@ -176,6 +228,23 @@ export function OpsQueueView() {
           </div>
           <div className="text-2xl font-bold mt-2 text-teal-300">{actionItemsCount}</div>
           <p className="text-xs text-muted-foreground mt-1">Pending items needing review</p>
+        </div>
+
+        <div 
+          onClick={() => { setActiveQueue('payments'); setPaymentFilter('pending'); }}
+          className={cn(
+            "p-4 rounded-2xl border transition-all cursor-pointer",
+            activeQueue === 'payments'
+              ? "bg-zinc-800/40 border-amber-500/40 ring-1 ring-amber-500/20"
+              : "bg-card/50 border-border/50 hover:bg-card"
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Pending Payments</span>
+            <CreditCard className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="text-2xl font-bold mt-2 text-amber-300">{pendingPayments.length}</div>
+          <p className="text-xs text-muted-foreground mt-1">UPI proofs awaiting audit</p>
         </div>
 
         <div 
@@ -227,6 +296,19 @@ export function OpsQueueView() {
           >
             <Sparkles className="w-3.5 h-3.5" />
             🔥 Priority Stream {actionItemsCount > 0 && <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-xs">{actionItemsCount}</span>}
+          </button>
+
+          <button
+            onClick={() => { setActiveQueue('payments'); setPaymentFilter('pending'); }}
+            className={cn(
+              "px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition-all",
+              activeQueue === 'payments'
+                ? "bg-card text-foreground shadow-sm border border-border/60"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+            Payment Audits {pendingPayments.length > 0 && <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-black text-xs font-bold">{pendingPayments.length}</span>}
           </button>
 
           <button
@@ -283,11 +365,84 @@ export function OpsQueueView() {
                   <CheckCircle2 className="w-12 h-12 text-teal-400 mx-auto" />
                   <h3 className="text-lg font-bold">All Operational Queues Clear!</h3>
                   <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                    No unread support tickets, or reported community markers right now.
+                    No pending payments, unread support tickets, or reported community markers right now.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
+
+                  {/* Pending Payments Section */}
+                  {pendingPayments.length > 0 && (
+                    <div className="bg-card border border-amber-500/30 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-2 border-b border-border/50">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                          <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+                            Pending Payment Verifications ({pendingPayments.length})
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => { setActiveQueue('payments'); setPaymentFilter('pending'); }}
+                          className="text-xs text-amber-400 hover:underline flex items-center gap-1 font-semibold"
+                        >
+                          View Payment Queue <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        {pendingPayments.slice(0, 3).map(p => (
+                          <div key={p.id} className="p-4 rounded-xl border border-border/60 bg-background/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-300">
+                                  ₹{p.amount || 499}
+                                </Badge>
+                                <span className="font-semibold text-sm">{p.userEmail}</span>
+                                {p.userName && <span className="text-xs text-muted-foreground">({p.userName})</span>}
+                              </div>
+                              <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 font-mono">
+                                <span>Ref: <strong className="text-foreground">{p.upiReference}</strong></span>
+                                <button 
+                                  onClick={() => copyToClipboard(p.upiReference, p.id)}
+                                  className="text-muted-foreground hover:text-foreground inline-flex items-center"
+                                  title="Copy UTR / Reference"
+                                >
+                                  {copiedId === p.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                                <span>•</span>
+                                <span>{p.createdAt?.toDate ? formatDistanceToNow(p.createdAt.toDate(), { addSuffix: true }) : 'Recently'}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {p.proofUrl && (
+                                <button
+                                  onClick={() => setPreviewImage(p.proofUrl)}
+                                  className="px-3 py-1.5 rounded-lg border border-border/60 text-xs font-semibold hover:bg-muted flex items-center gap-1 text-teal-400"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View Proof
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setRejectTarget(p)}
+                                disabled={processingPaymentId === p.id}
+                                className="px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold"
+                              >
+                                Reject
+                              </button>
+                              <button
+                                onClick={() => handleApprovePayment(p)}
+                                disabled={processingPaymentId === p.id}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" /> Grant Access
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Unread Support Tickets Section */}
                   {unreadSupport.length > 0 && (
@@ -396,6 +551,125 @@ export function OpsQueueView() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* QUEUE 2: PAYMENT AUDITS */}
+          {activeQueue === 'payments' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                {(['pending', 'approved', 'rejected', 'all'] as const).map(tab => {
+                  const count = tab === 'all' 
+                    ? paymentSubmissions.length 
+                    : paymentSubmissions.filter(p => p.status === tab).length;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setPaymentFilter(tab)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all",
+                        paymentFilter === tab
+                          ? "bg-zinc-800/50 text-amber-300 border border-amber-500/30"
+                          : "text-muted-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      {tab} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                {paymentSubmissions
+                  .filter(p => {
+                    const matchStatus = paymentFilter === 'all' || p.status === paymentFilter;
+                    const matchSearch = !searchQuery ||
+                      p.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      (p.userName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      p.upiReference.toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchStatus && matchSearch;
+                  })
+                  .map(p => (
+                    <div key={p.id} className="p-4 rounded-xl border border-border/60 bg-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className={cn("text-xs uppercase font-bold", 
+                              p.status === 'approved' && "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
+                              p.status === 'pending' && "border-amber-500/40 text-amber-400 bg-amber-500/10",
+                              p.status === 'rejected' && "border-rose-500/40 text-rose-400 bg-rose-500/10"
+                            )}
+                          >
+                            {p.status}
+                          </Badge>
+                          <span className="font-bold text-sm">{p.userEmail}</span>
+                          {p.userName && <span className="text-xs text-muted-foreground">({p.userName})</span>}
+                          <Badge variant="outline" className="text-xs text-muted-foreground">₹{p.amount || 499}</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-3 pt-1">
+                          <span className="font-mono">
+                            UTR / Ref: <strong className="text-foreground">{p.upiReference}</strong>
+                          </span>
+                          <button 
+                            onClick={() => copyToClipboard(p.upiReference, p.id)}
+                            className="text-muted-foreground hover:text-foreground inline-flex items-center"
+                            title="Copy Ref"
+                          >
+                            {copiedId === p.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                          <span>•</span>
+                          <span>{p.createdAt?.toDate ? format(p.createdAt.toDate(), 'PPP p') : 'Recent'}</span>
+                          {p.reviewedBy && (
+                            <>
+                              <span>•</span>
+                              <span>Reviewed by: {p.reviewedBy}</span>
+                            </>
+                          )}
+                          {p.rejectionNote && (
+                            <span className="text-rose-400 font-sans">Reason: {p.rejectionNote}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {p.proofUrl && (
+                          <button
+                            onClick={() => setPreviewImage(p.proofUrl)}
+                            className="px-3 py-1.5 rounded-lg border border-border/60 text-xs font-semibold hover:bg-muted flex items-center gap-1.5 text-teal-400"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View Proof
+                          </button>
+                        )}
+                        {p.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => setRejectTarget(p)}
+                              disabled={processingPaymentId === p.id}
+                              className="px-3 py-1.5 rounded-lg border border-rose-500/40 text-rose-400 hover:bg-rose-500/20 text-xs font-semibold"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => handleApprovePayment(p)}
+                              disabled={processingPaymentId === p.id}
+                              className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-semibold flex items-center gap-1.5"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Approve & Grant Beta
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {paymentSubmissions.filter(p => paymentFilter === 'all' || p.status === paymentFilter).length === 0 && (
+                  <div className="py-12 text-center text-muted-foreground border border-border/40 rounded-xl bg-card/20">
+                    <CheckCircle2 className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                    <p className="text-xs">No payment submissions found under "{paymentFilter}".</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -602,6 +876,87 @@ export function OpsQueueView() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT PROOF PREVIEW MODAL */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-card border border-border/80 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                Payment Proof Screenshot
+              </h3>
+              <div className="flex items-center gap-2">
+                <a 
+                  href={previewImage} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="p-1.5 rounded-lg border border-border/60 hover:bg-muted text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Full Size
+                </a>
+                <button onClick={() => setPreviewImage(null)} className="p-1.5 rounded-lg hover:bg-muted">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="max-h-[70vh] overflow-auto rounded-xl border border-border/40 bg-black/40 flex items-center justify-center p-2">
+              <img 
+                src={previewImage} 
+                alt="Payment proof" 
+                className="max-h-[65vh] w-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT REJECTION MODAL */}
+      {rejectTarget && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-card border border-rose-500/40 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-base text-rose-400 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Reject Payment Verification
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  User: <strong className="text-foreground">{rejectTarget.userEmail}</strong> (Ref: {rejectTarget.upiReference})
+                </p>
+              </div>
+              <button onClick={() => setRejectTarget(null)} className="p-1 rounded-lg hover:bg-muted">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Reason for Rejection</label>
+              <Input
+                value={rejectionReason}
+                onChange={e => setRejectionReason(e.target.value)}
+                placeholder="e.g. Invalid UTR reference / Amount mismatch"
+                className="bg-background text-xs"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setRejectTarget(null)}
+                className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-xl text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={processingPaymentId === rejectTarget.id}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold"
+              >
+                Confirm Rejection
+              </button>
             </div>
           </div>
         </div>

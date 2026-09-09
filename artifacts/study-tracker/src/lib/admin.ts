@@ -90,7 +90,7 @@ export async function deleteUserAsAdmin(userId: string) {
 export async function getAllUsersForAdmin() {
   if (!firestoreDb) return [];
   const usersCol = collection(firestoreDb, 'users');
-  const q = query(usersCol, limit(200));
+  const q = query(usersCol, limit(500));
   const snapshot = await getDocs(q);
 
   let adminUids = new Set<string>();

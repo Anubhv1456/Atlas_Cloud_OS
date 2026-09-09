@@ -71,7 +71,7 @@ export function DirectoryView() {
       await updateUserBetaAccess(userId, true, days, isTrial);
       const now = Date.now();
       const expiresAt = days ? now + days * 24 * 60 * 60 * 1000 : null;
-      setUsers(users.map(u => u.id === userId ? { 
+      setUsers(prev => prev.map(u => u.id === userId ? { 
         ...u, betaAccess: true, isTrial, betaAccessExpiresAt: expiresAt 
       } : u));
       toast.success(isTrial ? `${days}-Day Trial Access granted` : 'Lifetime Access granted');
@@ -88,7 +88,7 @@ export function DirectoryView() {
       const totalDays = Math.ceil((newExpiry - Date.now()) / (24 * 60 * 60 * 1000));
       
       await updateUserBetaAccess(user.id, true, totalDays, true);
-      setUsers(users.map(u => u.id === user.id ? {
+      setUsers(prev => prev.map(u => u.id === user.id ? {
         ...u,
         betaAccess: true,
         isTrial: true,
@@ -103,7 +103,7 @@ export function DirectoryView() {
   const handleRevokeAccess = async (userId: string) => {
     try {
       await updateUserBetaAccess(userId, false);
-      setUsers(users.map(u => u.id === userId ? { ...u, betaAccess: false, isTrial: false, betaAccessExpiresAt: null } : u));
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, betaAccess: false, isTrial: false, betaAccessExpiresAt: null } : u));
       toast.success('Access revoked');
     } catch (e) {
       toast.error('Failed to revoke access');
@@ -114,7 +114,7 @@ export function DirectoryView() {
     if (!confirm('Are you sure you want to permanently delete this user?')) return;
     try {
       await deleteUserAsAdmin(userId);
-      setUsers(users.filter(u => u.id !== userId));
+      setUsers(prev => prev.filter(u => u.id !== userId));
       toast.success('User deleted');
     } catch (e) {
       toast.error('Failed to delete user');
@@ -427,7 +427,7 @@ export function DirectoryView() {
                       <td className="py-3 px-4 text-xs text-indigo-400 font-mono">{aff.affiliateCode}</td>
                       <td className="py-3 px-4 text-center font-medium">{clients.length}</td>
                       <td className="py-3 px-4 text-center"><Badge variant="outline" className="bg-teal-500/10 text-teal-400">{activeClients.length}</Badge></td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-400">${activeClients.length * 50}</td>
+                      <td className="py-3 px-4 text-right font-bold text-emerald-400">₹{(activeClients.length * 100).toLocaleString('en-IN')}</td>
                     </tr>
                   );
                 })}

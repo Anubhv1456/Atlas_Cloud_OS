@@ -22,6 +22,7 @@ import {
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { computeIntelligentRecommendation, RecommendationResult } from '@/lib/recommendation-engine';
 import { toast } from 'sonner';
 
@@ -35,6 +36,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const [, setLocation] = useLocation();
   const { profile, updateProfile } = useExamProfile();
   const { markOnboarded } = useOnboardingStatus();
+  const { hasAccess } = useBetaAccess();
 
   // Step 2 state: Goal
   const [selectedGoal, setSelectedGoal] = useState<string>('MBBS Professional Exams');
@@ -149,6 +151,10 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
         description: 'You can adjust your exam goal anytime from Exam Target.'
       });
     }
+
+    if (!hasAccess) {
+      setLocation('/beta-access');
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -261,6 +267,11 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
     toast.success('Atlas Calibrated', {
       description: 'Your intelligent study plan is active.'
     });
+
+    if (!hasAccess) {
+      setLocation('/beta-access');
+      return;
+    }
 
     if (recommendedSystem?.subjectId) {
       if (recommendedSystem.systemId) {
@@ -754,8 +765,17 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 size="lg"
                 className="w-full rounded-2xl text-sm font-bold h-12 shadow-md gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
               >
-                <BookOpen className="w-4 h-4" />
-                Start Studying
+                {!hasAccess ? (
+                  <>
+                    <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                    <span>Proceed to Trial Activation</span>
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    <span>Start Studying</span>
+                  </>
+                )}
               </Button>
             </motion.div>
           )}

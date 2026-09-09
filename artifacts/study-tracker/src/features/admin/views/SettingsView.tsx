@@ -135,47 +135,159 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* 2. Pricing Engine */}
+      {/* 2. Pricing & Cohort Engine */}
       <section className="space-y-4">
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-          <PaymentIcon className="w-4 h-4 text-amber-400" /> Pricing Engine
+          <PaymentIcon className="w-4 h-4 text-amber-400" /> Pricing & Cohort Settings
         </h2>
         <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Plan Title</label>
-              <Input value={paymentConfig.title} onChange={e => setPaymentConfig({...paymentConfig, title: e.target.value})} className="bg-background" />
+              <Input 
+                value={paymentConfig.planTitle || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, planTitle: e.target.value})} 
+                className="bg-background" 
+                placeholder="e.g. Closed Beta Membership"
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground">Price (₹)</label>
-              <Input type="number" value={paymentConfig.priceInINR} onChange={e => setPaymentConfig({...paymentConfig, priceInINR: Number(e.target.value)})} className="bg-background" />
+              <label className="text-xs font-semibold text-muted-foreground">Price ({paymentConfig.currencySymbol || '₹'})</label>
+              <Input 
+                type="number" 
+                value={paymentConfig.price ?? 499} 
+                onChange={e => setPaymentConfig({...paymentConfig, price: Number(e.target.value)})} 
+                className="bg-background" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Duration Text</label>
-              <Input value={paymentConfig.durationText} onChange={e => setPaymentConfig({...paymentConfig, durationText: e.target.value})} className="bg-background" />
+              <Input 
+                value={paymentConfig.durationText || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, durationText: e.target.value})} 
+                className="bg-background" 
+                placeholder="e.g. 3 Months"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Duration (Days)</label>
+              <Input 
+                type="number" 
+                value={paymentConfig.durationDays ?? 90} 
+                onChange={e => setPaymentConfig({...paymentConfig, durationDays: Number(e.target.value)})} 
+                className="bg-background" 
+              />
             </div>
           </div>
+
+          {/* Cohort & Urgency Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-border/30 pt-6">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Cohort Header</label>
+              <Input 
+                value={paymentConfig.cohortHeaderTitle || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, cohortHeaderTitle: e.target.value})} 
+                className="bg-background" 
+                placeholder="e.g. CLOSED BETA • 2026 MEDICAL COHORT"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Cohort Badge Text</label>
+              <Input 
+                value={paymentConfig.cohortBadgeText || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, cohortBadgeText: e.target.value})} 
+                className="bg-background" 
+                placeholder="e.g. 200 Closed Beta Seats"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Total Cohort Seats</label>
+              <Input 
+                type="number" 
+                value={paymentConfig.totalSeats ?? 200} 
+                onChange={e => setPaymentConfig({...paymentConfig, totalSeats: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Claimed Seats</label>
+              <Input 
+                type="number" 
+                value={paymentConfig.claimedSeats ?? 38} 
+                onChange={e => setPaymentConfig({...paymentConfig, claimedSeats: Number(e.target.value)})} 
+                className="bg-background" 
+              />
+            </div>
+          </div>
+
+          {/* UPI & Payment Gateway Parameters */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/30 pt-6">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">UPI ID (VPA)</label>
+              <Input 
+                value={paymentConfig.upiId || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, upiId: e.target.value})} 
+                className="bg-background font-mono text-xs" 
+                placeholder="e.g. yourname@upi"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">UPI QR Image URL (Optional)</label>
+              <Input 
+                value={paymentConfig.upiQrUrl || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, upiQrUrl: e.target.value})} 
+                className="bg-background text-xs" 
+                placeholder="https://..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">External Payment Link (Optional)</label>
+              <Input 
+                value={paymentConfig.paymentLinkUrl || ''} 
+                onChange={e => setPaymentConfig({...paymentConfig, paymentLinkUrl: e.target.value})} 
+                className="bg-background text-xs" 
+                placeholder="https://rzp.io/..."
+              />
+            </div>
+          </div>
+
+          {/* Tab Visibility Toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/30 pt-4">
+            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
+              <span className="text-xs font-medium">Show UPI ID Tab</span>
+              <Switch checked={paymentConfig.enableUpiTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableUpiTab: v})} />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
+              <span className="text-xs font-medium">Show QR Code Tab</span>
+              <Switch checked={paymentConfig.enableQrTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableQrTab: v})} />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border/30">
+              <span className="text-xs font-medium">Show External Link Tab</span>
+              <Switch checked={paymentConfig.enableLinkTab ?? true} onCheckedChange={(v) => setPaymentConfig({...paymentConfig, enableLinkTab: v})} />
+            </div>
+          </div>
+
           <div className="space-y-2 border-t border-border/30 pt-6">
             <label className="text-xs font-semibold text-muted-foreground">Benefits (Bullet Points)</label>
             <div className="space-y-2">
-              {paymentConfig.benefits.map((b, i) => (
+              {(paymentConfig.benefits || []).map((b, i) => (
                 <div key={i} className="flex gap-2">
                   <Input value={b} onChange={e => {
-                    const newB = [...paymentConfig.benefits]; newB[i] = e.target.value;
+                    const newB = [...(paymentConfig.benefits || [])]; newB[i] = e.target.value;
                     setPaymentConfig({...paymentConfig, benefits: newB});
                   }} className="bg-background" />
-                  <Button variant="ghost" onClick={() => setPaymentConfig({...paymentConfig, benefits: paymentConfig.benefits.filter((_, idx) => idx !== i)})} className="text-rose-400">X</Button>
+                  <Button variant="ghost" onClick={() => setPaymentConfig({...paymentConfig, benefits: (paymentConfig.benefits || []).filter((_, idx) => idx !== i)})} className="text-rose-400">X</Button>
                 </div>
               ))}
               <div className="flex gap-2">
                 <Input value={newBenefit} onChange={e => setNewBenefit(e.target.value)} placeholder="Add new benefit..." className="bg-background" />
-                <Button onClick={() => { if(newBenefit) { setPaymentConfig({...paymentConfig, benefits: [...paymentConfig.benefits, newBenefit]}); setNewBenefit(''); } }} className="bg-muted text-foreground">Add</Button>
+                <Button onClick={() => { if(newBenefit) { setPaymentConfig({...paymentConfig, benefits: [...(paymentConfig.benefits || []), newBenefit]}); setNewBenefit(''); } }} className="bg-muted text-foreground">Add</Button>
               </div>
             </div>
           </div>
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSavePayments} className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30">
-              <Save className="w-4 h-4 mr-2"/> Save Pricing
+              <Save className="w-4 h-4 mr-2"/> Save Pricing & Cohort
             </Button>
           </div>
         </div>

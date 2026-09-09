@@ -37,6 +37,7 @@ const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Contact = lazy(() => import('@/pages/Contact'));
 const BetaAccess = lazy(() => import('@/pages/BetaAccess'));
+const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
 const AffiliatePartnerPage = lazy(() => import('@/features/affiliate/AffiliatePartnerPage'));
 const Analytics = lazy(() => import('@/features/analytics/Analytics'));
@@ -49,6 +50,7 @@ import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 
 
 import { useBetaAccess } from '@/hooks/useBetaAccess';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { ImpersonationProvider, useImpersonation } from '@/contexts/ImpersonationContext';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 
@@ -72,6 +74,7 @@ initTheme();
 function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
   const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
+  const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
   const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
   const [location, setLocation] = useLocation();
@@ -88,7 +91,7 @@ function ProtectedApp() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !accessLoading) {
+    if (!authLoading && !accessLoading && !onboardingLoading) {
       const isPublic = ['/privacy', '/terms', '/contact', '/accept-invitation', '/join'].includes(location);
       const isAdminRoute = location.startsWith('/admin');
 
@@ -101,8 +104,19 @@ function ProtectedApp() {
         if (isAdminRoute && !isImpersonating) {
           return;
         }
+
+        // 1. Run onboarding calibration first after login before trial screen
+        if (hasOnboarded === false) {
+          if (location !== '/onboarding' && location !== '/accept-invitation' && location !== '/join') {
+            setLocation('/onboarding');
+          }
+          return;
+        }
+
+        // 2. Once onboarded, check beta access and trial status
         if (!hasAccess) {
-          if (location !== '/beta-access' && location !== '/accept-invitation' && location !== '/join') {
+          // Allow candidate to visit /onboarding if they wish to adjust calibration
+          if (location !== '/beta-access' && location !== '/onboarding' && location !== '/accept-invitation' && location !== '/join') {
             setLocation('/beta-access');
           }
         } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation' || location === '/join')) {
@@ -110,9 +124,9 @@ function ProtectedApp() {
         }
       }
     }
-  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, location, setLocation, isImpersonating]);
+  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating]);
 
-  if (authLoading || accessLoading) {
+  if (authLoading || accessLoading || onboardingLoading) {
     return <AtlasLoadingScreen fullScreen message="Calibrating study schedule..." />;
   }
 
@@ -167,6 +181,17 @@ function ProtectedApp() {
       <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
         <Landing />
       </Suspense>
+    );
+  }
+
+  if (location === '/onboarding' || (user && hasOnboarded === false && !location.startsWith('/admin') && !['/privacy', '/terms', '/contact', '/accept-invitation', '/join'].includes(location))) {
+    return (
+      <div className="min-h-dvh flex flex-col w-full">
+        {isImpersonating && <ImpersonationBanner />}
+        <Suspense fallback={<AtlasLoadingScreen fullScreen message="Loading calibration wizard..." />}>
+          <Onboarding />
+        </Suspense>
+      </div>
     );
   }
 

@@ -180,7 +180,7 @@ export function AnalyticsView() {
             <div>
               <div className="flex justify-between items-end mb-2">
                 <div>
-                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Reads</div>
+                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Reads (Est.)</div>
                   <div className="text-sm font-bold text-foreground">{estDailyReads.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ 50k Free</span></div>
                 </div>
                 <div className="text-xs font-mono font-bold text-teal-400">{readsPct}%</div>
@@ -196,7 +196,7 @@ export function AnalyticsView() {
             <div className="border-t border-border/40 pt-4">
               <div className="flex justify-between items-end mb-2">
                 <div>
-                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Writes</div>
+                  <div className="text-xs font-semibold text-muted-foreground">Firestore Daily Writes (Est.)</div>
                   <div className="text-sm font-bold text-foreground">{estDailyWrites.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">/ 20k Free</span></div>
                 </div>
                 <div className="text-xs font-mono font-bold text-indigo-400">{writesPct}%</div>
@@ -211,8 +211,8 @@ export function AnalyticsView() {
             
             <div className="flex justify-between items-center border-t border-border/40 pt-4">
               <div>
-                <div className="text-xs text-muted-foreground font-semibold">Est. Cost Per Active User</div>
-                <div className="text-lg font-bold text-emerald-400">$0.04</div>
+                <div className="text-xs text-muted-foreground font-semibold">Est. Cost Per Active Student</div>
+                <div className="text-lg font-bold text-emerald-400">₹3.50 <span className="text-xs text-muted-foreground font-normal">(~$0.04)</span></div>
               </div>
               <Flame className="w-5 h-5 text-rose-500/50" />
             </div>
