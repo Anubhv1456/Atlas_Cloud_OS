@@ -42,7 +42,7 @@ const navItems = [
   }
 ];
 
-export function AdminDashboard() {
+export default function AdminDashboard() {
   const { isAdmin, loading: adminCheckLoading } = useAdmin();
   const [, setLocation] = useLocation();
   const { signOut, user } = useAuth();
