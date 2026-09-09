@@ -43,7 +43,8 @@ export async function updateUserBetaAccess(userId: string, betaAccess: boolean, 
       betaAccess: true,
       betaAccessExpiresAt,
       betaGrantedAt: new Date(),
-      isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15)
+      isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
+      onboardingCompleted: true
     }, { merge: true });
   } else {
     await setDoc(userRef, {
@@ -66,6 +67,7 @@ export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: bo
         betaAccessExpiresAt,
         betaGrantedAt: new Date(),
         isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
+        onboardingCompleted: true,
         ...(referredBy ? { referredBy } : {})
       }, { merge: true });
     } else {

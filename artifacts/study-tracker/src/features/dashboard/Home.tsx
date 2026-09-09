@@ -81,10 +81,9 @@ export default function Home() {
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
   useEffect(() => {
-    // Auto trigger onboarding if completed flag is missing
-    if (!onboardingLoading && hasOnboarded === false) {
-      setOnboardingOpen(true);
-    } else if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
+    // Pillar 4: Onboarding is strictly governed by App.tsx at the route level (/onboarding).
+    // Home dashboard only triggers the initial triage once the user is confirmed onboarded.
+    if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
       setTriageOpen(true);
     }
   }, [hasOnboarded, onboardingLoading, isConfigured, profile.hasCompletedTriage]);

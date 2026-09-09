@@ -1,14 +1,15 @@
 
 
 export interface UIPreference {
-  id: string; // 'subject:1' or 'system:2'
-  type: 'subject' | 'system';
-  entityId: number;
+  id: string; // 'subject:1' or 'system:2' or 'onboarding_status'
+  type?: 'subject' | 'system' | 'onboarding' | 'setting';
+  entityId?: number;
   order?: number;
   focus?: 'primary' | 'secondary' | null;
   focusUpdatedAt?: Date | null;
   customTopics?: { id: string; name: string; deleted?: boolean }[];
   examProfile?: string;
+  onboardingCompleted?: boolean;
   updatedAt: Date;
   hlc?: string;
 }

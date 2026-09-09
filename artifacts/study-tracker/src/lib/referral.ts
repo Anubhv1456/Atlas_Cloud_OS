@@ -259,12 +259,15 @@ export async function claimReferralCode(
       referredByCode: cleanCode,
       referredByUid: codeDetails.ownerUid,
       referralStatus: 'claimed',
+      onboardingCompleted: true,
       updatedAt: new Date()
     }, { merge: true });
 
     // Stash local storage for instant offline UI
     localStorage.setItem(`beta_access_${user.uid}`, 'true');
     localStorage.setItem(`beta_access_expiry_${user.uid}`, expiryTimestamp.toString());
+    localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
+    localStorage.setItem('atlas_onboarding_completed', 'true');
     sessionStorage.removeItem('atlas_pending_ref_code');
 
     return { 

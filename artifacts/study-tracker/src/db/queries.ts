@@ -6,6 +6,7 @@ import { scheduleFirstRevision, scheduleNextRevision, isRevisionDue, today, sort
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generateHLC } from '../lib/hlc';
+import { ALL_SUBJECTS } from '@/data/ontology';
 export function useSubjects() {
   return useLiveQuery(async () => {
     const subjects = await db.subjects.toArray().then(res => res.filter(s => !s.deletedAt));
@@ -238,6 +239,72 @@ export async function checkAndHandleAutoExpiry(rec?: OperationalModeRecord | nul
       return autoRecalibrated;
     }
   }
+
+  // Self-Healing Guard: Validate that tactical_sprint targetSubjectIds correspond to existing subjects in the database
+  if (current.mode === 'tactical_sprint' && Array.isArray(current.targetSubjectIds) && current.targetSubjectIds.length > 0) {
+    try {
+      const activeSubjects = await db.subjects.toArray().then(arr => arr.filter(s => s && !s.deletedAt));
+      if (activeSubjects.length > 0) {
+        const idSet = new Set(activeSubjects.map(s => String(s.id)));
+        const ontoSet = new Set(activeSubjects.map(s => s.ontologySubjectId ? String(s.ontologySubjectId) : ''));
+
+        const hasAnyValidTarget = current.targetSubjectIds.some(tid =>
+          idSet.has(String(tid)) || ontoSet.has(String(tid))
+        );
+
+        if (!hasAnyValidTarget) {
+          // Attempt automatic self-healing by matching names or ontology entries
+          const healedTargetIds: (string | number)[] = [];
+          for (const tid of current.targetSubjectIds) {
+            const tidStr = String(tid).toLowerCase();
+            // 1. Match via ALL_SUBJECTS ontology
+            const onto = ALL_SUBJECTS.find(os => String(os.id).toLowerCase() === tidStr || (os.name || '').toLowerCase() === tidStr);
+            if (onto) {
+              const matchedSub = activeSubjects.find(s => s.name && s.name.toLowerCase() === (onto.name || '').toLowerCase());
+              if (matchedSub && matchedSub.id !== undefined && !healedTargetIds.includes(matchedSub.id)) {
+                healedTargetIds.push(matchedSub.id);
+                continue;
+              }
+            }
+            // 2. Direct name matching
+            const directName = activeSubjects.find(s => s.name && (s.name.toLowerCase() === tidStr || tidStr.includes(s.name.toLowerCase())));
+            if (directName && directName.id !== undefined && !healedTargetIds.includes(directName.id)) {
+              healedTargetIds.push(directName.id);
+              continue;
+            }
+          }
+
+          if (healedTargetIds.length > 0) {
+            const autoHealed: OperationalModeRecord = {
+              ...current,
+              targetSubjectIds: healedTargetIds,
+              updatedAt: new Date(),
+              hlc: generateHLC(),
+            };
+            await db.operationalModes.put(autoHealed);
+            return autoHealed;
+          } else {
+            // Cannot reconcile with any subjects in active curriculum (e.g. foreign exam backup)
+            // Revert safely to standard mode so user is never locked out with 0 subjects
+            const safeReverted: OperationalModeRecord = {
+              ...current,
+              mode: 'standard',
+              targetSubjectIds: [],
+              previousMode: 'tactical_sprint',
+              notes: 'Restored sprint target subjects were incompatible with active curriculum; automatically reverted to standard mode.',
+              updatedAt: new Date(),
+              hlc: generateHLC(),
+            };
+            await db.operationalModes.put(safeReverted);
+            return safeReverted;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[OperationalMode] Self-healing check error:', e);
+    }
+  }
+
   return current;
 }
 

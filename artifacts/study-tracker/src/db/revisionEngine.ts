@@ -424,7 +424,8 @@ export function filterSystemsByOperationalMode(
   
   if (opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0) {
     const targetSet = new Set(opMode.targetSubjectIds.map(String));
-    return systems.filter(sys => targetSet.has(String(sys.subjectId)));
+    const filtered = systems.filter(sys => targetSet.has(String(sys.subjectId)));
+    return filtered.length > 0 ? filtered : systems;
   }
   
   return systems;
@@ -442,7 +443,8 @@ export function filterCurriculumSetsByOperationalMode(
 
   if (opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0) {
     const targetSet = new Set(opMode.targetSubjectIds.map(String));
-    return sets.filter(set => targetSet.has(String(set.subjectId)));
+    const filtered = sets.filter(set => targetSet.has(String(set.subjectId)));
+    return filtered.length > 0 ? filtered : sets;
   }
 
   return sets;

@@ -58,6 +58,9 @@ export default function AcceptInvitation() {
             description: `${res.trialDaysAwarded || 15}-Day full access granted for your exam preparation.`
           });
           localStorage.setItem(`invitation_accepted_${user.uid}`, 'true');
+          localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
+          localStorage.setItem('atlas_onboarding_completed', 'true');
+          window.dispatchEvent(new CustomEvent('atlas-onboarding-updated', { detail: { completed: true } }));
           setTimeout(() => {
             setLocation('/');
           }, 500);
@@ -68,6 +71,9 @@ export default function AcceptInvitation() {
         }
       } else {
         localStorage.setItem(`invitation_accepted_${user.uid}`, 'true');
+        localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
+        localStorage.setItem('atlas_onboarding_completed', 'true');
+        window.dispatchEvent(new CustomEvent('atlas-onboarding-updated', { detail: { completed: true } }));
         setTimeout(() => {
           setLocation('/');
         }, 500);

@@ -4,7 +4,7 @@ import { User } from 'firebase/auth';
 import { createSignedVaultBackup, verifyVaultBackupProvenance, AtlasVaultEnvelope } from './vaultSignature';
 import { StudySystem, CurriculumSet, HistoryEntry, DEFAULT_OPERATIONAL_MODE } from '@/db/types';
 import { scheduleFirstRevision, scheduleNextRevision, today } from '@/db/revisionEngine';
-import { getOntologyForExam } from '@/data/ontology';
+import { getOntologyForExam, ALL_SUBJECTS } from '@/data/ontology';
 import { getLocalExamProfile } from '@/lib/examProfile';
 import { generateHLC } from './hlc';
 import { doc, setDoc, getDocs, collection, writeBatch } from 'firebase/firestore';
@@ -63,6 +63,25 @@ export async function exportCompleteVault(user: User | null): Promise<{
     db.operationalModes.toArray(),
   ]);
 
+  // Enrich operational modes with portable subject names and ontology metadata
+  const enrichedOpModes = operationalModes.map(om => {
+    if (om.mode === 'tactical_sprint' && Array.isArray(om.targetSubjectIds)) {
+      const targetSubjectNames: string[] = [];
+      const targetOntologyIds: string[] = [];
+      om.targetSubjectIds.forEach(tid => {
+        const sub = subjects.find(s => String(s.id) === String(tid) || (s.ontologySubjectId && String(s.ontologySubjectId) === String(tid)));
+        if (sub?.name) targetSubjectNames.push(sub.name);
+        if (sub?.ontologySubjectId) targetOntologyIds.push(sub.ontologySubjectId);
+      });
+      return {
+        ...om,
+        targetSubjectNames: targetSubjectNames.length > 0 ? targetSubjectNames : undefined,
+        targetOntologyIds: targetOntologyIds.length > 0 ? targetOntologyIds : undefined
+      };
+    }
+    return om;
+  });
+
   const rawData = {
     subjects,
     systems,
@@ -75,7 +94,7 @@ export async function exportCompleteVault(user: User | null): Promise<{
     topicProgress,
     mistakeLogs,
     recommendationSkips,
-    operationalModes
+    operationalModes: enrichedOpModes
   };
 
   const envelope = await createSignedVaultBackup(rawData, user);
@@ -342,10 +361,79 @@ export async function restoreCompleteVault(
     expiresAt: parseDateSafe(sk.expiresAt) || new Date(Date.now() + 12 * 60 * 60 * 1000)
   }));
 
-  const cleanOpModes = (Array.isArray(data.operationalModes) ? data.operationalModes : []).map((om: any) => ({
-    ...om,
-    updatedAt: parseDateSafe(om.updatedAt) || new Date()
-  }));
+  const cleanOpModes = (Array.isArray(data.operationalModes) ? data.operationalModes : []).map((om: any) => {
+    // 10a. Remap targetSubjectIds using subjectIdMap, cleanSubjects, and ontology metadata
+    const rawTargetIds: any[] = Array.isArray(om.targetSubjectIds) ? om.targetSubjectIds : [];
+    const targetNames: string[] = Array.isArray(om.targetSubjectNames) ? om.targetSubjectNames : [];
+    const targetOntos: string[] = Array.isArray(om.targetOntologyIds) ? om.targetOntologyIds : [];
+
+    const remappedTargetIds = new Set<string | number>();
+
+    // Pass 1: Resolve from raw IDs
+    for (const tid of rawTargetIds) {
+      // 1. Direct remap if mapped by subjectIdMap (deduplication or ID migration)
+      if (subjectIdMap.has(tid)) {
+        remappedTargetIds.add(subjectIdMap.get(tid)!);
+        continue;
+      }
+      if (subjectIdMap.has(String(tid))) {
+        remappedTargetIds.add(subjectIdMap.get(String(tid))!);
+        continue;
+      }
+      if (typeof tid === 'string' && !isNaN(Number(tid)) && subjectIdMap.has(Number(tid))) {
+        remappedTargetIds.add(subjectIdMap.get(Number(tid))!);
+        continue;
+      }
+
+      // 2. Lookup in cleanSubjects by id, ontologySubjectId, or name
+      const matched = cleanSubjects.find(s => 
+        String(s.id) === String(tid) ||
+        (s.ontologySubjectId && String(s.ontologySubjectId) === String(tid)) ||
+        (s.name && String(s.name).toLowerCase() === String(tid).toLowerCase())
+      );
+      if (matched && matched.id !== undefined) {
+        remappedTargetIds.add(matched.id);
+        continue;
+      }
+
+      // 3. Lookup in ALL_SUBJECTS for ontology matching
+      const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
+      if (onto) {
+        const byOntoName = cleanSubjects.find(s => s.name && s.name.toLowerCase() === onto.name.toLowerCase());
+        if (byOntoName && byOntoName.id !== undefined) {
+          remappedTargetIds.add(byOntoName.id);
+          continue;
+        }
+      }
+
+      // Keep original as fallback
+      remappedTargetIds.add(tid);
+    }
+
+    // Pass 2: If targetSubjectNames was saved in backup, ensure all named subjects are resolved
+    for (const name of targetNames) {
+      if (!name) continue;
+      const sub = cleanSubjects.find(s => s.name && s.name.toLowerCase() === name.toLowerCase());
+      if (sub && sub.id !== undefined) {
+        remappedTargetIds.add(sub.id);
+      }
+    }
+
+    // Pass 3: If targetOntologyIds was saved in backup, resolve by ontology ID
+    for (const ontoId of targetOntos) {
+      if (!ontoId) continue;
+      const sub = cleanSubjects.find(s => s.ontologySubjectId && String(s.ontologySubjectId) === String(ontoId));
+      if (sub && sub.id !== undefined) {
+        remappedTargetIds.add(sub.id);
+      }
+    }
+
+    return {
+      ...om,
+      targetSubjectIds: Array.from(remappedTargetIds),
+      updatedAt: parseDateSafe(om.updatedAt) || new Date()
+    };
+  });
 
   // ── REVISION SCHEDULE RECOVERY & REHYDRATION PIPELINE ───────────────────────
   // If curriculumSets was missing from an older backup, or if system revision dates were lost:
@@ -531,6 +619,36 @@ export async function restoreCompleteVault(
     'operationalModes',
   ];
   affectedTables.forEach(table => dbEvents.emit('change', table));
+
+  // Pillar 3 Safeguard: Anyone restoring a vault backup is an existing user and must never see onboarding
+  try {
+    const uid = user?.uid;
+    if (uid) {
+      localStorage.setItem(`onboarding_completed_${uid}`, 'true');
+      if (firestoreDb) {
+        const userRef = doc(firestoreDb, 'users', uid);
+        await setDoc(userRef, { onboardingCompleted: true, updatedAt: new Date() }, { merge: true });
+      }
+    } else {
+      localStorage.setItem('onboarding_completed_guest', 'true');
+    }
+    localStorage.setItem('atlas_onboarding_completed', 'true');
+
+    await db.uiPreferences.put({
+      id: 'onboarding_status',
+      type: 'onboarding',
+      entityId: 0,
+      onboardingCompleted: true,
+      updatedAt: new Date(),
+      hlc: generateHLC(),
+    }).catch(() => {});
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('atlas-onboarding-updated', { detail: { completed: true } }));
+    }
+  } catch (err) {
+    console.warn('[VaultRestore] Failed to sync onboarding status on restore:', err);
+  }
 
   // 12. Account-Hopping Interceptor Protection
   if (verification.isForeignUid && verification.isHighHistoricalVolume) {

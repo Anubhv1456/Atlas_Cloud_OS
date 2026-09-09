@@ -113,7 +113,7 @@ export function useHomeLogic() {
     }
 
     // 1. KNOWLEDGE DECAY & REVISION DEBT (Highest Priority: 98-100)
-    const targetCandidateSystems = (opMode?.mode === 'tactical_sprint' && opMode.targetSubjectIds && opMode.targetSubjectIds.length > 0)
+    const sprintFilteredSystems = (opMode?.mode === 'tactical_sprint' && opMode.targetSubjectIds && opMode.targetSubjectIds.length > 0)
       ? systems.filter(sys => {
           const targetSet = new Set(opMode.targetSubjectIds.map(String));
           if (targetSet.has(String(sys.subjectId))) return true;
@@ -122,6 +122,7 @@ export function useHomeLogic() {
           return false;
         })
       : systems;
+    const targetCandidateSystems = sprintFilteredSystems.length > 0 ? sprintFilteredSystems : systems;
 
     const sortedByDecay = sortSystemsByRevisionPriority(targetCandidateSystems, curriculumSets, now);
     const topDecaySystem = sortedByDecay[0];

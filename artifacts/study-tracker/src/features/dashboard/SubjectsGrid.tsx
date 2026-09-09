@@ -77,29 +77,51 @@ export function SubjectsGrid({
 
   const isSprintActive = opMode.mode === 'tactical_sprint' && Array.isArray(opMode.targetSubjectIds) && opMode.targetSubjectIds.length > 0;
 
-  // Resolve target subject IDs including ontology mapping
+  // Resolve target subject IDs that actually match subjects in the current curriculum
   const sprintSubjectIdsSet = useMemo(() => {
     if (!isSprintActive) return new Set<string>();
-    const set = new Set(opMode.targetSubjectIds.map(String));
+    const rawTargetSet = new Set(opMode.targetSubjectIds.map(String));
+    const matchedSet = new Set<string>();
+
     profFilteredSubjects.forEach(s => {
-      if (s.ontologySubjectId && set.has(String(s.ontologySubjectId))) {
-        set.add(String(s.id));
+      // 1. Direct ID match
+      if (s.id !== undefined && rawTargetSet.has(String(s.id))) {
+        matchedSet.add(String(s.id));
+        return;
       }
-      const match = opMode.targetSubjectIds?.some(tid => {
-        const onto = ALL_SUBJECTS.find(os => String(os.id) === String(tid));
-        return onto && s.name && ((onto.name || '').toLowerCase()) === ((s.name || '').toLowerCase());
+      // 2. Ontology ID match
+      if (s.ontologySubjectId && rawTargetSet.has(String(s.ontologySubjectId))) {
+        if (s.id !== undefined) matchedSet.add(String(s.id));
+        return;
+      }
+      // 3. Name or ALL_SUBJECTS alias match
+      const nameMatch = opMode.targetSubjectIds?.some(tid => {
+        const subName = (s.name || '').toLowerCase();
+        const tidStr = String(tid).toLowerCase();
+        if (subName === tidStr) return true;
+        const onto = ALL_SUBJECTS.find(os => String(os.id).toLowerCase() === tidStr || (os.name || '').toLowerCase() === tidStr);
+        return onto && subName === (onto.name || '').toLowerCase();
       });
-      if (match && s.id !== undefined) {
-        set.add(String(s.id));
+      if (nameMatch && s.id !== undefined) {
+        matchedSet.add(String(s.id));
       }
     });
-    return set;
+
+    return matchedSet;
   }, [isSprintActive, opMode.targetSubjectIds, profFilteredSubjects]);
 
-  // Candidates considering sprint focus
+  // Candidates considering sprint focus with automatic zero-lockout protection
   const candidateSubjects = useMemo(() => {
-    if (isSprintActive && !showAllOverride && sprintSubjectIdsSet.size > 0) {
-      return profFilteredSubjects.filter(sub => sprintSubjectIdsSet.has(String(sub.id)));
+    if (isSprintActive && !showAllOverride) {
+      if (sprintSubjectIdsSet.size > 0) {
+        const filtered = profFilteredSubjects.filter(sub => sprintSubjectIdsSet.has(String(sub.id)));
+        if (filtered.length > 0) {
+          return filtered;
+        }
+      }
+      // Zero-lockout fallback: If sprint matches 0 subjects in this curriculum,
+      // fail-safe fallback to displaying all subjects so user is never trapped with 0 subjects.
+      return profFilteredSubjects;
     }
     return profFilteredSubjects;
   }, [profFilteredSubjects, isSprintActive, showAllOverride, sprintSubjectIdsSet]);
@@ -204,28 +226,32 @@ export function SubjectsGrid({
               <p className="text-xs text-muted-foreground truncate mt-0.5">
                 {showAllOverride
                   ? `Showing all ${safeSubjects.length} subjects (Exam focus paused)`
-                  : `Focused exclusively on ${sprintSubjectIdsSet.size} priority exam subjects.`}
+                  : sprintSubjectIdsSet.size === 0
+                    ? `Showing all ${safeSubjects.length} subjects (Focus targets re-aligning)`
+                    : `Focused exclusively on ${sprintSubjectIdsSet.size} priority exam subjects.`}
               </p>
             </div>
           </div>
           
-          <button
-            type="button"
-            onClick={() => setShowAllOverride(prev => !prev)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 dark:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
-          >
-            {showAllOverride ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>Focus Sprint ({sprintSubjectIdsSet.size})</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5" />
-                <span>View All ({safeSubjects.length})</span>
-              </>
-            )}
-          </button>
+          {sprintSubjectIdsSet.size > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAllOverride(prev => !prev)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 dark:text-amber-300 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              {showAllOverride ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5" />
+                  <span>Focus Sprint ({sprintSubjectIdsSet.size})</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>View All ({safeSubjects.length})</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
 
