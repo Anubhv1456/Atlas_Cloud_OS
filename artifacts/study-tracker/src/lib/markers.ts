@@ -1,5 +1,5 @@
 import { firestoreDb } from './firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 
 export type MarkerType = 'clinical_pearl' | 'mnemonic' | 'pitfall' | 'resource' | 'high_yield' | 'memory_trick';
 export type MarkerStatus = 'pending' | 'published' | 'trusted' | 'featured' | 'low_quality' | 'archived';
@@ -125,6 +125,77 @@ export async function interactWithMarker(
   }
   
   return updates;
+}
+
+export async function deleteMarker(markerId: string, userId: string): Promise<boolean> {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const markerRef = doc(firestoreDb, 'insights', markerId);
+  const snapshot = await getDoc(markerRef);
+  if (!snapshot.exists()) return false;
+
+  const data = snapshot.data();
+  if (data.userId !== userId) {
+    throw new Error("You can only delete your own trail markers.");
+  }
+
+  await deleteDoc(markerRef);
+  return true;
+}
+
+export async function updateOwnMarker(
+  markerId: string,
+  userId: string,
+  content: string,
+  source?: string
+): Promise<boolean> {
+  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  const markerRef = doc(firestoreDb, 'insights', markerId);
+  const snapshot = await getDoc(markerRef);
+  if (!snapshot.exists()) return false;
+
+  const data = snapshot.data();
+  if (data.userId !== userId) {
+    throw new Error("You can only edit your own trail markers.");
+  }
+
+  const updates: Record<string, any> = {
+    content: content.trim(),
+  };
+  if (source !== undefined) {
+    updates.source = source.trim();
+  }
+
+  await updateDoc(markerRef, updates);
+  return true;
+}
+
+export async function getTopicMarkerCounts(systemId: number | string): Promise<Record<string, number>> {
+  if (!firestoreDb) return {};
+  const markers = await getMarkersForSystem(systemId);
+  const counts: Record<string, number> = {};
+  for (const m of markers) {
+    if (m.topicId) {
+      counts[m.topicId] = (counts[m.topicId] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+export async function getSavedMarkersForUser(userId: string): Promise<Marker[]> {
+  if (!firestoreDb) return [];
+  const markersCol = collection(firestoreDb, 'insights');
+  const q = query(
+    markersCol,
+    where("savedBy", "array-contains", userId),
+    limit(100)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    helpfulBy: Array.isArray(doc.data().helpfulBy) ? doc.data().helpfulBy : [],
+    savedBy: Array.isArray(doc.data().savedBy) ? doc.data().savedBy : [],
+  })) as Marker[];
 }
 
 export async function getMarkersForSystem(systemId: number | string): Promise<Marker[]> {

@@ -65,6 +65,7 @@ interface TopicListProps {
   onAddTopic?: (name: string) => void;
   onResetTopics?: () => void;
   hasCustomEdits?: boolean;
+  markerCounts?: Record<string, number>;
 }
 
 export function TopicList({
@@ -80,7 +81,8 @@ export function TopicList({
   onDeleteTopic,
   onAddTopic,
   onResetTopics,
-  hasCustomEdits
+  hasCustomEdits,
+  markerCounts
 }: TopicListProps) {
   const [addTopicToSet, setAddTopicToSet] = useState<OntologyTopic | undefined>();
   const [formOpen, setFormOpen] = useState(false);
@@ -425,6 +427,12 @@ export function TopicList({
                       <span className="font-medium text-foreground truncate">
                         {topic.name}
                       </span>
+                      {markerCounts?.[topic.id] > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-mono font-semibold shrink-0">
+                          <Compass className="w-2.5 h-2.5" />
+                          <span>{markerCounts[topic.id]}</span>
+                        </span>
+                      )}
                       {sets.length > 0 && (
                         <span className="text-xs text-muted-foreground/60 shrink-0 hidden sm:inline-block">
                           ({sets.map(s => s.name).join(', ')})

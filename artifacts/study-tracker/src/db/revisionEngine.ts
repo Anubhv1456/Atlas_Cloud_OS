@@ -298,16 +298,46 @@ export function calculateNextInterval(currentInterval: number, confidence: Syste
   return Math.round(currentInterval * adjustedMultiplier);
 }
 
+export function applyExamDateCap(interval: number, now: Date, examDateInput?: Date | string | null): number {
+  if (!examDateInput) return interval;
+  const exam = new Date(examDateInput);
+  if (isNaN(exam.getTime())) return interval;
+  
+  const todayMs = new Date(now).setHours(0, 0, 0, 0);
+  const examMs = exam.setHours(0, 0, 0, 0);
+  const diffMs = examMs - todayMs;
+  const daysToExam = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (daysToExam <= 0) {
+    return 1;
+  }
+
+  // Case C: Imminent Crunch Window (<= 7 days to exam)
+  if (daysToExam <= 7) {
+    return Math.min(interval, Math.max(1, Math.min(2, daysToExam)));
+  }
+
+  // Case B: Interval crosses exam date or lands too close to exam day
+  if (interval >= daysToExam) {
+    return Math.max(1, daysToExam - 4);
+  }
+
+  // Case A: Interval lands within test window (Normal phase)
+  return interval;
+}
+
 export function scheduleFirstRevision(
   confidence: SystemStatus,
   now: Date = today(),
   decayFactor: number = 1.0,
+  examDate?: Date | string | null
 ): {
   currentRevisionInterval: number;
   nextRevisionDate: Date;
 } {
   const baseInterval = getInitialInterval(confidence);
-  const interval = Math.max(REVISION_CONFIG.MIN_INTERVAL, Math.round(baseInterval * (1 / Math.sqrt(decayFactor))));
+  let interval = Math.max(REVISION_CONFIG.MIN_INTERVAL, Math.round(baseInterval * (1 / Math.sqrt(decayFactor))));
+  interval = applyExamDateCap(interval, now, examDate);
   
   const d = new Date(now);
   d.setDate(d.getDate() + interval);
@@ -323,17 +353,19 @@ export function scheduleNextRevision(
   currentInterval: number,
   now: Date = today(),
   decayFactor: number = 1.0,
-  durationMultiplier: number = 1.0
+  durationMultiplier: number = 1.0,
+  examDate?: Date | string | null
 ): {
   currentRevisionInterval: number;
   nextRevisionDate: Date;
   durationMultiplier: number;
 } {
   const baseInterval = calculateNextInterval(currentInterval, confidence, decayFactor);
-  const calibratedInterval = Math.max(
+  let calibratedInterval = Math.max(
     REVISION_CONFIG.MIN_INTERVAL,
     Math.min(REVISION_CONFIG.MAX_INTERVAL, Math.round(baseInterval * durationMultiplier))
   );
+  calibratedInterval = applyExamDateCap(calibratedInterval, now, examDate);
   
   const d = new Date(now);
   d.setDate(d.getDate() + calibratedInterval);

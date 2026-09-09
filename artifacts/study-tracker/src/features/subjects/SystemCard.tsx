@@ -43,7 +43,7 @@ export function SystemCard(props: SystemCardProps) {
     cardRef, progress, completedCount, contentPct, revisionDue, revisionOverdue, overdueDays, 
     weakTopicsCount, totalTopicsCount, blocksCompleted, blocksTotal,
     toggleQBank, localNotes, handleStatusChange, handleNotesChange, handleDelete, handleRevisionComplete, 
-    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, handleResetTopics, hasCustomTopicEdits, finalTopics, 
+    handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, handleResetTopics, hasCustomTopicEdits, finalTopics, topicMarkerCounts,
     showLogSession, setShowLogSession, handleSetLogScore, showDecayCalibration, setShowDecayCalibration, toggleHighYield 
   } = useSystemCardLogic(props);
 
@@ -247,6 +247,7 @@ export function SystemCard(props: SystemCardProps) {
                   onAddTopic={handleAddCustomTopic}
                   onResetTopics={handleResetTopics}
                   hasCustomEdits={hasCustomTopicEdits}
+                  markerCounts={topicMarkerCounts}
                 />
               </div>
 

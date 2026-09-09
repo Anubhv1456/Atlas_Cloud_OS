@@ -5,7 +5,7 @@ import {
   updateSystem, deleteSystem, logCompletion, db, deleteHistoryEntry, 
   recordInitialEvaluation, completeRevision 
 } from '@/db';
-import { submitMarker, MarkerType } from '@/lib/markers';
+import { submitMarker, MarkerType, getTopicMarkerCounts } from '@/lib/markers';
 import { getUserAlias } from '@/lib/user';
 import { useAuth } from '@/hooks/useAuth';
 import { calculateSystemProgress } from '@/lib/progress';
@@ -62,7 +62,14 @@ export function useSystemCardLogic({
   const [insightType, setInsightType] = useState<MarkerType>('pitfall');
   const [insightSource, setInsightSource] = useState('');
   const [isSubmittingInsight, setIsSubmittingInsight] = useState(false);
+  const [topicMarkerCounts, setTopicMarkerCounts] = useState<Record<string, number>>({});
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (system.id) {
+      getTopicMarkerCounts(system.id).then(setTopicMarkerCounts).catch(() => {});
+    }
+  }, [system.id, showViewMarkersDialog, showInsightDialog]);
 
   // Guard to prevent re-triggering if already open
   const evalShownRef = useRef(false);
@@ -288,7 +295,7 @@ export function useSystemCardLogic({
     if (!insightContent.trim()) return;
     setIsSubmittingInsight(true);
     try {
-      const alias = await getUserAlias();
+      const alias = user?.uid ? await getUserAlias(user.uid) : 'Wayfinder';
       await submitMarker({
         subjectId: system.subjectId,
         subjectName: props.subjectName,
@@ -350,6 +357,7 @@ export function useSystemCardLogic({
     handleRenameSave, handleRevisionComplete,
     handleUpdateTopic, handleRenameTopic, handleDeleteTopic, handleAddCustomTopic, handleResetTopics,
     hasCustomTopicEdits: Boolean(system.customTopics && system.customTopics.length > 0),
-    finalTopics
+    finalTopics,
+    topicMarkerCounts
   };
 }

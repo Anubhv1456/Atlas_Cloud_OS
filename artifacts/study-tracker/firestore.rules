@@ -112,9 +112,9 @@ service cloud.firestore {
 
       // Users can vote helpful/save/report; authors and admins can update content; only author/admin can delete
       allow update: if isAuthenticated() && (
-        // Allow community reactions (helpfulBy, savedBy, reportedBy arrays and quality score updates)
+        // Allow community reactions (helpfulBy, savedBy, reportedBy arrays, status, and quality score updates)
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'helpfulBy', 'notHelpfulBy', 'savedBy', 'reportedBy', 'usefulCount', 'qualityScore', 'readCount'
+          'helpfulBy', 'notHelpfulBy', 'savedBy', 'reportedBy', 'usefulCount', 'qualityScore', 'readCount', 'status'
         ]) ||
         resource.data.userId == request.auth.uid ||
         isAdmin()
