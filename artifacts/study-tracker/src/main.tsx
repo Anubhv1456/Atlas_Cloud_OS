@@ -8,6 +8,7 @@ import {
   initializeChunkLoadRecovery,
   setServiceWorkerUpdater,
   notifyUpdateAvailable,
+  checkForAppUpdate,
 } from '@/lib/appUpdateManager';
 
 // Initialize zero-crash chunk load recovery and background update sync

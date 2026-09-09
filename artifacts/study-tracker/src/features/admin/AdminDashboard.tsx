@@ -11,9 +11,10 @@ import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { OpsQueueView } from './views/OpsQueueView';
 import { DirectoryView } from './views/DirectoryView';
 import { SettingsView } from './views/SettingsView';
+import { AmbassadorApplicationsView } from './views/AmbassadorApplicationsView';
 import { AnalyticsView } from './views/AnalyticsView';
 
-type ViewType = 'analytics' | 'directory' | 'ops' | 'settings';
+type ViewType = 'analytics' | 'directory' | 'ops' | 'ambassadors' | 'settings';
 
 const navItems = [
   { 
@@ -35,11 +36,17 @@ const navItems = [
     icon: ShieldCheck 
   },
   { 
-    id: 'settings' as const, 
-    label: 'Settings', 
-    subtitle: 'Flags & Pricing', 
-    icon: Sliders 
-  }
+     id: 'ambassadors' as const, 
+     label: 'Ambassadors', 
+     subtitle: 'Applications', 
+     icon: Sparkles 
+   },
+   { 
+     id: 'settings' as const, 
+     label: 'Settings', 
+     subtitle: 'Flags & Pricing', 
+     icon: Sliders 
+   }
 ];
 
 export default function AdminDashboard() {
@@ -80,6 +87,7 @@ export default function AdminDashboard() {
       case 'analytics': return <AnalyticsView />;
       case 'directory': return <DirectoryView />;
       case 'ops': return <OpsQueueView />;
+      case 'ambassadors': return <AmbassadorApplicationsView />;
       case 'settings': return <SettingsView />;
       default: return <AnalyticsView />;
     }

@@ -168,7 +168,7 @@ const ZCapsuleSchema = z.object({
     revisionSets: z.array(ZCurriculumSetSchema).optional().default([]),
     history: z.array(z.any()).optional().default([]),
     scoreLogs: z.array(z.any()).optional().default([]),
-  })
+  }).passthrough()
 });
 
 export async function restoreCompleteVault(

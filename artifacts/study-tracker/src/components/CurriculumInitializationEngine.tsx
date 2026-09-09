@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '@/db';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
@@ -15,81 +15,81 @@ export function CurriculumInitializationEngine({ children }: { children: React.R
   const subjectCount = useLiveQuery(() => db.subjects.count(), [targetExam]);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initLabel, setInitLabel] = useState('Verifying curriculum...');
-  
+  const initializationInProgressRef = useRef(false);
+
+  // If subjects already exist in DB, immediately unblock loading screen
+  useEffect(() => {
+    if (subjectCount !== undefined && subjectCount > 0 && isInitializing) {
+      setIsInitializing(false);
+    }
+  }, [subjectCount, isInitializing]);
+
   useEffect(() => {
     // If the query is still loading, profile is loading, or it's a custom exam, skip
     if (subjectCount === undefined || profileLoading || isCustom) return;
     
-    let isMounted = true;
-    
+    // Safety watchdog: under no circumstance should any initial loader block for more than 4 seconds
+    const safetyTimeout = setTimeout(() => {
+      setIsInitializing(false);
+    }, 4000);
+
     const checkAndLoad = async () => {
-      // Check local storage to see if we already initialized this specific exam manually or automatically
+      if (initializationInProgressRef.current) return;
+
       const examKey = targetExam.replace(/\s+/g, '_').toLowerCase();
       const initializedKey = `atlas_initialized_${examKey}`;
       const versionKey = `atlas_curriculum_version_${examKey}`;
       const hasInitialized = localStorage.getItem(initializedKey) === 'true';
       const currentVersion = localStorage.getItem(versionKey);
 
-      // Check if blueprint version needs update / reconciliation
-      if (currentVersion !== ATLAS_CURRICULUM_VERSION) {
-        try {
-          const { loadUniversalOntology } = await import('@/lib/exam-presets');
-          await loadUniversalOntology({
-            targetExam,
-            force: false,
-            showToast: false
-          });
-          localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
-          localStorage.setItem(initializedKey, 'true');
-        } catch (err) {
-          console.error('Curriculum blueprint sync failed:', err);
-        }
+      // Check current DB subjects count directly
+      const currentCount = await db.subjects.count().catch(() => 0);
+
+      // Need initialization if DB has 0 subjects or version upgraded
+      const needsInitialSeed = currentCount === 0 && !hasInitialized;
+      const needsVersionReconcile = currentVersion !== ATLAS_CURRICULUM_VERSION;
+
+      if (!needsInitialSeed && !needsVersionReconcile) {
+        setIsInitializing(false);
+        return;
       }
 
-      if (subjectCount === 0 && !hasInitialized) {
+      initializationInProgressRef.current = true;
+      if (needsInitialSeed) {
         setIsInitializing(true);
-        // Small buffer to let cloud sync push initial data if it's arriving from a new device login
-        await new Promise(r => setTimeout(r, 1500));
-        
-        // Re-check count directly from DB in case AutoSyncEngine populated it during the buffer
-        const currentCount = await db.subjects.count();
-        if (currentCount === 0 && isMounted) {
-          try {
-            const { loadUniversalOntology } = await import('@/lib/exam-presets');
-            await loadUniversalOntology({
-              targetExam,
-              force: false,
-              showToast: false,
-              onProgress: (pct, msg) => {
-                if (isMounted) setInitLabel(msg);
-              }
-            });
-            localStorage.setItem(initializedKey, 'true');
-            localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
-          } catch (err) {
-            console.error('Auto-load failed:', err);
+      }
+
+      try {
+        const { loadUniversalOntology } = await import('@/lib/exam-presets');
+        await loadUniversalOntology({
+          targetExam,
+          force: false,
+          showToast: false,
+          onProgress: (_pct, msg) => {
+            setInitLabel(msg);
           }
-        } else if (currentCount > 0) {
-            // It synced from cloud!
-            localStorage.setItem(initializedKey, 'true');
-            localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
-        }
-        if (isMounted) setIsInitializing(false);
-      } else if (subjectCount > 0 && !hasInitialized) {
-         // Mark as initialized if they already have data (e.g. legacy users or cloud rehydrated)
-         localStorage.setItem(initializedKey, 'true');
-         localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
+        });
+        localStorage.setItem(versionKey, ATLAS_CURRICULUM_VERSION);
+        localStorage.setItem(initializedKey, 'true');
+      } catch (err) {
+        console.error('Curriculum initialization error:', err);
+      } finally {
+        initializationInProgressRef.current = false;
+        setIsInitializing(false);
+        clearTimeout(safetyTimeout);
       }
     };
-    
+
     checkAndLoad();
-    
-    return () => { isMounted = false; };
+
+    return () => {
+      clearTimeout(safetyTimeout);
+    };
   }, [subjectCount, targetExam, isCustom, profileLoading]);
-  
+
   if (isInitializing) {
     return <AtlasLoadingScreen fullScreen message={initLabel} />;
   }
-  
+
   return <>{children}</>;
 }

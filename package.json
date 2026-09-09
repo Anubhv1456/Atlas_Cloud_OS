@@ -37,6 +37,8 @@
     "@visx/tooltip": "^4.0.0",
     "@visx/visx": "^4.0.0",
     "canvas-confetti": "^1.9.4",
+    "dexie": "^4.4.5",
+    "dexie-react-hooks": "^4.4.0",
     "express": "^5.2.1",
     "firebase": "^12.17.0",
     "html-to-image": "^1.11.13",

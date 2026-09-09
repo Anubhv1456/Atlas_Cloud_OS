@@ -1,5 +1,5 @@
 import { auth, firestoreDb } from '@/lib/firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, writeBatch, arrayUnion } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 class SimpleEventEmitter {
   private listeners: Record<string, Function[]> = {};
@@ -90,48 +90,62 @@ class FirestoreTable<T extends Record<string, any>> {
 
   public startListener(uid: string) {
     if (this.unsubscribe) this.unsubscribe();
-    const q = collection(firestoreDb, `users/${uid}/${this.name}${this.workspaceSuffix}`);
+    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
+    const collName = useBuckets ? `${this.name}_buckets${this.workspaceSuffix}` : `${this.name}${this.workspaceSuffix}`;
+    const q = collection(firestoreDb, `users/${uid}/${collName}`);
+
     this.unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         let hasChanges = false;
         snapshot.docChanges().forEach((change) => {
-          const data = change.doc.data();
-          // Parse date objects properly
-          for (const key in data) {
-            if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
-              data[key] = data[key].toDate();
+          const docData = change.doc.data();
+          const processIncomingItem = (data: any, docId: string) => {
+            for (const key in data) {
+              if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
+                data[key] = data[key].toDate();
+              }
             }
-          }
-
-          const docId = String(change.doc.id);
-          const incoming = { ...data, id: isNaN(Number(change.doc.id)) ? change.doc.id : Number(change.doc.id) } as T;
-
-          
-          // --- MIGRATION LOGIC FOR N:N CLINICAL GRAPH ---
-          if (incoming.subjectId && !incoming.subjectIds) {
-            incoming.subjectIds = [incoming.subjectId];
-          }
-
-          // Track remote HLC logical clock
-          if (incoming.hlc) {
-            updateHLC(incoming.hlc);
-          }
-          
-          if (change.type === "added" || change.type === "modified") {
-            const existing = this.cache.get(docId);
+            const incoming = { ...data, id: isNaN(Number(docId)) ? docId : Number(docId) } as T;
+            if (incoming.subjectId && !(incoming as any).subjectIds) {
+              (incoming as any).subjectIds = [incoming.subjectId];
+            }
+            if (incoming.hlc) updateHLC(incoming.hlc);
+            const resolvedId = String(incoming.id);
+            const existing = this.cache.get(resolvedId);
             if (existing) {
-              // Perform CRDT / HLC-aware conflict resolution to avoid overwriting newer local edits
               const merged = resolveEntityConflict(existing, incoming);
-              this.cache.set(docId, merged as T);
+              if (JSON.stringify(existing) !== JSON.stringify(merged)) {
+                this.cache.set(resolvedId, merged as T);
+                hasChanges = true;
+              }
             } else {
-              this.cache.set(docId, incoming);
+              this.cache.set(resolvedId, incoming);
+              hasChanges = true;
             }
-            hasChanges = true;
-          }
-          if (change.type === "removed") {
-            this.cache.delete(docId);
-            hasChanges = true;
+          };
+
+          if (useBuckets) {
+            if (change.type === "removed") {
+              if (docData.entries && Array.isArray(docData.entries)) {
+                docData.entries.forEach((e: any) => {
+                  this.cache.delete(String(e.id));
+                  hasChanges = true;
+                });
+              }
+            } else {
+              if (docData.entries && Array.isArray(docData.entries)) {
+                docData.entries.forEach((entry: any) => processIncomingItem(entry, entry.id));
+              }
+            }
+          } else {
+             if (change.type === "added" || change.type === "modified") {
+               processIncomingItem(docData, change.doc.id);
+             }
+             if (change.type === "removed") {
+               this.cache.delete(String(change.doc.id));
+               hasChanges = true;
+             }
           }
         });
         if (!this.isInitialLoadDone) {
@@ -199,45 +213,28 @@ class FirestoreTable<T extends Record<string, any>> {
     }
 
     const cleanPayload = sanitizeForFirestore(resolvedItem);
-
-    // Optimistic cache update
     this.cache.set(String(id), cleanPayload as T);
     dbEvents.emit('change', this.name);
 
     if (auth.currentUser) {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-      await setDoc(docRef, cleanPayload, { merge: true });
+      const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
+      if (useBuckets) {
+        const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
+        const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
+        const month = dateObj.toISOString().substring(0, 7);
+        const collName = `${this.name}_buckets${this.workspaceSuffix}`;
+        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
+        await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
+      } else {
+        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
+        await setDoc(docRef, cleanPayload, { merge: true });
+      }
     }
     return id;
   }
 
   async put(item: T): Promise<string | number> {
-    const id = (item as any).id || generateHLC();
-    const existing = this.cache.get(String(id));
-    const hlc = (item as any).hlc || generateHLC();
-
-    let resolvedItem = {
-      ...item,
-      id: isNaN(Number(id)) ? id : Number(id),
-      hlc,
-      updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
-    };
-
-    if (existing) {
-      resolvedItem = resolveEntityConflict(existing, resolvedItem);
-    }
-
-    const cleanPayload = sanitizeForFirestore(resolvedItem);
-
-    // Optimistic cache update
-    this.cache.set(String(id), cleanPayload as T);
-    dbEvents.emit('change', this.name);
-
-    if (auth.currentUser) {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-      await setDoc(docRef, cleanPayload, { merge: true });
-    }
-    return id;
+    return this.add(item); // Logic identical in our new bucket setup
   }
 
   async bulkAdd(items: T[]) {
@@ -253,9 +250,7 @@ class FirestoreTable<T extends Record<string, any>> {
         hlc: (item as any).hlc || generateHLC(),
         updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
       };
-      if (existing) {
-        resolved = resolveEntityConflict(existing, resolved);
-      }
+      if (existing) resolved = resolveEntityConflict(existing, resolved);
       const cleanPayload = sanitizeForFirestore(resolved);
       this.cache.set(String(id), cleanPayload as T);
       resolvedItems.push(cleanPayload);
@@ -263,51 +258,41 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    for (let i = 0; i < resolvedItems.length; i += 400) {
-      const batch = writeBatch(firestoreDb);
-      const chunk = resolvedItems.slice(i, i + 400);
-      chunk.forEach(item => {
-        const id = (item as any).id;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-        batch.set(docRef, item, { merge: true });
+    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
+    
+    if (useBuckets) {
+      const bucketsToUpdate: Record<string, any[]> = {};
+      resolvedItems.forEach(item => {
+        const d = (item as any).completedAt || (item as any).timestamp || (item as any).createdAt || new Date();
+        const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
+        const month = dateObj.toISOString().substring(0, 7);
+        if (!bucketsToUpdate[month]) bucketsToUpdate[month] = [];
+        bucketsToUpdate[month].push(item);
       });
+      
+      const batch = writeBatch(firestoreDb);
+      for (const [month, entries] of Object.entries(bucketsToUpdate)) {
+        const collName = `${this.name}_buckets${this.workspaceSuffix}`;
+        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
+        batch.set(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(...entries) }, { merge: true });
+      }
       await batch.commit();
+    } else {
+      for (let i = 0; i < resolvedItems.length; i += 400) {
+        const batch = writeBatch(firestoreDb);
+        const chunk = resolvedItems.slice(i, i + 400);
+        chunk.forEach(item => {
+          const id = (item as any).id;
+          const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
+          batch.set(docRef, item, { merge: true });
+        });
+        await batch.commit();
+      }
     }
   }
 
   async bulkPut(items: T[]) {
-    if (!items.length) return;
-    const resolvedItems: T[] = [];
-
-    items.forEach(item => {
-      const id = (item as any).id || generateHLC();
-      const existing = this.cache.get(String(id));
-      let resolved = {
-        ...item,
-        id: isNaN(Number(id)) ? id : Number(id),
-        hlc: (item as any).hlc || generateHLC(),
-        updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
-      };
-      if (existing) {
-        resolved = resolveEntityConflict(existing, resolved);
-      }
-      const cleanPayload = sanitizeForFirestore(resolved);
-      this.cache.set(String(id), cleanPayload as T);
-      resolvedItems.push(cleanPayload);
-    });
-    dbEvents.emit('change', this.name);
-
-    if (!auth.currentUser) return;
-    for (let i = 0; i < resolvedItems.length; i += 400) {
-      const batch = writeBatch(firestoreDb);
-      const chunk = resolvedItems.slice(i, i + 400);
-      chunk.forEach(item => {
-        const id = (item as any).id;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser!.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-        batch.set(docRef, item, { merge: true });
-      });
-      await batch.commit();
-    }
+    return this.bulkAdd(items);
   }
 
   async update(id: string | number, changes: Partial<T>) {
@@ -319,30 +304,57 @@ class FirestoreTable<T extends Record<string, any>> {
       updatedAt: changes.updatedAt ? (changes.updatedAt instanceof Date ? changes.updatedAt : new Date(changes.updatedAt)) : new Date(),
     }, true);
 
+    let resolved;
     if (existing) {
       const merged = { ...existing };
       for (const k of Object.keys(cleanChanges)) {
         (merged as any)[k] = cleanChanges[k];
       }
-      // Apply conflict-aware safeguard
-      const resolved = resolveEntityConflict(existing, merged);
+      resolved = resolveEntityConflict(existing, merged);
       this.cache.set(String(id), resolved as T);
       dbEvents.emit('change', this.name);
+    } else {
+       return 0;
     }
 
     if (!auth.currentUser) return 1;
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-    await setDoc(docRef, cleanChanges, { merge: true });
+    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
+    
+    if (useBuckets && resolved) {
+      const cleanPayload = sanitizeForFirestore(resolved);
+      const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
+      const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
+      const month = dateObj.toISOString().substring(0, 7);
+      const collName = `${this.name}_buckets${this.workspaceSuffix}`;
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
+      await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
+    } else {
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
+      await setDoc(docRef, cleanChanges, { merge: true });
+    }
     return 1;
   }
 
   async delete(id: string | number) {
+    const existing = this.cache.get(String(id));
     this.cache.delete(String(id));
     dbEvents.emit('change', this.name);
 
     if (!auth.currentUser) return;
-    const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-    await deleteDoc(docRef);
+    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
+    
+    if (useBuckets && existing) {
+      const cleanPayload = sanitizeForFirestore({ ...existing, deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
+      const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
+      const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
+      const month = dateObj.toISOString().substring(0, 7);
+      const collName = `${this.name}_buckets${this.workspaceSuffix}`;
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
+      await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
+    } else {
+      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
+      await deleteDoc(docRef);
+    }
   }
 
   where(field: string) {

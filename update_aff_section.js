@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Award, Sparkles, ExternalLink, ShieldCheck, CheckCircle2, Loader2, Clock } from 'lucide-react';
+const fs = require('fs');
+const content = `import React, { useState, useEffect } from 'react';
+import { Award, Sparkles, ExternalLink, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import { SettingsRow } from './SettingsLayout';
 import { Badge } from '@/components/ui/badge';
 import { useAffiliate } from '@/hooks/useAffiliate';
@@ -226,3 +227,5 @@ export function AffiliateSection() {
     </>
   );
 }
+`;
+fs.writeFileSync('/app/applet/artifacts/study-tracker/src/features/settings/AffiliateSection.tsx', content);
