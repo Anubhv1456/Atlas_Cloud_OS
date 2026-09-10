@@ -9,6 +9,8 @@ import { CurriculumSet } from '@/db/types';
 import { Check, Zap, Sparkles, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { db } from '@/db';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 
 interface CurriculumSetFormProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ interface CurriculumSetFormProps {
 const COLORS = ['teal', 'amber', 'purple', 'blue', 'gray'] as const;
 
 export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTopics, initialData }: CurriculumSetFormProps) {
+  const { hasAccess } = useBetaAccess();
   const [name, setName] = useState('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<Set<string>>(new Set());
   const [color, setColor] = useState<'teal' | 'amber' | 'purple' | 'blue' | 'gray'>('teal');
@@ -58,6 +61,44 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
     if (selectedTopicIds.size === 0) {
       toast.error('Select at least one topic');
       return;
+    }
+
+    if (!hasAccess && !initialData?.id && systemId) {
+      const hasAffiliate = typeof window !== 'undefined' && Boolean(
+        localStorage.getItem('atlas_affiliate_id') ||
+        sessionStorage.getItem('atlas_pending_ref_code')
+      );
+      const systemCap = hasAffiliate ? 4 : 3;
+
+      const allActiveSystems = await db.systems
+        .filter(s => !s.deletedAt && (
+          s.revisionState === 'in_progress' ||
+          s.currentRevisionInterval !== null ||
+          (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
+          s.status !== 'Unseen'
+        ))
+        .toArray();
+
+      const activeSystemIds = new Set(allActiveSystems.map(s => String(s.id)));
+      const isCurrentSystemActive = activeSystemIds.has(String(systemId));
+
+      if (!isCurrentSystemActive && activeSystemIds.size >= systemCap) {
+        const activeNames = allActiveSystems.map(s => s.name).filter(Boolean).slice(0, systemCap);
+        
+        const targetSys = await db.systems.get(systemId);
+
+        window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+          detail: {
+            trigger: 'system_breadth_cap',
+            activeCount: activeSystemIds.size,
+            cap: systemCap,
+            targetSystemName: targetSys?.name || 'New System',
+            activeSystemNames: activeNames,
+            hasAffiliateBonus: hasAffiliate,
+          }
+        }));
+        return;
+      }
     }
 
     try {

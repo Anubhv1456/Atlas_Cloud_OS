@@ -591,7 +591,8 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 // ── Study Blocks ──────────────────────────────────────────────────────────
 
 export async function createCurriculumSet(data: {
-  enforceReadOnlySandbox(); subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
+  subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
+  enforceReadOnlySandbox(); 
   const newSet: import('./types').CurriculumSet = {
     id: crypto.randomUUID(),
     ...data,
@@ -600,6 +601,15 @@ export async function createCurriculumSet(data: {
     hlc: generateHLC(),
   };
   await db.curriculumSets.add(newSet);
+  
+  if (data.systemId) {
+    await db.systems.update(data.systemId, {
+      status: 'In Progress',
+      revisionState: 'in_progress',
+      updatedAt: new Date()
+    });
+  }
+  
   return newSet;
 }
 
