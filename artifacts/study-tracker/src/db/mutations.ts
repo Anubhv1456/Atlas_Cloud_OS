@@ -612,10 +612,11 @@ export async function createCurriculumSet(data: {
       data.systemsToActivate.forEach(id => systemsToUpdate.add(String(id)));
     }
 
-    // 3. Atomically activate parent systems if currently 'Unseen'
+    // 3. Atomically activate parent systems if not currently active
+    const { isSystemActive } = await import('@/features/subjects/subjectUtils');
     for (const sysId of systemsToUpdate) {
       const existing = await db.systems.get(sysId);
-      if (existing && existing.status === 'Unseen') {
+      if (existing && !isSystemActive(existing)) {
         await db.systems.update(sysId, {
           status: 'In Progress',
           revisionState: 'in_progress',

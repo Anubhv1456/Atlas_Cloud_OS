@@ -6,8 +6,7 @@ export function isSystemActive(s: any): boolean {
   return (
     s.revisionState === 'in_progress' ||
     s.currentRevisionInterval !== null ||
-    (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
-    s.status !== 'Unseen'
+    (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0)
   );
 }
 

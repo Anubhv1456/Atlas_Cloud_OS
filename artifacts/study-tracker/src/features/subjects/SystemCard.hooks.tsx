@@ -270,25 +270,22 @@ export function useSystemCardLogic({
       const allSubjects = await db.subjects.toArray();
 
       let activeCount = 0;
-      let projectedCount = 0;
-      let isCurrentSystemActive = false;
+      let isTargetSystemNew = false;
       let activeNames: string[] = [];
 
       if (isOrganBased) {
           const activeLocalSubIds = new Set(allActiveSystems.map(s => String(s.subjectId)));
           activeCount = activeLocalSubIds.size;
-          isCurrentSystemActive = activeLocalSubIds.has(String(system.subjectId));
-          projectedCount = activeCount + (isCurrentSystemActive ? 0 : 1);
+          isTargetSystemNew = !activeLocalSubIds.has(String(system.subjectId));
           activeNames = allSubjects.filter(s => activeLocalSubIds.has(String(s.id))).map(s => s.name).filter(Boolean);
       } else {
-          activeCount = allActiveSystems.length;
           const activeLocalSysIds = new Set(allActiveSystems.map(s => String(s.id)));
-          isCurrentSystemActive = system.id ? activeLocalSysIds.has(String(system.id)) : false;
-          projectedCount = activeCount + (isCurrentSystemActive ? 0 : 1);
+          activeCount = activeLocalSysIds.size;
+          isTargetSystemNew = system.id ? !activeLocalSysIds.has(String(system.id)) : true;
           activeNames = allActiveSystems.map(s => s.name).filter(Boolean);
       }
 
-      if (!isCurrentSystemActive && projectedCount > systemCap) {
+      if (isTargetSystemNew && activeCount >= systemCap) {
         window.dispatchEvent(new CustomEvent('open-paywall-modal', {
           detail: {
             trigger: 'system_breadth_cap',

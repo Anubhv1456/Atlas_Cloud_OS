@@ -88,40 +88,39 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
       if (subjectId) newSubjectIds.add(String(subjectId));
 
       let activeCount = 0;
-      let projectedCount = 0;
+      let isTargetSystemNew = false;
       let targetName = 'New System';
       let activeNames: string[] = [];
 
       if (isOrganBased) {
           const activeLocalSubIds = new Set(allActiveSystems.map(s => String(s.subjectId)));
           activeCount = activeLocalSubIds.size;
-          
-          const projectedLocalSubIds = new Set(activeLocalSubIds);
-          for (const newSubId of newSubjectIds) {
-             const sub = allSubjects.find(s => String(s.id) === newSubId || String(s.ontologySubjectId) === newSubId);
-             if (sub) {
-                 projectedLocalSubIds.add(String(sub.id));
-                 if (!activeLocalSubIds.has(String(sub.id))) targetName = sub.name;
-             }
-          }
-          projectedCount = projectedLocalSubIds.size;
           activeNames = allSubjects.filter(s => activeLocalSubIds.has(String(s.id))).map(s => s.name).filter(Boolean);
-      } else {
-          activeCount = allActiveSystems.length;
-          const activeLocalSysIds = new Set(allActiveSystems.map(s => String(s.id)));
-          const projectedLocalSysIds = new Set(activeLocalSysIds);
-          for (const newSysId of newSystemIds) {
-             const sys = allSys.find(s => String(s.id) === newSysId || String(s.ontologySystemId) === newSysId);
-             if (sys) {
-                 projectedLocalSysIds.add(String(sys.id));
-                 if (!activeLocalSysIds.has(String(sys.id))) targetName = sys.name;
-             }
+          
+          for (const newSubId of newSubjectIds) {
+              if (!activeLocalSubIds.has(newSubId)) {
+                  isTargetSystemNew = true;
+                  const sub = allSubjects.find(s => String(s.id) === newSubId || String(s.ontologySubjectId) === newSubId);
+                  if (sub) targetName = sub.name;
+                  break;
+              }
           }
-          projectedCount = projectedLocalSysIds.size;
+      } else {
+          const activeLocalSysIds = new Set(allActiveSystems.map(s => String(s.id)));
+          activeCount = activeLocalSysIds.size;
           activeNames = allActiveSystems.map(s => s.name).filter(Boolean);
+          
+          for (const newSysId of newSystemIds) {
+              if (!activeLocalSysIds.has(newSysId)) {
+                  isTargetSystemNew = true;
+                  const sys = allSys.find(s => String(s.id) === newSysId || String(s.ontologySystemId) === newSysId);
+                  if (sys) targetName = sys.name;
+                  break;
+              }
+          }
       }
 
-      if (projectedCount > activeCount && projectedCount > systemCap) {
+      if (isTargetSystemNew && activeCount >= systemCap) {
         window.dispatchEvent(new CustomEvent('open-paywall-modal', {
           detail: {
             trigger: 'system_breadth_cap',
