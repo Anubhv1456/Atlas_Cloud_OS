@@ -146,28 +146,6 @@ export function QuickMistakeModal({
       return;
     }
 
-    // ── Milestone Volume Cap Interception (35 Default / 50 Affiliate) ───────────
-    if (!hasAccess && (!editingMistake || !editingMistake.id)) {
-      const hasAffiliate = typeof window !== 'undefined' && Boolean(
-        localStorage.getItem('atlas_affiliate_id') ||
-        sessionStorage.getItem('atlas_pending_ref_code')
-      );
-      const mistakeCap = hasAffiliate ? 50 : 35;
-      const currentMistakeCount = await db.mistakeLogs.filter(m => !m.deletedAt).count();
-
-      if (currentMistakeCount >= mistakeCap) {
-        window.dispatchEvent(new CustomEvent('open-paywall-modal', {
-          detail: {
-            trigger: 'mistake_volume_cap',
-            count: currentMistakeCount,
-            cap: mistakeCap,
-            hasAffiliateBonus: hasAffiliate,
-          }
-        }));
-        return;
-      }
-    }
-
     setSaving(true);
     try {
       if (editingMistake && editingMistake.id) {

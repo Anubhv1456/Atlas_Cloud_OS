@@ -255,51 +255,6 @@ export function useSystemCardLogic({
   const { hasAccess } = useBetaAccess();
 
   const handleStatusChange = async (status: SystemStatus) => {
-    // ── Milestone System Breadth Cap (3 Active Systems Default / 4 Affiliate) ──
-    if (!hasAccess && status !== 'Unseen') {
-      const hasAffiliate = typeof window !== 'undefined' && Boolean(
-        localStorage.getItem('atlas_affiliate_id') ||
-        sessionStorage.getItem('atlas_pending_ref_code')
-      );
-      const systemCap = hasAffiliate ? 4 : 3;
-
-      const allActiveSystems = await getActiveSystems();
-
-      const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
-      const isOrganBased = profile?.curriculum?.includes('Organ-System');
-      const allSubjects = await db.subjects.toArray();
-
-      let activeCount = 0;
-      let isTargetSystemNew = false;
-      let activeNames: string[] = [];
-
-      if (isOrganBased) {
-          const activeLocalSubIds = new Set(allActiveSystems.map(s => String(s.subjectId)));
-          activeCount = activeLocalSubIds.size;
-          isTargetSystemNew = !activeLocalSubIds.has(String(system.subjectId));
-          activeNames = allSubjects.filter(s => activeLocalSubIds.has(String(s.id))).map(s => s.name).filter(Boolean);
-      } else {
-          const activeLocalSysIds = new Set(allActiveSystems.map(s => String(s.id)));
-          activeCount = activeLocalSysIds.size;
-          isTargetSystemNew = system.id ? !activeLocalSysIds.has(String(system.id)) : true;
-          activeNames = allActiveSystems.map(s => s.name).filter(Boolean);
-      }
-
-      if (isTargetSystemNew && activeCount >= systemCap) {
-        window.dispatchEvent(new CustomEvent('open-paywall-modal', {
-          detail: {
-            trigger: 'system_breadth_cap',
-            activeCount,
-            cap: systemCap,
-            targetSystemName: system.name,
-            activeSystemNames: activeNames.slice(0, systemCap),
-            hasAffiliateBonus: hasAffiliate,
-          }
-        }));
-        return;
-      }
-    }
-
     await updateSystem(system.id!, { status });
   };
 

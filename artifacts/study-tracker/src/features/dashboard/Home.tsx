@@ -81,32 +81,12 @@ export default function Home() {
   const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
-  const { hasAccess, isFreeTier } = useBetaAccess();
-
-  // Reactive milestone stats for free tier status chip
-  const freeTierMistakeCount = useLiveQuery(() => db.mistakeLogs.filter(m => !m.deletedAt).count(), []) ?? 0;
-  
-  const freeTierActiveSystems = useLiveQuery(async () => {
-    const { getActiveSystems } = await import('@/features/subjects/subjectUtils');
-    const allActiveSystems = await getActiveSystems();
-    
-    const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
-    const isOrganBased = profile?.curriculum?.includes('Organ-System');
-
-    if (isOrganBased) {
-       const activeSubjects = new Set(allActiveSystems.map(s => String(s.subjectId)));
-       return activeSubjects.size;
-    } else {
-       return allActiveSystems.length;
-    }
-  }, []) ?? 0;
+  const { hasAccess, isFreeTier, isTrialActive, trialDaysRemaining } = useBetaAccess();
 
   const hasAffiliate = typeof window !== 'undefined' && Boolean(
     localStorage.getItem('atlas_affiliate_id') ||
     sessionStorage.getItem('atlas_pending_ref_code')
   );
-  const maxMistakes = hasAffiliate ? 50 : 35;
-  const maxSystems = hasAffiliate ? 4 : 3;
 
   useEffect(() => {
     // Pillar 4: Onboarding is strictly governed by App.tsx at the route level (/onboarding).
@@ -179,22 +159,18 @@ export default function Home() {
                 </button>
 
                 {/* ── Milestone Usage Status Chip (Free Tier Only) ──────────────── */}
-                {isFreeTier && (
+                {isTrialActive && (
                   <button
                     type="button"
                     onClick={() => {
                       window.dispatchEvent(new CustomEvent('open-paywall-modal', {
-                        detail: {
-                          trigger: 'mistake_volume_cap',
-                          count: freeTierMistakeCount,
-                          cap: maxMistakes,
-                        }
+                        detail: { trigger: 'default' }
                       }));
                     }}
                     className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0"
-                    title="Click to unlock unlimited vault capacity"
+                    title="Click to upgrade"
                   >
-                    <span className="font-semibold">{hasAffiliate ? 'Ambassador Pass:' : 'Free Pass:'}</span> {freeTierMistakeCount}/{maxMistakes} Mistakes • {freeTierActiveSystems}/{maxSystems} Systems
+                    <span className="font-semibold">🚀 14-Day Free Trial</span> • {trialDaysRemaining} Days Remaining
                   </button>
                 )}
 

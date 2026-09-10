@@ -7,13 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export interface PaywallTriggerDetail {
-  trigger?: 'mistake_volume_cap' | 'system_breadth_cap' | 'recalibration_relief_cap' | 'default';
-  count?: number;
-  cap?: number;
-  activeCount?: number;
-  targetSystemName?: string;
-  activeSystemNames?: string[];
-  hasAffiliateBonus?: boolean;
+  trigger?: 'trial_expired' | 'recalibration_relief_cap' | 'default';
 }
 
 export function UpgradePaywallModal() {
@@ -99,21 +93,12 @@ export function UpgradePaywallModal() {
   // ── Dynamic Headline & Context Mapping ─────────────────────────────────────
   const getContextualContent = () => {
     switch (payload.trigger) {
-      case 'mistake_volume_cap':
+      case 'trial_expired':
         return {
-          icon: <Brain className="w-8 h-8 text-amber-400" />,
-          badge: `Volume Cap Reached (${payload.count}/${payload.cap} Mistakes)`,
-          title: "Keep Your Mistake Vault Growing",
-          description: `You've recorded ${payload.count} high-yield clinical mistakes. Unlock the full vault to continue logging UWorld & NBME autopsies with zero limits throughout your dedicated prep.`,
-        };
-      case 'system_breadth_cap':
-        return {
-          icon: <Layers className="w-8 h-8 text-amber-400" />,
-          badge: `Active Capacity Reached (${payload.cap} Systems Running)`,
-          title: `Activate ${payload.targetSystemName || 'New Systems'}`,
-          description: payload.activeSystemNames && payload.activeSystemNames.length > 0
-            ? `You have active memory curves running across ${payload.activeSystemNames.join(', ')}. Unlock the lifetime pass to track all 19 organ systems simultaneously without resetting progress.`
-            : `You've reached your free limit of concurrent active organ systems. Unlock the lifetime pass to track all systems simultaneously.`,
+          icon: <Lock className="w-8 h-8 text-amber-400" />,
+          badge: `Trial Expired`,
+          title: "Your 14-Day Free Trial Has Ended",
+          description: `To continue logging study blocks, recovering mistakes, and using the Spaced Repetition engine, upgrade your vault access.`,
         };
       case 'recalibration_relief_cap':
         return {
@@ -134,9 +119,24 @@ export function UpgradePaywallModal() {
 
   const contextInfo = getContextualContent();
 
+  const isTrialExpiredTrap = payload.trigger === 'trial_expired';
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[500px] border-white/5 border-l-2 border-l-amber-500/30 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Prevent closing if it's a trial expiration trap
+      if (isTrialExpiredTrap && !open) return;
+      setIsOpen(open);
+    }}>
+      <DialogContent 
+        className="sm:max-w-[500px] border-white/5 border-l-2 border-l-amber-500/30 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden"
+        onInteractOutside={(e) => {
+          if (isTrialExpiredTrap) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isTrialExpiredTrap) e.preventDefault();
+        }}
+        hideCloseButton={isTrialExpiredTrap}
+      >
         <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 p-6 border-b border-border/50 flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-3 border border-amber-200 dark:border-amber-500/30 shadow-inner">
             {contextInfo.icon}

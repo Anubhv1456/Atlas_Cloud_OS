@@ -73,7 +73,7 @@ initTheme();
 
 function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
-  const { hasAccess, paymentStatus, loading: accessLoading } = useBetaAccess();
+  const { hasAccess, paymentStatus, isTrialExpired, loading: accessLoading } = useBetaAccess();
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
   const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
@@ -119,13 +119,20 @@ function ProtectedApp() {
           return;
         }
 
-        // 2. Usage Milestone Architecture: Free tier candidates remain on '/' without route lockouts
+        // Check trial status
+        if (!hasAccess && isTrialExpired) {
+             window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+               detail: { trigger: 'trial_expired' }
+             }));
+        }
+
+        // 2. Clear out beta-access routes
         if (location === '/beta-access' || location === '/accept-invitation' || location === '/join') {
           setLocation('/');
         }
       }
     }
-  }, [user, authLoading, hasAccess, paymentStatus, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating]);
+  }, [user, authLoading, hasAccess, paymentStatus, isTrialExpired, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating]);
 
   if (authLoading || accessLoading || onboardingLoading) {
     return <AtlasLoadingScreen fullScreen message="Calibrating study schedule..." />;

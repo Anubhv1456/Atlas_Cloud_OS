@@ -218,9 +218,36 @@ export function useBetaAccess() {
     }
   };
 
+  let isTrialActive = false;
+  let isTrialExpired = false;
+  let trialDaysRemaining = 0;
+
+  if (user && user.metadata && user.metadata.creationTime) {
+    const createdAt = new Date(user.metadata.creationTime);
+    const diffDays = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Trial logic
+    if (diffDays <= 14) {
+      isTrialActive = true;
+      trialDaysRemaining = 14 - diffDays;
+    } else {
+      isTrialExpired = true;
+    }
+  }
+
+  // Override trial status if user has paid/been granted access
+  if (state.hasAccess) {
+    isTrialActive = false;
+    isTrialExpired = false;
+    trialDaysRemaining = 0;
+  }
+
   return { 
     hasAccess: Boolean(state.hasAccess), 
     isFreeTier: state.hasAccess === false,
+    isTrialActive,
+    isTrialExpired,
+    trialDaysRemaining,
     paymentStatus: state.paymentStatus, 
     paymentRejectionNote: state.paymentRejectionNote, 
     vaultActivationRequired: state.vaultActivationRequired,
