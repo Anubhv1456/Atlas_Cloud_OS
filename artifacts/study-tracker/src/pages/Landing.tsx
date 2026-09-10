@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from 'framer-motion';
 import { ChevronRight, Play, Compass, ArrowRight, Cloud, Smartphone, Sparkles, Map, BookOpen, Brain, Shield, Activity, Clock, Users, ArrowUpRight, Github, Twitter, Mail, Network, Target } from 'lucide-react';
-import { FcGoogle } from 'react-icons/fc';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';

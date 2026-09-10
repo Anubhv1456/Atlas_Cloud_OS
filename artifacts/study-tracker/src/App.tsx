@@ -27,25 +27,26 @@ import { AutoSyncEngine } from '@/components/AutoSyncEngine';
 import { db, dbEvents } from '@/db';
 
 import { lazy } from 'react';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
 import Home from '@/features/dashboard/Home';
-const NotFound = lazy(() => import('@/pages/not-found'));
+const NotFound = lazyWithRetry(() => import('@/pages/not-found'));
 
-const Landing = lazy(() => import('@/pages/Landing'));
-const AcceptInvitation = lazy(() => import('@/pages/AcceptInvitation'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const Contact = lazy(() => import('@/pages/Contact'));
-const BetaAccess = lazy(() => import('@/pages/BetaAccess'));
-const Onboarding = lazy(() => import('@/pages/Onboarding'));
-const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
-const AffiliatePartnerPage = lazy(() => import('@/features/affiliate/AffiliatePartnerPage'));
-const Analytics = lazy(() => import('@/features/analytics/Analytics'));
-const Settings = lazy(() => import('@/features/settings/Settings'));
-const Timeline = lazy(() => import('@/features/timeline/Timeline'));
-const SubjectDetail = lazy(() => import('@/features/subjects/SubjectDetail'));
-const MistakeRecoveryQueue = lazy(() => import('@/features/mistakes/MistakeRecoveryQueue'));
-const SubjectRadarPage = lazy(() => import('@/features/radar/SubjectRadarPage'));
+const Landing = lazyWithRetry(() => import('@/pages/Landing'));
+const AcceptInvitation = lazyWithRetry(() => import('@/pages/AcceptInvitation'));
+const PrivacyPolicy = lazyWithRetry(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'));
+const Contact = lazyWithRetry(() => import('@/pages/Contact'));
+const BetaAccess = lazyWithRetry(() => import('@/pages/BetaAccess'));
+const Onboarding = lazyWithRetry(() => import('@/pages/Onboarding'));
+const AdminDashboard = lazyWithRetry(() => import('@/features/admin/AdminDashboard'));
+const AffiliatePartnerPage = lazyWithRetry(() => import('@/features/affiliate/AffiliatePartnerPage'));
+const Analytics = lazyWithRetry(() => import('@/features/analytics/Analytics'));
+const Settings = lazyWithRetry(() => import('@/features/settings/Settings'));
+const Timeline = lazyWithRetry(() => import('@/features/timeline/Timeline'));
+const SubjectDetail = lazyWithRetry(() => import('@/features/subjects/SubjectDetail'));
+const MistakeRecoveryQueue = lazyWithRetry(() => import('@/features/mistakes/MistakeRecoveryQueue'));
+const SubjectRadarPage = lazyWithRetry(() => import('@/features/radar/SubjectRadarPage'));
 import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 
 
@@ -186,9 +187,11 @@ function ProtectedApp() {
 
   if (!user) {
     return (
-      <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
-        <Landing />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
+          <Landing />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 

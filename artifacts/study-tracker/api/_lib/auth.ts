@@ -1,18 +1,19 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import firebaseConfig from '../../src/firebase-applet-config.json' with { type: 'json' };
-
 export interface AuthenticatedUser {
   uid: string;
   email?: string;
   emailVerified?: boolean;
 }
 
+const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB23xBbSVe1eehDAiyUSz_HOvKyPdfxytM';
+
 /**
  * Extracts and verifies the Firebase Auth ID Token from the Authorization header.
  * Uses Firebase Identity Toolkit REST API for lightweight, zero-dependency token validation.
+ * Compatible with standard Node.js IncomingMessage, Express, and VercelRequest.
  */
-export async function verifyAuthToken(req: VercelRequest): Promise<AuthenticatedUser | null> {
-  const authHeader = req.headers.authorization || req.headers.Authorization;
+export async function verifyAuthToken(req: { headers: Record<string, string | string[] | undefined> }): Promise<AuthenticatedUser | null> {
+  const rawAuth = req.headers?.authorization || req.headers?.Authorization;
+  const authHeader = Array.isArray(rawAuth) ? rawAuth[0] : rawAuth;
 
   if (!authHeader || typeof authHeader !== 'string') {
     return null;
@@ -28,11 +29,10 @@ export async function verifyAuthToken(req: VercelRequest): Promise<Authenticated
     return null;
   }
 
-  const apiKey = process.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey;
-  if (!apiKey) {
-    console.error('[Auth Middleware] Firebase API Key is missing');
-    return null;
-  }
+  const apiKey =
+    process.env.VITE_FIREBASE_API_KEY ||
+    process.env.FIREBASE_API_KEY ||
+    DEFAULT_FIREBASE_API_KEY;
 
   try {
     const res = await fetch(
@@ -73,10 +73,27 @@ export async function verifyAuthToken(req: VercelRequest): Promise<Authenticated
   }
 }
 
+export interface VercelRequest {
+  headers: Record<string, string | string[] | undefined>;
+  query?: Record<string, string | string[] | undefined>;
+  body?: any;
+  method?: string;
+}
+
+export interface VercelResponse {
+  status: (statusCode: number) => VercelResponse;
+  json: (body: any) => any;
+  setHeader: (name: string, value: string) => any;
+  end: () => any;
+}
+
+export type ApiRequest = VercelRequest;
+export type ApiResponse = VercelResponse;
+
 /**
  * Standard HTTP helper to require auth on Vercel API routes
  */
-export async function requireAuth(req: VercelRequest, res: VercelResponse): Promise<AuthenticatedUser | null> {
+export async function requireAuth(req: ApiRequest, res: ApiResponse): Promise<AuthenticatedUser | null> {
   const user = await verifyAuthToken(req);
   if (!user) {
     res.status(401).json({

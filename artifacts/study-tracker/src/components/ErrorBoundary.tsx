@@ -29,17 +29,27 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const isChunkError =
+        this.state.error?.message?.includes('dynamically imported') ||
+        this.state.error?.message?.includes('Failed to fetch') ||
+        this.state.error?.message?.includes('error loading dynamically imported module') ||
+        this.state.error?.message?.includes('Loading chunk');
+
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
           <div className="flex flex-col items-center max-w-md text-center p-6 bg-card rounded-2xl shadow-sm border border-border">
-            <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mb-4">
-              <TriangleAlert className="w-6 h-6" />
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+              {isChunkError ? <RefreshCcw className="w-6 h-6 animate-spin" /> : <TriangleAlert className="w-6 h-6 text-destructive" />}
             </div>
-            <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+            <h2 className="text-xl font-bold mb-2">
+              {isChunkError ? 'App Update Ready' : 'Something went wrong'}
+            </h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Atlas encountered an unexpected error. Your data is safe locally, but the app needs to be refreshed.
+              {isChunkError
+                ? 'A fresh update or module version is available. Tap below to reload the latest version.'
+                : 'Atlas encountered an unexpected error. Your data is safe locally, but the app needs to be refreshed.'}
             </p>
-            {this.state.error && (
+            {this.state.error && !isChunkError && (
               <div className="bg-muted p-3 rounded-md w-full text-left overflow-x-auto mb-6">
                 <code className="text-xs text-muted-foreground whitespace-pre-wrap">
                   {this.state.error.message}
@@ -49,12 +59,17 @@ export class ErrorBoundary extends Component<Props, State> {
             <Button
               onClick={() => {
                 this.setState({ hasError: false, error: null });
+                if ('caches' in window) {
+                  caches.keys().then((keys) => {
+                    keys.forEach((key) => caches.delete(key));
+                  }).catch(() => {});
+                }
                 window.location.reload();
               }}
               className="w-full gap-2"
             >
               <RefreshCcw className="w-4 h-4" />
-              Reload App
+              {isChunkError ? 'Update & Reload App' : 'Reload App'}
             </Button>
           </div>
         </div>

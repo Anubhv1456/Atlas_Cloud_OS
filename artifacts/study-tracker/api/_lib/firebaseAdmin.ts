@@ -4,12 +4,23 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 let adminApp: App | undefined;
 let adminDb: Firestore | undefined;
 
+function formatPrivateKey(key?: string): string | undefined {
+  if (!key) return undefined;
+  // Remove wrapping quotes if present
+  let formatted = key.trim();
+  if ((formatted.startsWith('"') && formatted.endsWith('"')) || (formatted.startsWith("'") && formatted.endsWith("'"))) {
+    formatted = formatted.slice(1, -1);
+  }
+  // Replace literal \n with real newlines
+  formatted = formatted.replace(/\\n/g, '\n');
+  return formatted;
+}
+
 export function initFirebaseAdmin(): { db: Firestore } {
   if (!getApps().length) {
     const projectId = process.env.FIREBASE_PROJECT_ID || 'atlas-cloud-6f1c6';
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@atlas-cloud-6f1c6.iam.gserviceaccount.com';
-    const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
-    const privateKey = rawPrivateKey ? rawPrivateKey.replace(/\\n/g, '\n') : undefined;
+    const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
     if (!projectId || !clientEmail || !privateKey) {
       throw new Error(
