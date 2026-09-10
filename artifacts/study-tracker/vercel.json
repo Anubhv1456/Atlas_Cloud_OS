@@ -41,7 +41,7 @@
       "destination": "/apple-touch-icon-:size.png"
     },
     {
-      "source": "/((?!assets/|apple-touch-icon|pwa-|favicon|manifest\\.json|.*\\.[\\w]+$).*)",
+      "source": "/((?!api/|assets/|apple-touch-icon|pwa-|favicon|manifest\\.json|.*\\.[\\w]+$).*)",
       "destination": "/index.html"
     }
   ]
