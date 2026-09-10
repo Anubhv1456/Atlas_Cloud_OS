@@ -1,4 +1,20 @@
 import { ScoreLog } from '@/db';
+import { db } from '@/db';
+
+export function isSystemActive(s: any): boolean {
+  if (s.deletedAt) return false;
+  return (
+    s.revisionState === 'in_progress' ||
+    s.currentRevisionInterval !== null ||
+    (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
+    s.status !== 'Unseen'
+  );
+}
+
+export async function getActiveSystems(): Promise<any[]> {
+  const allSystems = await db.systems.toArray();
+  return allSystems.filter(isSystemActive);
+}
 
 export function calculateYearScoreMap(scoreLogs: ScoreLog[]) {
   const map = new Map<number, { percentage: number; score: number; total: number; timestamp: Date }>();

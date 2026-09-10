@@ -17,6 +17,8 @@ import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
+import { getActiveSystems } from '@/features/subjects/subjectUtils';
+
 export interface SystemCardProps {
   system: StudySystem;
   subjectName: string;
@@ -261,14 +263,7 @@ export function useSystemCardLogic({
       );
       const systemCap = hasAffiliate ? 4 : 3;
 
-      const allActiveSystems = await db.systems
-        .filter(s => !s.deletedAt && (
-          s.revisionState === 'in_progress' ||
-          s.currentRevisionInterval !== null ||
-          (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
-          s.status !== 'Unseen'
-        ))
-        .toArray();
+      const allActiveSystems = await getActiveSystems();
 
       const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
       const isOrganBased = profile?.curriculum?.includes('Organ-System');

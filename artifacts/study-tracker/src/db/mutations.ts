@@ -593,38 +593,39 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 export async function createCurriculumSet(data: {
   subjectId: number; systemId?: number; systemsToActivate?: string[]; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
   enforceReadOnlySandbox(); 
-  const newSet: import('./types').CurriculumSet = {
-    id: crypto.randomUUID(),
-    ...data,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    hlc: generateHLC(),
-  };
-  await db.curriculumSets.add(newSet);
   
-  if (data.systemId) {
-    await db.systems.update(data.systemId, {
-      status: 'In Progress',
-      revisionState: 'in_progress',
-      updatedAt: new Date()
-    });
-  }
-
-  if (data.systemsToActivate && data.systemsToActivate.length > 0) {
-    const allSys = await db.systems.toArray();
-    for (const sysId of data.systemsToActivate) {
-       const sys = allSys.find(s => String(s.id) === sysId || String(s.ontologySystemId) === sysId);
-       if (sys && sys.id) {
-          await db.systems.update(sys.id, {
-             status: 'In Progress',
-             revisionState: 'in_progress',
-             updatedAt: new Date()
-          });
-       }
+  return await db.transaction('rw', [db.curriculumSets, db.systems], async () => {
+    // 1. Insert Curriculum Set
+    const newSet: import('./types').CurriculumSet = {
+      id: crypto.randomUUID(),
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      hlc: generateHLC(),
+    };
+    await db.curriculumSets.add(newSet);
+    
+    // 2. Collect unique systems to activate
+    const systemsToUpdate = new Set<string>();
+    if (data.systemId) systemsToUpdate.add(String(data.systemId));
+    if (data.systemsToActivate) {
+      data.systemsToActivate.forEach(id => systemsToUpdate.add(String(id)));
     }
-  }
-  
-  return newSet;
+
+    // 3. Atomically activate parent systems if currently 'Unseen'
+    for (const sysId of systemsToUpdate) {
+      const existing = await db.systems.get(sysId);
+      if (existing && existing.status === 'Unseen') {
+        await db.systems.update(sysId, {
+          status: 'In Progress',
+          revisionState: 'in_progress',
+          updatedAt: new Date(),
+        });
+      }
+    }
+    
+    return newSet;
+  });
 }
 
 export async function updateCurriculumSet(id: string, updates: Partial<import('./types').CurriculumSet>) {

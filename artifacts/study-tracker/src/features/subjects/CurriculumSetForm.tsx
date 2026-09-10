@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { db } from '@/db';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 
+import { getActiveSystems } from '@/features/subjects/subjectUtils';
+
 interface CurriculumSetFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -70,14 +72,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
       );
       const systemCap = hasAffiliate ? 4 : 3;
 
-      const allActiveSystems = await db.systems
-        .filter(s => !s.deletedAt && (
-          s.revisionState === 'in_progress' ||
-          s.currentRevisionInterval !== null ||
-          (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
-          s.status !== 'Unseen'
-        ))
-        .toArray();
+      const allActiveSystems = await getActiveSystems();
 
       const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
       const isOrganBased = profile?.curriculum?.includes('Organ-System');
