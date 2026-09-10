@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useOperationalMode, setOperationalMode, resetOperationalMode, Subject, isSoftRecalibrating, useSubjects } from '@/db';
+import { useOperationalMode, setOperationalMode, resetOperationalMode, Subject, isSoftRecalibrating, useSubjects, db } from '@/db';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { ALL_SUBJECTS } from '@/data/ontology';
 import { SprintSetupDrawer } from './SprintSetupDrawer';
 import { HolidaySetupDrawer } from './HolidaySetupDrawer';
@@ -71,6 +72,8 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
     };
   }, [currentMode, opMode, availableSubjects]);
 
+  const { hasAccess } = useBetaAccess();
+
   const handleSelectMode = async (modeKey: 'standard' | 'tactical_sprint' | 'clinical_duty' | 'holiday') => {
     if (modeKey === currentMode && modeKey !== 'tactical_sprint' && modeKey !== 'holiday') {
       return;
@@ -106,6 +109,22 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
     }
 
     if (modeKey === 'standard') {
+      // ── Milestone Soft Recalibration Cap (Exactly 1 Free Recalibration) ──────
+      if (!hasAccess) {
+        const currentOp = await db.operationalModes.get('current');
+        const recalibrationsUsed = currentOp?.recalibrationCount ?? (currentOp?.lastRecalibratedAt ? 1 : 0);
+
+        if (recalibrationsUsed >= 1) {
+          window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+            detail: {
+              trigger: 'recalibration_relief_cap',
+              recalibrationsUsed
+            }
+          }));
+          return;
+        }
+      }
+
       try {
         await resetOperationalMode(10);
         toast.success('Standard Mode Active', {

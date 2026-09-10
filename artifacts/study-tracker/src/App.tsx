@@ -105,7 +105,7 @@ function ProtectedApp() {
           return;
         }
 
-        // 1. Run onboarding calibration first after login before trial screen
+        // 1. Run onboarding calibration first after login
         if (hasOnboarded === false) {
           if (location !== '/onboarding' && location !== '/accept-invitation' && location !== '/join') {
             setLocation('/onboarding');
@@ -113,13 +113,8 @@ function ProtectedApp() {
           return;
         }
 
-        // 2. Once onboarded, check beta access and trial status
-        if (!hasAccess) {
-          // Allow candidate to visit /onboarding if they wish to adjust calibration
-          if (location !== '/beta-access' && location !== '/onboarding' && location !== '/accept-invitation' && location !== '/join') {
-            setLocation('/beta-access');
-          }
-        } else if (hasAccess && (location === '/beta-access' || location === '/accept-invitation' || location === '/join')) {
+        // 2. Usage Milestone Architecture: Free tier candidates remain on '/' without route lockouts
+        if (location === '/beta-access' || location === '/accept-invitation' || location === '/join') {
           setLocation('/');
         }
       }

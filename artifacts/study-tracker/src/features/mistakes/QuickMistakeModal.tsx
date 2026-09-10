@@ -28,6 +28,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getOntologyForExam } from '@/data/ontology';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { toast } from 'sonner';
 
 export interface QuickMistakeModalProps {
@@ -135,12 +136,36 @@ export function QuickMistakeModal({
     );
   };
 
+  const { hasAccess } = useBetaAccess();
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!keyTakeaway.trim()) {
       toast.error('Please enter the clinical rule or takeaway.');
       textareaRef.current?.focus();
       return;
+    }
+
+    // ── Milestone Volume Cap Interception (35 Default / 50 Affiliate) ───────────
+    if (!hasAccess && (!editingMistake || !editingMistake.id)) {
+      const hasAffiliate = typeof window !== 'undefined' && Boolean(
+        localStorage.getItem('atlas_affiliate_id') ||
+        sessionStorage.getItem('atlas_pending_ref_code')
+      );
+      const mistakeCap = hasAffiliate ? 50 : 35;
+      const currentMistakeCount = await db.mistakeLogs.filter(m => !m.deletedAt).count();
+
+      if (currentMistakeCount >= mistakeCap) {
+        window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+          detail: {
+            trigger: 'mistake_volume_cap',
+            count: currentMistakeCount,
+            cap: mistakeCap,
+            hasAffiliateBonus: hasAffiliate,
+          }
+        }));
+        return;
+      }
     }
 
     setSaving(true);

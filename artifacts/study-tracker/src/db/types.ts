@@ -233,6 +233,7 @@ export interface OperationalModeConfig {
   recalibrationWindowDays?: number;
   previousMode?: OperationalModeType;
   lastRecalibratedAt?: string;
+  recalibrationCount?: number; // Cumulative Soft Recalibration events used
   notes?: string;
 }
 
@@ -246,6 +247,7 @@ export interface OperationalModeRecord {
   recalibrationWindowDays: number;
   previousMode?: OperationalModeType;
   lastRecalibratedAt?: string;
+  recalibrationCount?: number; // Total consumed recalibration resets
   notes?: string;
   examProfile?: string;
   updatedAt: Date;
@@ -260,5 +262,6 @@ export const DEFAULT_OPERATIONAL_MODE: OperationalModeRecord = {
   dailyCapacityMinutes: 180,
   activatedAt: new Date().toISOString(),
   recalibrationWindowDays: 10,
+  recalibrationCount: 0,
   updatedAt: new Date(),
 };

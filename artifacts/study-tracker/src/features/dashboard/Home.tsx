@@ -28,6 +28,7 @@ import { calculateOverallProgress, calculateSubjectProgress } from '@/lib/progre
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { db } from '@/db';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { BaselineTriageModal } from '@/components/BaselineTriageModal';
@@ -80,6 +81,26 @@ export default function Home() {
   const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
+  const { hasAccess, isFreeTier } = useBetaAccess();
+
+  // Reactive milestone stats for free tier status chip
+  const freeTierMistakeCount = useLiveQuery(() => db.mistakeLogs.filter(m => !m.deletedAt).count(), []) ?? 0;
+  const freeTierActiveSystems = useLiveQuery(() => 
+    db.systems.filter(s => !s.deletedAt && (
+      s.revisionState === 'in_progress' ||
+      s.currentRevisionInterval !== null ||
+      (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
+      s.status !== 'Unseen'
+    )).count(),
+  []) ?? 0;
+
+  const hasAffiliate = typeof window !== 'undefined' && Boolean(
+    localStorage.getItem('atlas_affiliate_id') ||
+    sessionStorage.getItem('atlas_pending_ref_code')
+  );
+  const maxMistakes = hasAffiliate ? 50 : 35;
+  const maxSystems = hasAffiliate ? 4 : 3;
+
   useEffect(() => {
     // Pillar 4: Onboarding is strictly governed by App.tsx at the route level (/onboarding).
     // Home dashboard only triggers the initial triage once the user is confirmed onboarded.
@@ -97,6 +118,33 @@ export default function Home() {
       window.removeEventListener('open-onboarding', handleOpenOnboarding);
       window.removeEventListener('open-masterclass', handleOpenMasterclass);
     };
+  }, []);
+
+  // ── Payment Return Feedback & URL Sanitization ──────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+
+    if (paymentStatus === 'success') {
+      toast.success('Payment received! Verifying lifetime access with the network...', {
+        duration: 6000,
+      });
+
+      // Clean query parameters from address bar without page reload
+      urlParams.delete('payment');
+      const cleanSearch = urlParams.toString();
+      const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    } else if (paymentStatus === 'cancelled') {
+      toast.info('Checkout cancelled. Your study progress and local mistake vault remain saved.');
+
+      urlParams.delete('payment');
+      const cleanSearch = urlParams.toString();
+      const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+    }
   }, []);
 
   return (
@@ -118,10 +166,31 @@ export default function Home() {
                   <span className="truncate">
                     {profile.targetExam 
                       ? `${profile.targetExam} ${profile.currentYear ? `• ${profile.currentYear}` : ''}`
-                      : 'Target: NEET-PG 2026'
+                      : 'Target: USMLE Step 1'
                     }
                   </span>
                 </button>
+
+                {/* ── Milestone Usage Status Chip (Free Tier Only) ──────────────── */}
+                {isFreeTier && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+                        detail: {
+                          trigger: 'mistake_volume_cap',
+                          count: freeTierMistakeCount,
+                          cap: maxMistakes,
+                        }
+                      }));
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0"
+                    title="Click to unlock unlimited vault capacity"
+                  >
+                    <span className="font-semibold">Free Pass:</span> {freeTierMistakeCount}/{maxMistakes} Mistakes • {freeTierActiveSystems}/{maxSystems} Systems
+                  </button>
+                )}
+
                 {streak > 0 && (
                   <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 shrink-0">
                     <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d

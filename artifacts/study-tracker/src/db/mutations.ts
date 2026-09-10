@@ -928,6 +928,7 @@ export async function setOperationalMode(config: Partial<OperationalModeConfig>)
       : (existing.recalibrationWindowDays || 10),
     previousMode: isModeChanging ? existing.mode : (config.previousMode ?? existing.previousMode),
     lastRecalibratedAt: config.lastRecalibratedAt ?? existing.lastRecalibratedAt,
+    recalibrationCount: config.recalibrationCount !== undefined ? config.recalibrationCount : (existing.recalibrationCount ?? 0),
     notes: config.notes !== undefined ? config.notes : existing.notes,
     updatedAt: new Date(),
     hlc: generateHLC(),
@@ -939,6 +940,7 @@ export async function setOperationalMode(config: Partial<OperationalModeConfig>)
 
 export async function resetOperationalMode(recalibrationDays: number = 10): Promise<OperationalModeRecord> {
   const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
+  const currentRecalibrations = existing.recalibrationCount ?? 0;
   
   const resetRecord: OperationalModeRecord = {
     id: 'current',
@@ -950,6 +952,7 @@ export async function resetOperationalMode(recalibrationDays: number = 10): Prom
     recalibrationWindowDays: recalibrationDays,
     previousMode: existing.mode,
     lastRecalibratedAt: new Date().toISOString(),
+    recalibrationCount: currentRecalibrations + 1,
     updatedAt: new Date(),
     hlc: generateHLC(),
   };

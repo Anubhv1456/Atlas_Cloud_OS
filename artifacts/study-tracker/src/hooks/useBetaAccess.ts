@@ -5,253 +5,243 @@ import { firestoreDb } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease } from '@/lib/offlineLease';
 
+export interface BetaAccessState {
+  hasAccess: boolean;
+  expiresAt: number | null;
+  paymentStatus: 'pending' | 'approved' | 'rejected' | null;
+  paymentRejectionNote: string | null;
+  vaultActivationRequired: boolean;
+  vaultProvenance: any | null;
+  offlineLeaseValid: boolean;
+  offlineHoursRemaining: number;
+  isTrial: boolean;
+  hasClaimedTrial: boolean;
+  isTrialExpired: boolean;
+  loading: boolean;
+}
+
+// ── Singleton State & Subscription Hub ──────────────────────────────────────────
+// Ensures exactly 1 Firestore onSnapshot listener exists across all hook instances.
+let currentUserId: string | null = null;
+let activeUnsubscribe: (() => void) | null = null;
+const subscribers = new Set<(state: BetaAccessState) => void>();
+
+function getInitialStateForUser(uid: string | null): BetaAccessState {
+  if (!uid) {
+    return {
+      hasAccess: false,
+      expiresAt: null,
+      paymentStatus: null,
+      paymentRejectionNote: null,
+      vaultActivationRequired: false,
+      vaultProvenance: null,
+      offlineLeaseValid: true,
+      offlineHoursRemaining: 72,
+      isTrial: false,
+      hasClaimedTrial: false,
+      isTrialExpired: false,
+      loading: false,
+    };
+  }
+
+  const localAccess = typeof window !== 'undefined' ? localStorage.getItem(`beta_access_${uid}`) : null;
+  const isLocallyValid = localAccess === 'true';
+  const leaseCheck = verifyOfflineLease(uid);
+
+  return {
+    hasAccess: isLocallyValid,
+    expiresAt: null,
+    paymentStatus: null,
+    paymentRejectionNote: null,
+    vaultActivationRequired: false,
+    vaultProvenance: null,
+    offlineLeaseValid: leaseCheck.isValid,
+    offlineHoursRemaining: leaseCheck.hoursRemaining,
+    isTrial: false,
+    hasClaimedTrial: false,
+    isTrialExpired: false,
+    loading: false, // Instant synchronous hydration (0ms offline latency)
+  };
+}
+
+let singletonState: BetaAccessState = getInitialStateForUser(null);
+
+function updateSingleton(newState: Partial<BetaAccessState>) {
+  singletonState = { ...singletonState, ...newState };
+  subscribers.forEach((cb) => cb(singletonState));
+}
+
+function setupSingletonListener(uid: string) {
+  if (currentUserId === uid && activeUnsubscribe) {
+    return;
+  }
+
+  if (activeUnsubscribe) {
+    activeUnsubscribe();
+    activeUnsubscribe = null;
+  }
+
+  currentUserId = uid;
+  singletonState = getInitialStateForUser(uid);
+  subscribers.forEach((cb) => cb(singletonState));
+
+  if (!firestoreDb) return;
+
+  const userRef = doc(firestoreDb, 'users', uid);
+  activeUnsubscribe = onSnapshot(
+    userRef,
+    (snap) => {
+      if (currentUserId !== uid) return;
+
+      if (snap.exists()) {
+        const data = snap.data();
+        const isBeta = data.betaAccess === true;
+        if (isBeta) {
+          localStorage.setItem(`beta_access_${uid}`, 'true');
+          issueOfflineLease(uid);
+        } else {
+          localStorage.removeItem(`beta_access_${uid}`);
+          localStorage.removeItem(`beta_access_expiry_${uid}`);
+          revokeOfflineLease(uid);
+        }
+
+        updateSingleton({
+          hasAccess: isBeta,
+          paymentStatus: data.paymentStatus || null,
+          paymentRejectionNote: data.paymentRejectionNote || null,
+          vaultActivationRequired: Boolean(data.vaultActivationRequired),
+          vaultProvenance: data.vaultImportProvenance || null,
+          offlineLeaseValid: true,
+          offlineHoursRemaining: 72,
+          isTrialExpired: false,
+          loading: false,
+        });
+      } else {
+        localStorage.removeItem(`beta_access_${uid}`);
+        localStorage.removeItem(`beta_access_expiry_${uid}`);
+        revokeOfflineLease(uid);
+        updateSingleton({
+          hasAccess: false,
+          expiresAt: null,
+          isTrial: false,
+          hasClaimedTrial: false,
+          isTrialExpired: false,
+          paymentStatus: null,
+          paymentRejectionNote: null,
+          vaultActivationRequired: false,
+          vaultProvenance: null,
+          loading: false,
+        });
+      }
+    },
+    (error) => {
+      console.warn("Singleton Firestore access listener error (offline):", error);
+      updateSingleton({ loading: false });
+    }
+  );
+}
+
 export function useBetaAccess() {
   const { user } = useAuth();
   const { isImpersonating, impersonatedUser } = useImpersonation();
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [expiresAt, setExpiresAt] = useState<number | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
-  const [paymentRejectionNote, setPaymentRejectionNote] = useState<string | null>(null);
-  const [vaultActivationRequired, setVaultActivationRequired] = useState(false);
-  const [vaultProvenance, setVaultProvenance] = useState<any | null>(null);
-  const [offlineLeaseValid, setOfflineLeaseValid] = useState(true);
-  const [offlineHoursRemaining, setOfflineHoursRemaining] = useState(72);
-  const [isTrial, setIsTrial] = useState(false);
-  const [hasClaimedTrial, setHasClaimedTrial] = useState(false);
-  const [isTrialExpired, setIsTrialExpired] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const snapshotHandledRef = useRef(false);
+  const [state, setState] = useState<BetaAccessState>(() => {
+    if (isImpersonating && impersonatedUser) {
+      return {
+        hasAccess: Boolean(impersonatedUser.betaAccess),
+        expiresAt: null,
+        paymentStatus: (impersonatedUser.paymentStatus as any) || null,
+        paymentRejectionNote: null,
+        vaultActivationRequired: false,
+        vaultProvenance: null,
+        offlineLeaseValid: true,
+        offlineHoursRemaining: 72,
+        isTrial: false,
+        hasClaimedTrial: true,
+        isTrialExpired: false,
+        loading: false,
+      };
+    }
+    if (!user) return getInitialStateForUser(null);
+    return currentUserId === user.uid ? singletonState : getInitialStateForUser(user.uid);
+  });
 
   useEffect(() => {
     if (isImpersonating && impersonatedUser) {
-      const rawExp = impersonatedUser.betaAccessExpiresAt;
-      const exp = typeof rawExp === 'number' ? rawExp : rawExp?.toMillis ? rawExp.toMillis() : rawExp ? new Date(rawExp).getTime() : null;
-      const isExpired = exp && exp < Date.now();
-      const hasCandidateAccess = Boolean(impersonatedUser.betaAccess && !isExpired);
-
-      const isTrialCandidate = Boolean(impersonatedUser.isTrial);
-
-      setHasAccess(hasCandidateAccess);
-      setExpiresAt(exp);
-      setIsTrial(isTrialCandidate);
-      setHasClaimedTrial(Boolean(impersonatedUser.hasClaimedTrial || impersonatedUser.isTrial));
-      setIsTrialExpired(Boolean(isTrialCandidate && isExpired));
-      setPaymentStatus((impersonatedUser.paymentStatus as any) || null);
-      setPaymentRejectionNote(null);
-      setVaultActivationRequired(false);
-      setVaultProvenance(null);
-      setOfflineLeaseValid(true);
-      setOfflineHoursRemaining(72);
-      setLoading(false);
+      setState({
+        hasAccess: Boolean(impersonatedUser.betaAccess),
+        expiresAt: null,
+        paymentStatus: (impersonatedUser.paymentStatus as any) || null,
+        paymentRejectionNote: null,
+        vaultActivationRequired: false,
+        vaultProvenance: null,
+        offlineLeaseValid: true,
+        offlineHoursRemaining: 72,
+        isTrial: false,
+        hasClaimedTrial: true,
+        isTrialExpired: false,
+        loading: false,
+      });
       return;
     }
 
     if (!user) {
-      setHasAccess(false);
-      setExpiresAt(null);
-      setIsTrial(false);
-      setHasClaimedTrial(false);
-      setIsTrialExpired(false);
-      setPaymentStatus(null);
-      setPaymentRejectionNote(null);
-      setVaultActivationRequired(false);
-      setVaultProvenance(null);
-      setOfflineLeaseValid(true);
-      setLoading(false);
+      if (activeUnsubscribe) {
+        activeUnsubscribe();
+        activeUnsubscribe = null;
+        currentUserId = null;
+      }
+      const initialUnauth = getInitialStateForUser(null);
+      setState(initialUnauth);
       return;
     }
 
-    snapshotHandledRef.current = false;
+    // Subscribe component state to singleton updates
+    const handleUpdate = (updated: BetaAccessState) => setState(updated);
+    subscribers.add(handleUpdate);
 
-    // 1. Immediate local hydration (0ms offline latency)
-    const localAccess = localStorage.getItem(`beta_access_${user.uid}`);
-    const localExpiry = localStorage.getItem(`beta_access_expiry_${user.uid}`);
-    const leaseCheck = verifyOfflineLease(user.uid);
-    setOfflineLeaseValid(leaseCheck.isValid);
-    setOfflineHoursRemaining(leaseCheck.hoursRemaining);
-
-    let isLocallyValid = false;
-    if (localAccess === 'true') {
-      if (localExpiry) {
-        const expTime = parseInt(localExpiry, 10);
-        if (new Date().getTime() < expTime) {
-          isLocallyValid = true;
-          setExpiresAt(expTime);
-        } else {
-          localStorage.removeItem(`beta_access_${user.uid}`);
-          localStorage.removeItem(`beta_access_expiry_${user.uid}`);
-          revokeOfflineLease(user.uid);
-        }
-      } else {
-        // Lifetime access or active lease
-        isLocallyValid = true;
-      }
-    }
-
-    // Set optimistic access state immediately
-    if (isLocallyValid) {
-      setHasAccess(true);
-    }
-
-    // If no Firestore available, resolve immediately
-    if (!firestoreDb) {
-      setHasAccess(isLocallyValid);
-      setLoading(false);
-      return;
-    }
-
-    // 2. 300ms Race-Timeout Fallback
-    // If onSnapshot hangs (e.g. offline / poor signal), unblock App.tsx root mount
-    const offlineFallbackTimer = setTimeout(() => {
-      if (!snapshotHandledRef.current) {
-        setHasAccess(isLocallyValid);
-        setLoading(false);
-      }
-    }, 300);
-
-    const userRef = doc(firestoreDb, 'users', user.uid);
-
-    // 3. Real-time Cloud Synchronization
-    const unsubscribe = onSnapshot(
-      userRef,
-      async (snap) => {
-        snapshotHandledRef.current = true;
-        clearTimeout(offlineFallbackTimer);
-
-        if (snap.exists()) {
-          const data = snap.data();
-          setPaymentStatus(data.paymentStatus || null);
-          setPaymentRejectionNote(data.paymentRejectionNote || null);
-          setVaultActivationRequired(Boolean(data.vaultActivationRequired));
-          setVaultProvenance(data.vaultImportProvenance || null);
-
-          const isTrialAcc = Boolean(data.isTrial);
-          const hasClaimed = Boolean(data.hasClaimedTrial || data.isTrial);
-          setIsTrial(isTrialAcc);
-          setHasClaimedTrial(hasClaimed);
-
-          if (data.betaAccess === true) {
-            const expTime = data.betaAccessExpiresAt?.toMillis
-              ? data.betaAccessExpiresAt.toMillis()
-              : data.betaAccessExpiresAt;
-
-            if (expTime && new Date().getTime() > expTime) {
-              // Expired access
-              localStorage.removeItem(`beta_access_${user.uid}`);
-              localStorage.removeItem(`beta_access_expiry_${user.uid}`);
-              revokeOfflineLease(user.uid);
-              setHasAccess(false);
-              setExpiresAt(null);
-              setIsTrialExpired(Boolean(isTrialAcc || hasClaimed));
-              setDoc(userRef, { betaAccess: false }, { merge: true }).catch(() => {});
-            } else {
-              // Valid active access -> Issue / refresh bounded offline lease
-              localStorage.setItem(`beta_access_${user.uid}`, 'true');
-              issueOfflineLease(user.uid, expTime);
-              setOfflineLeaseValid(true);
-              setOfflineHoursRemaining(72);
-
-              if (expTime) {
-                localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
-                setExpiresAt(expTime);
-              } else {
-                setExpiresAt(null); // Lifetime
-              }
-              setIsTrialExpired(false);
-              setHasAccess(true);
-            }
-          } else {
-            // Access revoked or absent
-            localStorage.removeItem(`beta_access_${user.uid}`);
-            localStorage.removeItem(`beta_access_expiry_${user.uid}`);
-            revokeOfflineLease(user.uid);
-            setHasAccess(false);
-            setExpiresAt(null);
-            setIsTrialExpired(Boolean(isTrialAcc || hasClaimed));
-          }
-        } else {
-          localStorage.removeItem(`beta_access_${user.uid}`);
-          localStorage.removeItem(`beta_access_expiry_${user.uid}`);
-          revokeOfflineLease(user.uid);
-          setHasAccess(false);
-          setExpiresAt(null);
-          setIsTrial(false);
-          setHasClaimedTrial(false);
-          setIsTrialExpired(false);
-          setPaymentStatus(null);
-          setPaymentRejectionNote(null);
-          setVaultActivationRequired(false);
-          setVaultProvenance(null);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.warn("Firestore access snapshot skipped (offline):", error);
-        snapshotHandledRef.current = true;
-        clearTimeout(offlineFallbackTimer);
-        setHasAccess(isLocallyValid);
-        setLoading(false);
-      }
-    );
+    // Initialize or verify singleton listener
+    setupSingletonListener(user.uid);
 
     return () => {
-      clearTimeout(offlineFallbackTimer);
-      unsubscribe();
+      subscribers.delete(handleUpdate);
     };
-  }, [user]);
+  }, [user, isImpersonating, impersonatedUser]);
 
   const grantAccess = async () => {
     if (!user) return;
-
-    // Default 90 days / 3 months expiration for Closed Beta
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 90);
-    const expTime = expiryDate.getTime();
 
     if (firestoreDb) {
       try {
         const userRef = doc(firestoreDb, 'users', user.uid);
         await setDoc(userRef, {
           betaAccess: true,
-          paymentStatus: 'pending',
-          betaAccessExpiresAt: expTime,
+          paymentStatus: 'approved',
           vaultActivationRequired: false,
           updatedAt: new Date()
         }, { merge: true });
       } catch (e) {
-        console.error("Error granting beta access", e);
+        console.error("Error granting access", e);
       }
     }
     localStorage.setItem(`beta_access_${user.uid}`, 'true');
-    localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
     issueOfflineLease(user.uid);
-    setHasAccess(true);
-    setExpiresAt(expTime);
+    updateSingleton({ hasAccess: true, paymentStatus: 'approved' });
   };
 
   /**
    * Activates an instant clinical trial pass for a candidate (e.g. 7 or 14 days)
    */
-  const claimTrial = async (customDays?: number): Promise<boolean> => {
+  const claimTrial = async (_customDays?: number): Promise<boolean> => {
     if (!user || !firestoreDb) return false;
     try {
-      const days = customDays || 7;
-      const expTime = Date.now() + (days * 24 * 60 * 60 * 1000);
-      const userRef = doc(firestoreDb, 'users', user.uid);
-
       let affiliateId: string | undefined;
       if (typeof window !== 'undefined') {
-        affiliateId = localStorage.getItem('atlas_affiliate_id') || undefined;
+        affiliateId = localStorage.getItem('atlas_affiliate_id') || sessionStorage.getItem('atlas_pending_ref_code') || undefined;
       }
 
+      const userRef = doc(firestoreDb, 'users', user.uid);
       const payload: any = {
-        betaAccess: true,
-        isTrial: true,
         hasClaimedTrial: true,
-        trialStartedAt: new Date(),
-        paymentStatus: 'pending',
-        betaAccessExpiresAt: expTime,
-        vaultActivationRequired: false,
         updatedAt: new Date()
       };
       if (affiliateId) {
@@ -260,25 +250,14 @@ export function useBetaAccess() {
       }
 
       await setDoc(userRef, payload, { merge: true });
-
-      localStorage.setItem(`beta_access_${user.uid}`, 'true');
-      localStorage.setItem(`beta_access_expiry_${user.uid}`, expTime.toString());
-      issueOfflineLease(user.uid, expTime);
-      setHasAccess(true);
-      setExpiresAt(expTime);
-      setIsTrial(true);
-      setHasClaimedTrial(true);
-      setIsTrialExpired(false);
       return true;
     } catch (err) {
-      console.error("Failed to claim trial:", err);
+      console.error("Failed to claim trial/affiliate tracking:", err);
       return false;
     }
   };
 
-  const trialDaysRemaining = expiresAt && isTrial && hasAccess
-    ? Math.max(0, Math.ceil((expiresAt - Date.now()) / (1000 * 60 * 60 * 24)))
-    : null;
+  const trialDaysRemaining = null;
 
   const clearVaultActivationFlag = async () => {
     if (!user || !firestoreDb) return;
@@ -288,26 +267,27 @@ export function useBetaAccess() {
         vaultActivationRequired: false,
         updatedAt: new Date()
       }, { merge: true });
-      setVaultActivationRequired(false);
+      updateSingleton({ vaultActivationRequired: false });
     } catch (e) {
       console.error("Error clearing vault activation flag", e);
     }
   };
 
   return { 
-    hasAccess, 
-    expiresAt, 
-    paymentStatus, 
-    paymentRejectionNote, 
-    vaultActivationRequired,
-    vaultProvenance,
-    offlineLeaseValid,
-    offlineHoursRemaining,
-    isTrial,
-    hasClaimedTrial,
-    isTrialExpired,
+    hasAccess: Boolean(state.hasAccess), 
+    isFreeTier: state.hasAccess === false,
+    expiresAt: state.expiresAt, 
+    paymentStatus: state.paymentStatus, 
+    paymentRejectionNote: state.paymentRejectionNote, 
+    vaultActivationRequired: state.vaultActivationRequired,
+    vaultProvenance: state.vaultProvenance,
+    offlineLeaseValid: state.offlineLeaseValid,
+    offlineHoursRemaining: state.offlineHoursRemaining,
+    isTrial: state.isTrial,
+    hasClaimedTrial: state.hasClaimedTrial,
+    isTrialExpired: state.isTrialExpired,
     trialDaysRemaining,
-    loading, 
+    loading: state.loading, 
     grantAccess,
     claimTrial,
     clearVaultActivationFlag

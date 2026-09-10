@@ -13,6 +13,7 @@ import { isRevisionDue, isRevisionOverdue, daysOverdue } from '@/db';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { ALL_SYSTEMS, ALL_SUBJECTS } from '@/data/ontology';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
@@ -249,7 +250,45 @@ export function useSystemCardLogic({
     await updateSystem(system.id!, { isHighYield: !system.isHighYield });
   };
 
+  const { hasAccess } = useBetaAccess();
+
   const handleStatusChange = async (status: SystemStatus) => {
+    // ── Milestone System Breadth Cap (3 Active Systems Default / 4 Affiliate) ──
+    if (!hasAccess && status !== 'Unseen') {
+      const hasAffiliate = typeof window !== 'undefined' && Boolean(
+        localStorage.getItem('atlas_affiliate_id') ||
+        sessionStorage.getItem('atlas_pending_ref_code')
+      );
+      const systemCap = hasAffiliate ? 4 : 3;
+
+      const allActiveSystems = await db.systems
+        .filter(s => !s.deletedAt && (
+          s.revisionState === 'in_progress' ||
+          s.currentRevisionInterval !== null ||
+          (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
+          s.status !== 'Unseen'
+        ))
+        .toArray();
+
+      const activeSystemIds = new Set(allActiveSystems.map(s => String(s.id)));
+      const isCurrentSystemActive = system.id && activeSystemIds.has(String(system.id));
+
+      if (!isCurrentSystemActive && activeSystemIds.size >= systemCap) {
+        const activeNames = allActiveSystems.map(s => s.name).filter(Boolean).slice(0, systemCap);
+        window.dispatchEvent(new CustomEvent('open-paywall-modal', {
+          detail: {
+            trigger: 'system_breadth_cap',
+            activeCount: activeSystemIds.size,
+            cap: systemCap,
+            targetSystemName: system.name,
+            activeSystemNames: activeNames,
+            hasAffiliateBonus: hasAffiliate,
+          }
+        }));
+        return;
+      }
+    }
+
     await updateSystem(system.id!, { status });
   };
 

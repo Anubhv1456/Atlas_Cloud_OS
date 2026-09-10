@@ -1,107 +1,221 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Key, CreditCard, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import { Lock, Key, CreditCard, Sparkles, Zap, ShieldCheck, Brain, Layers, RotateCcw, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+
+export interface PaywallTriggerDetail {
+  trigger?: 'mistake_volume_cap' | 'system_breadth_cap' | 'recalibration_relief_cap' | 'default';
+  count?: number;
+  cap?: number;
+  activeCount?: number;
+  targetSystemName?: string;
+  activeSystemNames?: string[];
+  hasAffiliateBonus?: boolean;
+}
 
 export function UpgradePaywallModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [payload, setPayload] = useState<PaywallTriggerDetail>({ trigger: 'default' });
   const [, setLocation] = useLocation();
   const [affiliateId, setAffiliateId] = useState<string>('');
+  const { user, signInWithGoogle } = useAuth();
 
   useEffect(() => {
-    const handleOpen = () => setIsOpen(true);
-    window.addEventListener('open-paywall-modal', handleOpen);
+    const handleOpen = (e: Event) => {
+      const customEvent = e as CustomEvent<PaywallTriggerDetail>;
+      if (customEvent.detail) {
+        setPayload(customEvent.detail);
+      } else {
+        setPayload({ trigger: 'default' });
+      }
+      setIsOpen(true);
+    };
+
+    window.addEventListener('open-paywall-modal', handleOpen as EventListener);
     
-    // Affiliate Tracking: Read ?via= parameter from URL on load
+    // Affiliate Tracking: Read ?via= or ?ref= parameter from URL on load
     const urlParams = new URLSearchParams(window.location.search);
-    const via = urlParams.get('via');
+    const via = urlParams.get('via') || urlParams.get('ref');
     if (via) {
       setAffiliateId(via);
       localStorage.setItem('atlas_affiliate_id', via);
     } else {
-      const storedVia = localStorage.getItem('atlas_affiliate_id');
+      const storedVia = localStorage.getItem('atlas_affiliate_id') || sessionStorage.getItem('atlas_pending_ref_code');
       if (storedVia) setAffiliateId(storedVia);
     }
 
-    return () => window.removeEventListener('open-paywall-modal', handleOpen);
+    return () => window.removeEventListener('open-paywall-modal', handleOpen as EventListener);
   }, []);
 
-  const handleStripeCheckout = () => {
-    // Generate Stripe payment URL with affiliate tracking
-    let paymentUrl = 'https://buy.stripe.com/test_dummy_link_for_atlas';
-    if (affiliateId) {
-      paymentUrl += `?client_reference_id=${encodeURIComponent(affiliateId)}`;
+  const handleCheckout = async () => {
+    if (!user) {
+      toast.info('Please sign in with Google to associate your lifetime license.');
+      try {
+        await signInWithGoogle();
+      } catch (err) {
+        toast.error('Sign-in is required to continue to checkout.');
+      }
+      return;
     }
-    window.open(paymentUrl, '_blank');
+
+    setLoading(true);
+    try {
+      const idToken = await user.getIdToken();
+      const currentAffiliate = affiliateId || localStorage.getItem('atlas_affiliate_id') || sessionStorage.getItem('atlas_pending_ref_code') || '';
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ affiliateId: currentAffiliate }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || errData.message || `Checkout session creation failed (${response.status})`);
+      }
+
+      const { checkout_url } = await response.json();
+
+      if (!checkout_url) {
+        throw new Error('Payment gateway did not return a valid checkout URL');
+      }
+
+      // Redirect to Dodo hosted checkout page
+      window.location.href = checkout_url;
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast.error(err.message || 'Failed to initialize secure checkout. Please try again.');
+      setLoading(false);
+    }
   };
+
+  // ── Dynamic Headline & Context Mapping ─────────────────────────────────────
+  const getContextualContent = () => {
+    switch (payload.trigger) {
+      case 'mistake_volume_cap':
+        return {
+          icon: <Brain className="w-8 h-8 text-amber-400" />,
+          badge: `Volume Cap Reached (${payload.count}/${payload.cap} Mistakes)`,
+          title: "Keep Your Mistake Vault Growing",
+          description: `You've recorded ${payload.count} high-yield clinical mistakes. Unlock the full vault to continue logging UWorld & NBME autopsies with zero limits throughout your dedicated prep.`,
+        };
+      case 'system_breadth_cap':
+        return {
+          icon: <Layers className="w-8 h-8 text-amber-400" />,
+          badge: `Active Capacity Reached (${payload.cap} Systems Running)`,
+          title: `Activate ${payload.targetSystemName || 'New Systems'}`,
+          description: payload.activeSystemNames && payload.activeSystemNames.length > 0
+            ? `You have active memory curves running across ${payload.activeSystemNames.join(', ')}. Unlock the lifetime pass to track all 19 organ systems simultaneously without resetting progress.`
+            : `You've reached your free limit of concurrent active organ systems. Unlock the lifetime pass to track all systems simultaneously.`,
+        };
+      case 'recalibration_relief_cap':
+        return {
+          icon: <RotateCcw className="w-8 h-8 text-amber-400" />,
+          badge: "Soft Recalibration Protection",
+          title: "Protect Against Rotation Backlogs",
+          description: "You've experienced zero-debt schedule smoothing. Unlock continuous Soft Recalibrations to protect your schedule after every clinical duty shift, hospital call, or rest break.",
+        };
+      default:
+        return {
+          icon: <Lock className="w-8 h-8 text-amber-400" />,
+          badge: "Atlas Intelligence",
+          title: "Unlock Full Atlas Study Vault",
+          description: "One-time lifetime software license for USMLE Step 1 & Step 2 CK. No monthly subscriptions, no recurring compute markups.",
+        };
+    }
+  };
+
+  const contextInfo = getContextualContent();
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-[500px] border-white/5 border-l-2 border-l-amber-500/30 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden">
         <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 p-6 border-b border-border/50 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4 border border-amber-200 dark:border-amber-500/30">
-            <Lock className="w-8 h-8 text-amber-400 dark:text-amber-400" />
+          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-3 border border-amber-200 dark:border-amber-500/30 shadow-inner">
+            {contextInfo.icon}
           </div>
-          <DialogTitle className="text-2xl font-bold text-foreground mb-2">Unlock Atlas Intelligence</DialogTitle>
-          <DialogDescription className="text-base text-muted-foreground max-w-sm mx-auto">
-            Atlas runs on a BYOK (Bring Your Own Key) model to give you absolute privacy and zero recurring AI compute markups.
+          <span className="text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">
+            {contextInfo.badge}
+          </span>
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-foreground mb-1.5">{contextInfo.title}</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            {contextInfo.description}
           </DialogDescription>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="space-y-4">
+        <div className="p-6 space-y-5">
+          <div className="space-y-3.5">
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-zinc-800/40 flex items-center justify-center shrink-0 mt-0.5">
-                <CreditCard className="w-4 h-4 text-primary" />
+              <div className="w-7 h-7 rounded-lg bg-zinc-800/40 flex items-center justify-center shrink-0 mt-0.5 border border-white/5">
+                <CreditCard className="w-3.5 h-3.5 text-primary" />
               </div>
               <div>
-                <h4 className="font-semibold text-sm">1. One-Time Software License</h4>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Pay a single <strong>$69 lifetime fee</strong> for the Atlas interface. No monthly subscriptions, no hidden software fees. You own the software forever.
+                <h4 className="font-semibold text-xs text-foreground">One-Time Software License ($49)</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  Single purchase grants permanent access to all 19 organ systems, unlimited mistake logs, and lifetime UI updates.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Key className="w-4 h-4 text-indigo-500" />
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-500/20">
+                <Key className="w-3.5 h-3.5 text-indigo-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-sm">2. Bring Your Own Key (BYOK)</h4>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Enter your own Gemini API key in Settings. You pay Google directly for exactly what you use (typically ~$2-5/month during intense study periods).
+                <h4 className="font-semibold text-xs text-foreground">Bring Your Own Key (BYOK)</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  Plug in your own Gemini key for AI flashcard deck generation. You pay Google directly with zero markups.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-3 items-start">
-              <div className="w-8 h-8 rounded-full bg-emerald-950/20 flex items-center justify-center shrink-0 mt-0.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <div className="w-7 h-7 rounded-lg bg-emerald-950/20 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/20">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-sm">3. Absolute Privacy</h4>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Your API key never leaves your browser. All your study data, mistakes, and AI context remain 100% local on your device.
+                <h4 className="font-semibold text-xs text-foreground">100% Local-First & Private</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  Your notes, test autopsies, and memory decay states remain securely encrypted in your browser's IndexedDB.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-muted/50 rounded-xl p-4 border border-border">
+          <div className="bg-muted/40 rounded-xl p-4 border border-border/80">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium">Atlas Lifetime Pass</span>
-              <span className="text-lg font-bold">$69.00</span>
+              <div>
+                <span className="text-xs font-semibold text-foreground block">Atlas Lifetime Pass</span>
+                <span className="text-[10px] text-muted-foreground">All Organ Systems & Unlimited Autopsies</span>
+              </div>
+              <span className="text-lg font-bold text-foreground">$49.00</span>
             </div>
             <Button 
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-md"
-              onClick={handleStripeCheckout}
+              disabled={loading}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs py-2 shadow-md cursor-pointer transition-all"
+              onClick={handleCheckout}
             >
-              <Zap className="w-4 h-4 mr-2" />
-              Get Lifetime Access
+              {loading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Connecting to Secure Checkout...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3.5 h-3.5 mr-1.5" />
+                  Unlock Lifetime Access • $49
+                </>
+              )}
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-3">
-              Secure checkout via Stripe. Includes all future Atlas UI updates.
+            <p className="text-[10px] text-center text-muted-foreground mt-2">
+              Instant activation via Dodo Payments • Merchant of Record
             </p>
           </div>
           
@@ -122,3 +236,4 @@ export function UpgradePaywallModal() {
     </Dialog>
   );
 }
+
