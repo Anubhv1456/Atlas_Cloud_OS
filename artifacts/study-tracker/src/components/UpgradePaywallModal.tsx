@@ -157,7 +157,7 @@ export function UpgradePaywallModal() {
                 <CreditCard className="w-3.5 h-3.5 text-primary" />
               </div>
               <div>
-                <h4 className="font-semibold text-xs text-foreground">One-Time Software License ($49)</h4>
+                <h4 className="font-semibold text-xs text-foreground">One-Time Software License</h4>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                   Single purchase grants permanent access to all 19 organ systems, unlimited mistake logs, and lifetime UI updates.
                 </p>
@@ -195,7 +195,7 @@ export function UpgradePaywallModal() {
                 <span className="text-xs font-semibold text-foreground block">Atlas Lifetime Pass</span>
                 <span className="text-[10px] text-muted-foreground">All Organ Systems & Unlimited Autopsies</span>
               </div>
-              <span className="text-lg font-bold text-foreground">$49.00</span>
+              <span className="text-[10px] font-semibold text-muted-foreground">Calculated at Checkout</span>
             </div>
             <Button 
               disabled={loading}
@@ -210,7 +210,7 @@ export function UpgradePaywallModal() {
               ) : (
                 <>
                   <Zap className="w-3.5 h-3.5 mr-1.5" />
-                  Unlock Lifetime Access • $49
+                  Unlock Lifetime Access
                 </>
               )}
             </Button>

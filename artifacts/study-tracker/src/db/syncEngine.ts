@@ -70,6 +70,12 @@ class SyncEngine {
 
   private startMutationQueueWorker() {
     setInterval(async () => {
+      // DANGER: Stop background sync worker completely if impersonating
+      // This prevents the Admin's local Dexie state from overwriting the candidate's cloud state
+      if (sessionStorage.getItem('atlas_impersonated_target')) {
+        return;
+      }
+      
       if (!auth.currentUser || !navigator.onLine) return;
       const uid = auth.currentUser.uid;
 

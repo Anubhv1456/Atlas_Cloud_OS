@@ -9,6 +9,15 @@ import { generateHLC } from '../lib/hlc';
 import { recordSessionCompletion } from '../lib/telemetry';
 import { normalizeName } from '../lib/exam-presets';
 
+// Helper to block mutations during impersonation
+function enforceReadOnlySandbox() {
+  if (typeof window !== 'undefined' && sessionStorage.getItem('atlas_impersonated_target')) {
+    const errorMsg = 'Read-Only Mode: Data mutations are physically disabled during impersonation to prevent corrupting local state.';
+    toast.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+}
+
 export async function checkSubjectHasProgress(subjectId: number | string): Promise<boolean> {
   const setsTable = db.curriculumSets || db.revisionSets;
   const [systems, sets, history, pyqs, scores] = await Promise.all([
@@ -46,6 +55,7 @@ async function updateUIPref(type: 'subject' | 'system', entityId: number, update
 }
 
 export async function addSubject(name: string) {
+  enforceReadOnlySandbox();
   const trimmedName = name.trim();
   const existingSubjects = await db.subjects.toArray().then(res => res.filter(s => !s.deletedAt));
   
@@ -65,7 +75,8 @@ export async function addSubject(name: string) {
   });
 }
 
-export async function updateSubjectsOrder(updates: { id: number; order: number }[]) {
+export async function updateSubjectsOrder(updates: {
+  enforceReadOnlySandbox(); id: number; order: number }[]) {
   return await db.transaction('rw', db.uiPreferences, async () => {
     for (const update of updates) {
       await updateUIPref('subject', update.id, { order: update.order });
@@ -74,10 +85,12 @@ export async function updateSubjectsOrder(updates: { id: number; order: number }
 }
 
 export async function updateSubject(id: number, name: string) {
+  enforceReadOnlySandbox();
   return await db.subjects.update(id, { name, updatedAt: new Date(), hlc: generateHLC() });
 }
 
 export async function deleteSubject(id: number | string) {
+  enforceReadOnlySandbox();
   await db.transaction('rw', db.subjects, db.systems, db.history, db.pyqYears, db.curriculumSets, db.revisionSets, db.uiPreferences, async () => {
     const now = new Date();
     const hlc = generateHLC();
@@ -96,6 +109,7 @@ export async function deleteSubject(id: number | string) {
 }
 
 export async function addSystem(subjectId: number, name: string) {
+  enforceReadOnlySandbox();
   const existingPrefs = await db.uiPreferences.where('type').equals('system').toArray();
   const maxOrder = existingPrefs.reduce((max, sys) => Math.max(max, sys.order ?? 0), -1);
   const id = await db.systems.add({
@@ -120,6 +134,7 @@ export async function addSystem(subjectId: number, name: string) {
 }
 
 export async function updateSystem(id: number, changes: Partial<StudySystem>) {
+  enforceReadOnlySandbox();
   if ('focus' in changes || 'order' in changes) {
     const prefUpdates: any = {};
     if ('focus' in changes) { prefUpdates.focus = changes.focus; delete changes.focus; }
@@ -129,7 +144,8 @@ export async function updateSystem(id: number, changes: Partial<StudySystem>) {
   return await db.systems.update(id, { ...changes, updatedAt: new Date(), hlc: generateHLC() });
 }
 
-export async function updateSystemsOrder(updates: { id: number; order: number }[]) {
+export async function updateSystemsOrder(updates: {
+  enforceReadOnlySandbox(); id: number; order: number }[]) {
   return await db.transaction('rw', db.uiPreferences, async () => {
     for (const update of updates) {
       await updateUIPref('system', update.id, { order: update.order });
@@ -140,6 +156,7 @@ export async function updateSystemsOrder(updates: { id: number; order: number }[
 /** Set focus mode for a system, ensuring only one primary and one secondary exist at a time. */
 
 export async function setFocus(id: number, focus: 'primary' | 'secondary' | null) {
+  enforceReadOnlySandbox();
   return await db.transaction('rw', db.uiPreferences, async () => {
     if (focus) {
       const existing = await db.uiPreferences.filter(p => p.focus === focus).toArray();
@@ -152,6 +169,7 @@ export async function setFocus(id: number, focus: 'primary' | 'secondary' | null
 }
 
 export async function setSubjectFocus(subjectId: number, focus: 'primary' | 'secondary' | null) {
+  enforceReadOnlySandbox();
   return await db.transaction('rw', db.uiPreferences, async () => {
     if (focus) {
       const existing = await db.uiPreferences.filter(p => p.focus === focus).toArray();
@@ -164,6 +182,7 @@ export async function setSubjectFocus(subjectId: number, focus: 'primary' | 'sec
 }
 
 export async function deleteSystem(id: number | string) {
+  enforceReadOnlySandbox();
   await db.transaction('rw', db.systems, db.history, db.curriculumSets, db.revisionSets, db.uiPreferences, async () => {
     const now = new Date();
     const hlc = generateHLC();
@@ -180,10 +199,12 @@ export async function deleteSystem(id: number | string) {
 }
 
 export async function logCompletion(entry: Omit<HistoryEntry, 'id'>) {
+  enforceReadOnlySandbox();
   return await db.history.add({ ...entry, updatedAt: new Date(), hlc: generateHLC() });
 }
 
 export async function deleteHistoryEntry(id: number) {
+  enforceReadOnlySandbox();
   return await db.transaction('rw', db.history, db.systems, db.pyqYears, db.curriculumSets, async () => {
     const entry = await db.history.get(id);
     if (!entry || entry.deletedAt) return;
@@ -295,6 +316,7 @@ export async function deleteHistoryEntry(id: number) {
 
 /** Add a new year entry to a subject's PYQ section. */
 export async function addPYQYear(subjectId: number, year: string) {
+  enforceReadOnlySandbox();
   return await db.pyqYears.add({
     subjectId,
     year: year.trim(),
@@ -306,6 +328,7 @@ export async function addPYQYear(subjectId: number, year: string) {
 
 /** Batch add multiple PYQ year entries to a subject (ignores duplicates). */
 export async function addPYQYearBatch(subjectId: number, years: string[]) {
+  enforceReadOnlySandbox();
   const existing = await db.pyqYears.where('subjectId').equals(subjectId).toArray();
   const existingYears = new Set(existing.map(y => y.year.trim().toLowerCase()));
 
@@ -327,11 +350,13 @@ export async function addPYQYearBatch(subjectId: number, years: string[]) {
 
 /** Rename a PYQ year entry. */
 export async function updatePYQYear(id: number, year: string) {
+  enforceReadOnlySandbox();
   return await db.pyqYears.update(id, { year: year.trim(), updatedAt: new Date(), hlc: generateHLC() });
 }
 
 /** Remove a PYQ year entry and its associated history. */
 export async function deletePYQYear(id: number) {
+  enforceReadOnlySandbox();
   return await db.pyqYears.update(id, { deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
 }
 
@@ -406,6 +431,7 @@ export async function recordInitialEvaluation(
 
 /** Toggle whether a system is flagged as a Lengthy / Multi-Day topic. */
 export async function toggleSystemLengthy(systemId: number, isLengthy: boolean) {
+  enforceReadOnlySandbox();
   await updateSystem(systemId, { isLengthy });
   toast.success(isLengthy ? 'Flagged as Lengthy Topic 📚' : 'Topic Duration Flag Reset', {
     description: isLengthy
@@ -419,6 +445,7 @@ export async function toggleSystemLengthy(systemId: number, isLengthy: boolean) 
  * Sets revisionState to 'in_progress', logs day 1 check-in, and sets as secondary focus.
  */
 export async function startActiveRevision(systemId: number, initialProgressPct = 15) {
+  enforceReadOnlySandbox();
   const sys = await db.systems.get(systemId);
   if (!sys || sys.deletedAt) return;
 
@@ -448,6 +475,7 @@ export async function startActiveRevision(systemId: number, initialProgressPct =
  * Increments days logged if not already checked in today, and updates progress %.
  */
 export async function logDailyRevisionCheckIn(systemId: number, progressPct?: number) {
+  enforceReadOnlySandbox();
   const sys = await db.systems.get(systemId);
   if (!sys || sys.revisionState !== 'in_progress') return;
 
@@ -543,23 +571,27 @@ export async function completeRevision(
 }
 
 export async function clearHistory() {
+  enforceReadOnlySandbox();
   return await db.history.clear();
 }
 
 export async function saveTopicProgress(progress: import('./types').TopicProgress) {
+  enforceReadOnlySandbox();
   progress.updatedAt = new Date();
   progress.hlc = generateHLC();
   await db.topicProgress.put(progress);
 }
 
 export async function getTopicProgress(topicId: string): Promise<import('./types').TopicProgress | undefined> {
+  enforceReadOnlySandbox();
   return await db.topicProgress.get(topicId);
 }
 
 
 // ── Study Blocks ──────────────────────────────────────────────────────────
 
-export async function createCurriculumSet(data: { subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
+export async function createCurriculumSet(data: {
+  enforceReadOnlySandbox(); subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
   const newSet: import('./types').CurriculumSet = {
     id: crypto.randomUUID(),
     ...data,
@@ -572,6 +604,7 @@ export async function createCurriculumSet(data: { subjectId: number; systemId?: 
 }
 
 export async function updateCurriculumSet(id: string, updates: Partial<import('./types').CurriculumSet>) {
+  enforceReadOnlySandbox();
   return await db.curriculumSets.update(id, {
     ...updates,
     updatedAt: new Date(),
@@ -580,6 +613,7 @@ export async function updateCurriculumSet(id: string, updates: Partial<import('.
 }
 
 export async function deleteCurriculumSet(id: string) {
+  enforceReadOnlySandbox();
   return await db.curriculumSets.update(id, {
     deletedAt: new Date(),
     updatedAt: new Date(),
@@ -788,6 +822,7 @@ export async function adaptTopicPacingFeedback(
 // ── Mistake Log Mutations ──────────────────────────────────────────────────────
 
 export async function logMistake(data: {
+  enforceReadOnlySandbox();
   subjectId: number | string;
   systemId: number | string;
   curriculumSetId?: string;
@@ -844,6 +879,7 @@ export async function logMistake(data: {
 }
 
 export async function updateMistakeLog(id: number | string, changes: Partial<T.MistakeLog>) {
+  enforceReadOnlySandbox();
   await db.mistakeLogs.update(id, {
     ...changes,
     updatedAt: new Date(),
@@ -852,6 +888,7 @@ export async function updateMistakeLog(id: number | string, changes: Partial<T.M
 }
 
 export async function toggleMistakeVolatile(id: number | string, isVolatile: boolean) {
+  enforceReadOnlySandbox();
   await db.mistakeLogs.update(id, {
     isVolatile,
     updatedAt: new Date(),
@@ -861,6 +898,7 @@ export async function toggleMistakeVolatile(id: number | string, isVolatile: boo
 }
 
 export async function resolveMistake(id: number | string, resolved = true) {
+  enforceReadOnlySandbox();
   await db.mistakeLogs.update(id, {
     resolved,
     updatedAt: new Date(),
@@ -870,6 +908,7 @@ export async function resolveMistake(id: number | string, resolved = true) {
 }
 
 export async function deleteMistakeLog(id: number | string) {
+  enforceReadOnlySandbox();
   await db.mistakeLogs.update(id, {
     deletedAt: new Date(),
     updatedAt: new Date(),
@@ -878,6 +917,7 @@ export async function deleteMistakeLog(id: number | string) {
 }
 
 export async function restoreMistakeLog(id: number | string) {
+  enforceReadOnlySandbox();
   await db.mistakeLogs.update(id, {
     deletedAt: undefined,
     updatedAt: new Date(),
@@ -905,6 +945,7 @@ export async function addRecommendationSkip(
 // ── Operational Mode Mutations (Adaptive Focus & Soft Recalibration Engine) ──
 
 export async function setOperationalMode(config: Partial<OperationalModeConfig>): Promise<OperationalModeRecord> {
+  enforceReadOnlySandbox();
   const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
   
   const isModeChanging = config.mode !== undefined && config.mode !== existing.mode;
@@ -939,6 +980,7 @@ export async function setOperationalMode(config: Partial<OperationalModeConfig>)
 }
 
 export async function resetOperationalMode(recalibrationDays: number = 10): Promise<OperationalModeRecord> {
+  enforceReadOnlySandbox();
   const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
   const currentRecalibrations = existing.recalibrationCount ?? 0;
   
@@ -963,6 +1005,7 @@ export async function resetOperationalMode(recalibrationDays: number = 10): Prom
 
 
 export async function markMistakesAsAnkiExported(ids: (string | number)[]) {
+  enforceReadOnlySandbox();
   if (!db.mistakeLogs || ids.length === 0) return;
   const now = Date.now();
   for (const id of ids) {

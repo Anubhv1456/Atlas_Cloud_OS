@@ -35,6 +35,15 @@ export function ImpersonationBanner() {
 
   return (
     <>
+      <style>{`
+        /* Global Observer Theme to prevent accidental admin operations */
+        body { border: 4px solid #f59e0b; }
+        .observer-hatch {
+          position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+          background: repeating-linear-gradient(45deg, rgba(245, 158, 11, 0.03), rgba(245, 158, 11, 0.03) 10px, transparent 10px, transparent 20px);
+        }
+      `}</style>
+      <div className="observer-hatch" />
       <div 
         id="impersonation-hud-banner"
         className="sticky top-0 z-[100] w-full bg-zinc-950/95 border-b border-amber-500/40 px-3.5 py-2 backdrop-blur-md shadow-md text-zinc-100 flex flex-wrap items-center justify-between gap-3 text-xs"
@@ -97,6 +106,10 @@ export function ImpersonationBanner() {
 
         {/* Right Actions Area */}
         <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-900 border border-amber-500/30 text-amber-500/80 mr-2">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="font-semibold text-[10px] tracking-wider uppercase">Vault Synced: Read-Only Cloud Node</span>
+          </div>
           <Button
             id="impersonation-inspect-btn"
             variant="ghost"

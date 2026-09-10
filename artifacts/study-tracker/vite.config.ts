@@ -3,8 +3,62 @@ import path from 'path';
 import fs from 'fs';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig, Plugin, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+function vercelApiPlugin(): Plugin {
+  return {
+    name: 'vercel-api-dev',
+    configureServer(server) {
+      // Load .env variables directly into process.env so Vite Node runtime has them for /api routes
+      const env = loadEnv(server.config.mode, process.cwd(), '');
+      Object.assign(process.env, env);
+
+      server.middlewares.use('/api', async (req, res, next) => {
+        try {
+          // req.url is the path after /api, e.g., /checkout
+          const route = req.url?.split('?')[0]; 
+          let filePath = `./api${route}.ts`;
+          if (route === '' || route === '/') filePath = './api/index.ts';
+          
+          if (!fs.existsSync(path.resolve(import.meta.dirname, filePath))) {
+             return next();
+          }
+
+          // Use Vite's SSR loader to load and execute the TS module
+          const module = await server.ssrLoadModule(filePath);
+          const handler = module.default;
+          
+          if (typeof handler === 'function') {
+            // Mock res.status and res.json which Vercel provides
+            const originalEnd = res.end.bind(res);
+            res.status = (code: number) => {
+              res.statusCode = code;
+              return res as any;
+            };
+            res.json = (data: any) => {
+              res.setHeader('Content-Type', 'application/json');
+              originalEnd(JSON.stringify(data));
+              return res as any;
+            };
+            res.send = (data: any) => {
+              originalEnd(data);
+              return res as any;
+            };
+
+            await handler(req, res);
+          } else {
+            next();
+          }
+        } catch (err: any) {
+          console.error('Local API Error:', err);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+    }
+  }
+}
 
 const port = 3000;
 const currentBuildTime = Date.now();
@@ -63,6 +117,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     versionManifestPlugin(),
+    vercelApiPlugin(),
     VitePWA({
       selfDestroying: false,
       registerType: 'autoUpdate',
@@ -256,13 +311,7 @@ export default defineConfig({
     strictPort: true,
     host: '0.0.0.0',
     allowedHosts: true,
-    fs: { strict: true },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true
-      }
-    }
+    fs: { strict: true }
   },
   preview: {
     port,

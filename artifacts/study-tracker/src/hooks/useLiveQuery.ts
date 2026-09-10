@@ -11,6 +11,14 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
     
     const run = async () => {
       try {
+        const isImpersonating = typeof window !== 'undefined' && sessionStorage.getItem('atlas_impersonated_target');
+        if (isImpersonating) {
+          // Block local Dexie data entirely during impersonation so the admin doesn't see their own DB.
+          // In a full implementation, we would yield the remote Firestore fetch result here.
+          if (isMounted) setData([] as any);
+          return;
+        }
+
         const result = await queryFn();
         if (isMounted) setData(result as T);
       } catch (e) {

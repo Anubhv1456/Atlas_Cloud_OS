@@ -5,7 +5,7 @@ import {
   Check, ArrowRight, Loader2, Users, LogOut, 
   Copy, Upload, RefreshCw, AlertCircle, ExternalLink,
   Smartphone, Brain, Target, ShieldCheck, Sparkles, Zap, Clock,
-  Calendar, Sliders
+  Calendar, Sliders, CreditCard
 } from 'lucide-react';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,9 +73,50 @@ export default function BetaAccess() {
   const [transitioning, setTransitioning] = useState(false);
   const [transitionStep, setTransitionStep] = useState(0);
   const [claimingTrial, setClaimingTrial] = useState(false);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   const isAffiliateReferred = typeof window !== 'undefined' && Boolean(localStorage.getItem('atlas_affiliate_id'));
   const trialDays = isAffiliateReferred ? 14 : 7;
+
+  const handleCheckout = async () => {
+    if (!user) {
+      toast.error('Sign-in required to continue to checkout.');
+      return;
+    }
+
+    setLoadingCheckout(true);
+    try {
+      const idToken = await user.getIdToken();
+      const currentAffiliate = localStorage.getItem('atlas_affiliate_id') || sessionStorage.getItem('atlas_pending_ref_code') || '';
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ affiliateId: currentAffiliate }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || errData.message || `Checkout session creation failed (${response.status})`);
+      }
+
+      const { checkout_url } = await response.json();
+
+      if (!checkout_url) {
+        throw new Error('Payment gateway did not return a valid checkout URL');
+      }
+
+      // Redirect to Dodo hosted checkout page
+      window.location.href = checkout_url;
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast.error(err.message || 'Failed to initialize secure checkout. Please try again.');
+      setLoadingCheckout(false);
+    }
+  };
 
   const handleClaimTrial = async () => {
     setClaimingTrial(true);
@@ -267,7 +308,7 @@ export default function BetaAccess() {
                 Your Clinical Trial Has Concluded
               </h1>
               <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
-                All your logged study blocks, mistake bookmarks, and FSRS memory metrics are safely preserved in your Atlas Vault. To unlock lifetime access, connect with your campus representative or administrator.
+                All your logged study blocks, mistake bookmarks, and FSRS memory metrics are safely preserved in your Atlas Vault. Unlock a lifetime license to restore unrestricted access.
               </p>
             </div>
 
@@ -285,31 +326,25 @@ export default function BetaAccess() {
               </div>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10">
-              {payConfig.paymentLinkUrl && profile.targetExam?.includes('USMLE') ? (
-                <button 
-                  onClick={() => window.open(payConfig.paymentLinkUrl, '_blank')}
-                  className="flex-1 h-12 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_24px_rgba(20,184,166,0.3)] cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4 text-black" />
-                  <span>Unlock 2026 Pass (${payConfig.usdPrice || 39})</span>
-                </button>
-              ) : (
-                <>
-                  {payConfig.paymentLinkUrl && (
-                    <button 
-                      onClick={() => window.open(payConfig.paymentLinkUrl, '_blank')}
-                      className="flex-1 h-12 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Pay via Card (${payConfig.usdPrice || 39})</span>
-                    </button>
-                  )}
-                </>
-              )}
+            <div className="pt-2 flex flex-col gap-3 relative z-10">
+              <button 
+                onClick={handleCheckout}
+                disabled={loadingCheckout}
+                className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_24px_rgba(245,158,11,0.2)] cursor-pointer"
+              >
+                {loadingCheckout ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Preparing Checkout...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" /> Unlock Lifetime Access
+                  </>
+                )}
+              </button>
             </div>
             
-            <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10 mt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 relative z-10 mt-1">
               <button 
                 onClick={() => window.location.reload()}
                 className="w-full h-10 rounded-xl bg-transparent hover:bg-white/5 text-zinc-400 font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
@@ -318,6 +353,10 @@ export default function BetaAccess() {
                 <span>Check Verification Status</span>
               </button>
             </div>
+
+            <p className="text-[11px] text-zinc-500 mt-2 relative z-10">
+              Secured by Dodo Payments • Merchant of Record
+            </p>
           </div>
         ) : !hasClaimedTrial ? (
           /* Instant Trial Claim Card - Calibrated & Personalized */

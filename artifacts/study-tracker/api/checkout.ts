@@ -40,9 +40,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userId = decodedToken.uid;
     const userEmail = decodedToken.email || '';
     
-    // Parse body if string
+    // Parse body if stream (for local Vite dev) or if pre-parsed (Vercel)
     let body = req.body;
-    if (typeof body === 'string') {
+    if (!body) {
+      let rawBody = '';
+      for await (const chunk of req) {
+        rawBody += chunk;
+      }
+      try {
+        body = JSON.parse(rawBody);
+      } catch (e) {
+        body = {};
+      }
+    } else if (typeof body === 'string') {
       try {
         body = JSON.parse(body);
       } catch (e) {
