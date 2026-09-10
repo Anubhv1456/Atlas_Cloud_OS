@@ -187,7 +187,7 @@ export default function Home() {
                     className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0"
                     title="Click to unlock unlimited vault capacity"
                   >
-                    <span className="font-semibold">Free Pass:</span> {freeTierMistakeCount}/{maxMistakes} Mistakes • {freeTierActiveSystems}/{maxSystems} Systems
+                    <span className="font-semibold">{hasAffiliate ? 'Ambassador Pass:' : 'Free Pass:'}</span> {freeTierMistakeCount}/{maxMistakes} Mistakes • {freeTierActiveSystems}/{maxSystems} Systems
                   </button>
                 )}
 

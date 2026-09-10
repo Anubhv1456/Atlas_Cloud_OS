@@ -7,16 +7,12 @@ import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease } from '@/lib
 
 export interface BetaAccessState {
   hasAccess: boolean;
-  expiresAt: number | null;
   paymentStatus: 'pending' | 'approved' | 'rejected' | null;
   paymentRejectionNote: string | null;
   vaultActivationRequired: boolean;
   vaultProvenance: any | null;
   offlineLeaseValid: boolean;
   offlineHoursRemaining: number;
-  isTrial: boolean;
-  hasClaimedTrial: boolean;
-  isTrialExpired: boolean;
   loading: boolean;
 }
 
@@ -30,16 +26,12 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
   if (!uid) {
     return {
       hasAccess: false,
-      expiresAt: null,
       paymentStatus: null,
       paymentRejectionNote: null,
       vaultActivationRequired: false,
       vaultProvenance: null,
       offlineLeaseValid: true,
       offlineHoursRemaining: 72,
-      isTrial: false,
-      hasClaimedTrial: false,
-      isTrialExpired: false,
       loading: false,
     };
   }
@@ -50,16 +42,12 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
 
   return {
     hasAccess: isLocallyValid,
-    expiresAt: null,
     paymentStatus: null,
     paymentRejectionNote: null,
     vaultActivationRequired: false,
     vaultProvenance: null,
     offlineLeaseValid: leaseCheck.isValid,
     offlineHoursRemaining: leaseCheck.hoursRemaining,
-    isTrial: false,
-    hasClaimedTrial: false,
-    isTrialExpired: false,
     loading: false, // Instant synchronous hydration (0ms offline latency)
   };
 }
@@ -96,12 +84,12 @@ function setupSingletonListener(uid: string) {
       if (snap.exists()) {
         const data = snap.data();
         const isBeta = data.betaAccess === true;
+
         if (isBeta) {
           localStorage.setItem(`beta_access_${uid}`, 'true');
           issueOfflineLease(uid);
         } else {
           localStorage.removeItem(`beta_access_${uid}`);
-          localStorage.removeItem(`beta_access_expiry_${uid}`);
           revokeOfflineLease(uid);
         }
 
@@ -113,19 +101,14 @@ function setupSingletonListener(uid: string) {
           vaultProvenance: data.vaultImportProvenance || null,
           offlineLeaseValid: true,
           offlineHoursRemaining: 72,
-          isTrialExpired: false,
           loading: false,
         });
       } else {
         localStorage.removeItem(`beta_access_${uid}`);
-        localStorage.removeItem(`beta_access_expiry_${uid}`);
         revokeOfflineLease(uid);
+
         updateSingleton({
           hasAccess: false,
-          expiresAt: null,
-          isTrial: false,
-          hasClaimedTrial: false,
-          isTrialExpired: false,
           paymentStatus: null,
           paymentRejectionNote: null,
           vaultActivationRequired: false,
@@ -144,20 +127,17 @@ function setupSingletonListener(uid: string) {
 export function useBetaAccess() {
   const { user } = useAuth();
   const { isImpersonating, impersonatedUser } = useImpersonation();
+
   const [state, setState] = useState<BetaAccessState>(() => {
     if (isImpersonating && impersonatedUser) {
       return {
         hasAccess: Boolean(impersonatedUser.betaAccess),
-        expiresAt: null,
         paymentStatus: (impersonatedUser.paymentStatus as any) || null,
         paymentRejectionNote: null,
         vaultActivationRequired: false,
         vaultProvenance: null,
         offlineLeaseValid: true,
         offlineHoursRemaining: 72,
-        isTrial: false,
-        hasClaimedTrial: true,
-        isTrialExpired: false,
         loading: false,
       };
     }
@@ -169,16 +149,12 @@ export function useBetaAccess() {
     if (isImpersonating && impersonatedUser) {
       setState({
         hasAccess: Boolean(impersonatedUser.betaAccess),
-        expiresAt: null,
         paymentStatus: (impersonatedUser.paymentStatus as any) || null,
         paymentRejectionNote: null,
         vaultActivationRequired: false,
         vaultProvenance: null,
         offlineLeaseValid: true,
         offlineHoursRemaining: 72,
-        isTrial: false,
-        hasClaimedTrial: true,
-        isTrialExpired: false,
         loading: false,
       });
       return;
@@ -228,37 +204,6 @@ export function useBetaAccess() {
     updateSingleton({ hasAccess: true, paymentStatus: 'approved' });
   };
 
-  /**
-   * Activates an instant clinical trial pass for a candidate (e.g. 7 or 14 days)
-   */
-  const claimTrial = async (_customDays?: number): Promise<boolean> => {
-    if (!user || !firestoreDb) return false;
-    try {
-      let affiliateId: string | undefined;
-      if (typeof window !== 'undefined') {
-        affiliateId = localStorage.getItem('atlas_affiliate_id') || sessionStorage.getItem('atlas_pending_ref_code') || undefined;
-      }
-
-      const userRef = doc(firestoreDb, 'users', user.uid);
-      const payload: any = {
-        hasClaimedTrial: true,
-        updatedAt: new Date()
-      };
-      if (affiliateId) {
-        payload.referredBy = affiliateId;
-        payload.affiliateId = affiliateId;
-      }
-
-      await setDoc(userRef, payload, { merge: true });
-      return true;
-    } catch (err) {
-      console.error("Failed to claim trial/affiliate tracking:", err);
-      return false;
-    }
-  };
-
-  const trialDaysRemaining = null;
-
   const clearVaultActivationFlag = async () => {
     if (!user || !firestoreDb) return;
     try {
@@ -276,20 +221,14 @@ export function useBetaAccess() {
   return { 
     hasAccess: Boolean(state.hasAccess), 
     isFreeTier: state.hasAccess === false,
-    expiresAt: state.expiresAt, 
     paymentStatus: state.paymentStatus, 
     paymentRejectionNote: state.paymentRejectionNote, 
     vaultActivationRequired: state.vaultActivationRequired,
     vaultProvenance: state.vaultProvenance,
     offlineLeaseValid: state.offlineLeaseValid,
     offlineHoursRemaining: state.offlineHoursRemaining,
-    isTrial: state.isTrial,
-    hasClaimedTrial: state.hasClaimedTrial,
-    isTrialExpired: state.isTrialExpired,
-    trialDaysRemaining,
     loading: state.loading, 
     grantAccess,
-    claimTrial,
     clearVaultActivationFlag
   };
 }

@@ -196,7 +196,7 @@ function ProtectedApp() {
     );
   }
 
-  if (location === '/beta-access' || !hasAccess) {
+  if (location === '/beta-access') {
     return (
       <div className="min-h-dvh flex flex-col w-full">
         {isImpersonating && <ImpersonationBanner />}

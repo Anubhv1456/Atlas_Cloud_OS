@@ -126,11 +126,7 @@ export default function Onboarding() {
     loadUniversalOntology({ targetExam: selectedGoal || 'NEET PG', force: true }).catch(() => {});
     await markOnboarded();
 
-    if (!hasAccess) {
-      setLocation('/beta-access');
-    } else {
-      setLocation('/');
-    }
+    setLocation('/');
   };
 
   const handleNextFromGoal = async () => {
@@ -246,18 +242,14 @@ export default function Onboarding() {
       description: 'Your medical study trajectory has been initialized.'
     });
 
-    if (!hasAccess) {
-      setLocation('/beta-access');
-    } else {
-      if (recommendedSystem?.subjectId) {
-        if (recommendedSystem.systemId) {
-          setLocation(`/subjects/${recommendedSystem.subjectId}?highlight=${recommendedSystem.systemId}`);
-        } else {
-          setLocation(`/subjects/${recommendedSystem.subjectId}`);
-        }
+    if (recommendedSystem?.subjectId) {
+      if (recommendedSystem.systemId) {
+        setLocation(`/subjects/${recommendedSystem.subjectId}?highlight=${recommendedSystem.systemId}`);
       } else {
-        setLocation('/');
+        setLocation(`/subjects/${recommendedSystem.subjectId}`);
       }
+    } else {
+      setLocation('/');
     }
   };
 

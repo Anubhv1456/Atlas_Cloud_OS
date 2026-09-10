@@ -183,10 +183,6 @@ export function ImpersonationBanner() {
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Trial Mode</span>
-                <span className="text-zinc-300">{impersonatedUser.isTrial ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="flex justify-between items-center">
                 <span className="text-zinc-400">Affiliate Partner Status</span>
                 <span className="text-zinc-300">
                   {impersonatedUser.isAffiliate ? `Yes (${impersonatedUser.affiliateCode || 'Active'})` : 'Standard Candidate'}

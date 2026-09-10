@@ -9,7 +9,6 @@ export interface ImpersonationTarget {
   displayName?: string;
   betaAccess?: boolean;
   betaAccessExpiresAt?: any;
-  isTrial?: boolean;
   referredBy?: string;
   paymentStatus?: string;
   createdAt?: any;
