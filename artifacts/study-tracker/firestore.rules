@@ -41,27 +41,27 @@ service cloud.firestore {
 
     // ── USER PROFILES & PRIVATE STUDY TRACKER DATA ────────────────────────────
     match /users/{userId} {
-      // Allow reading user document (for display names, status checks, and peer interactions)
-      allow read: if isAuthenticated();
+      // Strictly scope profile reading to the authenticated owner or platform admins
+      allow read: if isOwner(userId) || isAdmin();
 
-      // Users can create/update their profile, BUT CANNOT grant themselves free beta access or admin roles
-      allow create: if isOwner(userId) && (
-        !request.resource.data.keys().hasAny(['role']) || request.resource.data.role != 'admin'
-      );
+      // Users can create their profile, but CANNOT set entitlement, roles, or billing data
+      allow create: if isOwner(userId) &&
+        !request.resource.data.keys().hasAny([
+          'role', 'isAdmin', 'betaAccess', 'paymentStatus', 'hasPaidAccess',
+          'betaAccessExpiresAt', 'vaultActivationRequired', 'dodoPaymentId',
+          'dodoAmount', 'paidAt', 'paymentMethod'
+        ]);
 
       allow update: if isAdmin() || (
         isOwner(userId) &&
         // Prevent role tampering
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin'])) &&
-        // Strict beta access / payment tampering guard
-        (
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['betaAccess', 'paymentStatus', 'betaAccessExpiresAt', 'vaultActivationRequired']) ||
-          (
-            request.resource.data.betaAccess == true &&
-            request.resource.data.paymentStatus == 'pending' &&
-            request.resource.data.betaAccessExpiresAt <= (request.time.toMillis() + (95 * 24 * 60 * 60 * 1000))
-          )
-        )
+        // Strictly forbid client mutation of entitlement, payment, and license fields
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'betaAccess', 'paymentStatus', 'hasPaidAccess', 'betaAccessExpiresAt',
+          'vaultActivationRequired', 'dodoPaymentId', 'dodoAmount', 'paidAt',
+          'paymentMethod'
+        ]))
       );
 
       allow delete: if isAdmin();
@@ -136,8 +136,10 @@ service cloud.firestore {
         request.resource.data.ownerUid == request.auth.uid &&
         request.resource.data.totalClaimed == 0;
 
-      // Updated atomically when claimed or qualified
-      allow update: if isAuthenticated();
+      // Only allow updating counters; owner cannot be hijacked
+      allow update: if isAuthenticated() &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClaimed', 'lastClaimedAt']);
       allow delete: if isAdmin();
     }
 

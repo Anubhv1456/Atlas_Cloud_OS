@@ -104,3 +104,35 @@ export async function requireAuth(req: ApiRequest, res: ApiResponse): Promise<Au
   }
   return user;
 }
+
+export function setCorsHeaders(res: ApiResponse): void {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
+}
+
+export async function parseRequestBody(req: any): Promise<any> {
+  if (req.body && typeof req.body === 'object') {
+    return req.body;
+  }
+  if (typeof req.body === 'string') {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  try {
+    let rawBody = '';
+    for await (const chunk of req) {
+      rawBody += chunk;
+    }
+    return rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    return {};
+  }
+}

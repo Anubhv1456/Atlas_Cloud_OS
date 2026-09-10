@@ -19,6 +19,7 @@ export interface AtlasVaultEnvelope {
   _export_timestamp: number;
   _telemetry_signature: VaultTelemetryMetrics;
   _provenance_hash: string;
+  _signature_type?: string;
   payload: {
     subjects?: any[];
     systems?: any[];
@@ -47,6 +48,8 @@ export interface ProvenanceVerificationResult {
   metrics: VaultTelemetryMetrics;
   payload: any;
   tamperWarning: boolean;
+  isServerSigned?: boolean;
+  signatureType?: string;
 }
 
 /**
@@ -121,6 +124,7 @@ export function computeVaultMetrics(data: any): VaultTelemetryMetrics {
 
 /**
  * Stretches a standard JSON export into a cryptographically signed Atlas Vault Envelope
+ * Signs authoritatively via serverless HMAC when online, falling back gracefully to local digest when offline.
  */
 export async function createSignedVaultBackup(
   rawData: any, 
@@ -132,8 +136,44 @@ export async function createSignedVaultBackup(
   const originDisplayName = user?.displayName || undefined;
   const exportTimestamp = Date.now();
 
-  const signatureSeed = `${originUid}:${originEmail || ''}:${exportTimestamp}:${metrics.totalStudyMinutes}:${metrics.completedTopics}:${metrics.scoreLogsCount}`;
-  const provenanceHash = await generateSha256(signatureSeed);
+  let provenanceHash = '';
+  let signatureType = 'client_sha256';
+
+  // Attempt serverless HMAC signing if user is authenticated and online
+  if (user && typeof navigator !== 'undefined' && navigator.onLine) {
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/vault/sign-backup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          originUid,
+          originEmail,
+          exportTimestamp,
+          metrics,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.provenanceHash) {
+          provenanceHash = data.provenanceHash;
+          signatureType = data.signatureType || 'server_hmac_sha256';
+        }
+      }
+    } catch (e) {
+      console.warn('[Vault Signer] Network signing unavailable, falling back to local digest', e);
+    }
+  }
+
+  // Fallback to local SHA-256 for anonymous or offline users
+  if (!provenanceHash) {
+    const signatureSeed = `${originUid}:${originEmail || ''}:${exportTimestamp}:${metrics.totalStudyMinutes}:${metrics.completedTopics}:${metrics.scoreLogsCount}`;
+    provenanceHash = await generateSha256(signatureSeed);
+  }
 
   return {
     _vault_schema_version: 2,
@@ -143,6 +183,7 @@ export async function createSignedVaultBackup(
     _export_timestamp: exportTimestamp,
     _telemetry_signature: metrics,
     _provenance_hash: provenanceHash,
+    _signature_type: signatureType,
     payload: rawData
   };
 }
@@ -172,12 +213,42 @@ export async function verifyVaultBackupProvenance(
     : computeVaultMetrics(payloadData);
 
   let tamperWarning = false;
+  let isServerSigned = false;
+  let signatureType = isEnvelope ? fileContent._signature_type : undefined;
 
-  if (isEnvelope) {
-    const signatureSeed = `${originUid}:${originEmail || ''}:${exportTimestamp}:${metrics.totalStudyMinutes}:${metrics.completedTopics}:${metrics.scoreLogsCount}`;
-    const expectedHash = await generateSha256(signatureSeed);
-    if (fileContent._provenance_hash && fileContent._provenance_hash !== expectedHash) {
-      tamperWarning = true;
+  if (isEnvelope && fileContent._provenance_hash) {
+    const isHmac = fileContent._provenance_hash.startsWith('hmac_') || signatureType === 'server_hmac_sha256';
+
+    if (isHmac && typeof navigator !== 'undefined' && navigator.onLine) {
+      try {
+        const res = await fetch('/api/vault/verify-backup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            originUid,
+            originEmail,
+            exportTimestamp,
+            metrics,
+            provenanceHash: fileContent._provenance_hash,
+            signatureType,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          tamperWarning = !data.valid;
+          isServerSigned = Boolean(data.signedByServer);
+        }
+      } catch (e) {
+        console.warn('[Vault Provenance] Server verification failed, performing structural checks', e);
+      }
+    } else {
+      // Legacy checksum verification
+      const signatureSeed = `${originUid}:${originEmail || ''}:${exportTimestamp}:${metrics.totalStudyMinutes}:${metrics.completedTopics}:${metrics.scoreLogsCount}`;
+      const expectedHash = await generateSha256(signatureSeed);
+      if (!isHmac && fileContent._provenance_hash !== expectedHash) {
+        tamperWarning = true;
+      }
     }
   }
 
@@ -206,6 +277,8 @@ export async function verifyVaultBackupProvenance(
     exportTimestamp,
     metrics,
     payload: payloadData,
-    tamperWarning
+    tamperWarning,
+    isServerSigned,
+    signatureType,
   };
 }

@@ -99,6 +99,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { db } = initFirebaseAdmin();
 
+      // Idempotency check: Skip mutation if payment was already fulfilled
+      const existingPayment = await db.collection('processed_payments').doc(paymentId).get();
+      if (existingPayment.exists) {
+        console.log(`[Dodo Webhook] Payment ${paymentId} already processed. Acknowledging event idempotently.`);
+        return res.status(200).json({ received: true, status: 'already_processed' });
+      }
+
       // Fallback: If metadata is missing userId, look up user by verified email
       if (!userId && userEmail) {
         const userQuery = await db.collection('users').where('email', '==', userEmail).limit(1).get();
@@ -161,6 +168,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ received: true, eventType });
   } catch (err: any) {
     console.error('[Dodo Webhook Error] Failed to process webhook event:', err);
-    return res.status(500).json({ error: 'Internal server error while processing webhook', message: err?.message });
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 }

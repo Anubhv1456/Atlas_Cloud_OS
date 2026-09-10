@@ -1,0 +1,11 @@
+# Environment & Secrets
+.env
+.env*.local
+*.pem
+*.key
+serviceAccountKey*.json
+
+# Dependencies & Build
+node_modules
+dist
+.cache

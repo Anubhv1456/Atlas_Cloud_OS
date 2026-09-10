@@ -68,7 +68,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const payment = await dodo.payments.retrieve(paymentId);
         if (payment && payment.status === 'succeeded') {
-          verifiedPayment = payment;
+          // Strict IDOR ownership validation: Verify payment belongs to authenticated caller
+          const matchesUid = payment.metadata?.user_id === user.uid || payment.metadata?.userId === user.uid;
+          const matchesEmail = Boolean(user.email && payment.customer?.email?.toLowerCase() === user.email.toLowerCase());
+
+          if (matchesUid || matchesEmail) {
+            verifiedPayment = payment;
+          } else {
+            console.warn(`[Verify Payment] Payment ${paymentId} does not match caller UID (${user.uid}) or email (${user.email})`);
+          }
         }
       } catch (e) {
         console.warn('[Verify Payment] Could not retrieve payment by ID:', paymentId, e);

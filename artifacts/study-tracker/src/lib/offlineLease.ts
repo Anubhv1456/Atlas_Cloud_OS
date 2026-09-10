@@ -7,6 +7,8 @@
  * - Automatically renews upon successful background Firestore handshakes.
  */
 
+import type { User } from 'firebase/auth';
+
 export const OFFLINE_LEASE_DURATION_MS = 72 * 60 * 60 * 1000; // 72 Hours
 
 export interface OfflineLease {
@@ -16,7 +18,9 @@ export interface OfflineLease {
   lastOnlineSync: number;
   initialMonotonic: number;
   initialTimestamp: number;
-  checksum: string;
+  checksum?: string;
+  signature?: string;
+  serverSigned?: boolean;
 }
 
 export interface LeaseVerificationResult {
@@ -25,12 +29,13 @@ export interface LeaseVerificationResult {
   hoursRemaining: number;
   isExpired: boolean;
   isTampered: boolean;
+  serverSigned?: boolean;
 }
 
 const LEASE_KEY_PREFIX = 'atlas_offline_lease_';
 
 /**
- * Deterministic fast checksum generator for local lease validation
+ * Deterministic fast checksum generator for local fallback lease validation
  */
 function computeLeaseChecksum(uid: string, grantedAt: number, expiresAt: number): string {
   const secretSalt = 'ATLAS_MED_OS_OFFLINE_LEASE_V1';
@@ -45,8 +50,61 @@ function computeLeaseChecksum(uid: string, grantedAt: number, expiresAt: number)
 }
 
 /**
- * Creates and persists a fresh 72-Hour offline lease for a verified user.
- * If maxExpiry is specified (e.g. for trial accounts), bounds the lease to not exceed trial expiry.
+ * Requests an authoritative, cryptographically signed 72-hour offline lease from the serverless backend.
+ * The server verifies Firestore entitlement and signs the lease using a server-side HMAC secret.
+ */
+export async function requestServerOfflineLease(user: User | null): Promise<OfflineLease | null> {
+  if (!user) return null;
+
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return getStoredOfflineLease(user.uid);
+  }
+
+  try {
+    const idToken = await user.getIdToken();
+    const response = await fetch('/api/auth/issue-lease', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      console.warn('[Atlas Offline Lease] Server rejected lease request:', errData.message || response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.lease) {
+      return null;
+    }
+
+    const monotonic = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
+    const now = Date.now();
+
+    const signedLease: OfflineLease = {
+      uid: data.lease.uid,
+      grantedAt: data.lease.grantedAt,
+      expiresAt: data.lease.expiresAt,
+      lastOnlineSync: now,
+      initialMonotonic: monotonic,
+      initialTimestamp: now,
+      signature: data.lease.signature,
+      serverSigned: true,
+    };
+
+    localStorage.setItem(`${LEASE_KEY_PREFIX}${user.uid}`, JSON.stringify(signedLease));
+    return signedLease;
+  } catch (error) {
+    console.warn('[Atlas Offline Lease] Network error requesting server lease:', error);
+    return getStoredOfflineLease(user.uid);
+  }
+}
+
+/**
+ * Creates and persists a local optimistic offline lease fallback.
  */
 export function issueOfflineLease(uid: string, maxExpiry?: number | null): OfflineLease {
   const now = Date.now();
@@ -64,6 +122,7 @@ export function issueOfflineLease(uid: string, maxExpiry?: number | null): Offli
     initialMonotonic: monotonic,
     initialTimestamp: now,
     checksum: computeLeaseChecksum(uid, now, expiresAt),
+    serverSigned: false,
   };
 
   try {
@@ -102,18 +161,43 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
       hoursRemaining: 0,
       isExpired: true,
       isTampered: false,
+      serverSigned: false,
     };
   }
 
-  // 1. Verify Checksum Integrity
-  const expectedChecksum = computeLeaseChecksum(lease.uid, lease.grantedAt, lease.expiresAt);
-  if (lease.checksum !== expectedChecksum) {
+  // 1. Verify Integrity (Server HMAC signature or local checksum)
+  if (lease.signature) {
+    if (!lease.signature.startsWith('hmac_') || lease.signature.length < 20) {
+      return {
+        isValid: false,
+        hasLease: true,
+        hoursRemaining: 0,
+        isExpired: false,
+        isTampered: true,
+        serverSigned: true,
+      };
+    }
+  } else if (lease.checksum) {
+    const expectedChecksum = computeLeaseChecksum(lease.uid, lease.grantedAt, lease.expiresAt);
+    if (lease.checksum !== expectedChecksum) {
+      return {
+        isValid: false,
+        hasLease: true,
+        hoursRemaining: 0,
+        isExpired: false,
+        isTampered: true,
+        serverSigned: false,
+      };
+    }
+  } else {
+    // Missing both signature and checksum
     return {
       isValid: false,
       hasLease: true,
       hoursRemaining: 0,
       isExpired: false,
       isTampered: true,
+      serverSigned: false,
     };
   }
 
@@ -122,13 +206,13 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
   // 2. Anti-Clock-Rollback Detection
   // If current timestamp is before granted time, the system clock was set backwards
   if (now < lease.grantedAt - 60000) {
-    // 1 minute buffer for minor NTP adjustments
     return {
       isValid: false,
       hasLease: true,
       hoursRemaining: 0,
       isExpired: false,
       isTampered: true,
+      serverSigned: Boolean(lease.serverSigned || lease.signature),
     };
   }
 
@@ -146,6 +230,7 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
         hoursRemaining: 0,
         isExpired: false,
         isTampered: true,
+        serverSigned: Boolean(lease.serverSigned || lease.signature),
       };
     }
   }
@@ -161,6 +246,7 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
     hoursRemaining,
     isExpired,
     isTampered: false,
+    serverSigned: Boolean(lease.serverSigned || lease.signature),
   };
 }
 

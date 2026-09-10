@@ -182,190 +182,84 @@ export async function getReferralCodeDetails(code: string): Promise<ReferralCode
 
 /**
  * Claims a referral code when a referee signs up / completes enrollment
+ * Authenticates with the serverless API to perform atomic transaction and secure writes
  */
 export async function claimReferralCode(
   code: string, 
   user: User
 ): Promise<{ success: boolean; message: string; trialDaysAwarded?: number }> {
-  if (!firestoreDb || !user || !code) {
+  if (!user || !code) {
     return { success: false, message: 'Invalid referral context' };
   }
 
+  const cleanCode = code.trim().toUpperCase();
+
   try {
-    const config = await getReferralConfig();
-    if (!config.enabled) {
-      return { success: false, message: 'Referral program is currently paused' };
-    }
-
-    const cleanCode = code.trim().toUpperCase();
-    const codeDetails = await getReferralCodeDetails(cleanCode);
-
-    if (!codeDetails) {
-      return { success: false, message: 'Invalid or expired invite pass' };
-    }
-
-    // Prevent self-referral
-    if (codeDetails.ownerUid === user.uid) {
-      return { success: false, message: 'Cannot claim your own invite pass' };
-    }
-
-    const userRef = doc(firestoreDb, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-    const userData = userSnap.exists() ? userSnap.data() : null;
-
-    // Check if user already claimed a code
-    if (userData?.referredByCode) {
-      return { success: false, message: 'Invite pass already claimed on this account' };
-    }
-
-    // Check quota on referrer
-    if (codeDetails.totalClaimed >= config.maxPassesPerUser) {
-      return { success: false, message: 'This batchmate has reached their study pass limit' };
-    }
-
-    // Provision referee trial access
-    const trialDays = config.refereeTrialDays || 15;
-    const now = Date.now();
-    const expiryTimestamp = now + (trialDays * 24 * 60 * 60 * 1000);
-
-    const referralRecordId = `${codeDetails.ownerUid}_${user.uid}`;
-    const referralRecordRef = doc(firestoreDb, 'referrals', referralRecordId);
-
-    const record: ReferralRecord = {
-      id: referralRecordId,
-      referrerUid: codeDetails.ownerUid,
-      refereeUid: user.uid,
-      refereeEmail: user.email || '',
-      refereeName: user.displayName || 'Doctor',
-      code: cleanCode,
-      status: 'claimed',
-      bonusDaysAwarded: config.referrerBonusDays,
-      claimedAt: new Date(),
-    };
-
-    await setDoc(referralRecordRef, record);
-
-    // Increment code claim counter
-    const codeRef = doc(firestoreDb, 'referralCodes', cleanCode);
-    await updateDoc(codeRef, {
-      totalClaimed: increment(1)
+    const idToken = await user.getIdToken();
+    const res = await fetch('/api/referral/claim', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ code: cleanCode }),
     });
 
-    // Update referee account
-    await setDoc(userRef, {
-      betaAccess: true,
-      betaAccessExpiresAt: expiryTimestamp,
-      isTrial: true,
-      referredByCode: cleanCode,
-      referredByUid: codeDetails.ownerUid,
-      referralStatus: 'claimed',
-      onboardingCompleted: true,
-      updatedAt: new Date()
-    }, { merge: true });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, message: data.message || 'Failed to apply referral pass' };
+    }
 
     // Stash local storage for instant offline UI
-    localStorage.setItem(`beta_access_${user.uid}`, 'true');
-    localStorage.setItem(`beta_access_expiry_${user.uid}`, expiryTimestamp.toString());
+    if (data.expiryTimestamp) {
+      localStorage.setItem(`beta_access_${user.uid}`, 'true');
+      localStorage.setItem(`beta_access_expiry_${user.uid}`, data.expiryTimestamp.toString());
+    }
     localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
     localStorage.setItem('atlas_onboarding_completed', 'true');
     sessionStorage.removeItem('atlas_pending_ref_code');
 
     return { 
       success: true, 
-      message: `Activated ${trialDays}-Day Study Pass!`,
-      trialDaysAwarded: trialDays
+      message: data.message || `Activated ${data.trialDaysAwarded || 15}-Day Study Pass!`,
+      trialDaysAwarded: data.trialDaysAwarded || 15
     };
-  } catch (e) {
-    console.error('[Referral Engine] Error claiming code:', e);
-    return { success: false, message: 'Failed to apply referral pass' };
+  } catch (e: any) {
+    console.error('[Referral Engine] Error claiming code via server API:', e);
+    return { success: false, message: 'Network error claiming referral pass. Please check your connection.' };
   }
 }
 
 /**
  * Triggers atomic reward qualification when a referee completes their first study session (>= min minutes)
+ * Dispatches to serverless API with referee ID token for atomic Firestore transaction
  */
 export async function qualifyReferral(
   refereeUid: string, 
   sessionDurationMinutes: number
 ): Promise<boolean> {
-  if (!firestoreDb || !refereeUid) return false;
+  if (!refereeUid) return false;
 
   try {
-    const config = await getReferralConfig();
-    if (!config.enabled) return false;
+    const { auth } = await import('./firebase');
+    const currentUser = auth?.currentUser;
+    if (!currentUser || currentUser.uid !== refereeUid) return false;
 
-    const minMinutes = config.minStudyMinutesToQualify || 10;
-    if (sessionDurationMinutes < minMinutes) {
-      return false;
-    }
-
-    const refereeRef = doc(firestoreDb, 'users', refereeUid);
-    const refereeSnap = await getDoc(refereeRef);
-    if (!refereeSnap.exists()) return false;
-
-    const refereeData = refereeSnap.data();
-    const referrerUid = refereeData?.referredByUid;
-    const refCode = refereeData?.referredByCode;
-
-    if (!referrerUid || refereeData?.referralStatus === 'qualified') {
-      return false; // Already qualified or not referred
-    }
-
-    const referralRecordId = `${referrerUid}_${refereeUid}`;
-    const referralRecordRef = doc(firestoreDb, 'referrals', referralRecordId);
-    const recordSnap = await getDoc(referralRecordRef);
-
-    if (!recordSnap.exists()) return false;
-
-    const bonusDays = config.referrerBonusDays || 14;
-    const bonusMillis = bonusDays * 24 * 60 * 60 * 1000;
-
-    // 1. Mark referral as qualified
-    await updateDoc(referralRecordRef, {
-      status: 'qualified',
-      qualifiedAt: new Date()
+    const idToken = await currentUser.getIdToken();
+    const res = await fetch('/api/referral/qualify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ sessionDurationMinutes }),
     });
 
-    // 2. Mark referee as qualified
-    await updateDoc(refereeRef, {
-      referralStatus: 'qualified',
-      updatedAt: new Date()
-    });
-
-    // 3. Increment code qualified counter
-    if (refCode) {
-      const codeRef = doc(firestoreDb, 'referralCodes', refCode);
-      await updateDoc(codeRef, {
-        totalQualified: increment(1)
-      }).catch(() => {});
-    }
-
-    // 4. Extend Referrer's Access Expiry
-    const referrerRef = doc(firestoreDb, 'users', referrerUid);
-    const referrerSnap = await getDoc(referrerRef);
-    if (referrerSnap.exists()) {
-      const refData = referrerSnap.data();
-      const currentExpiry = refData.betaAccessExpiresAt?.toMillis
-        ? refData.betaAccessExpiresAt.toMillis()
-        : (refData.betaAccessExpiresAt || Date.now());
-
-      const newExpiry = Math.max(Date.now(), currentExpiry) + bonusMillis;
-
-      await updateDoc(referrerRef, {
-        betaAccess: true,
-        betaAccessExpiresAt: newExpiry,
-        pendingReferralRewardToast: {
-          colleagueName: refereeData.displayName || 'Your batchmate',
-          bonusDays,
-          grantedAt: Date.now()
-        },
-        updatedAt: new Date()
-      });
-    }
-
-    return true;
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data.success && data.qualified);
   } catch (e) {
-    console.error('[Referral Engine] Error qualifying referral:', e);
+    console.error('[Referral Engine] Error qualifying referral via server API:', e);
     return false;
   }
 }

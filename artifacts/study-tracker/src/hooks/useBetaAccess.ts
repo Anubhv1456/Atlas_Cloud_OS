@@ -1,19 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
+import type { User } from 'firebase/auth';
 import { useAuth } from './useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease } from '@/lib/offlineLease';
+import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease, requestServerOfflineLease } from '@/lib/offlineLease';
 
 export interface BetaAccessState {
   hasAccess: boolean;
-  paymentStatus: 'pending' | 'approved' | 'rejected' | null;
+  paymentStatus: 'pending' | 'approved' | 'rejected' | 'succeeded' | null;
   paymentRejectionNote: string | null;
   vaultActivationRequired: boolean;
   vaultProvenance: any | null;
   offlineLeaseValid: boolean;
   offlineHoursRemaining: number;
   loading: boolean;
+  trialExpiresAt?: string | number | null;
+  trialStartedAt?: any | null;
+  isTrialAuthoritative?: boolean;
 }
 
 // ── Singleton State & Subscription Hub ──────────────────────────────────────────
@@ -33,12 +37,15 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
       offlineLeaseValid: true,
       offlineHoursRemaining: 72,
       loading: false,
+      trialExpiresAt: null,
+      trialStartedAt: null,
+      isTrialAuthoritative: false,
     };
   }
 
-  const localAccess = typeof window !== 'undefined' ? localStorage.getItem(`beta_access_${uid}`) : null;
-  const isLocallyValid = localAccess === 'true';
   const leaseCheck = verifyOfflineLease(uid);
+  // Authoritative offline entitlement must be backed by a cryptographically verified offline lease
+  const isLocallyValid = leaseCheck.isValid && !leaseCheck.isExpired && !leaseCheck.isTampered;
 
   return {
     hasAccess: isLocallyValid,
@@ -49,6 +56,9 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
     offlineLeaseValid: leaseCheck.isValid,
     offlineHoursRemaining: leaseCheck.hoursRemaining,
     loading: false, // Instant synchronous hydration (0ms offline latency)
+    trialExpiresAt: null,
+    trialStartedAt: null,
+    isTrialAuthoritative: false,
   };
 }
 
@@ -59,7 +69,7 @@ function updateSingleton(newState: Partial<BetaAccessState>) {
   subscribers.forEach((cb) => cb(singletonState));
 }
 
-function setupSingletonListener(uid: string) {
+function setupSingletonListener(uid: string, userObj?: User | null) {
   if (currentUserId === uid && activeUnsubscribe) {
     return;
   }
@@ -88,6 +98,9 @@ function setupSingletonListener(uid: string) {
         if (isBeta) {
           localStorage.setItem(`beta_access_${uid}`, 'true');
           issueOfflineLease(uid);
+          if (userObj) {
+            requestServerOfflineLease(userObj).catch(() => {});
+          }
         } else {
           localStorage.removeItem(`beta_access_${uid}`);
           revokeOfflineLease(uid);
@@ -102,6 +115,9 @@ function setupSingletonListener(uid: string) {
           offlineLeaseValid: true,
           offlineHoursRemaining: 72,
           loading: false,
+          trialExpiresAt: data.trialExpiresAt || null,
+          trialStartedAt: data.trialStartedAt || null,
+          isTrialAuthoritative: Boolean(data.trialExpiresAt),
         });
       } else {
         localStorage.removeItem(`beta_access_${uid}`);
@@ -114,6 +130,9 @@ function setupSingletonListener(uid: string) {
           vaultActivationRequired: false,
           vaultProvenance: null,
           loading: false,
+          trialExpiresAt: null,
+          trialStartedAt: null,
+          isTrialAuthoritative: false,
         });
       }
     },
@@ -176,33 +195,48 @@ export function useBetaAccess() {
     subscribers.add(handleUpdate);
 
     // Initialize or verify singleton listener
-    setupSingletonListener(user.uid);
+    setupSingletonListener(user.uid, user);
 
     return () => {
       subscribers.delete(handleUpdate);
     };
   }, [user, isImpersonating, impersonatedUser]);
 
-  const grantAccess = async () => {
-    if (!user) return;
+  // Server-authoritative trial activation & sync
+  useEffect(() => {
+    if (!user || state.hasAccess || state.trialExpiresAt) return;
+    let isCancelled = false;
 
-    if (firestoreDb) {
+    async function syncServerTrial() {
       try {
-        const userRef = doc(firestoreDb, 'users', user.uid);
-        await setDoc(userRef, {
-          betaAccess: true,
-          paymentStatus: 'approved',
-          vaultActivationRequired: false,
-          updatedAt: new Date()
-        }, { merge: true });
-      } catch (e) {
-        console.error("Error granting access", e);
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/auth/activate-trial', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isCancelled && data.success && data.trialExpiresAt) {
+          updateSingleton({
+            trialExpiresAt: data.trialExpiresAt,
+            trialStartedAt: data.trialStartedAt,
+            isTrialAuthoritative: true,
+          });
+        }
+      } catch (err) {
+        console.warn('[useBetaAccess] Network error during trial sync:', err);
       }
     }
-    localStorage.setItem(`beta_access_${user.uid}`, 'true');
-    issueOfflineLease(user.uid);
-    updateSingleton({ hasAccess: true, paymentStatus: 'approved' });
-  };
+
+    syncServerTrial();
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, state.hasAccess, state.trialExpiresAt]);
 
   const clearVaultActivationFlag = async () => {
     if (!user || !firestoreDb) return;
@@ -222,11 +256,29 @@ export function useBetaAccess() {
   let isTrialExpired = false;
   let trialDaysRemaining = 0;
 
-  if (user && user.metadata && user.metadata.creationTime) {
+  if (state.trialExpiresAt) {
+    const expiryMs =
+      typeof state.trialExpiresAt === 'string'
+        ? new Date(state.trialExpiresAt).getTime()
+        : typeof state.trialExpiresAt === 'number'
+        ? state.trialExpiresAt
+        : 0;
+
+    const diffMs = expiryMs - Date.now();
+    if (diffMs > 0) {
+      isTrialActive = true;
+      trialDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    } else {
+      isTrialExpired = true;
+    }
+  } else if (user && user.metadata && user.metadata.creationTime) {
     const createdAt = new Date(user.metadata.creationTime);
-    const diffDays = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    const now = Date.now();
+    const diffMs = now - createdAt.getTime();
+    // Guard against negative clock drift / retroactive system clock manipulation
+    const diffDays = diffMs < 0 ? 999 : Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    // Trial logic
+    // Trial logic fallback
     if (diffDays <= 14) {
       isTrialActive = true;
       trialDaysRemaining = 14 - diffDays;
@@ -255,7 +307,6 @@ export function useBetaAccess() {
     offlineLeaseValid: state.offlineLeaseValid,
     offlineHoursRemaining: state.offlineHoursRemaining,
     loading: state.loading, 
-    grantAccess,
     clearVaultActivationFlag
   };
 }
