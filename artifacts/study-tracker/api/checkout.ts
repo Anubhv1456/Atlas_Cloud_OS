@@ -87,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           quantity: 1,
         },
       ],
-      billing: {
+      customer: {
         email: userEmail,
       },
       metadata: {

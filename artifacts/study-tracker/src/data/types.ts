@@ -7,13 +7,13 @@ export interface OntologyTopic {
   estimatedStudyMinutes: number;
   relatedTopics: string[];
   aliases: string[];
-  pyqWeight: number;
-  difficulty: 'low' | 'average' | 'high';
+  pyqWeight?: number;
+  difficulty?: 'low' | 'average' | 'high';
 }
 
 export interface OntologySystem {
   id: string;
-  subjectId: string;
+  subjectId?: string;
   name: string;
   topics: OntologyTopic[];
   legacyId?: string;
@@ -24,7 +24,7 @@ export interface OntologySubject {
   id: string;
   name: string;
   systems: OntologySystem[];
-  category?: 'Organ Systems' | 'Foundational Disciplines' | 'Clerkship';
+  category?: 'Organ Systems' | 'Organ System' | 'Foundational Disciplines' | 'Clerkship' | 'Pre-Clinical' | 'Para-Clinical' | 'Clinical' | 'General';
   legacyId?: string;
   legacyIds?: string[];
 }

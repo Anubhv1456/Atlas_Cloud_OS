@@ -431,7 +431,7 @@ export function computeNextActionsServerSide(params: ServerComputeNextActionPara
       badges.push({ label: '🎯 High Yield', variant: 'primary', iconType: 'target' });
     }
 
-    const isBlockWeak = weakTopicsInSet > 0 || (topicMemoryLosses.length > 0 && topicMemoryLosses.some(loss => loss > 80));
+    const isBlockWeak = weakTopicsInSet > 0 || (topicMemoryLosses.length > 0 && topicMemoryLosses.some((loss: number) => loss > 80));
     if (isBlockWeak) {
       badges.push({
         label: weakTopicsInSet > 1 ? `⚠️ ${weakTopicsInSet} Weak Topics` : '⚠️ Weak Area',

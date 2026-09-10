@@ -1,4 +1,4 @@
-import { UNIVERSAL_ONTOLOGY, type OntologySubject, type OntologyTopic } from '../../src/data/ontology.js';
+import { UNIVERSAL_ONTOLOGY, type OntologySubject, type OntologySystem, type OntologyTopic } from '../../src/data/ontology.js';
 
 export interface SanitizedTopic {
   id: string;
@@ -52,7 +52,7 @@ export function sanitizeTopic(topic: OntologyTopic): SanitizedTopic {
 export function getSubjectSummaries(): SubjectSummary[] {
   return UNIVERSAL_ONTOLOGY.map((sub: OntologySubject) => {
     const systemCount = sub.systems.length;
-    const topicCount = sub.systems.reduce((acc, sys) => acc + (sys.topics ? sys.topics.length : 0), 0);
+    const topicCount = sub.systems.reduce((acc: number, sys: OntologySystem) => acc + (sys.topics ? sys.topics.length : 0), 0);
     return {
       id: sub.id,
       name: sub.name,
@@ -82,9 +82,9 @@ export function getSanitizedSubject(subjectQuery: string): SanitizedSubject | nu
   return {
     id: found.id,
     name: found.name,
-    systems: found.systems.map((sys) => ({
+    systems: found.systems.map((sys: OntologySystem) => ({
       id: sys.id,
-      subjectId: sys.subjectId,
+      subjectId: sys.subjectId || found.id,
       name: sys.name,
       topics: (sys.topics || []).map(sanitizeTopic),
     })),
@@ -104,7 +104,7 @@ export function searchSanitizedTopics(query: string, limit = 50): SanitizedTopic
       for (const topic of system.topics || []) {
         if (
           topic.name.toLowerCase().includes(normalized) ||
-          topic.aliases?.some((a) => a.toLowerCase().includes(normalized))
+          topic.aliases?.some((a: string) => a.toLowerCase().includes(normalized))
         ) {
           matches.push(sanitizeTopic(topic));
           if (matches.length >= limit) return matches;

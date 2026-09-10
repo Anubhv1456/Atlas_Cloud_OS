@@ -81,6 +81,8 @@ export function getSubjectById(id: string): { id: string; name: string } | undef
 }
 
 // Re-export ontologies and alias utilities
+export const UNIVERSAL_ONTOLOGY: OntologySubject[] = ALL_SUBJECTS as OntologySubject[];
+
 export {
   NEETPG_ONTOLOGY,
   USMLE_ONTOLOGY,
