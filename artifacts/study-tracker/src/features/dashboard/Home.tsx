@@ -85,14 +85,25 @@ export default function Home() {
 
   // Reactive milestone stats for free tier status chip
   const freeTierMistakeCount = useLiveQuery(() => db.mistakeLogs.filter(m => !m.deletedAt).count(), []) ?? 0;
-  const freeTierActiveSystems = useLiveQuery(() => 
-    db.systems.filter(s => !s.deletedAt && (
+  
+  const freeTierActiveSystems = useLiveQuery(async () => {
+    const allActiveSystems = await db.systems.filter(s => !s.deletedAt && (
       s.revisionState === 'in_progress' ||
       s.currentRevisionInterval !== null ||
       (s.contentUnitsCompleted !== undefined && s.contentUnitsCompleted > 0) ||
       s.status !== 'Unseen'
-    )).count(),
-  []) ?? 0;
+    )).toArray();
+    
+    const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
+    const isOrganBased = profile?.curriculum?.includes('Organ-System');
+
+    if (isOrganBased) {
+       const activeSubjects = new Set(allActiveSystems.map(s => String(s.subjectId)));
+       return activeSubjects.size;
+    } else {
+       return allActiveSystems.length;
+    }
+  }, []) ?? 0;
 
   const hasAffiliate = typeof window !== 'undefined' && Boolean(
     localStorage.getItem('atlas_affiliate_id') ||

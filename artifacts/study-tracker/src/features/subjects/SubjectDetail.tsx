@@ -911,6 +911,7 @@ export default function SubjectDetail() {
         <section className="mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <CurriculumSets 
             subjectId={subject.id as number} 
+            systemId={highlightedSystemId || undefined}
             topics={allTopics}
           />
         </section>

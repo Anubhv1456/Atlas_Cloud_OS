@@ -270,18 +270,37 @@ export function useSystemCardLogic({
         ))
         .toArray();
 
-      const activeSystemIds = new Set(allActiveSystems.map(s => String(s.id)));
-      const isCurrentSystemActive = system.id && activeSystemIds.has(String(system.id));
+      const profile = await import('@/lib/examProfile').then(m => m.getLocalExamProfile());
+      const isOrganBased = profile?.curriculum?.includes('Organ-System');
+      const allSubjects = await db.subjects.toArray();
 
-      if (!isCurrentSystemActive && activeSystemIds.size >= systemCap) {
-        const activeNames = allActiveSystems.map(s => s.name).filter(Boolean).slice(0, systemCap);
+      let activeCount = 0;
+      let projectedCount = 0;
+      let isCurrentSystemActive = false;
+      let activeNames: string[] = [];
+
+      if (isOrganBased) {
+          const activeLocalSubIds = new Set(allActiveSystems.map(s => String(s.subjectId)));
+          activeCount = activeLocalSubIds.size;
+          isCurrentSystemActive = activeLocalSubIds.has(String(system.subjectId));
+          projectedCount = activeCount + (isCurrentSystemActive ? 0 : 1);
+          activeNames = allSubjects.filter(s => activeLocalSubIds.has(String(s.id))).map(s => s.name).filter(Boolean);
+      } else {
+          activeCount = allActiveSystems.length;
+          const activeLocalSysIds = new Set(allActiveSystems.map(s => String(s.id)));
+          isCurrentSystemActive = system.id ? activeLocalSysIds.has(String(system.id)) : false;
+          projectedCount = activeCount + (isCurrentSystemActive ? 0 : 1);
+          activeNames = allActiveSystems.map(s => s.name).filter(Boolean);
+      }
+
+      if (!isCurrentSystemActive && projectedCount > systemCap) {
         window.dispatchEvent(new CustomEvent('open-paywall-modal', {
           detail: {
             trigger: 'system_breadth_cap',
-            activeCount: activeSystemIds.size,
+            activeCount,
             cap: systemCap,
             targetSystemName: system.name,
-            activeSystemNames: activeNames,
+            activeSystemNames: activeNames.slice(0, systemCap),
             hasAffiliateBonus: hasAffiliate,
           }
         }));

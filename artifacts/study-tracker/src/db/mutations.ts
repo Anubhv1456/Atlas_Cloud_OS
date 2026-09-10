@@ -591,7 +591,7 @@ export async function getTopicProgress(topicId: string): Promise<import('./types
 // ── Study Blocks ──────────────────────────────────────────────────────────
 
 export async function createCurriculumSet(data: {
-  subjectId: number; systemId?: number; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
+  subjectId: number; systemId?: number; systemsToActivate?: string[]; name: string; topicIds: string[]; color?: 'teal' | 'amber' | 'purple' | 'blue' | 'gray'; depth?: 'rapid' | 'standard' | 'deep'; isLengthy?: boolean }) {
   enforceReadOnlySandbox(); 
   const newSet: import('./types').CurriculumSet = {
     id: crypto.randomUUID(),
@@ -608,6 +608,20 @@ export async function createCurriculumSet(data: {
       revisionState: 'in_progress',
       updatedAt: new Date()
     });
+  }
+
+  if (data.systemsToActivate && data.systemsToActivate.length > 0) {
+    const allSys = await db.systems.toArray();
+    for (const sysId of data.systemsToActivate) {
+       const sys = allSys.find(s => String(s.id) === sysId || String(s.ontologySystemId) === sysId);
+       if (sys && sys.id) {
+          await db.systems.update(sys.id, {
+             status: 'In Progress',
+             revisionState: 'in_progress',
+             updatedAt: new Date()
+          });
+       }
+    }
   }
   
   return newSet;
