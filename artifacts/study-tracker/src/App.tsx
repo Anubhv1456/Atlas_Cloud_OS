@@ -113,6 +113,12 @@ function ProtectedApp() {
           return;
         }
 
+        // Evict returning users from the onboarding route
+        if (hasOnboarded === true && location === '/onboarding') {
+          setLocation('/');
+          return;
+        }
+
         // 2. Usage Milestone Architecture: Free tier candidates remain on '/' without route lockouts
         if (location === '/beta-access' || location === '/accept-invitation' || location === '/join') {
           setLocation('/');
