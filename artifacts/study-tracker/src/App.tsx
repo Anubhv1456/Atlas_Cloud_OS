@@ -91,6 +91,43 @@ function ProtectedApp() {
     }
   }, []);
 
+  // Intercept incoming ?payment=success return from checkout for instant entitlement verification
+  useEffect(() => {
+    if (typeof window === 'undefined' || !user) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      const verifyInstantAccess = async () => {
+        try {
+          const idToken = await user.getIdToken();
+          const res = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${idToken}`,
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.verified && data.hasAccess) {
+              toast.success('Payment verified! Your Lifetime Vault Access is now active.', {
+                duration: 6000,
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('Instant payment verification check error:', e);
+        } finally {
+          // Clean up the URL query parameter without page reload
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      };
+
+      verifyInstantAccess();
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!authLoading && !accessLoading && !onboardingLoading) {
       const isPublic = ['/privacy', '/terms', '/contact', '/accept-invitation', '/join'].includes(location);

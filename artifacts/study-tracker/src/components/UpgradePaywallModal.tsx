@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Lock, Key, CreditCard, Sparkles, Zap, ShieldCheck, Brain, Layers, RotateCcw, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { toast } from 'sonner';
 
 export interface PaywallTriggerDetail {
@@ -17,6 +18,14 @@ export function UpgradePaywallModal() {
   const [, setLocation] = useLocation();
   const [affiliateId, setAffiliateId] = useState<string>('');
   const { user, signInWithGoogle } = useAuth();
+  const { hasAccess } = useBetaAccess();
+
+  // Automatically dismiss paywall trap whenever paid access is confirmed
+  useEffect(() => {
+    if (hasAccess && isOpen) {
+      setIsOpen(false);
+    }
+  }, [hasAccess, isOpen]);
 
   useEffect(() => {
     const handleOpen = (e: Event) => {
@@ -119,7 +128,7 @@ export function UpgradePaywallModal() {
 
   const contextInfo = getContextualContent();
 
-  const isTrialExpiredTrap = payload.trigger === 'trial_expired';
+  const isTrialExpiredTrap = payload.trigger === 'trial_expired' && !hasAccess;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
