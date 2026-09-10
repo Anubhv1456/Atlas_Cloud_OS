@@ -123,7 +123,12 @@ export default function Onboarding() {
       startedStudying: startedStudying || 'yes'
     });
 
-    loadUniversalOntology({ targetExam: selectedGoal || 'NEET PG', force: true }).catch(() => {});
+    try {
+      await loadUniversalOntology({ targetExam: selectedGoal || 'NEET PG', force: true });
+    } catch (e) {
+      console.error('Failed to load universal ontology:', e);
+    }
+    
     await markOnboarded();
 
     setLocation('/');
@@ -131,6 +136,8 @@ export default function Onboarding() {
 
   const handleNextFromGoal = async () => {
     try {
+      const target = selectedGoal || 'NEET PG';
+      db.switchWorkspace(target);
       const count = await db.subjects.count();
       if (count > 0) {
         setStep(4);
@@ -142,7 +149,7 @@ export default function Onboarding() {
       setImportStatusText('Preparing Universal Medical Curriculum...');
 
       await loadUniversalOntology({
-        targetExam: selectedGoal,
+        targetExam: target,
         force: true,
         onProgress: (pct, msg) => {
           setImportProgress(pct);
@@ -236,6 +243,12 @@ export default function Onboarding() {
       dailyQuestionGoal: dailyGoal,
       startedStudying: startedStudying
     });
+
+    try {
+      await loadUniversalOntology({ targetExam: selectedGoal || 'NEET PG', force: false });
+    } catch (e) {
+      console.error('Failed to load universal ontology in finish step:', e);
+    }
 
     await markOnboarded();
     toast.success('Calibration Saved', {
