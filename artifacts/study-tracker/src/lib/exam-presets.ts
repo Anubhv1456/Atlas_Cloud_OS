@@ -41,6 +41,12 @@ export async function loadUniversalOntology(options: LoadOntologyOptions = {}) {
   // Ensure workspace matches target exam
   db.switchWorkspace(targetExam);
 
+  // Wait for the cache to load before reading the existing tables
+  await Promise.all([
+    db.subjects.ready,
+    db.systems.ready
+  ]);
+
   const activeOntology = getOntologyForExam(targetExam);
 
   try {
