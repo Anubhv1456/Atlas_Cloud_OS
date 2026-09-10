@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { Webhook } from 'svix';
 import { FieldValue } from 'firebase-admin/firestore';
-import { initFirebaseAdmin } from '../src/lib/firebaseAdmin';
+import { initFirebaseAdmin } from '../src/lib/firebaseAdmin.js';
 
 interface VercelRequest extends IncomingMessage {
   body?: any;

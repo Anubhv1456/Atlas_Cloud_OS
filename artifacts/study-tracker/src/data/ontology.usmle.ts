@@ -1,4 +1,4 @@
-import { OntologySubject } from './types';
+import { OntologySubject } from './types.js';
 
 /**
  * Backward-Compatible Legacy Identifier Mapping Dictionary

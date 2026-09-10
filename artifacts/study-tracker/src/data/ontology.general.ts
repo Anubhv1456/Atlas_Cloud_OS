@@ -1,4 +1,4 @@
-import { OntologySubject } from './types';
+import { OntologySubject } from './types.js';
 
 export const GENERAL_ONTOLOGY: OntologySubject[] = [
   {

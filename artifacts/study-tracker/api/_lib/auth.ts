@@ -50,7 +50,13 @@ export async function verifyAuthToken(req: VercelRequest): Promise<Authenticated
       return null;
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as {
+      users?: Array<{
+        localId: string;
+        email?: string;
+        emailVerified?: boolean;
+      }>;
+    };
     if (!data.users || data.users.length === 0) {
       return null;
     }

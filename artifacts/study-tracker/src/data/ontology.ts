@@ -1,5 +1,5 @@
-import { OntologySubject, OntologySystem, OntologyTopic } from './types';
-import { UNIVERSAL_ONTOLOGY as NEETPG_ONTOLOGY } from './ontology.neetpg';
+import { OntologySubject, OntologySystem, OntologyTopic } from './types.js';
+import { UNIVERSAL_ONTOLOGY as NEETPG_ONTOLOGY } from './ontology.neetpg.js';
 import {
   USMLE_ONTOLOGY,
   USMLE_STEP1_ONTOLOGY,
@@ -11,8 +11,8 @@ import {
   normalizeUsmleSystemId,
   normalizeUsmleTopicId,
   isSubjectIdMatch
-} from './ontology.usmle';
-import { GENERAL_ONTOLOGY } from './ontology.general';
+} from './ontology.usmle.js';
+import { GENERAL_ONTOLOGY } from './ontology.general.js';
 
 // Helper function to dynamically load ontology based on exam string
 export function getOntologyForExam(targetExam: string): OntologySubject[] {

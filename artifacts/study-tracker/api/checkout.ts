@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import DodoPayments from 'dodopayments';
-import { initFirebaseAdmin } from '../src/lib/firebaseAdmin';
+import { initFirebaseAdmin } from '../src/lib/firebaseAdmin.js';
 
 interface VercelRequest extends IncomingMessage {
   body?: any;
