@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = []): T | undefined {
   const [data, setData] = useState<T | undefined>(undefined);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -13,12 +14,9 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
       try {
         const isImpersonating = typeof window !== 'undefined' && sessionStorage.getItem('atlas_impersonated_target');
         if (isImpersonating) {
-          // Block local Dexie data entirely during impersonation so the admin doesn't see their own DB.
-          // In a full implementation, we would yield the remote Firestore fetch result here.
           if (isMounted) setData([] as any);
           return;
         }
-
         const result = await queryFn();
         if (isMounted) setData(result as T);
       } catch (e) {
@@ -26,22 +24,22 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
       }
     };
 
-    const unsubAuth = onAuthStateChanged(auth, () => {
-      run();
-    });
+    run();
+  }, [...deps, tick]); // Re-run when dependencies or tick changes
 
-    const handler = () => run();
+  useEffect(() => {
+    const handler = () => setTick(t => t + 1);
     dbEvents.on('change', handler);
     
-    // Initial run
-    run();
-
+    const unsubAuth = onAuthStateChanged(auth, () => {
+      setTick(t => t + 1);
+    });
+    
     return () => {
-      isMounted = false;
       dbEvents.off('change', handler);
       unsubAuth();
     };
-  }, deps);
+  }, []);
 
   return data;
 }
