@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, setDoc, writeBatch, onSnapshot, arrayUnion } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, writeBatch, onSnapshot, arrayUnion, query, where } from 'firebase/firestore';
 import { auth, firestoreDb } from '@/lib/firebase';
 import { localDb } from './localDb';
 
@@ -38,6 +38,40 @@ class SyncEngine {
 
       await localDb.sync_meta.put({ id: 'initial_load_done', lastSyncTimestamp: Date.now() });
       console.log('Cold Boot Hydration Complete.');
+    } else {
+      console.log('Initiating Incremental Sync...');
+      const lastSyncTimestamp = (meta as any).lastSyncTimestamp || 0;
+      const bucketCollections = [
+        'history_buckets', 'scoreLogs_buckets', 'mistakeLogs_buckets'
+      ];
+
+      let hasNewData = false;
+      for (const collName of bucketCollections) {
+        const q = query(
+          collection(firestoreDb, `users/${uid}/${collName}`),
+          where('updatedAt', '>', lastSyncTimestamp)
+        );
+        const querySnapshot = await getDocs(q);
+        const allItems: any[] = [];
+        
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.entries && Array.isArray(data.entries)) {
+            allItems.push(...data.entries);
+          }
+        });
+
+        const targetTable = collName.split('_')[0];
+        if ((localDb as any)[targetTable] && allItems.length > 0) {
+          await (localDb as any)[targetTable].bulkPut(allItems);
+          hasNewData = true;
+        }
+      }
+      
+      await localDb.sync_meta.put({ id: 'initial_load_done', lastSyncTimestamp: Date.now() });
+      if (hasNewData) {
+        console.log('Incremental Sync Complete.');
+      }
     }
 
     this.startCurrentMonthListeners(uid);

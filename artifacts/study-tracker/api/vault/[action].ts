@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { setCorsHeaders, parseRequestBody, verifyAuthToken, type VercelRequest, type VercelResponse } from '../_lib/auth.js';
+import { requireAuth, setCorsHeaders, parseRequestBody, type VercelRequest, type VercelResponse } from '../_lib/auth.js';
 
 function getAction(req: VercelRequest): string {
   const queryAction = req.query.action;
@@ -15,6 +15,11 @@ async function handleSignBackup(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const authenticatedUser = await requireAuth(req, res);
+  if (!authenticatedUser) {
+    return; // 401 response handled by requireAuth
+  }
+
   try {
     const body = await parseRequestBody(req);
     const { originUid, originEmail, exportTimestamp, metrics } = body || {};
@@ -23,16 +28,14 @@ async function handleSignBackup(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid backup signing request: missing metadata or metrics.' });
     }
 
-    // Authenticate caller if auth token is present, verifying UID match
-    const authenticatedUser = await verifyAuthToken(req);
-    if (authenticatedUser && originUid !== 'anonymous_local_vault' && authenticatedUser.uid !== originUid) {
+    if (authenticatedUser.uid !== originUid) {
       return res.status(403).json({ error: 'Forbidden: caller UID does not match origin UID.' });
     }
 
-    const secret =
-      process.env.VAULT_SIGNING_SECRET ||
-      process.env.FIREBASE_PRIVATE_KEY ||
-      'atlas_vault_provenance_signing_secret_v1';
+    const secret = process.env.VAULT_SIGNING_SECRET;
+    if (!secret) {
+      throw new Error('Server configuration error: VAULT_SIGNING_SECRET is not set.');
+    }
 
     const historyCount = typeof metrics.historyCount === 'number' ? metrics.historyCount : 0;
     const signatureSeed = `${originUid}:${originEmail || ''}:${exportTimestamp}:${metrics.totalStudyMinutes}:${metrics.completedTopics}:${metrics.scoreLogsCount}:${historyCount}`;
@@ -47,13 +50,18 @@ async function handleSignBackup(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('[API vault/sign-backup] Error:', error);
-    return res.status(500).json({ error: 'Failed to generate vault signature.' });
+    return res.status(500).json({ error: error.message || 'Failed to generate vault signature.' });
   }
 }
 
 async function handleVerifyBackup(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const authenticatedUser = await requireAuth(req, res);
+  if (!authenticatedUser) {
+    return; // 401 response handled by requireAuth
   }
 
   try {
@@ -64,10 +72,10 @@ async function handleVerifyBackup(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid verification request: missing envelope fields.' });
     }
 
-    const secret =
-      process.env.VAULT_SIGNING_SECRET ||
-      process.env.FIREBASE_PRIVATE_KEY ||
-      'atlas_vault_provenance_signing_secret_v1';
+    const secret = process.env.VAULT_SIGNING_SECRET;
+    if (!secret) {
+      throw new Error('Server configuration error: VAULT_SIGNING_SECRET is not set.');
+    }
 
     // 1. Check Server HMAC-SHA256
     const historyCount = typeof metrics.historyCount === 'number' ? metrics.historyCount : 0;
@@ -103,7 +111,7 @@ async function handleVerifyBackup(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('[API vault/verify-backup] Error:', error);
-    return res.status(500).json({ error: 'Verification error' });
+    return res.status(500).json({ error: error.message || 'Verification error' });
   }
 }
 

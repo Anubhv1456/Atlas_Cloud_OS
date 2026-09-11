@@ -199,6 +199,19 @@ export async function getSavedMarkersForUser(userId: string): Promise<Marker[]> 
 }
 
 export async function getMarkersForSystem(systemId: number | string): Promise<Marker[]> {
+  const cacheKey = `atlas_cache_markers_system_${systemId}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { timestamp, data } = JSON.parse(cached);
+      if (Date.now() - timestamp < 3600000) { // 1 Hour TTL
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading system markers cache:', e);
+  }
+
   if (!firestoreDb) return [];
   const markersCol = collection(firestoreDb, 'insights');
   const q = query(
@@ -236,11 +249,33 @@ export async function getMarkersForSystem(systemId: number | string): Promise<Ma
     return timeB - timeA;
   });
 
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
+      timestamp: Date.now(),
+      data: markers
+    }));
+  } catch (e) {
+    console.warn('Error setting system markers cache:', e);
+  }
+
   return markers;
 }
 
 
 export async function getMarkersForTopic(topicId: string): Promise<Marker[]> {
+  const cacheKey = `atlas_cache_markers_topic_${topicId}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { timestamp, data } = JSON.parse(cached);
+      if (Date.now() - timestamp < 3600000) { // 1 Hour TTL
+        return data;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading topic markers cache:', e);
+  }
+
   if (!firestoreDb) return [];
   const markersCol = collection(firestoreDb, 'insights');
   const q = query(
@@ -275,6 +310,15 @@ export async function getMarkersForTopic(topicId: string): Promise<Marker[]> {
     const timeB = b.createdAt?.toMillis?.() || 0;
     return timeB - timeA;
   });
+
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
+      timestamp: Date.now(),
+      data: markers
+    }));
+  } catch (e) {
+    console.warn('Error setting topic markers cache:', e);
+  }
 
   return markers;
 }

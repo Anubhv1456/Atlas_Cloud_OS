@@ -164,10 +164,10 @@ async function handleIssueLease(req: VercelRequest, res: VercelResponse) {
     }
 
     // Server-side HMAC signing
-    const secret =
-      process.env.OFFLINE_LEASE_SECRET ||
-      process.env.FIREBASE_PRIVATE_KEY ||
-      'atlas_med_vault_offline_lease_secret_v1';
+    const secret = process.env.OFFLINE_LEASE_SECRET;
+    if (!secret) {
+      throw new Error('Server configuration error: OFFLINE_LEASE_SECRET is not set.');
+    }
 
     const signingPayload = `${user.uid}#${now}#${expiresAt}`;
     const signature = crypto.createHmac('sha256', secret).update(signingPayload).digest('hex');

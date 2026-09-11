@@ -49,7 +49,8 @@ service cloud.firestore {
         !request.resource.data.keys().hasAny([
           'role', 'isAdmin', 'betaAccess', 'paymentStatus', 'hasPaidAccess',
           'betaAccessExpiresAt', 'vaultActivationRequired', 'dodoPaymentId',
-          'dodoAmount', 'paidAt', 'paymentMethod'
+          'dodoAmount', 'paidAt', 'paymentMethod',
+          'trialExpiresAt', 'trialStartedAt', 'isTrial'
         ]);
 
       allow update: if isAdmin() || (
@@ -60,7 +61,7 @@ service cloud.firestore {
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'betaAccess', 'paymentStatus', 'hasPaidAccess', 'betaAccessExpiresAt',
           'vaultActivationRequired', 'dodoPaymentId', 'dodoAmount', 'paidAt',
-          'paymentMethod'
+          'paymentMethod', 'trialExpiresAt', 'trialStartedAt', 'isTrial'
         ]))
       );
 
@@ -151,18 +152,8 @@ service cloud.firestore {
         isAdmin()
       );
 
-      // Created upon claiming an invitation pass
-      allow create: if isAuthenticated() &&
-        request.resource.data.refereeUid == request.auth.uid;
-
-      // Updated upon session qualification
-      allow update: if isAuthenticated() && (
-        resource.data.refereeUid == request.auth.uid ||
-        resource.data.referrerUid == request.auth.uid ||
-        isAdmin()
-      );
-
-      allow delete: if isAdmin();
+      // Only Cloud Functions / Admin SDK can manage referral records
+      allow write: if false;
     }
 
     // ── CONTACT & SUPPORT INQUIRIES ───────────────────────────────────────────

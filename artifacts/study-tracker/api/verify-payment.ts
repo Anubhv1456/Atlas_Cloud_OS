@@ -60,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       environment: dodoMode,
     });
 
+    const isEmailVerified = user.emailVerified === true;
     let verifiedPayment: any = null;
 
     // Check by paymentId if provided in request body or query
@@ -70,12 +71,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (payment && payment.status === 'succeeded') {
           // Strict IDOR ownership validation: Verify payment belongs to authenticated caller
           const matchesUid = payment.metadata?.user_id === user.uid || payment.metadata?.userId === user.uid;
-          const matchesEmail = Boolean(user.email && payment.customer?.email?.toLowerCase() === user.email.toLowerCase());
+          const matchesEmail = Boolean(isEmailVerified && user.email && payment.customer?.email?.toLowerCase() === user.email.toLowerCase());
 
           if (matchesUid || matchesEmail) {
             verifiedPayment = payment;
           } else {
-            console.warn(`[Verify Payment] Payment ${paymentId} does not match caller UID (${user.uid}) or email (${user.email})`);
+            console.warn(`[Verify Payment] Payment ${paymentId} does not match caller UID (${user.uid}) or verified email (${user.email})`);
           }
         }
       } catch (e) {
@@ -84,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // If not found by paymentId, search recent payments list
-    if (!verifiedPayment && user.email) {
+    if (!verifiedPayment) {
       try {
         const paymentsList = await dodo.payments.list({
           status: 'succeeded',
@@ -92,10 +93,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         if (paymentsList && paymentsList.items && paymentsList.items.length > 0) {
-          // Find payment matching user's UID in metadata or customer email
+          // Find payment matching user's UID in metadata or verified customer email
           const match = paymentsList.items.find((item: any) => {
             const matchesUid = item.metadata?.user_id === user.uid || item.metadata?.userId === user.uid;
-            const matchesEmail = user.email && item.customer?.email?.toLowerCase() === user.email.toLowerCase();
+            const matchesEmail = Boolean(isEmailVerified && user.email && item.customer?.email?.toLowerCase() === user.email.toLowerCase());
             return matchesUid || matchesEmail;
           });
 
@@ -110,16 +111,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. Grant access immediately if verified
     if (verifiedPayment && verifiedPayment.status === 'succeeded') {
+      const verifiedPaymentId = verifiedPayment.payment_id || verifiedPayment.id || `verified_${Date.now()}`;
+      const amount = verifiedPayment.total_amount ?? verifiedPayment.amount ?? 4900;
+      const currency = verifiedPayment.currency || 'USD';
+
       await userDocRef.set(
         {
           betaAccess: true,
           paymentStatus: 'succeeded',
           paymentMethod: 'dodo_payments',
-          dodoPaymentId: verifiedPayment.payment_id || verifiedPayment.id || `verified_${Date.now()}`,
-          dodoAmount: verifiedPayment.total_amount ?? verifiedPayment.amount ?? 4900,
-          currency: verifiedPayment.currency || 'USD',
+          dodoPaymentId: verifiedPaymentId,
+          dodoAmount: amount,
+          currency,
           paidAt: new Date().toISOString(),
           updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Record verified transaction in processed_payments for audit and idempotency
+      await db.collection('processed_payments').doc(verifiedPaymentId).set(
+        {
+          paymentId: verifiedPaymentId,
+          userId: user.uid,
+          amount,
+          currency,
+          source: 'verify_payment_direct',
+          customerEmail: verifiedPayment.customer?.email || user.email || null,
+          verifiedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );

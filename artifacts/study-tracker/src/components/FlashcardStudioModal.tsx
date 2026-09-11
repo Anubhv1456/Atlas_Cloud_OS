@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -387,12 +388,12 @@ return (
                     <div className="w-full space-y-4">
                       <div className="bg-background rounded-lg p-4 border shadow-sm">
                         <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Front</div>
-                        <div className="text-sm" dangerouslySetInnerHTML={{ __html: previewCard.front }} />
+                        <div className="text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewCard.front) }} />
                       </div>
                       <div className="bg-background rounded-lg p-4 border shadow-sm relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
                          <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 pl-2">Back</div>
-                         <div className="text-sm pl-2" dangerouslySetInnerHTML={{ __html: previewCard.back }} />
+                         <div className="text-sm pl-2" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewCard.back) }} />
                       </div>
 
                       {/* 1-Tap Micro Polish */}
