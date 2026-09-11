@@ -44,12 +44,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 2. Fallback Path: Query Dodo Payments directly to prevent waiting on webhook
-    const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY;
-    if (!dodoApiKey) {
-      return res.status(200).json({
+    // Extract paymentId from request body or query
+    const paymentId = (req.body?.paymentId || req.query?.paymentId) as string | undefined;
+    if (!paymentId || typeof paymentId !== 'string') {
+      return res.status(400).json({
         verified: false,
         hasAccess: false,
+        error: 'Bad Request',
+        message: 'paymentId is required for payment verification',
+      });
+    }
+
+    // 2. Query Dodo Payments directly
+    const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY;
+    if (!dodoApiKey) {
+      return res.status(500).json({
+        verified: false,
+        hasAccess: false,
+        error: 'Configuration Error',
         message: 'Payment gateway configuration unavailable for direct lookup',
       });
     }
@@ -60,110 +72,102 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       environment: dodoMode,
     });
 
-    const isEmailVerified = user.emailVerified === true;
-    let verifiedPayment: any = null;
-
-    // Check by paymentId if provided in request body or query
-    const paymentId = (req.body?.paymentId || req.query?.paymentId) as string | undefined;
-    if (paymentId && typeof paymentId === 'string') {
-      try {
-        const payment = await dodo.payments.retrieve(paymentId);
-        if (payment && payment.status === 'succeeded') {
-          // Strict IDOR ownership validation: Verify payment belongs to authenticated caller
-          const matchesUid = payment.metadata?.user_id === user.uid || payment.metadata?.userId === user.uid;
-          const matchesEmail = Boolean(isEmailVerified && user.email && payment.customer?.email?.toLowerCase() === user.email.toLowerCase());
-
-          if (matchesUid || matchesEmail) {
-            verifiedPayment = payment;
-          } else {
-            console.warn(`[Verify Payment] Payment ${paymentId} does not match caller UID (${user.uid}) or verified email (${user.email})`);
-          }
-        }
-      } catch (e) {
-        console.warn('[Verify Payment] Could not retrieve payment by ID:', paymentId, e);
-      }
+    let payment: any = null;
+    try {
+      payment = await dodo.payments.retrieve(paymentId);
+    } catch (e: any) {
+      console.warn('[Verify Payment] Could not retrieve payment by ID:', paymentId, e);
+      return res.status(404).json({
+        verified: false,
+        hasAccess: false,
+        error: 'Payment Not Found',
+        message: `Could not retrieve payment details for paymentId: ${paymentId}`,
+      });
     }
 
-    // If not found by paymentId, search recent payments list
-    if (!verifiedPayment) {
-      try {
-        const paymentsList = await dodo.payments.list({
-          status: 'succeeded',
-          page_size: 15,
-        });
-
-        if (paymentsList && paymentsList.items && paymentsList.items.length > 0) {
-          // Find payment matching user's UID in metadata or verified customer email
-          const match = paymentsList.items.find((item: any) => {
-            const matchesUid = item.metadata?.user_id === user.uid || item.metadata?.userId === user.uid;
-            const matchesEmail = Boolean(isEmailVerified && user.email && item.customer?.email?.toLowerCase() === user.email.toLowerCase());
-            return matchesUid || matchesEmail;
-          });
-
-          if (match) {
-            verifiedPayment = match;
-          }
-        }
-      } catch (e) {
-        console.warn('[Verify Payment] Could not search payments list:', e);
-      }
+    if (!payment || payment.status !== 'succeeded') {
+      return res.status(400).json({
+        verified: false,
+        hasAccess: false,
+        error: 'Payment Not Completed',
+        message: 'The transaction is not in a completed/succeeded state',
+      });
     }
 
-    // 3. Grant access immediately if verified
-    if (verifiedPayment && verifiedPayment.status === 'succeeded') {
-      const verifiedPaymentId = verifiedPayment.payment_id || verifiedPayment.id || `verified_${Date.now()}`;
-      const amount = verifiedPayment.total_amount ?? verifiedPayment.amount ?? 4900;
-      const currency = verifiedPayment.currency || 'USD';
+    // Strict IDOR ownership validation: Verify payment belongs to authenticated caller via metadata
+    const matchesUid = payment.metadata?.user_id === user.uid || payment.metadata?.userId === user.uid;
+    if (!matchesUid) {
+      console.warn(`[Verify Payment] Payment IDOR detected: Payment ${paymentId} does not match caller UID (${user.uid})`);
+      return res.status(403).json({
+        verified: false,
+        hasAccess: false,
+        error: 'Forbidden',
+        message: 'Payment verification failed. This transaction does not belong to your account metadata.',
+      });
+    }
 
-      await userDocRef.set(
-        {
-          betaAccess: true,
+    // 3. Document-Level Idempotency Guard (Transaction)
+    const processedPaymentRef = db.collection('processed_payments').doc(paymentId);
+
+    const result = await db.runTransaction(async (transaction) => {
+      const processedSnap = await transaction.get(processedPaymentRef);
+      if (processedSnap.exists) {
+        const existingData = processedSnap.data() || {};
+        if (existingData.userId !== user.uid) {
+          throw {
+            status: 409,
+            message: 'This transaction has already been claimed by another account.',
+          };
+        }
+        // Already claimed by this user - return early
+        return {
+          verified: true,
+          hasAccess: true,
           paymentStatus: 'succeeded',
-          paymentMethod: 'dodo_payments',
-          dodoPaymentId: verifiedPaymentId,
-          dodoAmount: amount,
-          currency,
-          paidAt: new Date().toISOString(),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+          source: 'dodo_direct_idempotent',
+        };
+      }
 
-      // Record verified transaction in processed_payments for audit and idempotency
-      await db.collection('processed_payments').doc(verifiedPaymentId).set(
-        {
-          paymentId: verifiedPaymentId,
-          userId: user.uid,
-          amount,
-          currency,
-          source: 'verify_payment_direct',
-          customerEmail: verifiedPayment.customer?.email || user.email || null,
-          verifiedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+      const amount = payment.total_amount ?? payment.amount ?? 4900;
+      const currency = payment.currency || 'USD';
 
-      console.log(`[Verify Payment] Direct verification succeeded for user ${user.uid} (${user.email})`);
+      // Atomic State Commits
+      transaction.set(userDocRef, {
+        betaAccess: true,
+        paymentStatus: 'succeeded',
+        paymentMethod: 'dodo_payments',
+        dodoPaymentId: paymentId,
+        dodoAmount: amount,
+        currency,
+        paidAt: new Date().toISOString(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
 
-      return res.status(200).json({
+      transaction.set(processedPaymentRef, {
+        paymentId,
+        userId: user.uid,
+        amount,
+        currency,
+        source: 'verify_payment_direct',
+        customerEmail: payment.customer?.email || user.email || null,
+        claimedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      return {
         verified: true,
         hasAccess: true,
         paymentStatus: 'succeeded',
         source: 'dodo_direct',
-      });
-    }
-
-    // 4. Return current unverified state
-    return res.status(200).json({
-      verified: false,
-      hasAccess: false,
-      message: 'No completed payment record found yet. Please allow a few moments if transaction is processing.',
+      };
     });
+
+    return res.status(200).json(result);
+
   } catch (error: any) {
     console.error('[Verify Payment Error]:', error);
-    return res.status(500).json({
-      error: 'Failed to verify payment status',
-      message: error?.message,
+    const statusCode = error.status || 500;
+    return res.status(statusCode).json({
+      error: error.message || 'Failed to verify payment status',
     });
   }
 }

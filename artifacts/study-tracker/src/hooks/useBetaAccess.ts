@@ -26,6 +26,15 @@ let currentUserId: string | null = null;
 let activeUnsubscribe: (() => void) | null = null;
 const subscribers = new Set<(state: BetaAccessState) => void>();
 
+export function cleanupBetaAccessSubscription() {
+  if (activeUnsubscribe) {
+    activeUnsubscribe();
+    activeUnsubscribe = null;
+    console.log('[useBetaAccess] Cleaned up real-time entitlements listener.');
+  }
+  currentUserId = null;
+}
+
 function getInitialStateForUser(uid: string | null): BetaAccessState {
   if (!uid) {
     return {
@@ -55,7 +64,7 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
     vaultProvenance: null,
     offlineLeaseValid: leaseCheck.isValid,
     offlineHoursRemaining: leaseCheck.hoursRemaining,
-    loading: false, // Instant synchronous hydration (0ms offline latency)
+    loading: !isLocallyValid, // True (loading) only if we do not have a valid cryptographic lease cached on Frame 0
     trialExpiresAt: null,
     trialStartedAt: null,
     isTrialAuthoritative: false,
@@ -74,10 +83,7 @@ function setupSingletonListener(uid: string, userObj?: User | null) {
     return;
   }
 
-  if (activeUnsubscribe) {
-    activeUnsubscribe();
-    activeUnsubscribe = null;
-  }
+  cleanupBetaAccessSubscription();
 
   currentUserId = uid;
   singletonState = getInitialStateForUser(uid);
@@ -180,11 +186,7 @@ export function useBetaAccess() {
     }
 
     if (!user) {
-      if (activeUnsubscribe) {
-        activeUnsubscribe();
-        activeUnsubscribe = null;
-        currentUserId = null;
-      }
+      cleanupBetaAccessSubscription();
       const initialUnauth = getInitialStateForUser(null);
       setState(initialUnauth);
       return;

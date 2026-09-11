@@ -86,3 +86,48 @@ export const localDb = new AtlasLocalDB();
 
 // Multi-Tab Broadcast Coordination
 export const tabSyncChannel = new BroadcastChannel('atlas_tab_sync');
+
+/**
+ * Requests persistent storage allocation from the device engine to prevent
+ * background OS database evictions under high memory pressure.
+ */
+export async function ensurePersistentStorage(): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+    try {
+      const isPersisted = await navigator.storage.persisted();
+      if (!isPersisted) {
+        const granted = await navigator.storage.persist();
+        console.log(`[Storage Persist] Requested persistence. Granted: ${granted}`);
+        return granted;
+      }
+      return isPersisted;
+    } catch (err) {
+      console.warn('[Storage Persist] Persistent storage request error:', err);
+    }
+  }
+  return false;
+}
+
+/**
+ * Executes a Dexie write transaction with strict quota-exceeded guards.
+ */
+export async function safeDbWrite<T>(writePromise: Promise<T>): Promise<T | null> {
+  try {
+    return await writePromise;
+  } catch (err: any) {
+    if (err.name === 'QuotaExceededError' || err.message?.includes('QuotaExceededError')) {
+      console.error('[DATABASE CRITICAL] Out of local disk space. Write aborted.');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atlas-system-alert', {
+          detail: {
+            type: 'QUOTA_EXCEEDED',
+            message: 'Your browser is out of local disk storage. Please free up space on your device or export an instant backup to protect your study blocks.'
+          }
+        }));
+      }
+    } else {
+      console.error('[DATABASE WRITE ERROR]:', err);
+    }
+    return null;
+  }
+}

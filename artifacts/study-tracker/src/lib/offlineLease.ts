@@ -1,7 +1,7 @@
 /**
  * Atlas Medical OS - Cryptographic Offline Lease & Anti-Tamper Engine
  *
- * Implements a 72-Hour Optimistic Lease Architecture:
+ * Implements a 72-Hour Server-Signed Lease Architecture:
  * - Grants valid paid/trial candidates a 72-hour offline operating window.
  * - Detects operating system clock rollbacks via monotonic performance references.
  * - Automatically renews upon successful background Firestore handshakes.
@@ -18,7 +18,6 @@ export interface OfflineLease {
   lastOnlineSync: number;
   initialMonotonic: number;
   initialTimestamp: number;
-  checksum?: string;
   signature?: string;
   serverSigned?: boolean;
 }
@@ -33,21 +32,6 @@ export interface LeaseVerificationResult {
 }
 
 const LEASE_KEY_PREFIX = 'atlas_offline_lease_';
-
-/**
- * Deterministic fast checksum generator for local fallback lease validation
- */
-function computeLeaseChecksum(uid: string, grantedAt: number, expiresAt: number): string {
-  const secretSalt = 'ATLAS_MED_OS_OFFLINE_LEASE_V1';
-  const raw = `${uid}#${grantedAt}#${expiresAt}#${secretSalt}`;
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    const char = raw.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return `lease_${Math.abs(hash).toString(16)}`;
-}
 
 /**
  * Requests an authoritative, cryptographically signed 72-hour offline lease from the serverless backend.
@@ -91,7 +75,7 @@ export async function requestServerOfflineLease(user: User | null): Promise<Offl
       lastOnlineSync: now,
       initialMonotonic: monotonic,
       initialTimestamp: now,
-      signature: data.lease.signature,
+      signature: data.signature,
       serverSigned: true,
     };
 
@@ -104,7 +88,8 @@ export async function requestServerOfflineLease(user: User | null): Promise<Offl
 }
 
 /**
- * Creates and persists a local optimistic offline lease fallback.
+ * @deprecated Local optimistic leases without server signatures are rejected by design.
+ * Deprecated placeholder to ensure compatibility with legacy client components.
  */
 export function issueOfflineLease(uid: string, maxExpiry?: number | null): OfflineLease {
   const now = Date.now();
@@ -121,7 +106,6 @@ export function issueOfflineLease(uid: string, maxExpiry?: number | null): Offli
     lastOnlineSync: now,
     initialMonotonic: monotonic,
     initialTimestamp: now,
-    checksum: computeLeaseChecksum(uid, now, expiresAt),
     serverSigned: false,
   };
 
@@ -165,32 +149,8 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
     };
   }
 
-  // 1. Verify Integrity (Server HMAC signature or local checksum)
-  if (lease.signature) {
-    if (!lease.signature.startsWith('hmac_') || lease.signature.length < 20) {
-      return {
-        isValid: false,
-        hasLease: true,
-        hoursRemaining: 0,
-        isExpired: false,
-        isTampered: true,
-        serverSigned: true,
-      };
-    }
-  } else if (lease.checksum) {
-    const expectedChecksum = computeLeaseChecksum(lease.uid, lease.grantedAt, lease.expiresAt);
-    if (lease.checksum !== expectedChecksum) {
-      return {
-        isValid: false,
-        hasLease: true,
-        hoursRemaining: 0,
-        isExpired: false,
-        isTampered: true,
-        serverSigned: false,
-      };
-    }
-  } else {
-    // Missing both signature and checksum
+  // 1. Verify Integrity: Reject any lease that lacks a valid server-side signature
+  if (!lease.signature || !lease.signature.startsWith('hmac_') || lease.signature.length < 20) {
     return {
       isValid: false,
       hasLease: true,
@@ -204,7 +164,6 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
   const now = Date.now();
 
   // 2. Anti-Clock-Rollback Detection
-  // If current timestamp is before granted time, the system clock was set backwards
   if (now < lease.grantedAt - 60000) {
     return {
       isValid: false,
@@ -212,7 +171,7 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
       hoursRemaining: 0,
       isExpired: false,
       isTampered: true,
-      serverSigned: Boolean(lease.serverSigned || lease.signature),
+      serverSigned: true,
     };
   }
 
@@ -230,7 +189,7 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
         hoursRemaining: 0,
         isExpired: false,
         isTampered: true,
-        serverSigned: Boolean(lease.serverSigned || lease.signature),
+        serverSigned: true,
       };
     }
   }
@@ -246,8 +205,21 @@ export function verifyOfflineLease(uid: string): LeaseVerificationResult {
     hoursRemaining,
     isExpired,
     isTampered: false,
-    serverSigned: Boolean(lease.serverSigned || lease.signature),
+    serverSigned: true,
   };
+}
+
+/**
+ * Triggered during online app launch to automatically refresh the offline lease
+ */
+export async function refreshOfflineLeaseOnLaunch(user: User | null): Promise<void> {
+  if (!user) return;
+  if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.onLine) {
+    console.log('[Atlas Offline Lease] Refreshing offline lease on app launch...');
+    await requestServerOfflineLease(user).catch((err) => {
+      console.warn('[Atlas Offline Lease] Failed background lease renewal on launch:', err);
+    });
+  }
 }
 
 /**

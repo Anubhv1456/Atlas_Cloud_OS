@@ -211,6 +211,7 @@ export default defineConfig({
         importScripts: ['/sw-custom.js'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [/^\/[a-zA-Z0-9_-]+$/],
         navigateFallbackDenylist: [
           /^\/api/,
           /^\/apple-touch-icon/,
@@ -224,6 +225,20 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true,
         runtimeCaching: [
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'atlas-static-images',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 30 * 24 * 60 * 60
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',

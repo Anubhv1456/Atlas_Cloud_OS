@@ -8,7 +8,7 @@ import { scheduleFirstRevision, scheduleNextRevision, today } from '@/db/revisio
 import { getOntologyForExam, ALL_SUBJECTS } from '@/data/ontology';
 import { getLocalExamProfile } from '@/lib/examProfile';
 import { generateHLC } from './hlc';
-import { doc, setDoc, getDocs, collection, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, writeBatch, deleteDoc } from 'firebase/firestore';
 import { firestoreDb } from './firebase';
 import { calibrateCurriculumSetSDSR, calibrateSystemSDSR } from './sdsr-engine';
 import { loadUniversalOntology, normalizeName } from './exam-presets';
@@ -1133,6 +1133,8 @@ export async function purgeCompleteDataVault(user: User | null): Promise<PurgeVa
     db.recommendationSkips.clear(),
     db.operationalModes.clear(),
     localDb.sync_meta.clear(),
+    localDb.mutation_queue.clear(),
+    localDb.local_snapshots.clear(),
   ]);
 
   // 2. Put fresh default standard operational mode (clearing all smoothing quotas, holiday freezes, sprint states)
@@ -1203,6 +1205,14 @@ export async function purgeCompleteDataVault(user: User | null): Promise<PurgeVa
       });
     } catch (err) {
       console.warn('[Purge] Resetting opMode doc in Firestore:', err);
+    }
+
+    // Delete remote cloud backup documents from backups collection
+    try {
+      const backupDoc = doc(firestoreDb, `users/${user.uid}/backups`, 'latest');
+      await deleteDoc(backupDoc);
+    } catch (err) {
+      console.warn('[Purge] Resetting remote backup document in Firestore:', err);
     }
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, Suspense, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UpgradePaywallModal } from "@/components/UpgradePaywallModal";
+import { ensurePersistentStorage } from '@/db/localDb';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster, toast } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -105,40 +106,72 @@ function ProtectedApp() {
     }
   }, []);
 
+  // Request WebKit/Safari persistent storage configuration on startup
+  useEffect(() => {
+    ensurePersistentStorage();
+  }, []);
+
   // Intercept incoming ?payment=success return from checkout for instant entitlement verification
   useEffect(() => {
     if (typeof window === 'undefined' || !user) return;
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
-      const verifyInstantAccess = async () => {
+      const paymentId = params.get('payment_id') || undefined;
+      const pollingToastId = toast.loading('Reconciling your lifetime study license. Please keep this tab open...');
+
+      let attempts = 0;
+      const maxAttempts = 6; // Poll for up to 30 seconds
+      const intervalMs = 5000;
+
+      const pollPaymentStatus = async () => {
         try {
           const idToken = await user.getIdToken();
-          const res = await fetch('/api/verify-payment', {
+          const url = paymentId ? `/api/verify-payment?paymentId=${paymentId}` : '/api/verify-payment';
+          
+          const res = await fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${idToken}`,
             },
           });
+
           if (res.ok) {
             const data = await res.json();
             if (data.verified && data.hasAccess) {
-              toast.success('Payment verified! Your Lifetime Vault Access is now active.', {
-                duration: 6000,
+              toast.dismiss(pollingToastId);
+              toast.success('License verified! Your Lifetime Vault Access is now active.', {
+                duration: 10000,
               });
+              
+              // Clean up query parameters on success without page reload
+              const cleanUrl = window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+              return; // Terminate polling
             }
           }
         } catch (e) {
-          console.warn('Instant payment verification check error:', e);
-        } finally {
-          // Clean up the URL query parameter without page reload
+          console.warn('[Redirection Hook] Verification attempt failed:', e);
+        }
+
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(pollPaymentStatus, intervalMs);
+        } else {
+          toast.dismiss(pollingToastId);
+          toast.error('Verification timed out.', {
+            description: 'Our servers are still processing the transaction. Click "Verify License" in Settings to manually reconcile.',
+            duration: 12000
+          });
+          
+          // Clean parameters anyway to prevent infinite page-load executions
           const cleanUrl = window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }
       };
 
-      verifyInstantAccess();
+      pollPaymentStatus();
     }
   }, [user]);
 
@@ -172,7 +205,7 @@ function ProtectedApp() {
         }
 
         // Check trial status
-        if (!hasAccess && isTrialExpired) {
+        if (!accessLoading && !hasAccess && isTrialExpired) {
              window.dispatchEvent(new CustomEvent('open-paywall-modal', {
                detail: { trigger: 'trial_expired' }
              }));
