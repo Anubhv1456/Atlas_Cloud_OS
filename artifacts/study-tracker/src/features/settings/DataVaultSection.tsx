@@ -7,9 +7,16 @@ import {
   RefreshCw, 
   CopyPlus, 
   Merge,
-  BookOpen
+  BookOpen,
+  Cloud,
+  Shield,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { db } from '@/db/schema';
+import { syncEngine } from '@/db/syncEngine';
+import { localDb } from '@/db/localDb';
+import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { exportCompleteVault, restoreCompleteVault, repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
@@ -41,6 +48,57 @@ export function DataVaultSection() {
   const setsCount = curriculumSets?.filter(s => !s.deletedAt)?.length ?? 0;
   const scoreCount = scoreLogs?.filter(s => !s.deletedAt)?.length ?? 0;
   const historyCount = history?.filter(h => !h.deletedAt)?.length ?? 0;
+
+  const [syncMeta, setSyncMeta] = useState<{
+    lastCloudSync: number;
+    lastSnapshot: number;
+    snapshotCount: number;
+  }>({ lastCloudSync: 0, lastSnapshot: 0, snapshotCount: 0 });
+
+  const loadSyncMeta = async () => {
+    try {
+      const cloudMeta = await localDb.sync_meta.get('last_cloud_sync_timestamp');
+      const snapMeta = await localDb.sync_meta.get('last_snapshot_timestamp');
+      const snaps = await localDb.local_snapshots.toArray();
+      setSyncMeta({
+        lastCloudSync: cloudMeta ? cloudMeta.lastSyncTimestamp : 0,
+        lastSnapshot: snapMeta ? snapMeta.lastSyncTimestamp : 0,
+        snapshotCount: snaps.length
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (modalOpen) {
+      loadSyncMeta();
+    }
+  }, [modalOpen]);
+
+  const handleManualSync = async () => {
+    if (!user) {
+      toast.error('Please sign in to synchronize with cloud backup');
+      return;
+    }
+    try {
+      setLoadingAction('manual-sync');
+      toast.loading('Pushing latest local changes upstream...', { id: 'manual-sync-toast' });
+      
+      // 1. Snapshot first to be absolutely resilient
+      await syncEngine.captureLocalSnapshot();
+      
+      // 2. Upload to Firestore
+      await syncEngine.pushLocalBackupToFirestore(user.uid);
+      
+      toast.success('Database successfully synchronized with cloud vault', { id: 'manual-sync-toast' });
+      await loadSyncMeta();
+    } catch (err) {
+      toast.error('Failed to synchronize cloud backup: ' + String(err), { id: 'manual-sync-toast' });
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -220,6 +278,55 @@ export function DataVaultSection() {
               <span><strong>{setsCount}</strong> Study Blocks</span>
               <span>•</span>
               <span><strong>{historyCount}</strong> Study Logs</span>
+            </div>
+
+            {/* Cloud Synchronization Panel */}
+            <div className="p-4 bg-muted/15 border border-border/50 rounded-2xl space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <Cloud className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-foreground">Local-First Sync State</h4>
+                    <p className="text-[10px] text-muted-foreground">All writes persist locally first</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleManualSync}
+                  disabled={loadingAction !== null}
+                  className="h-8 text-xs font-bold px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg active:scale-95 transition-all shadow-xs shrink-0"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", loadingAction === 'manual-sync' && "animate-spin")} />
+                  Sync Now
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-border/40">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Shield className="w-3 h-3 text-emerald-400/80" />
+                    Cloud Backup
+                  </span>
+                  <span className="font-semibold text-foreground block truncate">
+                    {syncMeta.lastCloudSync > 0 
+                      ? new Date(syncMeta.lastCloudSync).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + new Date(syncMeta.lastCloudSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                      : 'Never Synced'}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-zinc-400" />
+                    Rolling Snapshot
+                  </span>
+                  <span className="font-semibold text-foreground block truncate">
+                    {syncMeta.lastSnapshot > 0 
+                      ? `${new Date(syncMeta.lastSnapshot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${syncMeta.snapshotCount}/4 active)` 
+                      : 'No snapshots'}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Duplicates Advisory */}

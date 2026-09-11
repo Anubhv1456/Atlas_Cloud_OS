@@ -226,6 +226,9 @@ export function UpgradePaywallModal() {
             <p className="text-[10px] text-center text-muted-foreground mt-2">
               Instant activation via Dodo Payments • Merchant of Record
             </p>
+            <p className="text-[9px] text-center text-zinc-500 mt-1 leading-relaxed">
+              Backed by our 7-day refund guarantee. Contact us anytime for support.
+            </p>
           </div>
           
           <div className="text-center">

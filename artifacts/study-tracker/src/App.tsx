@@ -1,4 +1,4 @@
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UpgradePaywallModal } from "@/components/UpgradePaywallModal";
 import { Toaster } from '@/components/ui/toaster';
@@ -12,6 +12,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import { cn } from '@/lib/utils';
 import { triggerSpacedRepetitionNotification } from '@/lib/pwaAndNotifications';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { syncEngine } from '@/db/syncEngine';
 
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
@@ -79,6 +80,19 @@ function ProtectedApp() {
   const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
   const [location, setLocation] = useLocation();
+  const [syncLoading, setSyncLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    syncEngine.coldBootPromise.then(() => {
+      if (isMounted) {
+        setSyncLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Intercept incoming ?ref=... parameter and save to session
   useEffect(() => {
@@ -172,8 +186,8 @@ function ProtectedApp() {
     }
   }, [user, authLoading, hasAccess, paymentStatus, isTrialExpired, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating]);
 
-  if (authLoading || accessLoading || onboardingLoading) {
-    return <AtlasLoadingScreen fullScreen message="Calibrating study schedule..." />;
+  if (authLoading || accessLoading || onboardingLoading || (user && syncLoading)) {
+    return <AtlasLoadingScreen fullScreen message="Synchronizing clinical database..." />;
   }
 
   if (location === '/privacy') {
@@ -262,7 +276,6 @@ function ProtectedApp() {
         <div className="pointer-events-none fixed top-[50%] left-[50%] w-[100vw] h-[100vw] max-w-[600px] max-h-[600px] meridian-ring opacity-20" />
         <div className="pointer-events-none fixed top-[50%] left-[50%] w-[80vw] h-[80vw] max-w-[450px] max-h-[450px] meridian-ring opacity-30" />
         <GlobalAnnouncements />
-        <AutoSyncEngine />
         <DynamicIslandCapsule />
         <BottomNav />
         <div
@@ -403,6 +416,7 @@ function App() {
             <ErrorBoundary>
               <WouterRouter base={import.meta.env.BASE_URL && import.meta.env.BASE_URL !== '/' ? import.meta.env.BASE_URL.replace(/\/$/, '') : undefined}>
                 <CurriculumInitializationEngine>
+                  <AutoSyncEngine />
                   <ProtectedApp />
                 </CurriculumInitializationEngine>
               </WouterRouter>

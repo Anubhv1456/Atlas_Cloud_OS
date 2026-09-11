@@ -1,6 +1,7 @@
 import { auth, firestoreDb } from '@/lib/firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, writeBatch, arrayUnion } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { localDb, tabSyncChannel } from './localDb';
 class SimpleEventEmitter {
   private listeners: Record<string, Function[]> = {};
   private pendingEvents: Set<string> = new Set();
@@ -88,82 +89,47 @@ class FirestoreTable<T extends Record<string, any>> {
     dbEvents.emit('change', this.name);
   }
 
-  public startListener(uid: string) {
+  public async startListener(uid: string) {
     if (this.unsubscribe) this.unsubscribe();
-    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
-    const collName = useBuckets ? `${this.name}_buckets${this.workspaceSuffix}` : `${this.name}${this.workspaceSuffix}`;
-    const q = collection(firestoreDb, `users/${uid}/${collName}`);
+    this.unsubscribe = () => {};
 
-    this.unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        let hasChanges = false;
-        snapshot.docChanges().forEach((change) => {
-          const docData = change.doc.data();
-          const processIncomingItem = (data: any, docId: string) => {
-            for (const key in data) {
-              if (data[key] && typeof data[key] === 'object' && 'toDate' in data[key]) {
-                data[key] = data[key].toDate();
+    // Hydrate directly from Dexie localDb
+    const localTable = (localDb as any)[this.name];
+    if (localTable) {
+      try {
+        const items = await localTable.toArray();
+        this.cache.clear();
+        items.forEach((item: any) => {
+          // Parse stringified Date objects if necessary
+          for (const key in item) {
+            if (item[key] && typeof item[key] === 'object' && 'toDate' in item[key]) {
+              item[key] = item[key].toDate();
+            } else if (item[key] && typeof item[key] === 'string' && (key.endsWith('At') || key === 'timestamp')) {
+              const d = new Date(item[key]);
+              if (!isNaN(d.getTime())) {
+                item[key] = d;
               }
             }
-            const incoming = { ...data, id: isNaN(Number(docId)) ? docId : Number(docId) } as T;
-            if (incoming.subjectId && !(incoming as any).subjectIds) {
-              (incoming as any).subjectIds = [incoming.subjectId];
-            }
-            if (incoming.hlc) updateHLC(incoming.hlc);
-            const resolvedId = String(incoming.id);
-            const existing = this.cache.get(resolvedId);
-            if (existing) {
-              const merged = resolveEntityConflict(existing, incoming);
-              if (JSON.stringify(existing) !== JSON.stringify(merged)) {
-                this.cache.set(resolvedId, merged as T);
-                hasChanges = true;
-              }
-            } else {
-              this.cache.set(resolvedId, incoming);
-              hasChanges = true;
-            }
-          };
+          }
 
-          if (useBuckets) {
-            if (change.type === "removed") {
-              if (docData.entries && Array.isArray(docData.entries)) {
-                docData.entries.forEach((e: any) => {
-                  this.cache.delete(String(e.id));
-                  hasChanges = true;
-                });
-              }
-            } else {
-              if (docData.entries && Array.isArray(docData.entries)) {
-                docData.entries.forEach((entry: any) => processIncomingItem(entry, entry.id));
-              }
-            }
-          } else {
-             if (change.type === "added" || change.type === "modified") {
-               processIncomingItem(docData, change.doc.id);
-             }
-             if (change.type === "removed") {
-               this.cache.delete(String(change.doc.id));
-               hasChanges = true;
-             }
+          let itemWorkspace = (item as any)._workspace;
+          if (itemWorkspace === undefined) {
+            itemWorkspace = getWorkspaceSuffix(item.examProfile);
+          }
+          if (itemWorkspace === this.workspaceSuffix) {
+            this.cache.set(String(item.id), item as T);
           }
         });
-        if (!this.isInitialLoadDone) {
-          this.isInitialLoadDone = true;
-          this.readyResolve();
-        }
-        if (hasChanges) {
-          dbEvents.emit('change', this.name);
-        }
-      },
-      (error) => {
-        console.warn(`[FirestoreTable:${this.name}] Snapshot listener operating in offline/cache mode:`, error);
-        if (!this.isInitialLoadDone) {
-          this.isInitialLoadDone = true;
-          this.readyResolve();
-        }
+      } catch (err) {
+        console.error(`[FirestoreTable:${this.name}] Local hydration failed:`, err);
       }
-    );
+    }
+
+    if (!this.isInitialLoadDone) {
+      this.isInitialLoadDone = true;
+      this.readyResolve();
+    }
+    dbEvents.emit('change', this.name);
   }
 
   public stopListener() {
@@ -216,25 +182,16 @@ class FirestoreTable<T extends Record<string, any>> {
     this.cache.set(String(id), cleanPayload as T);
     dbEvents.emit('change', this.name);
 
-    if (auth.currentUser) {
-      const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
-      if (useBuckets) {
-        const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
-        const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
-        const month = dateObj.toISOString().substring(0, 7);
-        const collName = `${this.name}_buckets${this.workspaceSuffix}`;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
-        await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
-      } else {
-        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-        await setDoc(docRef, cleanPayload, { merge: true });
-      }
+    const localTable = (localDb as any)[this.name];
+    if (localTable) {
+      await localTable.put(cleanPayload);
     }
+    tabSyncChannel.postMessage('invalidate_cache');
     return id;
   }
 
   async put(item: T): Promise<string | number> {
-    return this.add(item); // Logic identical in our new bucket setup
+    return this.add(item);
   }
 
   async bulkAdd(items: T[]) {
@@ -248,6 +205,7 @@ class FirestoreTable<T extends Record<string, any>> {
         ...item,
         id: isNaN(Number(id)) ? id : Number(id),
         hlc: (item as any).hlc || generateHLC(),
+        _workspace: this.workspaceSuffix,
         updatedAt: item.updatedAt ? (item.updatedAt instanceof Date ? item.updatedAt : new Date(item.updatedAt)) : new Date(),
       };
       if (existing) resolved = resolveEntityConflict(existing, resolved);
@@ -257,38 +215,11 @@ class FirestoreTable<T extends Record<string, any>> {
     });
     dbEvents.emit('change', this.name);
 
-    if (!auth.currentUser) return;
-    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
-    
-    if (useBuckets) {
-      const bucketsToUpdate: Record<string, any[]> = {};
-      resolvedItems.forEach(item => {
-        const d = (item as any).completedAt || (item as any).timestamp || (item as any).createdAt || new Date();
-        const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
-        const month = dateObj.toISOString().substring(0, 7);
-        if (!bucketsToUpdate[month]) bucketsToUpdate[month] = [];
-        bucketsToUpdate[month].push(item);
-      });
-      
-      const batch = writeBatch(firestoreDb);
-      for (const [month, entries] of Object.entries(bucketsToUpdate)) {
-        const collName = `${this.name}_buckets${this.workspaceSuffix}`;
-        const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
-        batch.set(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(...entries) }, { merge: true });
-      }
-      await batch.commit();
-    } else {
-      for (let i = 0; i < resolvedItems.length; i += 400) {
-        const batch = writeBatch(firestoreDb);
-        const chunk = resolvedItems.slice(i, i + 400);
-        chunk.forEach(item => {
-          const id = (item as any).id;
-          const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-          batch.set(docRef, item, { merge: true });
-        });
-        await batch.commit();
-      }
+    const localTable = (localDb as any)[this.name];
+    if (localTable) {
+      await localTable.bulkPut(resolvedItems);
     }
+    tabSyncChannel.postMessage('invalidate_cache');
   }
 
   async bulkPut(items: T[]) {
@@ -301,6 +232,7 @@ class FirestoreTable<T extends Record<string, any>> {
     const cleanChanges = sanitizeForFirestore({
       ...changes,
       hlc: nowHlc,
+      _workspace: this.workspaceSuffix,
       updatedAt: changes.updatedAt ? (changes.updatedAt instanceof Date ? changes.updatedAt : new Date(changes.updatedAt)) : new Date(),
     }, true);
 
@@ -317,44 +249,23 @@ class FirestoreTable<T extends Record<string, any>> {
        return 0;
     }
 
-    if (!auth.currentUser) return 1;
-    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
-    
-    if (useBuckets && resolved) {
-      const cleanPayload = sanitizeForFirestore(resolved);
-      const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
-      const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
-      const month = dateObj.toISOString().substring(0, 7);
-      const collName = `${this.name}_buckets${this.workspaceSuffix}`;
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
-      await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
-    } else {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-      await setDoc(docRef, cleanChanges, { merge: true });
+    const localTable = (localDb as any)[this.name];
+    if (localTable && resolved) {
+      await localTable.put(resolved);
     }
+    tabSyncChannel.postMessage('invalidate_cache');
     return 1;
   }
 
   async delete(id: string | number) {
-    const existing = this.cache.get(String(id));
     this.cache.delete(String(id));
     dbEvents.emit('change', this.name);
 
-    if (!auth.currentUser) return;
-    const useBuckets = ['history', 'scoreLogs', 'mistakeLogs', 'pyqYears', 'topicProgress'].includes(this.name);
-    
-    if (useBuckets && existing) {
-      const cleanPayload = sanitizeForFirestore({ ...existing, deletedAt: new Date(), updatedAt: new Date(), hlc: generateHLC() });
-      const d = cleanPayload.completedAt || cleanPayload.timestamp || cleanPayload.createdAt || new Date();
-      const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
-      const month = dateObj.toISOString().substring(0, 7);
-      const collName = `${this.name}_buckets${this.workspaceSuffix}`;
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${collName}`, month);
-      await setDoc(docRef, { month, updatedAt: Date.now(), entries: arrayUnion(cleanPayload) }, { merge: true });
-    } else {
-      const docRef = doc(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`, String(id));
-      await deleteDoc(docRef);
+    const localTable = (localDb as any)[this.name];
+    if (localTable) {
+      await localTable.delete(id);
     }
+    tabSyncChannel.postMessage('invalidate_cache');
   }
 
   where(field: string) {
@@ -618,20 +529,15 @@ class FirestoreTable<T extends Record<string, any>> {
   async clear() {
     this.cache.clear();
     dbEvents.emit('change', this.name);
-    if (!auth.currentUser) return;
-    try {
-      const q = collection(firestoreDb, `users/${auth.currentUser.uid}/${this.name}${this.workspaceSuffix}`);
-      const snap = await getDocs(q);
-      if (snap.empty) return;
-      const docs = snap.docs;
-      for (let i = 0; i < docs.length; i += 400) {
-        const batch = writeBatch(firestoreDb);
-        docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-        await batch.commit();
+    const localTable = (localDb as any)[this.name];
+    if (localTable) {
+      try {
+        await localTable.clear();
+      } catch (err) {
+        console.error(`Error clearing local table ${this.name}:`, err);
       }
-    } catch (e) {
-      console.error(`Error clearing table ${this.name}:`, e);
     }
+    tabSyncChannel.postMessage('invalidate_cache');
   }
 }
 
@@ -723,3 +629,18 @@ class AtlasDB {
 }
 
 export const db = new AtlasDB();
+
+tabSyncChannel.onmessage = async (event) => {
+  if (event.data === 'invalidate_cache') {
+    const tables = [
+      db.subjects, db.systems, db.history, db.pyqYears, db.scoreLogs,
+      db.uiPreferences, db.topicProgress, db.curriculumSets, db.revisionSets,
+      db.mistakeLogs, db.recommendationSkips, db.operationalModes
+    ];
+    if (auth.currentUser) {
+      for (const t of tables) {
+        await t.startListener(auth.currentUser.uid);
+      }
+    }
+  }
+};

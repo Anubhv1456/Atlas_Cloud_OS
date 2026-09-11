@@ -216,7 +216,7 @@ export default function BetaAccess() {
             )}
             
             <p className="text-[10px] text-zinc-500 px-4 leading-relaxed">
-              By proceeding, you agree to our Terms of Service. Secure payments processed via Dodo Payments.
+              By proceeding, you agree to our Terms of Service. Secure payments processed via Dodo Payments. Your seat is fully protected under our 7-day refund guarantee; contact us anytime for assistance.
             </p>
           </div>
         </div>

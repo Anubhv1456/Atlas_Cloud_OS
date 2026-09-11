@@ -50,6 +50,7 @@ const SECTIONS: Section[] = [
   { id: 'curriculum-ip', number: '5.0', title: 'Curriculum Intelligence & Intellectual Property', icon: Layers },
   { id: 'trademarks', number: '6.0', title: 'Third-Party Ecosystem & Non-Affiliation', icon: Building2, badge: 'Disclaimers' },
   { id: 'cloud-sync', number: '7.0', title: 'Cloud Sync & Account Integrity', icon: Lock },
+  { id: 'refund-policy', number: '7.5', title: 'Refund Policy & Guarantees', icon: ShieldCheck, badge: 'Guarantee' },
   { id: 'prohibited', number: '8.0', title: 'Prohibited Conduct & System Security', icon: Ban },
   { id: 'disclaimer-warranties', number: '9.0', title: 'Disclaimer of Warranties ("AS IS")', icon: AlertTriangle },
   { id: 'limitation-liability', number: '10.0', title: 'Limitation of Liability & Exam Outcomes', icon: Scale },
@@ -659,6 +660,55 @@ export default function TermsOfService() {
                 <p>
                   When Cloud Sync is enabled, your study data synchronizes across your authorized devices using Google Firebase Cloud Firestore. Candidates are responsible for maintaining the confidentiality of their authentication credentials and restricting access to their personal devices.
                 </p>
+              </div>
+            </section>
+
+            {/* SECTION 7.5: REFUND POLICY & SATISFACTION GUARANTEE */}
+            <section id="refund-policy" className="scroll-mt-28 space-y-4">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-zinc-800/40 text-primary flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-mono font-semibold text-primary">7.5</span>
+                    <h2 className="text-xl font-bold text-foreground">Refund Policy & Satisfaction Guarantee</h2>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => copySectionLink('refund-policy', 'Refund Policy')}
+                  className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+                >
+                  {copiedSection === 'refund-policy' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+
+              <div className="prose prose-sm text-muted-foreground leading-relaxed space-y-4">
+                <p>
+                  We are fully committed to helping you master your clinical curriculum and excel in your exams. To ensure absolute confidence in your decision, we offer an unconditional, 100% satisfaction guarantee:
+                </p>
+                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 text-xs sm:text-sm">
+                  <div className="font-bold text-foreground flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Our 7-Day Guarantee Terms:
+                  </div>
+                  <ul className="space-y-2 text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-2" />
+                      <span><strong>7-Day Window:</strong> If Atlas does not fit your daily medical study or spaced-repetition workflow, you are eligible for a 100% full refund within <strong>7 days</strong> of your initial license activation.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-2" />
+                      <span><strong>Simple Contact Path:</strong> We keep our operations relationship-oriented. To request a refund, please contact us through our public <strong>Contact Page</strong>, or submit a request directly via the <strong>Feedback Module</strong> inside your dashboard's Settings.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-2" />
+                      <span><strong>Asynchronous Revocation:</strong> Once a refund is approved and processed by our merchant partner (Dodo Payments), your premium cloud synchronization and advanced study-tracker features will be safely deactivated, reverting your account to the free tier.</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </section>
 

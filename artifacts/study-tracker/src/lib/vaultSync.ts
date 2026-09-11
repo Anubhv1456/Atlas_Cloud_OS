@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { db, dbEvents } from '@/db/schema';
+import { localDb } from '@/db/localDb';
 import { User } from 'firebase/auth';
 import { createSignedVaultBackup, verifyVaultBackupProvenance, AtlasVaultEnvelope } from './vaultSignature';
 import { StudySystem, CurriculumSet, HistoryEntry, DEFAULT_OPERATIONAL_MODE } from '@/db/types';
@@ -589,6 +590,7 @@ export async function restoreCompleteVault(
       db.mistakeLogs.clear(),
       db.recommendationSkips.clear(),
       db.operationalModes.clear(),
+      localDb.local_snapshots.clear(),
     ]);
 
     if (cleanSubjects.length > 0) await db.subjects.bulkPut(cleanSubjects);
@@ -602,6 +604,26 @@ export async function restoreCompleteVault(
     if (cleanMistakeLogs.length > 0) await db.mistakeLogs.bulkPut(cleanMistakeLogs);
     if (cleanSkips.length > 0) await db.recommendationSkips.bulkPut(cleanSkips);
     if (cleanOpModes.length > 0) await db.operationalModes.bulkPut(cleanOpModes);
+
+    // Create a new baseline snapshot (slot 1)
+    const baselinePayload = {
+      subjects: cleanSubjects,
+      systems: cleanSystems,
+      curriculumSets: cleanCurriculumSets,
+      history: cleanHistory,
+      pyqYears: cleanPyqYears,
+      scoreLogs: cleanScoreLogs,
+      uiPreferences: cleanUiPrefs,
+      topicProgress: cleanTopicProgress,
+      mistakeLogs: cleanMistakeLogs,
+      recommendationSkips: cleanSkips,
+      operationalModes: cleanOpModes
+    };
+    await localDb.local_snapshots.add({
+      timestamp: Date.now(),
+      version: 1,
+      payload: JSON.stringify(baselinePayload)
+    });
   });
 
   // Notify all UI live queries across all collections
@@ -1110,6 +1132,7 @@ export async function purgeCompleteDataVault(user: User | null): Promise<PurgeVa
     db.mistakeLogs.clear(),
     db.recommendationSkips.clear(),
     db.operationalModes.clear(),
+    localDb.sync_meta.clear(),
   ]);
 
   // 2. Put fresh default standard operational mode (clearing all smoothing quotas, holiday freezes, sprint states)
