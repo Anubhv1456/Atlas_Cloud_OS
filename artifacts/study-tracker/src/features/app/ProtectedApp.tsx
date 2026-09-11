@@ -19,13 +19,15 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
+import { useAdmin } from '@/hooks/useAdmin';
+import { useRole } from '@/hooks/useRole';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { toast } from 'sonner';
 import { firestoreDb } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 
 const NotFound = lazyWithRetry(() => import('@/pages/not-found'));
 const Timeline = lazyWithRetry(() => import('@/features/timeline/Timeline'));
@@ -43,12 +45,16 @@ import { GlobalQuickEntry } from '@/components/ui/GlobalQuickEntry';
 
 export default function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin } = useAdmin();
+  const { isStaff } = useRole();
   const { hasAccess, paymentStatus, isTrialExpired, loading: accessLoading } = useBetaAccess();
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
   const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
   const [location, setLocation] = useLocation();
   const [syncLoading, setSyncLoading] = useState(true);
+
+  const isStaffOrAdmin = isAdmin || isStaff;
 
   useEffect(() => {
     let isMounted = true;
@@ -119,38 +125,47 @@ export default function ProtectedApp() {
     };
   }, []);
 
-  // Surface Peer Milestone Toast (pendingReferralRewardToast)
+  // Surface Peer Milestone Toast (pendingReferralRewardToast) - one-time check on session load
   useEffect(() => {
     if (!user || !firestoreDb) return;
+    let isMounted = true;
 
-    const userDocRef = doc(firestoreDb, 'users', user.uid);
-    const unsubscribe = onSnapshot(userDocRef, async (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      const toastData = data?.pendingReferralRewardToast;
-      if (toastData && toastData.bonusDays) {
-        const colleagueName = toastData.colleagueName || 'Your batchmate';
-        const bonusDays = toastData.bonusDays || 14;
+    const checkPendingRewards = async () => {
+      try {
+        const userDocRef = doc(firestoreDb, 'users', user.uid);
+        const snap = await getDoc(userDocRef);
+        if (!isMounted || !snap.exists()) return;
+        const data = snap.data();
+        const toastData = data?.pendingReferralRewardToast;
+        if (toastData && toastData.bonusDays) {
+          const colleagueName = toastData.colleagueName || 'Your batchmate';
+          const bonusDays = toastData.bonusDays || 14;
 
-        toast.success(`🎉 Peer Milestone Reached! Dr. ${colleagueName} logged their first study block. +${bonusDays} days added to your subscription!`, {
-          duration: 9000,
-        });
-
-        // Immediately clear pendingReferralRewardToast from users/{uid} so it displays exactly once
-        try {
-          await updateDoc(userDocRef, {
-            pendingReferralRewardToast: deleteField(),
+          toast.success(`🎉 Peer Milestone Reached! Dr. ${colleagueName} logged their first study block. +${bonusDays} days added to your subscription!`, {
+            duration: 9000,
           });
-        } catch (err) {
-          await updateDoc(userDocRef, {
-            pendingReferralRewardToast: null,
-          }).catch((e) => console.warn('[Peer Milestone Toast] Could not clear toast flag:', e));
-        }
-      }
-    });
 
-    return () => unsubscribe();
-  }, [user]);
+          // Immediately clear pendingReferralRewardToast from users/{uid} so it displays exactly once
+          try {
+            await updateDoc(userDocRef, {
+              pendingReferralRewardToast: deleteField(),
+            });
+          } catch (err) {
+            await updateDoc(userDocRef, {
+              pendingReferralRewardToast: null,
+            }).catch((e) => console.warn('[Peer Milestone Toast] Could not clear toast flag:', e));
+          }
+        }
+      } catch (e) {
+        console.warn('[Peer Milestone Check] Skipped or offline:', e);
+      }
+    };
+
+    checkPendingRewards();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!authLoading && !accessLoading && !onboardingLoading) {
@@ -175,7 +190,7 @@ export default function ProtectedApp() {
           return;
         }
 
-        if (!accessLoading && !hasAccess && isTrialExpired) {
+        if (!isStaffOrAdmin && !isAdminRoute && !accessLoading && !hasAccess && isTrialExpired) {
           window.dispatchEvent(new CustomEvent('open-paywall-modal', {
             detail: { trigger: 'trial_expired' }
           }));
@@ -186,7 +201,7 @@ export default function ProtectedApp() {
         }
       }
     }
-  }, [user, authLoading, hasAccess, paymentStatus, isTrialExpired, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating]);
+  }, [user, authLoading, hasAccess, paymentStatus, isTrialExpired, accessLoading, onboardingLoading, hasOnboarded, location, setLocation, isImpersonating, isStaffOrAdmin]);
 
   if (authLoading || accessLoading || onboardingLoading || (user && syncLoading)) {
     return <AtlasLoadingScreen fullScreen message="Synchronizing clinical database..." />;

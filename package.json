@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "node server.ts",
-    "dev": "npm run dev:server & npm run dev:study-tracker #",
+    "dev": "npm run dev --workspace=artifacts/study-tracker -- --port 3000 --host 0.0.0.0",
     "dev:server": "PORT=3001 npx tsx watch artifacts/api-server/src/index.ts",
     "dev:study-tracker": "npm run dev --workspace=artifacts/study-tracker -- --port 3000 --host 0.0.0.0",
     "dev:mockup": "npm run dev --workspace=artifacts/mockup-sandbox",

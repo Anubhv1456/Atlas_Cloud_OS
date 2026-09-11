@@ -29,7 +29,7 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
     }, 250);
 
     const docRef = doc(firestoreDb, 'config', 'featureFlags');
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+    const unsubscribe = onSnapshot(docRef, { includeMetadataChanges: false }, (snapshot) => {
       clearTimeout(fallbackTimer);
       if (snapshot.exists()) {
         setFlags({ ...defaultFlags, ...(snapshot.data() as FeatureFlags) });
