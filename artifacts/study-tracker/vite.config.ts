@@ -22,7 +22,32 @@ function vercelApiPlugin(): Plugin {
           if (route === '' || route === '/') filePath = './api/index.ts';
           
           if (!fs.existsSync(path.resolve(import.meta.dirname, filePath))) {
-             return next();
+            const segments = route ? route.split('/').filter(Boolean) : [];
+            if (segments.length >= 2) {
+              const parentPath = segments.slice(0, -1).join('/');
+              const dynamicCandidate = `./api/${parentPath}/[action].ts`;
+              if (fs.existsSync(path.resolve(import.meta.dirname, dynamicCandidate))) {
+                filePath = dynamicCandidate;
+                (req as any).query = (req as any).query || {};
+                (req as any).query.action = segments[segments.length - 1];
+              } else {
+                return next();
+              }
+            } else if (segments.length === 1) {
+              const indexCandidate = `./api/${segments[0]}/index.ts`;
+              const actionCandidate = `./api/${segments[0]}/[action].ts`;
+              if (fs.existsSync(path.resolve(import.meta.dirname, indexCandidate))) {
+                filePath = indexCandidate;
+              } else if (fs.existsSync(path.resolve(import.meta.dirname, actionCandidate))) {
+                filePath = actionCandidate;
+                (req as any).query = (req as any).query || {};
+                (req as any).query.action = '';
+              } else {
+                return next();
+              }
+            } else {
+              return next();
+            }
           }
 
           // Use Vite's SSR loader to load and execute the TS module

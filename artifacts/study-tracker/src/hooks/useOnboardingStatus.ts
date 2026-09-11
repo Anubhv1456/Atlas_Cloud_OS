@@ -141,20 +141,16 @@ export function useOnboardingStatus() {
       // 3. Pillar 1: Data-Informed Self-Detection (Heuristic Inference)
       // Check if user already has active subjects, history logs, or scores in database
       try {
-        const [subCountLocal, histCountLocal, scoreCountLocal, subCountDb, histCountDb, scoreCountDb] = await Promise.all([
-          localDb.subjects.count().catch(() => 0),
+        const [histCountLocal, scoreCountLocal, histCountDb, scoreCountDb] = await Promise.all([
           localDb.history.count().catch(() => 0),
           localDb.scoreLogs.count().catch(() => 0),
-          db.subjects.count().catch(() => 0),
           db.history.count().catch(() => 0),
           db.scoreLogs.count().catch(() => 0)
         ]);
 
         const hasExistingStudyData = (
-          subCountLocal > 0 ||
           histCountLocal > 0 ||
           scoreCountLocal > 0 ||
-          subCountDb > 0 ||
           histCountDb > 0 ||
           scoreCountDb > 0
         );

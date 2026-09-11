@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 logger.info({ 
   port, 
@@ -19,10 +19,13 @@ server.on("error", (err: any) => {
 });
 
 // Handle graceful shutdown
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM received, shutting down gracefully");
+const shutdown = (signal: string) => {
+  logger.info(`${signal} received, shutting down gracefully`);
   server.close(() => {
     logger.info("Server closed");
     process.exit(0);
   });
-});
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

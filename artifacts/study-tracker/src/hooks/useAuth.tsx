@@ -5,6 +5,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/db/schema';
 import { localDb } from '@/db/localDb';
 import { cleanupBetaAccessSubscription } from '@/hooks/useBetaAccess';
+import { flushTelemetryBatch } from '@/lib/telemetry';
 
 interface AuthContextType {
   user: User | null;
@@ -68,6 +69,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
+      // 0. Flush any buffered telemetry before wiping session storage
+      await flushTelemetryBatch().catch(() => {});
+
       // 1. Teardown active Firestore subscriptions
       cleanupBetaAccessSubscription();
 

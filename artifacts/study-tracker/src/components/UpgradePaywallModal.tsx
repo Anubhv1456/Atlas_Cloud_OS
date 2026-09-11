@@ -84,10 +84,14 @@ export function UpgradePaywallModal() {
         throw new Error(errData.error || errData.message || `Checkout session creation failed (${response.status})`);
       }
 
-      const { checkout_url } = await response.json();
+      const { checkout_url, session_id } = await response.json();
 
       if (!checkout_url) {
         throw new Error('Payment gateway did not return a valid checkout URL');
+      }
+
+      if (session_id) {
+        localStorage.setItem('pending_dodo_session_id', session_id);
       }
 
       // Redirect to Dodo hosted checkout page

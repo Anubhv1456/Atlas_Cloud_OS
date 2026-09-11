@@ -41,6 +41,8 @@ import { useHomeLogic } from './Home.hooks';
 import { AmbientAIWidget, ChatAssistantDrawer } from '@/components/ai';
 import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingCommandBar';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
+import { useAuth } from '@/hooks/useAuth';
 
 // ── Inline result sub-components ──────────────────────────────────────────────
 
@@ -82,6 +84,8 @@ export default function Home() {
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
 
   const { hasAccess, isFreeTier, isTrialActive, trialDaysRemaining } = useBetaAccess();
+  const { user } = useAuth();
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
   const hasAffiliate = typeof window !== 'undefined' && Boolean(
     localStorage.getItem('atlas_affiliate_id') ||
@@ -115,9 +119,44 @@ export default function Home() {
     const paymentStatus = urlParams.get('payment');
 
     if (paymentStatus === 'success') {
+      setIsVerifyingPayment(true);
       toast.success('Payment received! Verifying lifetime access with the network...', {
         duration: 6000,
       });
+
+      const verify = async () => {
+        try {
+          const sessionId = localStorage.getItem('pending_dodo_session_id');
+          if (!sessionId || !user) {
+             // If we don't have session ID or user yet, we will just rely on the webhook polling
+             // but let's wait a bit for webhook
+             await new Promise(r => setTimeout(r, 4000));
+             setIsVerifyingPayment(false);
+             return;
+          }
+          
+          const idToken = await user.getIdToken();
+          const res = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({ sessionId })
+          });
+          
+          if (res.ok) {
+            localStorage.removeItem('pending_dodo_session_id');
+            // useBetaAccess will automatically sync from Firestore shortly
+          }
+        } catch (e) {
+          console.error("Payment verification failed", e);
+        } finally {
+          setIsVerifyingPayment(false);
+        }
+      };
+      
+      verify();
 
       // Clean query parameters from address bar without page reload
       urlParams.delete('payment');
@@ -132,10 +171,13 @@ export default function Home() {
       const cleanUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
       window.history.replaceState({}, '', cleanUrl);
     }
-  }, []);
+  }, [user]);
 
   return (
     <>
+      {isVerifyingPayment && (
+        <AtlasLoadingScreen fullScreen message="Verifying payment status..." />
+      )}
       <div className="min-h-dvh w-full bg-background flex flex-col relative animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-x-hidden">
         {/* ── Full-Width Sticky Header ───────────────────────────────────────── */}
         <header className="sticky top-0 z-50 flex items-center justify-between gap-2.5 sm:gap-4 w-full bg-background/95 dark:bg-background/80 backdrop-blur-xl border-b border-border/40 py-3 px-4 sm:px-6 lg:px-8 shadow-sm">

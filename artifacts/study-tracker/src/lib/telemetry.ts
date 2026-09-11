@@ -138,8 +138,7 @@ export function recordSessionCompletion(sessionType: string, durationMins: numbe
     });
   }
 
-  // Flush buffer on session end
-  flushTelemetryBatch();
+  // Events remain buffered in localStorage and are flushed during periodic sync or logout
 }
 
 /** Flush buffered events to Firestore telemetry_logs collection (1 write per flush) */

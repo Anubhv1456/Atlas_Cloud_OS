@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useAdmin } from '@/hooks/useAdmin';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { 
-  Activity, Users, ShieldCheck, LogOut, LayoutDashboard, Sparkles, ArrowLeft, BarChart3, Sliders
+  Users, ShieldCheck, LogOut, LayoutDashboard, Sparkles, ArrowLeft, BarChart3, Sliders
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 
 import { OpsQueueView } from './views/OpsQueueView';
 import { DirectoryView } from './views/DirectoryView';
@@ -50,37 +48,10 @@ const navItems = [
 ];
 
 export default function AdminDashboard() {
-  const { isAdmin, loading: adminCheckLoading } = useAdmin();
   const [, setLocation] = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   
   const [activeView, setActiveView] = useState<ViewType>('analytics');
-
-  if (adminCheckLoading) {
-    return <AtlasLoadingScreen message="Verifying credentials..." />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center space-y-4 max-w-sm">
-          <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldCheck className="w-8 h-8 text-rose-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Access Denied</h1>
-          <p className="text-muted-foreground text-sm">
-            This console is restricted to platform administrators.
-          </p>
-          <button 
-            onClick={() => setLocation('/')}
-            className="px-6 py-2.5 bg-card hover:bg-muted border border-border/50 rounded-xl text-sm font-semibold transition-colors mt-4 w-full"
-          >
-            Return Home
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const renderContent = () => {
     switch (activeView) {

@@ -18,10 +18,14 @@ import { db, dbEvents } from '@/db';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
+import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { DynamicIslandCapsule } from '@/components/ai/DynamicIslandCapsule';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { toast } from 'sonner';
+import { firestoreDb } from '@/lib/firebase';
+import { doc, onSnapshot, updateDoc, deleteField } from 'firebase/firestore';
 
 const NotFound = lazyWithRetry(() => import('@/pages/not-found'));
 const Timeline = lazyWithRetry(() => import('@/features/timeline/Timeline'));
@@ -115,6 +119,39 @@ export default function ProtectedApp() {
     };
   }, []);
 
+  // Surface Peer Milestone Toast (pendingReferralRewardToast)
+  useEffect(() => {
+    if (!user || !firestoreDb) return;
+
+    const userDocRef = doc(firestoreDb, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, async (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const toastData = data?.pendingReferralRewardToast;
+      if (toastData && toastData.bonusDays) {
+        const colleagueName = toastData.colleagueName || 'Your batchmate';
+        const bonusDays = toastData.bonusDays || 14;
+
+        toast.success(`🎉 Peer Milestone Reached! Dr. ${colleagueName} logged their first study block. +${bonusDays} days added to your subscription!`, {
+          duration: 9000,
+        });
+
+        // Immediately clear pendingReferralRewardToast from users/{uid} so it displays exactly once
+        try {
+          await updateDoc(userDocRef, {
+            pendingReferralRewardToast: deleteField(),
+          });
+        } catch (err) {
+          await updateDoc(userDocRef, {
+            pendingReferralRewardToast: null,
+          }).catch((e) => console.warn('[Peer Milestone Toast] Could not clear toast flag:', e));
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   useEffect(() => {
     if (!authLoading && !accessLoading && !onboardingLoading) {
       const isAdminRoute = location.startsWith('/admin');
@@ -159,9 +196,11 @@ export default function ProtectedApp() {
     return (
       <div className="min-h-dvh flex flex-col w-full">
         {isImpersonating && <ImpersonationBanner />}
-        <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
-          <AdminDashboard />
-        </Suspense>
+        <AdminRouteGuard fallbackPath="/">
+          <Suspense fallback={<AtlasLoadingScreen fullScreen />}>
+            <AdminDashboard />
+          </Suspense>
+        </AdminRouteGuard>
       </div>
     );
   }

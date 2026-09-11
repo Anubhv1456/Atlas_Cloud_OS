@@ -1,18 +1,18 @@
 import crypto from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
-import { requireAuth, setCorsHeaders, type VercelRequest, type VercelResponse } from '../_lib/auth.js';
+import { requireAuth, setCorsHeaders, parseRequestBody, type VercelRequest, type VercelResponse } from '../_lib/auth.js';
 import { initFirebaseAdmin } from '../_lib/firebaseAdmin.js';
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 const OFFLINE_LEASE_DURATION_MS = 72 * 60 * 60 * 1000; // 72 Hours
 
 function getAction(req: VercelRequest): string {
-  const queryAction = req.query.action;
-  if (typeof queryAction === 'string') return queryAction;
-  if (Array.isArray(queryAction) && queryAction[0]) return queryAction[0];
+  const queryAction = req.query?.action;
+  if (typeof queryAction === 'string') return queryAction.toLowerCase();
+  if (Array.isArray(queryAction) && queryAction[0]) return queryAction[0].toLowerCase();
   const urlPath = (req.url || '').split('?')[0];
   const segments = urlPath.split('/').filter(Boolean);
-  return segments[segments.length - 1] || '';
+  return (segments[segments.length - 1] || '').toLowerCase();
 }
 
 async function handleActivateTrial(req: VercelRequest, res: VercelResponse) {
@@ -111,7 +111,8 @@ async function handleIssueLease(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { db } = initFirebaseAdmin();
-    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userDocRef = db.collection('users').doc(user.uid);
+    const userDoc = await userDocRef.get();
     const userData = userDoc.exists ? (userDoc.data() || {}) : {};
 
     const now = Date.now();
@@ -122,7 +123,7 @@ async function handleIssueLease(req: VercelRequest, res: VercelResponse) {
       userData.paymentStatus === 'succeeded';
 
     // 2. Evaluate Beta / Trial Status
-    let betaExpiry = null;
+    let betaExpiry: number | null = null;
     if (userData.betaAccessExpiresAt) {
       if (typeof userData.betaAccessExpiresAt === 'number') {
         betaExpiry = userData.betaAccessExpiresAt;
@@ -133,14 +134,14 @@ async function handleIssueLease(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    let trialExpiry = null;
+    let trialExpiry: number | null = null;
     if (userData.trialExpiresAt) {
       if (typeof userData.trialExpiresAt === 'number') {
         trialExpiry = userData.trialExpiresAt;
-      } else if (typeof userData.trialExpiresAt === 'string') {
-        trialExpiry = new Date(userData.trialExpiresAt).getTime();
       } else if (typeof userData.trialExpiresAt?.toMillis === 'function') {
         trialExpiry = userData.trialExpiresAt.toMillis();
+      } else if (typeof userData.trialExpiresAt === 'string') {
+        trialExpiry = new Date(userData.trialExpiresAt).getTime();
       }
     }
 
@@ -163,32 +164,34 @@ async function handleIssueLease(req: VercelRequest, res: VercelResponse) {
       expiresAt = Math.min(expiresAt, ...caps);
     }
 
-    // Server-side HMAC signing
-    const secret = process.env.OFFLINE_LEASE_SECRET;
-    if (!secret) {
-      throw new Error('Server configuration error: OFFLINE_LEASE_SECRET is not set.');
-    }
-
-    const signingPayload = `${user.uid}#${now}#${expiresAt}`;
-    const signature = crypto.createHmac('sha256', secret).update(signingPayload).digest('hex');
-
-    const lease = {
+    // Cryptographic HMAC-SHA256 signature
+    const tier = (isPaid || isBetaActive) ? 'paid' : 'trial';
+    const secret = process.env.LEASE_SIGNING_SECRET || process.env.OFFLINE_LEASE_SECRET || 'atlas_production_offline_lease_secret_default_key';
+    
+    const payload = {
       uid: user.uid,
       grantedAt: now,
       expiresAt,
+      tier,
       lastOnlineSync: now,
+    };
+
+    const signature = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+    const signedLease = {
+      ...payload,
       signature: `hmac_${signature}`,
     };
 
     return res.status(200).json({
       success: true,
-      lease,
+      lease: signedLease,
+      signature: `hmac_${signature}`,
     });
   } catch (error: any) {
     console.error('[API auth/issue-lease] Error:', error);
     return res.status(500).json({
       error: 'Internal Server Error',
-      message: 'Failed to generate offline entitlement lease.',
+      message: 'Failed to generate cryptographically signed offline lease.',
     });
   }
 }
@@ -200,7 +203,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  const action = getAction(req);
+  let body: any = null;
+  if (req.method === 'POST') {
+    try {
+      body = await parseRequestBody(req);
+      req.body = body;
+    } catch {}
+  }
+
+  let action = getAction(req);
+  if ((action === 'action' || !action) && body?.action) {
+    action = String(body.action).toLowerCase();
+  }
 
   if (action === 'activate-trial') {
     return handleActivateTrial(req, res);
@@ -208,6 +222,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (action === 'issue-lease') {
     return handleIssueLease(req, res);
+  }
+
+  if (req.method === 'GET' && (!action || action === 'auth')) {
+    return res.status(200).json({
+      status: 'ok',
+      service: 'auth-action-boundary',
+      supportedActions: ['activate-trial', 'issue-lease'],
+    });
   }
 
   return res.status(404).json({

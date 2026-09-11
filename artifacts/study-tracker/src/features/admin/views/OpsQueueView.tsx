@@ -62,12 +62,12 @@ export function OpsQueueView() {
   const fetchAllData = async () => {
     setRefreshing(true);
     try {
-      const [supportData, markersData, statsData, paymentData] = await Promise.all([
+      const [supportData, markersData, paymentData] = await Promise.all([
         getContactMessages(),
         getAllMarkersForAdmin(),
-        getDashboardStats(),
         getPaymentSubmissions()
       ]);
+      const statsData = await getDashboardStats(markersData);
       setSupportMessages(supportData);
       setMarkers(markersData);
       setStats(statsData);

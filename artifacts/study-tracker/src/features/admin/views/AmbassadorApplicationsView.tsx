@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, CheckCircle2, XCircle, Search, RefreshCw, X, Loader2 } from 'lucide-react';
 import { firestoreDb } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { approveAmbassadorApplication, rejectAmbassadorApplication } from '@/lib/admin';
 
 interface AmbassadorApplication {
   id: string;
@@ -49,34 +50,23 @@ export function AmbassadorApplicationsView() {
 
   const handleApprove = async (app: AmbassadorApplication) => {
     try {
-      // 1. Update User to isAffiliate
-      await updateDoc(doc(firestoreDb, 'users', app.userId), {
-        isAffiliate: true,
-        affiliateCode: `ambassador_${app.userId.slice(0, 6)}`
-      });
-      // 2. Update Application Status
-      await updateDoc(doc(firestoreDb, 'ambassador_applications', app.id), {
-        status: 'approved'
-      });
-      
-      toast.success(`Approved ${app.userName}`);
+      await approveAmbassadorApplication(app.id, app.userId);
+      toast.success(`Approved Dr. ${app.userName} as Ambassador! Access granted.`);
       setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'approved' } : a));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error('Failed to approve application');
+      toast.error(e.message || 'Failed to approve application');
     }
   };
 
   const handleReject = async (appId: string) => {
     try {
-      await updateDoc(doc(firestoreDb, 'ambassador_applications', appId), {
-        status: 'rejected'
-      });
+      await rejectAmbassadorApplication(appId);
       toast.success('Application rejected');
       setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'rejected' } : a));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      toast.error('Failed to reject application');
+      toast.error(e.message || 'Failed to reject application');
     }
   };
 

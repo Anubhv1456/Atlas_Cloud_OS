@@ -2,6 +2,7 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "workspaces": [
     "artifacts/*",
     "lib/*",
@@ -19,6 +20,9 @@
     "lint": "tsc --build"
   },
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@google/genai": "^2.18.0",
     "@hello-pangea/dnd": "^18.0.1",
@@ -38,16 +42,23 @@
     "@visx/tooltip": "^4.0.0",
     "@visx/visx": "^4.0.0",
     "canvas-confetti": "^1.9.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dexie": "^4.4.5",
     "dexie-react-hooks": "^4.4.0",
     "dodopayments": "^2.50.0",
     "dompurify": "^3.4.15",
+    "drizzle-orm": "^0.45.2",
+    "esbuild": "0.25.0",
+    "esbuild-plugin-pino": "^2.3.3",
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "firebase": "^12.17.0",
     "firebase-admin": "^14.3.0",
     "html-to-image": "^1.11.13",
     "katex": "^0.18.5",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",

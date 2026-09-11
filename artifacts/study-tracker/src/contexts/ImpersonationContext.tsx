@@ -1,3 +1,10 @@
+/**
+ * @deprecated Client-side Observer Mode is deprecated due to client auth collisions
+ * and local IndexedDB state cross-contamination. Privileged candidate inspections must
+ * transition to serverless vault endpoints under /api/admin/ (e.g. /api/admin/inspect-vault).
+ *
+ * TODO: Decommission client ImpersonationProvider once serverless vault inspection is fully wired.
+ */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { logImpersonationEvent, getCandidateCloudProfile } from '@/lib/admin';

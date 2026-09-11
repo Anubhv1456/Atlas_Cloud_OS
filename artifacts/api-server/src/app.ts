@@ -38,14 +38,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 app.get("/healthz", (req, res) => res.json({ status: "ok" }));
 
-let distPath = path.resolve(__dirname, "../../..", "dist");
-if (fs.existsSync(path.resolve(__dirname, "index.html"))) {
-  distPath = __dirname;
-}
+const possiblePaths = [
+  path.resolve(process.cwd(), "dist"),
+  path.resolve(__dirname, "dist"),
+  __dirname,
+  path.resolve(__dirname, "../../..", "dist"),
+  path.resolve(process.cwd(), "artifacts/study-tracker/dist"),
+];
+const distPath = possiblePaths.find((p) => fs.existsSync(path.resolve(p, "index.html"))) || path.resolve(process.cwd(), "dist");
 
 app.use(express.static(distPath));
 app.use((req, res) => {
-  res.sendFile(path.resolve(distPath, "index.html"));
+  const indexFile = path.resolve(distPath, "index.html");
+  if (fs.existsSync(indexFile)) {
+    res.sendFile(indexFile);
+  } else {
+    res.status(200).send("Atlas Cloud is running.");
+  }
 });
 
 export default app;

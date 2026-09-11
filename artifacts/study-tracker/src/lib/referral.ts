@@ -12,6 +12,8 @@ import {
 } from 'firebase/firestore';
 import { firestoreDb } from './firebase';
 import { User } from 'firebase/auth';
+export * from '@/types/growth';
+import type { ReferralCodeEntity } from '@/types/growth';
 
 export interface ReferralConfig {
   enabled: boolean;
@@ -163,21 +165,103 @@ export async function ensureUserReferralCode(user: User): Promise<string> {
 }
 
 /**
- * Fetches referral code details to display inviter info on landing screen
+ * Normalizes legacy ReferralCodeDoc into canonical ReferralCodeEntity schema
  */
-export async function getReferralCodeDetails(code: string): Promise<ReferralCodeDoc | null> {
+export function normalizeLegacyReferralCode(legacy: ReferralCodeDoc): ReferralCodeEntity {
+  return {
+    code: legacy.code,
+    type: 'batchmate',
+    ownerUid: legacy.ownerUid,
+    ownerEmail: legacy.ownerEmail || '',
+    ownerDisplayName: legacy.ownerDisplayName || 'Doctor',
+    status: 'active',
+    stats: {
+      totalClaims: legacy.totalClaimed || 0,
+      totalQualified: legacy.totalQualified || 0,
+      totalConversions: 0,
+      activeSeats: legacy.totalClaimed || 0,
+    },
+    config: {
+      maxClaims: 3,
+      refereeTrialDays: 15,
+      referrerBonusDays: 14,
+    },
+    createdAt: legacy.createdAt || new Date(),
+    updatedAt: legacy.createdAt || new Date(),
+  };
+}
+
+/**
+ * Resolves a referral or partner code using the Phase 1 Unified Access Bridge:
+ * 1. Checks canonical path /referral_codes/{code}
+ * 2. If not found, gracefully falls back to legacy path /referralCodes/{code}
+ */
+export async function resolveReferralCode(code: string): Promise<ReferralCodeEntity | null> {
   if (!firestoreDb || !code) return null;
+  const cleanCode = code.trim().toUpperCase();
+  if (!cleanCode) return null;
+
   try {
-    const cleanCode = code.trim().toUpperCase();
-    const codeRef = doc(firestoreDb, 'referralCodes', cleanCode);
-    const snap = await getDoc(codeRef);
-    if (snap.exists()) {
-      return snap.data() as ReferralCodeDoc;
+    // 1. Primary: Canonical /referral_codes/{code}
+    const canonicalRef = doc(firestoreDb, 'referral_codes', cleanCode);
+    const canonicalSnap = await getDoc(canonicalRef);
+    if (canonicalSnap.exists()) {
+      const data = canonicalSnap.data();
+      return {
+        code: cleanCode,
+        type: data.type || 'batchmate',
+        ownerUid: data.ownerUid || '',
+        ownerEmail: data.ownerEmail || '',
+        ownerDisplayName: data.ownerDisplayName || 'Doctor',
+        status: data.status || 'active',
+        stats: {
+          totalClaims: data.stats?.totalClaims ?? data.totalClaimed ?? 0,
+          totalQualified: data.stats?.totalQualified ?? data.totalQualified ?? 0,
+          totalConversions: data.stats?.totalConversions ?? 0,
+          activeSeats: data.stats?.activeSeats ?? data.totalClaimed ?? 0,
+        },
+        config: {
+          maxClaims: data.config?.maxClaims ?? 3,
+          refereeTrialDays: data.config?.refereeTrialDays ?? 15,
+          referrerBonusDays: data.config?.referrerBonusDays ?? 14,
+        },
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt || data.createdAt,
+      } as ReferralCodeEntity;
+    }
+
+    // 2. Secondary: Fallback to legacy /referralCodes/{code}
+    const legacyRef = doc(firestoreDb, 'referralCodes', cleanCode);
+    const legacySnap = await getDoc(legacyRef);
+    if (legacySnap.exists()) {
+      const legacyData = legacySnap.data() as ReferralCodeDoc;
+      return normalizeLegacyReferralCode(legacyData);
     }
   } catch (e) {
-    console.error('[Referral Engine] Error resolving referral code details:', e);
+    console.error('[Referral Bridge] Error resolving referral code:', e);
   }
+
   return null;
+}
+
+/**
+ * Fetches referral code details to display inviter info on landing screen.
+ * Leverages resolveReferralCode for transparent canonical-to-legacy lookup,
+ * returning a ReferralCodeDoc for full backward compatibility with UI components.
+ */
+export async function getReferralCodeDetails(code: string): Promise<ReferralCodeDoc | null> {
+  const resolved = await resolveReferralCode(code);
+  if (!resolved) return null;
+
+  return {
+    code: resolved.code,
+    ownerUid: resolved.ownerUid,
+    ownerEmail: resolved.ownerEmail,
+    ownerDisplayName: resolved.ownerDisplayName,
+    totalClaimed: resolved.stats.totalClaims,
+    totalQualified: resolved.stats.totalQualified,
+    createdAt: resolved.createdAt,
+  };
 }
 
 /**
@@ -186,13 +270,17 @@ export async function getReferralCodeDetails(code: string): Promise<ReferralCode
  */
 export async function claimReferralCode(
   code: string, 
-  user: User
+  user: User,
+  sourceParam?: GrowthSourceParam
 ): Promise<{ success: boolean; message: string; trialDaysAwarded?: number }> {
   if (!user || !code) {
     return { success: false, message: 'Invalid referral context' };
   }
 
   const cleanCode = code.trim().toUpperCase();
+  const resolvedSource = sourceParam || 
+    (sessionStorage.getItem('atlas_pending_ref_source') as GrowthSourceParam) || 
+    'ref';
 
   try {
     const idToken = await user.getIdToken();
@@ -202,7 +290,10 @@ export async function claimReferralCode(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ code: cleanCode }),
+      body: JSON.stringify({ 
+        code: cleanCode,
+        sourceParam: resolvedSource,
+      }),
     });
 
     const data = await res.json();
@@ -218,6 +309,7 @@ export async function claimReferralCode(
     localStorage.setItem(`onboarding_completed_${user.uid}`, 'true');
     localStorage.setItem('atlas_onboarding_completed', 'true');
     sessionStorage.removeItem('atlas_pending_ref_code');
+    sessionStorage.removeItem('atlas_pending_ref_source');
 
     return { 
       success: true, 
@@ -231,8 +323,8 @@ export async function claimReferralCode(
 }
 
 /**
- * Triggers atomic reward qualification when a referee completes their first study session (>= min minutes)
- * Dispatches to serverless API with referee ID token for atomic Firestore transaction
+ * Triggers atomic reward settlement when a referee completes their first study session (>= min minutes)
+ * Dispatches to /api/referral/settle with trigger 'study_milestone' and referee ID token for atomic transaction
  */
 export async function qualifyReferral(
   refereeUid: string, 
@@ -246,18 +338,35 @@ export async function qualifyReferral(
     if (!currentUser || currentUser.uid !== refereeUid) return false;
 
     const idToken = await currentUser.getIdToken();
-    const res = await fetch('/api/referral/qualify', {
+    
+    // Primary: Call unified settle endpoint
+    let res = await fetch('/api/referral/settle', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${idToken}`,
       },
-      body: JSON.stringify({ sessionDurationMinutes }),
+      body: JSON.stringify({ 
+        trigger: 'study_milestone',
+        sessionDurationMinutes 
+      }),
     });
+
+    // Fallback: If 404, fallback to legacy qualify action
+    if (res.status === 404) {
+      res = await fetch('/api/referral/qualify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ sessionDurationMinutes }),
+      });
+    }
 
     if (!res.ok) return false;
     const data = await res.json();
-    return Boolean(data.success && data.qualified);
+    return Boolean(data.success && (data.qualified || data.alreadySettled));
   } catch (e) {
     console.error('[Referral Engine] Error qualifying referral via server API:', e);
     return false;

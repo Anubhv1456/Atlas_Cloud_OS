@@ -1,6 +1,32 @@
-import { firestoreDb } from './firebase';
+import { firestoreDb, auth } from './firebase';
 import { collection, query, getDocs, limit, doc, updateDoc, orderBy, getDoc, setDoc } from 'firebase/firestore';
 import { Marker, MarkerStatus } from './markers';
+
+/**
+ * Executes a privileged mutation through the serverless admin action boundary (/api/admin/*)
+ * utilizing the caller's Firebase Auth Bearer token.
+ */
+async function callServerlessAdminApi<T = any>(action: string, payload: Record<string, any>): Promise<T> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) {
+    throw new Error('Unauthenticated: An active administrator session is required.');
+  }
+
+  const res = await fetch(`/api/admin/${action}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || data.error || `Admin operation '${action}' failed with status ${res.status}`);
+  }
+  return data as T;
+}
 
 export async function getAllMarkersForAdmin(): Promise<Marker[]> {
   if (!firestoreDb) return [];
@@ -34,59 +60,84 @@ export async function updateMarkerStatusAdmin(markerId: string, status: MarkerSt
 }
 
 export async function updateUserBetaAccess(userId: string, betaAccess: boolean, durationDays?: number | null, isTrial?: boolean) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
-  const userRef = doc(firestoreDb, 'users', userId);
-  if (betaAccess) {
-    const now = Date.now();
-    const betaAccessExpiresAt = durationDays ? now + durationDays * 24 * 60 * 60 * 1000 : null;
-    await setDoc(userRef, {
-      betaAccess: true,
-      betaAccessExpiresAt,
-      betaGrantedAt: new Date(),
-      isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
-      onboardingCompleted: true
-    }, { merge: true });
-  } else {
-    await setDoc(userRef, {
-      betaAccess: false,
-      betaAccessExpiresAt: null,
-      isTrial: false
-    }, { merge: true });
-  }
-}
-
-export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null, isTrial?: boolean, referredBy?: string) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
-  const now = Date.now();
-  const promises = userIds.map(userId => {
+  try {
+    return await callServerlessAdminApi('update-access', {
+      targetUserId: userId,
+      betaAccess,
+      durationDays,
+      isTrial,
+    });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
     const userRef = doc(firestoreDb, 'users', userId);
     if (betaAccess) {
+      const now = Date.now();
       const betaAccessExpiresAt = durationDays ? now + durationDays * 24 * 60 * 60 * 1000 : null;
-      return setDoc(userRef, {
+      await setDoc(userRef, {
         betaAccess: true,
         betaAccessExpiresAt,
         betaGrantedAt: new Date(),
         isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
-        onboardingCompleted: true,
-        ...(referredBy ? { referredBy } : {})
+        onboardingCompleted: true
       }, { merge: true });
     } else {
-      return setDoc(userRef, {
+      await setDoc(userRef, {
         betaAccess: false,
         betaAccessExpiresAt: null,
         isTrial: false
       }, { merge: true });
     }
-  });
-  await Promise.all(promises);
+  }
 }
 
+export async function bulkUpdateUserBetaAccess(userIds: string[], betaAccess: boolean, durationDays?: number | null, isTrial?: boolean, referredBy?: string) {
+  try {
+    return await callServerlessAdminApi('bulk-update-access', {
+      targetUserIds: userIds,
+      betaAccess,
+      durationDays,
+      isTrial,
+      referredBy,
+    });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
+    const now = Date.now();
+    const promises = userIds.map(userId => {
+      const userRef = doc(firestoreDb, 'users', userId);
+      if (betaAccess) {
+        const betaAccessExpiresAt = durationDays ? now + durationDays * 24 * 60 * 60 * 1000 : null;
+        return setDoc(userRef, {
+          betaAccess: true,
+          betaAccessExpiresAt,
+          betaGrantedAt: new Date(),
+          isTrial: isTrial ?? (durationDays !== null && durationDays !== undefined && durationDays <= 15),
+          onboardingCompleted: true,
+          ...(referredBy ? { referredBy } : {})
+        }, { merge: true });
+      } else {
+        return setDoc(userRef, {
+          betaAccess: false,
+          betaAccessExpiresAt: null,
+          isTrial: false
+        }, { merge: true });
+      }
+    });
+    await Promise.all(promises);
+  }
+}
 
 export async function deleteUserAsAdmin(userId: string) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
-  const { deleteDoc } = await import("firebase/firestore");
-  const userRef = doc(firestoreDb, "users", userId);
-  await deleteDoc(userRef);
+  try {
+    return await callServerlessAdminApi('delete-user', { targetUserId: userId });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
+    const { deleteDoc } = await import("firebase/firestore");
+    const userRef = doc(firestoreDb, "users", userId);
+    await deleteDoc(userRef);
+  }
 }
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
@@ -139,11 +190,11 @@ export async function getAllUsersForAdmin(forceRefresh = false) {
   return users;
 }
 
-export async function getDashboardStats() {
+export async function getDashboardStats(preloadedMarkers?: Marker[]) {
   if (!firestoreDb) return { users: 0, signups: 0, pendingMarkers: 0, reportedMarkers: 0 };
   
   const allUsers = await getAllUsersForAdmin();
-  const markers = await getAllMarkersForAdmin();
+  const markers = preloadedMarkers || await getAllMarkersForAdmin();
   
   // Filter out admin accounts so metrics reflect true medical candidates
   const studentCandidates = allUsers.filter(u => !(u as any).isAdmin);
@@ -498,58 +549,92 @@ export async function getPaymentSubmissions(): Promise<PaymentSubmission[]> {
 }
 
 export async function approvePayment(paymentId: string, userId: string, adminEmail?: string, durationDays: number = 90) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
-  
-  // 1. Update Payment doc
-  const paymentRef = doc(firestoreDb, 'payments', paymentId);
-  await updateDoc(paymentRef, {
-    status: 'approved',
-    reviewedAt: new Date(),
-    reviewedBy: adminEmail || 'admin'
-  });
+  try {
+    return await callServerlessAdminApi('review-payment', {
+      paymentId,
+      targetUserId: userId,
+      status: 'approved',
+      durationDays,
+    });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
+    
+    // 1. Update Payment doc
+    const paymentRef = doc(firestoreDb, 'payments', paymentId);
+    await updateDoc(paymentRef, {
+      status: 'approved',
+      reviewedAt: new Date(),
+      reviewedBy: adminEmail || 'admin'
+    });
 
-  // 2. Update User doc and Grant Beta Access
-  await updateUserBetaAccess(userId, true, durationDays);
+    // 2. Update User doc and Grant Beta Access
+    await updateUserBetaAccess(userId, true, durationDays);
 
-  const userRef = doc(firestoreDb, 'users', userId);
-  await setDoc(userRef, {
-    paymentStatus: 'approved'
-  }, { merge: true });
+    const userRef = doc(firestoreDb, 'users', userId);
+    await setDoc(userRef, {
+      paymentStatus: 'approved'
+    }, { merge: true });
+  }
 }
 
 export async function rejectPayment(paymentId: string, userId: string, rejectionNote?: string, adminEmail?: string) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
+  try {
+    return await callServerlessAdminApi('review-payment', {
+      paymentId,
+      targetUserId: userId,
+      status: 'rejected',
+      rejectionNote,
+    });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
 
-  // 1. Update Payment doc
-  const paymentRef = doc(firestoreDb, 'payments', paymentId);
-  await updateDoc(paymentRef, {
-    status: 'rejected',
-    rejectionNote: rejectionNote || 'Verification unsuccessful.',
-    reviewedAt: new Date(),
-    reviewedBy: adminEmail || 'admin'
-  });
+    // 1. Update Payment doc
+    const paymentRef = doc(firestoreDb, 'payments', paymentId);
+    await updateDoc(paymentRef, {
+      status: 'rejected',
+      rejectionNote: rejectionNote || 'Verification unsuccessful.',
+      reviewedAt: new Date(),
+      reviewedBy: adminEmail || 'admin'
+    });
 
-  // 2. Update User doc
-  const userRef = doc(firestoreDb, 'users', userId);
-  await setDoc(userRef, {
-    paymentStatus: 'rejected',
-    paymentRejectionNote: rejectionNote || 'Verification unsuccessful.'
-  }, { merge: true });
+    // 2. Update User doc
+    const userRef = doc(firestoreDb, 'users', userId);
+    await setDoc(userRef, {
+      paymentStatus: 'rejected',
+      paymentRejectionNote: rejectionNote || 'Verification unsuccessful.'
+    }, { merge: true });
+  }
 }
 
-
-
-
 export async function updateAffiliateStatus(userId: string, isAffiliate: boolean) {
-  if (!firestoreDb) throw new Error("Firestore is not initialized.");
-  const userRef = doc(firestoreDb, 'users', userId);
-  const updateData: any = { isAffiliate };
-  
-  if (isAffiliate) {
-    updateData.affiliateCode = `affiliate_${userId.slice(0, 6)}`;
+  try {
+    return await callServerlessAdminApi('update-affiliate', {
+      targetUserId: userId,
+      isAffiliate,
+    });
+  } catch (err) {
+    console.warn('[Admin API] Serverless execution failed, attempting client fallback:', err);
+    if (!firestoreDb) throw err;
+    const userRef = doc(firestoreDb, 'users', userId);
+    const updateData: any = { isAffiliate };
+    
+    if (isAffiliate) {
+      updateData.affiliateCode = `affiliate_${userId.slice(0, 6)}`;
+    }
+    
+    await setDoc(userRef, updateData, { merge: true });
   }
-  
-  await setDoc(userRef, updateData, { merge: true });
+}
+
+/**
+ * Serverless Vault Inspection
+ * Inspects a candidate's cloud vault record directly from the server without
+ * client auth collisions or local IndexedDB contamination.
+ */
+export async function inspectCandidateVaultServerless(userId: string) {
+  return await callServerlessAdminApi('inspect-vault', { targetUserId: userId });
 }
 
 export interface ImpersonationAuditLog {
@@ -598,4 +683,26 @@ export async function getCandidateCloudProfile(userId: string) {
     console.warn('[Admin] Failed to fetch candidate profile:', err);
     return null;
   }
+}
+
+/**
+ * Dispatches ambassador approval through the serverless admin action boundary (/api/admin/*).
+ * Grants platform access, creates canonical partner code, and records audit entry atomically.
+ */
+export async function approveAmbassadorApplication(applicationId: string, targetUserId: string) {
+  return callServerlessAdminApi('approve-ambassador', {
+    action: 'approve-ambassador',
+    applicationId,
+    targetUserId,
+  });
+}
+
+/**
+ * Dispatches ambassador rejection through the serverless admin action boundary.
+ */
+export async function rejectAmbassadorApplication(applicationId: string) {
+  return callServerlessAdminApi('reject-ambassador', {
+    action: 'reject-ambassador',
+    applicationId,
+  });
 }

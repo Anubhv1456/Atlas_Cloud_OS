@@ -26,9 +26,27 @@ export default function AcceptInvitation() {
 
     // Parse referral code from URL search or sessionStorage
     let detectedRef = '';
+    let detectedSource: 'ref' | 'via' | 'affiliate' = 'ref';
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      detectedRef = params.get('ref') || sessionStorage.getItem('atlas_pending_ref_code') || '';
+      if (params.get('ref')) {
+        detectedRef = params.get('ref') || '';
+        detectedSource = 'ref';
+      } else if (params.get('via')) {
+        detectedRef = params.get('via') || '';
+        detectedSource = 'via';
+      } else if (params.get('affiliate')) {
+        detectedRef = params.get('affiliate') || '';
+        detectedSource = 'affiliate';
+      } else {
+        detectedRef = sessionStorage.getItem('atlas_pending_ref_code') || '';
+        detectedSource = (sessionStorage.getItem('atlas_pending_ref_source') as any) || 'ref';
+      }
+
+      if (detectedRef) {
+        sessionStorage.setItem('atlas_pending_ref_code', detectedRef.trim().toUpperCase());
+        sessionStorage.setItem('atlas_pending_ref_source', detectedSource);
+      }
     }
 
     if (detectedRef) {
@@ -51,8 +69,9 @@ export default function AcceptInvitation() {
       }
 
       const activeCode = refCode || sessionStorage.getItem('atlas_pending_ref_code');
+      const activeSource = (sessionStorage.getItem('atlas_pending_ref_source') as any) || 'ref';
       if (activeCode) {
-        const res = await claimReferralCode(activeCode, user);
+        const res = await claimReferralCode(activeCode, user, activeSource);
         if (res.success) {
           toast.success('15-Day Study Pass Activated 🎉', {
             description: `${res.trialDaysAwarded || 15}-Day full access granted for your exam preparation.`

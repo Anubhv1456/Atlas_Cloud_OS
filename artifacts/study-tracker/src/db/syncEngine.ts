@@ -1,6 +1,7 @@
 import { compressSync, decompressSync, strToU8, strFromU8 } from 'fflate';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, firestoreDb } from '@/lib/firebase';
+import { flushTelemetryBatch } from '@/lib/telemetry';
 import { localDb } from './localDb';
 import { db } from './schema';
 
@@ -138,6 +139,17 @@ class SyncEngine {
         id: 'last_cloud_sync_timestamp',
         lastSyncTimestamp: now
       });
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('atlas_last_cloud_sync_timestamp', String(now));
+        } catch (e) {
+          // Ignore
+        }
+      }
+
+      // Bundle flush of any pending telemetry events during cloud sync
+      await flushTelemetryBatch().catch(() => {});
 
       console.log(`Successfully backed up ${totalRecords} items in a single-blob.`);
     } catch (err) {

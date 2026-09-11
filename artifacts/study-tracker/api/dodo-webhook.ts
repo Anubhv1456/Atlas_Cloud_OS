@@ -132,21 +132,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ received: true, warning: 'No matching user ID resolved; logged to unmatched_payments' });
       }
 
-      // 4. Atomic Authoritative Firestore Mutation
-      await db.collection('users').doc(userId).set(
+      // 4. Atomic Authoritative Firestore Mutation & Attribution Conversion
+      const userRef = db.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+      const userData = userSnap.exists ? userSnap.data() || {} : {};
+
+      const refCode = userData.attribution?.code || userData.referredByCode || affiliateId;
+      const referrerUid = userData.attribution?.referrerUid || userData.referredByUid;
+
+      await userRef.set(
         {
           betaAccess: true,
+          hasPaidAccess: true,
           paymentStatus: 'succeeded',
           paymentMethod: 'dodo_payments',
           dodoPaymentId: paymentId,
           dodoAmount: amount,
           currency,
-          referredBy: affiliateId,
+          referredBy: affiliateId || userData.referredBy,
           paidAt: new Date().toISOString(),
+          attribution: {
+            ...(userData.attribution || {}),
+            status: 'converted',
+            convertedAt: FieldValue.serverTimestamp(),
+          },
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
+
+      // Increment canonical referral code conversion counter
+      if (refCode && typeof refCode === 'string') {
+        try {
+          const canonicalRef = db.collection('referral_codes').doc(refCode.trim().toUpperCase());
+          const cSnap = await canonicalRef.get();
+          if (cSnap.exists) {
+            await canonicalRef.update({
+              'stats.totalConversions': FieldValue.increment(1),
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          }
+        } catch (e) {
+          console.warn('[Dodo Webhook] Non-critical: Failed to increment referral conversion stats:', e);
+        }
+      }
+
+      // Update /referrals ledger if record exists
+      if (referrerUid) {
+        try {
+          const ledgerRef = db.collection('referrals').doc(`${referrerUid}_${userId}`);
+          await ledgerRef.set(
+            {
+              status: 'converted',
+              convertedAt: FieldValue.serverTimestamp(),
+              paymentId,
+              amount,
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn('[Dodo Webhook] Non-critical: Failed to update referral ledger:', e);
+        }
+      }
 
       // Also record in processed_payments for audit & idempotency
       await db.collection('processed_payments').doc(paymentId).set(

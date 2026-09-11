@@ -27,9 +27,9 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Admin bootstrap check (strictly read-only for authenticated, write only by cloud console)
+    // Admin bootstrap check (strictly accessible by verified admins, client writes disallowed)
     match /admins/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isAdmin();
       allow write: if false;
     }
 
@@ -50,7 +50,8 @@ service cloud.firestore {
           'role', 'isAdmin', 'betaAccess', 'paymentStatus', 'hasPaidAccess',
           'betaAccessExpiresAt', 'vaultActivationRequired', 'dodoPaymentId',
           'dodoAmount', 'paidAt', 'paymentMethod',
-          'trialExpiresAt', 'trialStartedAt', 'isTrial'
+          'trialExpiresAt', 'trialStartedAt', 'isTrial',
+          'attribution', 'isAffiliate', 'affiliateCode'
         ]);
 
       allow update: if isAdmin() || (
@@ -61,7 +62,8 @@ service cloud.firestore {
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
           'betaAccess', 'paymentStatus', 'hasPaidAccess', 'betaAccessExpiresAt',
           'vaultActivationRequired', 'dodoPaymentId', 'dodoAmount', 'paidAt',
-          'paymentMethod', 'trialExpiresAt', 'trialStartedAt', 'isTrial'
+          'paymentMethod', 'trialExpiresAt', 'trialStartedAt', 'isTrial',
+          'attribution', 'isAffiliate', 'affiliateCode'
         ]))
       );
 
@@ -125,6 +127,14 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid ||
         isAdmin()
       );
+    }
+
+    // ── CANONICAL UNIFIED GROWTH & REFERRAL REGISTRY (PHASE 1) ─────────────────
+    match /referral_codes/{code} {
+      // Authenticated users can read code records (to view inviter details or verify partner stats)
+      allow read: if isAuthenticated();
+      // Strictly serverless mutation via /api/referral/* pipeline
+      allow write: if false;
     }
 
     // ── PEER REFERRAL & STUDY PASS INVITATIONS ─────────────────────────────────

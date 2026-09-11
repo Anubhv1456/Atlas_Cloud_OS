@@ -132,15 +132,32 @@ function App() {
     if (typeof window !== 'undefined') {
       try {
         const url = new URL(window.location.href);
-        const via = url.searchParams.get('via') || url.searchParams.get('ref') || url.searchParams.get('affiliate');
-        
-        if (via) {
-          localStorage.setItem('atlas_affiliate_id', via);
-          
-          url.searchParams.delete('via');
+        const ref = url.searchParams.get('ref');
+        const via = url.searchParams.get('via');
+        const affiliate = url.searchParams.get('affiliate');
+
+        let shouldCleanUrl = false;
+
+        // Peer invite tracking: Strictly in sessionStorage, never written to atlas_affiliate_id
+        if (ref) {
+          sessionStorage.setItem('atlas_pending_ref_code', ref.trim().toUpperCase());
           url.searchParams.delete('ref');
-          url.searchParams.delete('affiliate');
-          window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+          shouldCleanUrl = true;
+        }
+
+        // Commercial partner / affiliate attribution: Stored strictly in localStorage
+        const partnerCode = via || affiliate;
+        if (partnerCode) {
+          localStorage.setItem('atlas_affiliate_id', partnerCode.trim());
+          if (via) url.searchParams.delete('via');
+          if (affiliate) url.searchParams.delete('affiliate');
+          shouldCleanUrl = true;
+        }
+
+        // Clean parameters from the URL without triggering a route reload
+        if (shouldCleanUrl) {
+          const cleanPath = url.pathname + (url.search ? url.search : '') + url.hash;
+          window.history.replaceState({}, '', cleanPath);
         }
       } catch (err) {
         console.warn('[Referral Capture] Failed to parse parameters:', err);

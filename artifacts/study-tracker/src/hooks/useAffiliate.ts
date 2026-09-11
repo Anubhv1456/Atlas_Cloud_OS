@@ -2,14 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
-import { 
-  doc, 
-  getDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs 
-} from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 export interface ReferredCandidate {
   id: string;
@@ -17,16 +10,20 @@ export interface ReferredCandidate {
   emailMasked: string;
   joinedAt: Date | null;
   status: 'active' | 'trial' | 'expired';
-  
 }
 
 export interface AffiliateStats {
   totalReferrals: number;
   activeSeats: number;
   pendingSeats: number;
-  
-  
-  }
+}
+
+interface ReferralCodeStats {
+  totalClaims: number;
+  totalQualified: number;
+  totalConversions: number;
+  activeSeats: number;
+}
 
 export function useAffiliate() {
   const { user } = useAuth();
@@ -37,7 +34,8 @@ export function useAffiliate() {
   const [loading, setLoading] = useState<boolean>(true);
   const [referralsLoading, setReferralsLoading] = useState<boolean>(false);
   const [referredCandidates, setReferredCandidates] = useState<ReferredCandidate[]>([]);
-  
+  const [codeStats, setCodeStats] = useState<ReferralCodeStats | null>(null);
+
   // Real-time Affiliate Config State
   const [config, setConfig] = useState({ cookieWindowDays: 60 });
 
@@ -55,6 +53,7 @@ export function useAffiliate() {
       setAffiliateCode(null);
       setLoading(false);
       setReferredCandidates([]);
+      setCodeStats(null);
       return;
     }
 
@@ -79,8 +78,10 @@ export function useAffiliate() {
       (snap) => {
         if (snap.exists()) {
           const data = snap.data();
-          setIsAffiliate(Boolean(data.isAffiliate));
-          setAffiliateCode(data.affiliateCode || (data.isAffiliate ? `affiliate_${user.uid.slice(0, 6)}` : null));
+          const isAff = Boolean(data.isAffiliate || data.attribution?.isPartner);
+          const resolvedCode = data.affiliateCode || data.attribution?.ownedCode || (isAff ? `affiliate_${user.uid.slice(0, 6)}` : null);
+          setIsAffiliate(isAff);
+          setAffiliateCode(resolvedCode);
         } else {
           setIsAffiliate(false);
           setAffiliateCode(null);
@@ -94,117 +95,93 @@ export function useAffiliate() {
         setLoading(false);
       }
     );
-
-    return () => {
-    };
   }, [user, isImpersonating, impersonatedUser]);
 
-  // Helper to safely mask email (e.g., "alex.miller@gmail.com" -> "a***r@gmail.com")
-  const maskEmail = (email?: string | null): string => {
-    if (!email || !email.includes('@')) return 'Anonymous Scholar';
-    const [local, domain] = email.split('@');
-    if (local.length <= 2) return `${local[0]}***@${domain}`;
-    return `${local[0]}***${local[local.length - 1]}@${domain}`;
-  };
-
-  // Helper to mask name (e.g., "John Doe" -> "Dr. John D.")
-  const maskName = (name?: string | null, email?: string | null): string => {
-    if (name && name.trim()) {
-      const parts = name.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        return `${parts[0]} ${parts[1][0]}.`;
-      }
-      return parts[0];
-    }
-    if (email) {
-      return `Scholar ${email.slice(0, 3).toUpperCase()}`;
-    }
-    return 'Candidate';
-  };
-
-  // 2. Fetch Referred Candidates for the given affiliateCode
+  // 2. Fetch Aggregated Counters & Masked Candidates
   const fetchReferrals = useCallback(async () => {
     if (!affiliateCode || !firestoreDb) {
       setReferredCandidates([]);
+      setCodeStats(null);
       return;
     }
 
     setReferralsLoading(true);
+    const cleanCode = affiliateCode.trim().toUpperCase();
+
+    // Step A: Read aggregated counters directly from the user's active code document /referral_codes/{affiliateCode}
+    // (authorized by allow read: if isAuthenticated(); without cross-user query)
     try {
-      const usersRef = collection(firestoreDb, 'users');
-      // Fetch users referred by this affiliate code
-      const q = query(usersRef, where('referredBy', '==', affiliateCode));
-      const snap = await getDocs(q);
-
-      const targetId = isImpersonating ? impersonatedUser?.id : user?.uid;
-      const candidates: ReferredCandidate[] = [];
-
-      snap.forEach((docSnap) => {
-        const d = docSnap.data();
-        // Exclude the affiliate themselves and admins
-        if (docSnap.id === targetId || d.role === 'admin' || d.isAdmin) return;
-
-        const rawExp = d.betaAccessExpiresAt;
-        const expTime = typeof rawExp === 'number' 
-          ? rawExp 
-          : rawExp?.toMillis 
-          ? rawExp.toMillis() 
-          : rawExp ? new Date(rawExp).getTime() : null;
-
-        const isExpired = expTime && expTime < Date.now();
-        const isActive = Boolean(d.betaAccess && !isExpired);
-        const isTrial = Boolean(d.isTrial || (!d.betaAccess && d.paymentStatus === 'pending'));
-
-        let joinedDate: Date | null = null;
-        if (d.createdAt) {
-          joinedDate = d.createdAt.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+      const codeRef = doc(firestoreDb, 'referral_codes', cleanCode);
+      const codeSnap = await getDoc(codeRef);
+      if (codeSnap.exists()) {
+        const cd = codeSnap.data();
+        if (cd.stats) {
+          setCodeStats({
+            totalClaims: cd.stats.totalClaims || 0,
+            totalQualified: cd.stats.totalQualified || 0,
+            totalConversions: cd.stats.totalConversions || 0,
+            activeSeats: cd.stats.activeSeats || 0,
+          });
         }
-
-        candidates.push({
-          id: docSnap.id,
-          displayName: maskName(d.displayName, d.email),
-          emailMasked: maskEmail(d.email),
-          joinedAt: joinedDate,
-          status: isActive ? 'active' : isTrial ? 'trial' : 'expired',
-          
-        });
-      });
-
-      // Sort newest first
-      candidates.sort((a, b) => {
-        const timeA = a.joinedAt ? a.joinedAt.getTime() : 0;
-        const timeB = b.joinedAt ? b.joinedAt.getTime() : 0;
-        return timeB - timeA;
-      });
-
-      setReferredCandidates(candidates);
+      }
     } catch (e) {
-      console.warn('[useAffiliate] Error fetching referral roster:', e);
-    } finally {
+      console.warn('[useAffiliate] Could not read code document stats:', e);
+    }
+
+    // Step B: Fetch masked candidate list via authenticated serverless route (GET /api/referral/roster)
+    if (user) {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/referral/roster?code=${encodeURIComponent(cleanCode)}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.candidates)) {
+            setReferredCandidates(data.candidates.map((c: any) => ({
+              ...c,
+              joinedAt: c.joinedAt ? new Date(c.joinedAt) : null,
+            })));
+
+            if (data.stats) {
+              setCodeStats(prev => prev || data.stats);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[useAffiliate] Roster API call deferred:', e);
+      } finally {
+        setReferralsLoading(false);
+      }
+    } else {
       setReferralsLoading(false);
     }
-  }, [affiliateCode, isImpersonating, impersonatedUser, user]);
+  }, [affiliateCode, user]);
 
   useEffect(() => {
     if (isAffiliate && affiliateCode) {
       fetchReferrals();
     } else {
       setReferredCandidates([]);
+      setCodeStats(null);
     }
   }, [isAffiliate, affiliateCode, fetchReferrals]);
 
-  // 3. Computed Aggregate Statistics
+  // 3. Computed Aggregate Statistics (combining authoritative code counters with masked roster)
   const stats: AffiliateStats = useMemo(() => {
-    const totalReferrals = referredCandidates.length;
-    const activeSeats = referredCandidates.filter(c => c.status === 'active').length;
-    const pendingSeats = totalReferrals - activeSeats;
-            
+    const totalReferrals = codeStats?.totalClaims ?? referredCandidates.length;
+    const activeSeats = codeStats?.activeSeats ?? codeStats?.totalConversions ?? referredCandidates.filter(c => c.status === 'active').length;
+    const pendingSeats = Math.max(0, totalReferrals - activeSeats);
+
     return {
       totalReferrals,
       activeSeats,
       pendingSeats,
-      };
-  }, [referredCandidates, config.cookieWindowDays]);
+    };
+  }, [codeStats, referredCandidates]);
 
   // 4. Link Generators
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://atlas.app';

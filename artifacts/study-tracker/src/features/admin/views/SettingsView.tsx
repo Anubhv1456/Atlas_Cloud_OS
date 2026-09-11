@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Sliders, ToggleLeft, Megaphone, CreditCard, Share2, 
-  Save, CheckCircle2, ShieldCheck, CreditCard as PaymentIcon
+  Save, CheckCircle2, ShieldCheck, CreditCard as PaymentIcon, Users, Gift
 } from 'lucide-react';
 import { 
   getFeatureFlags, setFeatureFlags, FeatureFlags,
@@ -10,6 +10,9 @@ import {
   getSocialLinks, setSocialLinks, SocialLinks,
   getAffiliateConfig, saveAffiliateConfig, AffiliateConfig, DEFAULT_AFFILIATE_CONFIG
 } from '@/lib/admin';
+import { 
+  getReferralConfig, saveReferralConfig, ReferralConfig, DEFAULT_REFERRAL_CONFIG 
+} from '@/lib/referral';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -25,6 +28,7 @@ export function SettingsView() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
   const [affiliateConfig, setAffiliateConfig] = useState<AffiliateConfig>(DEFAULT_AFFILIATE_CONFIG);
+  const [referralConfig, setReferralConfig] = useState<ReferralConfig>(DEFAULT_REFERRAL_CONFIG);
   const [socials, setSocials] = useState<SocialLinks>({});
 
   // Forms
@@ -34,14 +38,15 @@ export function SettingsView() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [f, a, p, s, aff] = await Promise.all([
-          getFeatureFlags(), getAnnouncements(), getPaymentConfig(), getSocialLinks(), getAffiliateConfig()
+        const [f, a, p, s, aff, refCfg] = await Promise.all([
+          getFeatureFlags(), getAnnouncements(), getPaymentConfig(), getSocialLinks(), getAffiliateConfig(), getReferralConfig()
         ]);
         setFlags(f);
         setAnnouncements(a);
         setPaymentConfig(p || DEFAULT_PAYMENT_CONFIG);
         setSocials(s || {});
         setAffiliateConfig(aff || DEFAULT_AFFILIATE_CONFIG);
+        setReferralConfig(refCfg || DEFAULT_REFERRAL_CONFIG);
       } catch (e) {
         toast.error('Failed to load settings');
       } finally {
@@ -50,6 +55,15 @@ export function SettingsView() {
     }
     loadData();
   }, []);
+
+  const handleSaveReferralConfig = async () => {
+    try {
+      await saveReferralConfig(referralConfig);
+      toast.success('Peer referral configuration saved to /config/referral_settings');
+    } catch (e) {
+      toast.error('Failed to save referral configuration');
+    }
+  };
 
   const handleSaveAffiliateConfig = async () => {
     try {
@@ -298,6 +312,89 @@ export function SettingsView() {
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSaveAffiliateConfig} className="bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30">
               <Save className="w-4 h-4 mr-2"/> Save Affiliate Config
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2.6 Peer Referral & Study Pass Program */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Gift className="w-4 h-4 text-teal-400" /> Batchmate Referral & Study Pass Program
+        </h2>
+        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/30">
+            <div>
+              <div className="font-semibold text-sm text-foreground">Referral Program Active</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Enable or pause doctor-to-doctor study pass referrals across the platform.</div>
+            </div>
+            <Switch 
+              checked={referralConfig.enabled} 
+              onCheckedChange={(v) => setReferralConfig({ ...referralConfig, enabled: v })} 
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Referee Trial Days</label>
+              <Input 
+                type="number" 
+                value={referralConfig.refereeTrialDays} 
+                onChange={e => setReferralConfig({ ...referralConfig, refereeTrialDays: Math.max(1, Number(e.target.value)) })} 
+                className="bg-background" 
+              />
+              <p className="text-[11px] text-muted-foreground">Days of access granted immediately to batchmates upon pass redemption.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Referrer Milestone Bonus Days</label>
+              <Input 
+                type="number" 
+                value={referralConfig.referrerBonusDays} 
+                onChange={e => setReferralConfig({ ...referralConfig, referrerBonusDays: Math.max(0, Number(e.target.value)) })} 
+                className="bg-background" 
+              />
+              <p className="text-[11px] text-muted-foreground">Days credited to the referring doctor when referee completes milestone study block.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Max Passes Per Doctor</label>
+              <Input 
+                type="number" 
+                value={referralConfig.maxPassesPerUser} 
+                onChange={e => setReferralConfig({ ...referralConfig, maxPassesPerUser: Math.max(1, Number(e.target.value)) })} 
+                className="bg-background" 
+              />
+              <p className="text-[11px] text-muted-foreground">Maximum peer invite study passes each doctor can issue.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Milestone Study Threshold (Minutes)</label>
+              <Input 
+                type="number" 
+                value={referralConfig.minStudyMinutesToQualify} 
+                onChange={e => setReferralConfig({ ...referralConfig, minStudyMinutesToQualify: Math.max(1, Number(e.target.value)) })} 
+                className="bg-background" 
+              />
+              <p className="text-[11px] text-muted-foreground">Minimum study session duration required for referee to qualify reward.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/30">
+            <div>
+              <div className="font-semibold text-sm text-foreground">Allow Downstream Invites</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Allow newly invited peers on trial to issue study passes to their own colleagues.</div>
+            </div>
+            <Switch 
+              checked={referralConfig.allowDownstreamInvites} 
+              onCheckedChange={(v) => setReferralConfig({ ...referralConfig, allowDownstreamInvites: v })} 
+            />
+          </div>
+
+          <div className="flex justify-between items-center pt-2">
+            <span className="text-xs text-muted-foreground">Target document: <code className="text-teal-400 font-mono">/config/referral_settings</code></span>
+            <Button onClick={handleSaveReferralConfig} className="bg-teal-500/20 text-teal-400 hover:bg-teal-500/30">
+              <Save className="w-4 h-4 mr-2"/> Save Referral Settings
             </Button>
           </div>
         </div>

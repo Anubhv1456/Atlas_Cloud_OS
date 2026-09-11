@@ -44,14 +44,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Extract paymentId from request body or query
-    const paymentId = (req.body?.paymentId || req.query?.paymentId) as string | undefined;
-    if (!paymentId || typeof paymentId !== 'string') {
+    // Extract paymentId or sessionId from request body or query
+    let paymentId = (req.body?.paymentId || req.query?.paymentId) as string | undefined;
+    const sessionId = (req.body?.sessionId || req.query?.sessionId) as string | undefined;
+
+    if (!paymentId && !sessionId) {
       return res.status(400).json({
         verified: false,
         hasAccess: false,
         error: 'Bad Request',
-        message: 'paymentId is required for payment verification',
+        message: 'paymentId or sessionId is required for payment verification',
       });
     }
 
@@ -66,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const dodoMode = process.env.DODO_PAYMENTS_MODE === 'live' ? 'live_mode' : 'test_mode';
+    const dodoMode = process.env.DODO_PAYMENTS_ENVIRONMENT === 'live_mode' ? 'live_mode' : 'test_mode';
     const dodo = new DodoPayments({
       bearerToken: dodoApiKey,
       environment: dodoMode,
@@ -74,14 +76,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let payment: any = null;
     try {
-      payment = await dodo.payments.retrieve(paymentId);
+      if (paymentId) {
+        payment = await dodo.payments.retrieve(paymentId);
+      } else if (sessionId) {
+        const session = await dodo.checkoutSessions.retrieve(sessionId) as any;
+        // The session might contain the payment_id or payment object
+        paymentId = session?.payment_id || session?.payment?.payment_id || undefined;
+        
+        if (paymentId) {
+           payment = await dodo.payments.retrieve(paymentId);
+        } else if (session?.status === 'succeeded' || session?.status === 'complete') {
+           // Fallback if paymentId is not directly accessible but session is complete
+           payment = {
+              status: 'succeeded',
+              total_amount: session.total_amount,
+              currency: session.currency,
+              metadata: session.metadata || session.payment?.metadata,
+              customer: session.customer,
+           };
+           paymentId = session.id;
+        } else {
+           throw new Error('Could not resolve payment from session');
+        }
+      }
     } catch (e: any) {
-      console.warn('[Verify Payment] Could not retrieve payment by ID:', paymentId, e);
+      console.warn('[Verify Payment] Could not retrieve payment:', e);
       return res.status(404).json({
         verified: false,
         hasAccess: false,
         error: 'Payment Not Found',
-        message: `Could not retrieve payment details for paymentId: ${paymentId}`,
+        message: `Could not retrieve payment details for provided ID`,
       });
     }
 

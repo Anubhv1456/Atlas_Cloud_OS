@@ -148,22 +148,10 @@ export function DirectoryView() {
     }
   };
 
-  const handleImpersonate = async (targetUser: any) => {
-    await startImpersonation({
-      id: targetUser.id,
-      email: targetUser.email,
-      displayName: targetUser.displayName,
-      betaAccess: targetUser.betaAccess,
-      betaAccessExpiresAt: targetUser.betaAccessExpiresAt,
-      isTrial: targetUser.isTrial,
-      referredBy: targetUser.referredBy,
-      paymentStatus: targetUser.paymentStatus,
-      createdAt: targetUser.createdAt,
-      lastLoginAt: targetUser.lastLoginAt,
-      isAffiliate: targetUser.isAffiliate,
-      affiliateCode: targetUser.affiliateCode
-    });
-    setLocation('/');
+  // TODO: Replace client-side impersonation trigger with serverless vault inspection (e.g., /api/admin/inspect-vault)
+  // Client-side session override causes authentication and local IndexedDB state collisions with target user records.
+  const handleImpersonate = async (_targetUser: any) => {
+    toast.warning("Client-side Observer Mode is disabled to prevent auth collisions. Serverless vault inspection is scheduled.");
   };
 
   const affiliatesList = users.filter(u => u.isAffiliate);
@@ -332,8 +320,17 @@ export function DirectoryView() {
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-card border-border/50">
-                              <DropdownMenuItem onClick={() => handleImpersonate(user)} className="text-xs flex items-center gap-2 cursor-pointer text-amber-400 focus:text-amber-400 focus:bg-amber-500/10">
-                                <Eye className="w-3.5 h-3.5" /> Impersonate View
+                              <DropdownMenuItem 
+                                disabled
+                                onClick={() => handleImpersonate(user)} 
+                                className="text-xs flex items-center justify-between cursor-not-allowed opacity-50 text-muted-foreground focus:bg-transparent"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <Eye className="w-3.5 h-3.5" /> Impersonate View
+                                </span>
+                                <span className="text-[9px] uppercase font-mono tracking-wider text-amber-400/90 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20">
+                                  Deprecated
+                                </span>
                               </DropdownMenuItem>
                               
                               <DropdownMenuSeparator className="bg-border/50" />
@@ -422,24 +419,55 @@ export function DirectoryView() {
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Code</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-center">Seats Provisioned</th>
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-center">Active Seats</th>
-                  
+                  <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase text-right">Attributed Conversions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
                 {affiliatesList.map(aff => {
-                  const clients = users.filter(u => (u.referredBy === aff.affiliateCode || u.affiliateId === aff.affiliateCode) && !u.isAdmin && u.id !== aff.id);
+                  const clients = users.filter(u => 
+                    (u.referredBy === aff.affiliateCode || 
+                     u.affiliateId === aff.affiliateCode || 
+                     u.attribution?.code === aff.affiliateCode || 
+                     u.attribution?.referrerUid === aff.id) && 
+                    !u.isAdmin && u.id !== aff.id
+                  );
                   const activeClients = clients.filter(c => {
                     if (!c.betaAccess) return false;
                     const expiresAt = typeof c.betaAccessExpiresAt === 'number' ? c.betaAccessExpiresAt : c.betaAccessExpiresAt?.toMillis?.();
                     return !expiresAt || expiresAt > Date.now();
                   });
+                  const convertedClients = clients.filter(c => 
+                    c.attribution?.status === 'converted' || 
+                    c.hasPaidAccess || 
+                    c.paymentStatus === 'succeeded' || 
+                    c.paymentStatus === 'approved'
+                  );
+                  const conversionsCount = convertedClients.length;
+
                   return (
                     <tr key={aff.id} className="hover:bg-muted/10">
-                      <td className="py-3 px-4 font-medium text-sm text-foreground">{aff.displayName || aff.email}</td>
-                      <td className="py-3 px-4 text-xs text-indigo-400 font-mono">{aff.affiliateCode}</td>
+                      <td className="py-3 px-4 font-medium text-sm text-foreground">
+                        <div>{aff.displayName || aff.email}</div>
+                        {aff.displayName && <div className="text-xs text-muted-foreground">{aff.email}</div>}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-indigo-400 font-mono font-semibold">{aff.affiliateCode}</td>
                       <td className="py-3 px-4 text-center font-medium">{clients.length}</td>
-                      <td className="py-3 px-4 text-center"><Badge variant="outline" className="bg-teal-500/10 text-teal-400">{activeClients.length}</Badge></td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-400">${(activeClients.length * 12).toLocaleString()} <span className="text-xs text-muted-foreground font-normal">(₹{(activeClients.length * 100).toLocaleString('en-IN')})</span></td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge variant="outline" className="bg-teal-500/10 text-teal-400 border-teal-500/30">
+                          {activeClients.length}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <span className="font-semibold text-emerald-400 text-sm">
+                          {conversionsCount}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-1.5 font-normal">
+                          {conversionsCount === 1 ? 'Conversion' : 'Conversions'}
+                        </span>
+                        <div className="text-[11px] text-muted-foreground font-normal">
+                          {activeClients.length} Referred Active {activeClients.length === 1 ? 'User' : 'Users'}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}

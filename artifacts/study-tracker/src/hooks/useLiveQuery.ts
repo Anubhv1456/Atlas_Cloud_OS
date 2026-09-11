@@ -12,11 +12,6 @@ export function useLiveQuery<T>(queryFn: () => Promise<T> | T, deps: any[] = [])
     
     const run = async () => {
       try {
-        const isImpersonating = typeof window !== 'undefined' && sessionStorage.getItem('atlas_impersonated_target');
-        if (isImpersonating) {
-          if (isMounted) setData([] as any);
-          return;
-        }
         const result = await queryFn();
         if (isMounted) setData(result as T);
       } catch (e) {
