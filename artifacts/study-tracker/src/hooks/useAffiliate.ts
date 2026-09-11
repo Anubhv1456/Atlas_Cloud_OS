@@ -4,7 +4,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
 import { 
   doc, 
-  onSnapshot, 
+  getDoc, 
   collection, 
   query, 
   where, 
@@ -67,20 +67,15 @@ export function useAffiliate() {
 
     // Subscribe to admin configuration
     const configRef = doc(firestoreDb, 'config', 'affiliate_config');
-    const unsubscribeConfig = onSnapshot(configRef, (snap) => {
+    getDoc(configRef).then((snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        setConfig({
-          
-          
-          cookieWindowDays: data.cookieWindowDays ?? 60
-        });
+        setConfig({ cookieWindowDays: data.cookieWindowDays ?? 60 });
       }
-    });
+    }).catch(() => {});
 
     const userRef = doc(firestoreDb, 'users', user.uid);
-    const unsubscribeUser = onSnapshot(
-      userRef,
+    getDoc(userRef).then(
       (snap) => {
         if (snap.exists()) {
           const data = snap.data();
@@ -91,7 +86,7 @@ export function useAffiliate() {
           setAffiliateCode(null);
         }
         setLoading(false);
-      },
+      }).catch(
       (err) => {
         console.warn('Could not read affiliate state from Firestore:', err);
         setIsAffiliate(false);
@@ -101,8 +96,6 @@ export function useAffiliate() {
     );
 
     return () => {
-      unsubscribeConfig();
-      unsubscribeUser();
     };
   }, [user, isImpersonating, impersonatedUser]);
 

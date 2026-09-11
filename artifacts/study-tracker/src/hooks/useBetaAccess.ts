@@ -3,7 +3,7 @@ import type { User } from 'firebase/auth';
 import { useAuth } from './useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease, requestServerOfflineLease } from '@/lib/offlineLease';
 
 export interface BetaAccessState {
@@ -24,15 +24,11 @@ export interface BetaAccessState {
 // ── Singleton State & Subscription Hub ──────────────────────────────────────────
 // Ensures exactly 1 Firestore onSnapshot listener exists across all hook instances.
 let currentUserId: string | null = null;
-let activeUnsubscribe: (() => void) | null = null;
+let isSingletonSetup = false;
 const subscribers = new Set<(state: BetaAccessState) => void>();
 
 export function cleanupBetaAccessSubscription() {
-  if (activeUnsubscribe) {
-    activeUnsubscribe();
-    activeUnsubscribe = null;
-    console.log('[useBetaAccess] Cleaned up real-time entitlements listener.');
-  }
+  isSingletonSetup = false;
   currentUserId = null;
 }
 
@@ -86,8 +82,64 @@ function isCurrentlyInStudySession() {
   return path.startsWith('/subjects/') || path.startsWith('/mistakes') || path.startsWith('/radar');
 }
 
+export async function forceFetchEntitlements(uid: string, userObj?: User | null) {
+  if (!firestoreDb) return;
+  try {
+    const userRef = doc(firestoreDb, 'users', uid);
+    const snap = await getDoc(userRef);
+    if (currentUserId !== uid) return;
+
+    if (snap.exists()) {
+      const data = snap.data();
+      const isBeta = data.betaAccess === true;
+
+      if (isBeta) {
+        localStorage.setItem(`beta_access_${uid}`, 'true');
+        issueOfflineLease(uid);
+        if (userObj) {
+          requestServerOfflineLease(userObj).catch(() => {});
+        }
+      } else {
+        localStorage.removeItem(`beta_access_${uid}`);
+        revokeOfflineLease(uid);
+      }
+
+      updateSingleton({
+        hasAccess: isBeta,
+        paymentStatus: data.paymentStatus || null,
+        paymentRejectionNote: data.paymentRejectionNote || null,
+        vaultActivationRequired: Boolean(data.vaultActivationRequired),
+        vaultProvenance: data.vaultImportProvenance || null,
+        offlineLeaseValid: true,
+        offlineHoursRemaining: 72,
+        loading: false,
+        trialExpiresAt: data.trialExpiresAt || null,
+        trialStartedAt: data.trialStartedAt || null,
+        isTrialAuthoritative: Boolean(data.trialExpiresAt),
+      });
+    } else {
+      localStorage.removeItem(`beta_access_${uid}`);
+      revokeOfflineLease(uid);
+      updateSingleton({
+        hasAccess: false,
+        paymentStatus: null,
+        paymentRejectionNote: null,
+        vaultActivationRequired: false,
+        vaultProvenance: null,
+        loading: false,
+        trialExpiresAt: null,
+        trialStartedAt: null,
+        isTrialAuthoritative: false,
+      });
+    }
+  } catch (error) {
+    console.warn("Singleton Firestore access listener error (offline):", error);
+    updateSingleton({ loading: false });
+  }
+}
+
 function setupSingletonListener(uid: string, userObj?: User | null) {
-  if (currentUserId === uid && activeUnsubscribe) {
+  if (currentUserId === uid && isSingletonSetup) {
     return;
   }
 
@@ -98,6 +150,7 @@ function setupSingletonListener(uid: string, userObj?: User | null) {
 
 
   currentUserId = uid;
+  isSingletonSetup = true;
   singletonState = getInitialStateForUser(uid);
   subscribers.forEach((cb) => cb(singletonState));
 
@@ -134,61 +187,8 @@ function setupSingletonListener(uid: string, userObj?: User | null) {
 
 
   const userRef = doc(firestoreDb, 'users', uid);
-  activeUnsubscribe = onSnapshot(
-    userRef,
-    (snap) => {
-      if (currentUserId !== uid) return;
-
-      if (snap.exists()) {
-        const data = snap.data();
-        const isBeta = data.betaAccess === true;
-
-        if (isBeta) {
-          localStorage.setItem(`beta_access_${uid}`, 'true');
-          issueOfflineLease(uid);
-          if (userObj) {
-            requestServerOfflineLease(userObj).catch(() => {});
-          }
-        } else {
-          localStorage.removeItem(`beta_access_${uid}`);
-          revokeOfflineLease(uid);
-        }
-
-        updateSingleton({
-          hasAccess: isBeta,
-          paymentStatus: data.paymentStatus || null,
-          paymentRejectionNote: data.paymentRejectionNote || null,
-          vaultActivationRequired: Boolean(data.vaultActivationRequired),
-          vaultProvenance: data.vaultImportProvenance || null,
-          offlineLeaseValid: true,
-          offlineHoursRemaining: 72,
-          loading: false,
-          trialExpiresAt: data.trialExpiresAt || null,
-          trialStartedAt: data.trialStartedAt || null,
-          isTrialAuthoritative: Boolean(data.trialExpiresAt),
-        });
-      } else {
-        localStorage.removeItem(`beta_access_${uid}`);
-        revokeOfflineLease(uid);
-
-        updateSingleton({
-          hasAccess: false,
-          paymentStatus: null,
-          paymentRejectionNote: null,
-          vaultActivationRequired: false,
-          vaultProvenance: null,
-          loading: false,
-          trialExpiresAt: null,
-          trialStartedAt: null,
-          isTrialAuthoritative: false,
-        });
-      }
-    },
-    (error) => {
-      console.warn("Singleton Firestore access listener error (offline):", error);
-      updateSingleton({ loading: false });
-    }
-  );
+  // Execute one-shot fetch
+  forceFetchEntitlements(uid, userObj);
 }
 
 export function useBetaAccess() {
@@ -352,6 +352,12 @@ export function useBetaAccess() {
     offlineHoursRemaining: state.offlineHoursRemaining,
     loading: state.loading, 
     isSoftLocked: state.isSoftLocked,
-    clearVaultActivationFlag
+    clearVaultActivationFlag,
+    refetchAccess: () => {
+      if (user && user.uid) {
+        updateSingleton({ loading: true });
+        forceFetchEntitlements(user.uid, user);
+      }
+    }
   };
 }
