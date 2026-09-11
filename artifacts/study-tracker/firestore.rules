@@ -12,6 +12,21 @@ service cloud.firestore {
     }
 
     // Server-side check for administrator privileges
+    
+    // Server-side check for moderator privileges (with short-circuit optimization)
+    function isModerator() {
+      return isAuthenticated() && (
+        request.auth.token.moderator == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator')
+      );
+    }
+
+    // Helper for any staff member
+    function isStaff() {
+      return isAdmin() || isModerator();
+    }
+
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
@@ -98,7 +113,8 @@ service cloud.firestore {
         request.resource.data.proofUrl.size() > 0;
 
       // Only admins can approve, reject, or delete payment submissions
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || (isModerator() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedAt', 'moderatorNotes']));
+      allow delete: if isAdmin();
     }
 
     // ── COMMUNITY INSIGHT MARKERS ─────────────────────────────────────────────
@@ -111,14 +127,14 @@ service cloud.firestore {
         request.resource.data.content is string &&
         request.resource.data.content.size() > 0;
 
-      // Users can vote helpful/save/report; authors and admins can update content; only author/admin can delete
+      // Users can vote helpful/save/report; authors and staff can update content; only author/admin can delete
       allow update: if isAuthenticated() && (
         // Allow community reactions (helpfulBy, savedBy, reportedBy arrays, status, and quality score updates)
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'helpfulBy', 'notHelpfulBy', 'savedBy', 'reportedBy', 'usefulCount', 'qualityScore', 'readCount', 'status'
         ]) ||
         resource.data.userId == request.auth.uid ||
-        isAdmin()
+        isStaff()
       );
 
       allow delete: if isAuthenticated() && (
@@ -183,7 +199,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (
         resource == null ||
         resource.data.userId == request.auth.uid ||
-        isAdmin()
+        isStaff()
       );
       
       allow create: if isAuthenticated() &&
