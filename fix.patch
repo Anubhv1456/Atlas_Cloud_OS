@@ -1,0 +1,14 @@
+--- src/lib/ai/geminiClient.ts
++++ src/lib/ai/geminiClient.ts
+@@ -383,9 +383,10 @@
+           source: 'LOCAL_TOKENIZER',
+         };
+       }
++    } else {
++      throw err;
+     }
+-
+-    throw err;
+   }
+ 
+   const rawJsonText = rawData?.candidates?.[0]?.content?.parts?.[0]?.text;

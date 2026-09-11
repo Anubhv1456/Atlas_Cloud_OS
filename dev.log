@@ -1,0 +1,51 @@
+
+> workspace@0.0.0 dev
+> npm run dev:server & npm run dev:study-tracker #
+
+
+> workspace@0.0.0 dev:study-tracker
+> npm run dev --workspace=artifacts/study-tracker -- --port 3000 --host 0.0.0.0
+
+
+> workspace@0.0.0 dev:server
+> PORT=3001 npx tsx watch artifacts/api-server/src/index.ts
+
+
+> @workspace/study-tracker@0.1.0 dev
+> vite --port 3000 --host 0.0.0.0 --port 3000 --host 0.0.0.0
+
+error when starting dev server:
+Error: Port 3000 is already in use
+    at Server.onError$1 (file:///app/applet/node_modules/.bun/vite@7.3.6+3943ab9b75ef2875/node_modules/vite/dist/node/chunks/config.js:15006:28)
+    at Server.emit (node:events:519:28)
+    at emitErrorNT (node:net:1977:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+npm error Lifecycle script `dev` failed with error:
+npm error code 1
+npm error path /app/applet/artifacts/study-tracker
+npm error workspace @workspace/study-tracker@0.1.0
+npm error location /app/applet/artifacts/study-tracker
+npm error command failed
+npm error command sh -c vite --port 3000 --host 0.0.0.0 --port 3000 --host 0.0.0.0
+[08:23:13.095] [32mINFO[39m (6550): [36mStarting server...[39m
+    [35mport[39m: "3001"
+    [35mnodeEnv[39m: "development"
+    [35mcwd[39m: "/app/applet"
+[08:23:13.118] [32mINFO[39m (6550): [36mServer listening on 0.0.0.0[39m
+    [35mport[39m: "3001"
+[08:23:13.118] [31mERROR[39m (6550): [36mServer failed to start[39m
+    err: {
+      "type": "Error",
+      "message": "listen EADDRINUSE: address already in use 0.0.0.0:3001",
+      "stack":
+          Error: listen EADDRINUSE: address already in use 0.0.0.0:3001
+              at Server.setupListenHandle [as _listen2] (node:net:1941:16)
+              at listenInCluster (node:net:1998:12)
+              at node:net:2207:7
+              at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+      "code": "EADDRINUSE",
+      "errno": -98,
+      "syscall": "listen",
+      "address": "0.0.0.0",
+      "port": 3001
+    }

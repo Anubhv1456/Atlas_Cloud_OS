@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, googleProvider, firestoreDb } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/db/schema';
+import { localDb } from '@/db/localDb';
+import { cleanupBetaAccessSubscription } from '@/hooks/useBetaAccess';
 
 interface AuthContextType {
   user: User | null;
@@ -65,9 +68,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      // 1. Teardown active Firestore subscriptions
+      cleanupBetaAccessSubscription();
+
+      // 2. Forcibly clear all IndexedDB tables to prevent cross-account contamination
+      await Promise.all([
+        db.subjects.clear(),
+        db.systems.clear(),
+        db.curriculumSets.clear(),
+        db.revisionSets.clear(),
+        db.history.clear(),
+        db.pyqYears.clear(),
+        db.scoreLogs.clear(),
+        db.uiPreferences.clear(),
+        db.topicProgress.clear(),
+        db.mistakeLogs.clear(),
+        db.recommendationSkips.clear(),
+        db.operationalModes.clear(),
+        localDb.sync_meta.clear(),
+        localDb.mutation_queue.clear(),
+        localDb.local_snapshots.clear(),
+      ]);
+
+      // 3. Clear sensitive session & local storage (preserving UI theme only)
+      sessionStorage.clear();
+      const keysToRemove = Object.keys(localStorage).filter(
+        (key) =>
+          (key.startsWith('atlas_') || key.startsWith('beta_access_')) &&
+          key !== 'atlas_theme_mode'
+      );
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      // 4. Terminate Firebase session
+      await firebaseSignOut(auth);
+
+      // 5. Replace route to prevent back-button state resurrection
+      window.location.replace('/login');
     } catch (error) {
-      console.error('Error signing out', error);
+      console.error('[useAuth] Error during secure sign-out teardown:', error);
+      window.location.replace('/login');
     }
   };
 

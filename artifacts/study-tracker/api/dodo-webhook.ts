@@ -83,9 +83,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // 3. Process Entitlement Grant on 'payment.succeeded' or 'checkout.session.completed'
     const eventType = event.type || event.event;
+    const { db } = initFirebaseAdmin();
 
+    // ============================================
+    // 1. Grants: Handle Payment Successful States
+    // ============================================
     if (eventType === 'payment.succeeded' || eventType === 'checkout.session.completed') {
       const paymentData = event.data || {};
       const metadata = paymentData.metadata || {};
@@ -96,8 +99,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const paymentId = paymentData.payment_id || paymentData.id || `dodo_${Date.now()}`;
       const amount = paymentData.total_amount ?? paymentData.amount ?? 4900;
       const currency = paymentData.currency || 'USD';
-
-      const { db } = initFirebaseAdmin();
 
       // Idempotency check: Skip mutation if payment was already fulfilled
       const existingPayment = await db.collection('processed_payments').doc(paymentId).get();
@@ -162,6 +163,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log(`[Dodo Webhook] Authoritative license granted for user: ${userId} (Payment: ${paymentId})`);
       return res.status(200).json({ received: true, userId, status: 'granted' });
+    }
+
+    // ============================================
+    // 2. Revocations: Handle Refunds and Disputes
+    // ============================================
+    if (eventType === 'payment.refunded' || eventType === 'payment.disputed' || eventType === 'subscription.cancelled') {
+      const paymentData = event.data || {};
+      const metadata = paymentData.metadata || {};
+
+      let userId = metadata.user_id || metadata.userId;
+      const userEmail = metadata.user_email || metadata.userEmail || paymentData.customer?.email;
+      const paymentId = paymentData.payment_id || paymentData.id || `dodo_revoke_${Date.now()}`;
+      
+      if (!userId && userEmail) {
+        const userQuery = await db.collection('users').where('email', '==', userEmail).limit(1).get();
+        if (!userQuery.empty) userId = userQuery.docs[0].id;
+      }
+
+      if (userId) {
+        await db.collection('users').doc(userId).set({
+          betaAccess: false,
+          hasPaidAccess: false,
+          licenseRevoked: true,
+          revokedAt: FieldValue.serverTimestamp(),
+          paymentStatus: eventType === 'payment.refunded' ? 'refunded' : (eventType === 'payment.disputed' ? 'disputed' : 'cancelled'),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        
+        await db.collection('processed_payments').doc(paymentId).set(
+           { paymentId, userId, eventType, processedAt: FieldValue.serverTimestamp() }, 
+           { merge: true }
+        );
+
+        console.log(`[Dodo Webhook] Revoked license for user: ${userId} due to ${eventType}`);
+        return res.status(200).json({ received: true, userId, status: 'revoked' });
+      }
     }
 
     // Acknowledge other event types idempotently

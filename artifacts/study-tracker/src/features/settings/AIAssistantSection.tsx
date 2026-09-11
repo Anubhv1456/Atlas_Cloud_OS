@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+import { clearAICache } from '@/lib/ai/aiCache';
 import { SettingsRow } from './SettingsLayout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -42,6 +43,17 @@ export function AIAssistantSection() {
 
   const handleSaveKey = (keyOverride?: string) => {
     const keyToSave = (keyOverride !== undefined ? keyOverride : localKey || '').trim();
+    
+    // Enforce Google AI Studio standard key format
+    if (keyToSave && !/^AIza[a-zA-Z0-9_\-]{35}$/.test(keyToSave)) {
+      toast.error('Invalid format. Gemini API keys typically begin with "AIza" and contain 39 characters.');
+      return;
+    }
+
+    if (!keyToSave) {
+      clearAICache();
+    }
+
     updateSettings({ 
       geminiApiKey: keyToSave,
       validationStatus: keyToSave ? 'unconfigured' : 'unconfigured',

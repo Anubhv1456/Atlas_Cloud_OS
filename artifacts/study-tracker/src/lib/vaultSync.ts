@@ -1,3 +1,4 @@
+import { decompressSync, strFromU8 } from 'fflate';
 import { z } from 'zod';
 import { db, dbEvents } from '@/db/schema';
 import { localDb } from '@/db/localDb';
@@ -195,7 +196,18 @@ export async function restoreCompleteVault(
   jsonText: string,
   user: User | null
 ): Promise<RestoreVaultResult> {
-  const parsed = JSON.parse(jsonText);
+  let parsed = JSON.parse(jsonText);
+  if (parsed.compressed && parsed.encoding === 'base64' && parsed.data) {
+    const binaryString = atob(parsed.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const decompressedUint8 = decompressSync(bytes);
+    const decompressedStr = strFromU8(decompressedUint8);
+    parsed = JSON.parse(decompressedStr);
+  }
+
   const verification = await verifyVaultBackupProvenance(parsed, user?.uid || null);
   
   // 1. Zod Runtime Schema Validation & Coercion (Capsule Checkpoint)

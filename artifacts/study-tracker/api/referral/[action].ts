@@ -12,14 +12,10 @@ function getAction(req: VercelRequest): string {
 }
 
 async function handleClaim(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const user = await requireAuth(req, res);
-  if (!user) {
-    return; // 401 sent
-  }
+  if (!user) return; // 401 sent
 
   const body = await parseRequestBody(req);
   const code = typeof body?.code === 'string' ? body.code.trim().toUpperCase() : '';
@@ -32,7 +28,7 @@ async function handleClaim(req: VercelRequest, res: VercelResponse) {
     const { db } = initFirebaseAdmin();
 
     const result = await db.runTransaction(async (transaction) => {
-      // 1. Read Referral Config
+      // 1. Read Global Config
       const configRef = db.collection('referral_config').doc('global');
       const configSnap = await transaction.get(configRef);
       const config = configSnap.exists
@@ -40,43 +36,62 @@ async function handleClaim(req: VercelRequest, res: VercelResponse) {
         : { enabled: true, maxPassesPerUser: 10, refereeTrialDays: 15, referrerBonusDays: 14 };
 
       if (config.enabled === false) {
-        throw new Error('Referral program is currently paused');
+        return { success: false, message: 'Referral program is currently paused', status: 400 };
       }
 
-      // 2. Read Referee Document
+      // 2. Read Referee (Target User)
       const refereeRef = db.collection('users').doc(user.uid);
       const refereeSnap = await transaction.get(refereeRef);
       const refereeData = refereeSnap.exists ? refereeSnap.data() || {} : {};
 
       if (refereeData.referredByCode) {
-        throw new Error('Invite pass already claimed on this account');
+        return { success: false, message: 'Invite pass already claimed on this account', status: 400 };
       }
 
-      // 3. Read Referral Code
+      // 3. Brute Force Throttling Check
+      const failedAttempts = refereeData.failedReferralAttempts || 0;
+      const lastFailedAttempt = refereeData.lastFailedReferralAttempt?.toMillis?.() || 0;
+      const oneHour = 60 * 60 * 1000;
+
+      if (failedAttempts >= 5 && Date.now() - lastFailedAttempt < oneHour) {
+        return { success: false, message: 'Too many failed attempts. Please try again later.', status: 429 };
+      }
+
+      // 4. Validate Code Integrity
       const codeRef = db.collection('referralCodes').doc(code);
       const codeSnap = await transaction.get(codeRef);
+      
       if (!codeSnap.exists) {
-        throw new Error('Invalid or expired invite pass');
+        transaction.set(refereeRef, {
+          failedReferralAttempts: FieldValue.increment(1),
+          lastFailedReferralAttempt: FieldValue.serverTimestamp()
+        }, { merge: true });
+        return { success: false, message: 'Invalid or expired invite pass', status: 400 };
       }
 
       const codeData = codeSnap.data() || {};
+      
+      // Self-Referral Prevention
       if (codeData.ownerUid === user.uid) {
-        throw new Error('Cannot claim your own invite pass');
+        transaction.set(refereeRef, {
+          failedReferralAttempts: FieldValue.increment(1),
+          lastFailedReferralAttempt: FieldValue.serverTimestamp()
+        }, { merge: true });
+        return { success: false, message: 'Cannot claim your own invite pass', status: 400 };
       }
 
       const maxPasses = config.maxPassesPerUser || 10;
       if ((codeData.totalClaimed || 0) >= maxPasses) {
-        throw new Error('This batchmate has reached their study pass limit');
+        return { success: false, message: 'This batchmate has reached their study pass limit', status: 400 };
       }
 
-      // 4. Calculate Timestamps
+      // 5. Calculate Execution Timestamps
       const trialDays = config.refereeTrialDays || 15;
-      const now = Date.now();
-      const expiryTimestamp = now + trialDays * 24 * 60 * 60 * 1000;
+      const expiryTimestamp = Date.now() + trialDays * 24 * 60 * 60 * 1000;
       const referralRecordId = `${codeData.ownerUid}_${user.uid}`;
       const referralRecordRef = db.collection('referrals').doc(referralRecordId);
 
-      // 5. Atomic State Commits
+      // 6. Commit Atomic State
       transaction.set(referralRecordRef, {
         id: referralRecordId,
         referrerUid: codeData.ownerUid,
@@ -103,6 +118,7 @@ async function handleClaim(req: VercelRequest, res: VercelResponse) {
           referredByUid: codeData.ownerUid,
           referralStatus: 'claimed',
           onboardingCompleted: true,
+          failedReferralAttempts: 0, // Reset counter on success
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -113,15 +129,21 @@ async function handleClaim(req: VercelRequest, res: VercelResponse) {
         message: `Activated ${trialDays}-Day Study Pass!`,
         trialDaysAwarded: trialDays,
         expiryTimestamp,
+        status: 200
       };
     });
+
+    // Bubble up explicit HTTP status codes
+    if (!result.success) {
+      return res.status(result.status || 400).json({ success: false, message: result.message });
+    }
 
     return res.status(200).json(result);
   } catch (error: any) {
     console.error('[API referral/claim] Error:', error);
-    return res.status(400).json({
+    return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to apply referral pass.',
+      message: 'Failed to apply referral pass due to an internal error.',
     });
   }
 }

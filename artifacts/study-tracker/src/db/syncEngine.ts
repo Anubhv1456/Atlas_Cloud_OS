@@ -1,3 +1,4 @@
+import { compressSync, decompressSync, strToU8, strFromU8 } from 'fflate';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, firestoreDb } from '@/lib/firebase';
 import { localDb } from './localDb';
@@ -112,12 +113,22 @@ class SyncEngine {
       }
 
       const serialized = JSON.stringify(backupPayload);
+      
+      const uint8 = strToU8(serialized);
+      const compressedUint8 = compressSync(uint8, { level: 6 });
+      let binaryString = '';
+      for (let i = 0; i < compressedUint8.length; i++) {
+        binaryString += String.fromCharCode(compressedUint8[i]);
+      }
+      const base64Data = btoa(binaryString);
 
       // Write entire backup to a single document location in Firestore
       const docRef = doc(firestoreDb, `users/${uid}/vaultBackup`, 'latest');
       await setDoc(docRef, {
-        data: serialized,
-        snapshotVersion: 1,
+        version: 2,
+        compressed: true,
+        encoding: 'base64',
+        data: base64Data,
         updatedAt: serverTimestamp(),
         itemCount: totalRecords
       });
@@ -148,7 +159,19 @@ class SyncEngine {
       if (docSnap.exists()) {
         const docData = docSnap.data();
         if (docData && docData.data) {
-          const parsed = JSON.parse(docData.data);
+          let parsed;
+          if (docData.compressed && docData.encoding === 'base64') {
+            const binaryString = atob(docData.data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const decompressedUint8 = decompressSync(bytes);
+            const jsonStr = strFromU8(decompressedUint8);
+            parsed = JSON.parse(jsonStr);
+          } else {
+            parsed = JSON.parse(docData.data);
+          }
           
           // Fast bulkPut inside IndexedDB
           for (const tableName of Object.keys(parsed)) {

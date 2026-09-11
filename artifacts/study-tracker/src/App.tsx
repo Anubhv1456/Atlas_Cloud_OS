@@ -18,7 +18,7 @@ import { syncEngine } from '@/db/syncEngine';
 
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
-import { AudioPermissionBanner } from '@/components/AudioPermissionBanner';
+
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { FeatureFlagsProvider } from '@/hooks/useFeatureFlags';
 import { loadUniversalOntology } from '@/lib/exam-presets';
@@ -317,7 +317,7 @@ function ProtectedApp() {
             isCollapsed ? "md:pl-[72px]" : "md:pl-64 lg:pl-72"
           )}
         >
-          <AudioPermissionBanner />
+          
           <OfflineLeaseBanner />
           <motion.main
             key={location}
@@ -359,13 +359,20 @@ function App() {
     // Capture partner/affiliate referral parameter across any landing route
     if (typeof window !== 'undefined') {
       try {
-        const searchParams = new URLSearchParams(window.location.search);
-        const via = searchParams.get('via') || searchParams.get('ref') || searchParams.get('affiliate');
+        const url = new URL(window.location.href);
+        const via = url.searchParams.get('via') || url.searchParams.get('ref') || url.searchParams.get('affiliate');
+        
         if (via) {
           localStorage.setItem('atlas_affiliate_id', via);
+          
+          // Strip referral query parameters cleanly from address bar
+          url.searchParams.delete('via');
+          url.searchParams.delete('ref');
+          url.searchParams.delete('affiliate');
+          window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
         }
-      } catch {
-        // Ignore URL parsing fallback
+      } catch (err) {
+        console.warn('[Referral Capture] Failed to parse parameters:', err);
       }
     }
   }, []);

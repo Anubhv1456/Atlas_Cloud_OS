@@ -8,6 +8,7 @@ import { issueOfflineLease, verifyOfflineLease, revokeOfflineLease, requestServe
 
 export interface BetaAccessState {
   hasAccess: boolean;
+  isSoftLocked?: boolean;
   paymentStatus: 'pending' | 'approved' | 'rejected' | 'succeeded' | null;
   paymentRejectionNote: string | null;
   vaultActivationRequired: boolean;
@@ -65,6 +66,7 @@ function getInitialStateForUser(uid: string | null): BetaAccessState {
     offlineLeaseValid: leaseCheck.isValid,
     offlineHoursRemaining: leaseCheck.hoursRemaining,
     loading: !isLocallyValid, // True (loading) only if we do not have a valid cryptographic lease cached on Frame 0
+    isSoftLocked: false,
     trialExpiresAt: null,
     trialStartedAt: null,
     isTrialAuthoritative: false,
@@ -78,18 +80,58 @@ function updateSingleton(newState: Partial<BetaAccessState>) {
   subscribers.forEach((cb) => cb(singletonState));
 }
 
+function isCurrentlyInStudySession() {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return path.startsWith('/subjects/') || path.startsWith('/mistakes') || path.startsWith('/radar');
+}
+
 function setupSingletonListener(uid: string, userObj?: User | null) {
   if (currentUserId === uid && activeUnsubscribe) {
     return;
   }
 
   cleanupBetaAccessSubscription();
+  if (typeof window !== 'undefined' && (window as any)._leaseInterval) {
+    clearInterval((window as any)._leaseInterval);
+  }
+
 
   currentUserId = uid;
   singletonState = getInitialStateForUser(uid);
   subscribers.forEach((cb) => cb(singletonState));
 
   if (!firestoreDb) return;
+
+  // Poll offline lease expiration every minute
+  (window as any)._leaseInterval = setInterval(() => {
+    if (currentUserId !== uid) return;
+    const leaseCheck = verifyOfflineLease(uid);
+    const isLocallyValid = leaseCheck.isValid && !leaseCheck.isExpired && !leaseCheck.isTampered;
+    
+    if (!isLocallyValid && singletonState.hasAccess) {
+      if (isCurrentlyInStudySession()) {
+        updateSingleton({
+          isSoftLocked: true,
+          offlineLeaseValid: false,
+          offlineHoursRemaining: 0,
+        });
+      } else {
+        updateSingleton({
+          hasAccess: false,
+          isSoftLocked: false,
+          offlineLeaseValid: false,
+          offlineHoursRemaining: 0,
+        });
+      }
+    } else if (isLocallyValid) {
+      updateSingleton({
+        offlineLeaseValid: true,
+        offlineHoursRemaining: leaseCheck.hoursRemaining,
+      });
+    }
+  }, 60000);
+
 
   const userRef = doc(firestoreDb, 'users', uid);
   activeUnsubscribe = onSnapshot(
@@ -309,6 +351,7 @@ export function useBetaAccess() {
     offlineLeaseValid: state.offlineLeaseValid,
     offlineHoursRemaining: state.offlineHoursRemaining,
     loading: state.loading, 
+    isSoftLocked: state.isSoftLocked,
     clearVaultActivationFlag
   };
 }

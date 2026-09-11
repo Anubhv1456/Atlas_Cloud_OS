@@ -8,7 +8,7 @@ export function OfflineLeaseBanner() {
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
-  const { offlineLeaseValid, offlineHoursRemaining } = useBetaAccess();
+  const { offlineLeaseValid, offlineHoursRemaining, isSoftLocked } = useBetaAccess();
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export function OfflineLeaseBanner() {
     }
   };
 
-  // If online, no banner needed — zero visual noise
-  if (isOnline) {
+  // If online and not soft locked, no banner needed — zero visual noise
+  if (isOnline && !isSoftLocked) {
     return null;
   }
 
@@ -72,11 +72,13 @@ export function OfflineLeaseBanner() {
 
             <div className="flex items-center gap-2 truncate">
               <span className="font-semibold text-foreground">
-                {isLeaseCritical ? 'Offline Sync Required' : 'Offline Vault Active'}
+                {isSoftLocked ? 'Session Locked' : isLeaseCritical ? 'Offline Sync Required' : 'Offline Vault Active'}
               </span>
               <span className="hidden sm:inline text-muted-foreground">•</span>
               <span className="text-muted-foreground truncate">
-                {isLeaseCritical
+                {isSoftLocked
+                  ? 'Offline lease expired. Please connect to the internet to sync and continue after this session.'
+                  : isLeaseCritical
                   ? offlineLeaseValid
                     ? `Lease expires in ${offlineHoursRemaining}h. Connect to internet to preserve SDSR recommendations.`
                     : 'Lease expired. Connect to internet to sync learning schedule.'

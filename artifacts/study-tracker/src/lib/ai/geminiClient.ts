@@ -345,9 +345,20 @@ export async function executeCognitiveCompiler(
       options.maxRetries ?? 2
     );
   } catch (err: any) {
-    // If Model not found (404) or persistent rate limit, execute fallback switch
-    if (err.message?.includes('403') || err.message?.includes('400') || err.message?.includes('API_KEY_INVALID')) { throw new Error('API Key invalid or quota exceeded. Please check your AI Studio settings.'); }
-    if (err.message?.startsWith('MODEL_NOT_FOUND') || err.message?.includes('429') || err.message?.includes('503')) {
+    const errorMsg = err?.message || String(err);
+
+    // Surface direct quota exhaustion without mask
+    if (errorMsg.includes('429') || errorMsg.toLowerCase().includes('quota') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
+      throw new Error('Your Google AI Studio quota is temporarily exhausted. Please wait 60 seconds or switch keys in Settings.');
+    }
+
+    // Surface invalid credentials
+    if (errorMsg.includes('403') || errorMsg.includes('API_KEY_INVALID') || errorMsg.includes('PERMISSION_DENIED')) { 
+      throw new Error('API Key invalid or unauthorized. Please verify your key in Settings.'); 
+    }
+
+    // Retain fallback for model availability (503/404)
+    if (errorMsg.includes('MODEL_NOT_FOUND') || errorMsg.includes('503')) {
       try {
         const fallbackModel: any = 'gemini-flash';
         activeModel = fallbackModel;
@@ -373,15 +384,7 @@ export async function executeCognitiveCompiler(
         };
       }
     } else {
-      console.warn('GeminiClient Cloud API failed, executing local cognitive compiler:', err);
-      const localResult = await executeLocalMedicalCognitiveEngine(input, conversationHistory);
-      return {
-        delta: localResult.delta,
-        action: localResult.action || null,
-        modelUsed: 'LOCAL_TOKENIZER',
-        latencyMs: performance.now() - startTime,
-        source: 'LOCAL_TOKENIZER',
-      };
+      throw err;
     }
   }
 
