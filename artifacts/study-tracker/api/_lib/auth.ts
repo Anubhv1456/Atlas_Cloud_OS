@@ -78,6 +78,7 @@ export interface VercelRequest {
   query?: Record<string, string | string[] | undefined>;
   body?: any;
   method?: string;
+  url?: string;
 }
 
 export interface VercelResponse {
