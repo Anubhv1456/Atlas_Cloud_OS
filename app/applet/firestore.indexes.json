@@ -1,0 +1,35 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "vaultBackup",
+      "fieldPath": "data",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "unmatched_payments",
+      "fieldPath": "rawPayload",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "telemetry_logs",
+      "fieldPath": "knowledge_gaps",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "telemetry_logs",
+      "fieldPath": "error_categories",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "telemetry_logs",
+      "fieldPath": "skip_reasons",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "adminAuditLogs",
+      "fieldPath": "details",
+      "indexes": []
+    }
+  ]
+}

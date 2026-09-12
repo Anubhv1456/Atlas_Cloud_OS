@@ -9,3 +9,19 @@ serviceAccountKey*.json
 node_modules
 dist
 .cache
+
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Build & Testing Caches
+.vercel
+.turbo
+.next
+coverage/
+*.tsbuildinfo
+*.log
+
+# Firebase & Deployment Caches
+.firebase/
+firebase-export*
