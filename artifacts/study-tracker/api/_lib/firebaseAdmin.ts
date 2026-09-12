@@ -1,8 +1,10 @@
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getAuth, type Auth } from 'firebase-admin/auth';
 
 let adminApp: App | undefined;
 let adminDb: Firestore | undefined;
+let adminAuth: Auth | undefined;
 
 function formatPrivateKey(key?: string): string | undefined {
   if (!key) return undefined;
@@ -16,7 +18,7 @@ function formatPrivateKey(key?: string): string | undefined {
   return formatted;
 }
 
-export function initFirebaseAdmin(): { db: Firestore } {
+export function initFirebaseAdmin(): { db: Firestore; auth: Auth } {
   if (!getApps().length) {
     const projectId = process.env.FIREBASE_PROJECT_ID || 'atlas-cloud-6f1c6';
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@atlas-cloud-6f1c6.iam.gserviceaccount.com';
@@ -42,6 +44,9 @@ export function initFirebaseAdmin(): { db: Firestore } {
   if (!adminDb) {
     adminDb = getFirestore(adminApp);
   }
+  if (!adminAuth) {
+    adminAuth = getAuth(adminApp!);
+  }
 
-  return { db: adminDb };
+  return { db: adminDb, auth: adminAuth };
 }

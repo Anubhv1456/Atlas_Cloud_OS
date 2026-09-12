@@ -2,6 +2,7 @@ export interface AuthenticatedUser {
   uid: string;
   email?: string;
   emailVerified?: boolean;
+  claims?: Record<string, any>;
 }
 
 const DEFAULT_FIREBASE_API_KEY = 'AIzaSyB23xBbSVe1eehDAiyUSz_HOvKyPdfxytM';
@@ -66,6 +67,7 @@ export async function verifyAuthToken(req: { headers: Record<string, string | st
       uid: user.localId,
       email: user.email,
       emailVerified: user.emailVerified,
+      claims: user.customAttributes ? (() => { try { return JSON.parse(user.customAttributes); } catch { return {}; } })() : {}
     };
   } catch (error) {
     console.error('[Auth Middleware] Error verifying token:', error);
