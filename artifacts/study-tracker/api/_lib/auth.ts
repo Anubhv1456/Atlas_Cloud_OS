@@ -56,6 +56,7 @@ export async function verifyAuthToken(req: { headers: Record<string, string | st
         localId: string;
         email?: string;
         emailVerified?: boolean;
+        customAttributes?: string;
       }>;
     };
     if (!data.users || data.users.length === 0) {

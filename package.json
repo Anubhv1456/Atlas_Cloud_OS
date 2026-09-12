@@ -84,5 +84,68 @@
     "tsx": "^4.23.13",
     "vite-plugin-javascript-obfuscator": "^3.1.0",
     "vitest": "^4.1.10"
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "@firebase/util": "true",
+      "protobufjs": "true",
+      "esbuild#0.25.0": false,
+      "@google/genai#2.20.0": false,
+      "esbuild#0": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [
+          "true"
+        ]
+      ],
+      "@google/genai#2": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [
+          "true"
+        ]
+      ]
+    }
   }
 }
