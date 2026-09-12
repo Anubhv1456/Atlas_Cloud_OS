@@ -81,12 +81,12 @@ export function MistakesNotebookCard() {
 
   return (
     <>
-      <div className="bg-card border border-border/80 rounded-2xl p-5 shadow-xs space-y-4 transition-all hover:border-border">
+      <div className="bg-card border border-border/80 rounded-xl p-5 shadow-xs space-y-4 transition-all hover:border-border">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+              <span className="p-1.5 rounded-lg bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5">
                 <BookOpen className="w-4 h-4" />
               </span>
               <h2 className="text-base font-bold text-foreground tracking-tight">
@@ -107,7 +107,7 @@ export function MistakesNotebookCard() {
                 setModalSubjectId(undefined);
                 setModalOpen(true);
               }}
-              className="rounded-xl font-bold text-xs h-8 px-3 gap-1 cursor-pointer hover:bg-muted/80"
+              className="rounded-md font-bold text-xs h-8 px-3 gap-1 cursor-pointer hover:bg-muted/80"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Rule</span>
@@ -115,7 +115,7 @@ export function MistakesNotebookCard() {
 
             <Link
               href="/mistakes"
-              className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all shadow-xs cursor-pointer active:scale-95"
+              className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-md bg-foreground text-background hover:bg-foreground/90 transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <span>Open Notebook</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ export function MistakesNotebookCard() {
 
         {/* Diagnostic Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-muted/40 border border-border/40 space-y-0.5">
+          <div className="p-3 rounded-lg bg-muted/40 border border-border/40 space-y-0.5">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block">
               Active Rules
             </span>
@@ -137,7 +137,7 @@ export function MistakesNotebookCard() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-0.5">
+          <div className="p-3 rounded-lg bg-amber-950/20 border border-white/5 space-y-0.5">
             <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
               <Zap className="w-3 h-3 text-amber-400 fill-amber-500" />
               Volatile Rules
@@ -150,7 +150,7 @@ export function MistakesNotebookCard() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-zinc-800/40 border border-white/5 space-y-0.5">
+          <div className="p-3 rounded-lg bg-zinc-800/40 border border-white/5 space-y-0.5">
             <span className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               Coverage
@@ -165,7 +165,7 @@ export function MistakesNotebookCard() {
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 space-y-0.5">
+          <div className="p-3 rounded-lg bg-emerald-950/20 border border-white/5 space-y-0.5">
             <span className="text-xs font-bold text-emerald-400 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
               <Archive className="w-3 h-3 text-emerald-400" />
               Archived

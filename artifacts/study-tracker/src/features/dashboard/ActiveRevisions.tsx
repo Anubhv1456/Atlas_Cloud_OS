@@ -59,7 +59,7 @@ export function ActiveRevisions({
         <div className="grid grid-cols-1 gap-4">
           {/* Primary Focus */}
           {isPrimaryIntentStale && (customPrimarySubject || customPrimarySystem) && (
-            <div className="mb-3 p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-sm flex items-center justify-between">
+            <div className="mb-3 p-3 rounded-xl bg-amber-950/20 border border-white/5 text-sm flex items-center justify-between">
               <span className="text-amber-400 font-medium">Are you still focusing on this? (Set {">"}72h ago)</span>
               <button onClick={(e) => {
                 e.stopPropagation();
@@ -68,7 +68,7 @@ export function ActiveRevisions({
               }} className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30">Clear</button>
             </div>
           )}
-          <div className="bg-card rounded-2xl border border-white/5 shadow-sm overflow-hidden relative flex flex-col justify-between">
+          <div className="bg-card rounded-xl border border-white/5 shadow-sm overflow-hidden relative flex flex-col justify-between">
             <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
             <div className="p-4">
               <div className="flex items-center justify-between mb-2 gap-1">

@@ -216,7 +216,7 @@ export function OpsQueueView() {
         <div 
           onClick={() => { setActiveQueue('action_needed'); }}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
+            "p-4 rounded-xl border transition-all cursor-pointer",
             activeQueue === 'action_needed'
               ? "bg-zinc-800/40 border-teal-500/40 ring-1 ring-teal-500/20"
               : "bg-card/50 border-border/50 hover:bg-card"
@@ -235,7 +235,7 @@ export function OpsQueueView() {
         <div 
           onClick={() => { setActiveQueue('support'); setSupportFilter('unread'); }}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
+            "p-4 rounded-xl border transition-all cursor-pointer",
             activeQueue === 'support'
               ? "bg-zinc-800/40 border-purple-500/40 ring-1 ring-primary/20"
               : "bg-card/50 border-border/50 hover:bg-card"
@@ -252,7 +252,7 @@ export function OpsQueueView() {
         <div 
           onClick={() => { setActiveQueue('markers'); setMarkerFilter('reported'); }}
           className={cn(
-            "p-4 rounded-2xl border transition-all cursor-pointer",
+            "p-4 rounded-xl border transition-all cursor-pointer",
             activeQueue === 'markers'
               ? "bg-rose-500/10 border-rose-500/40 ring-1 ring-rose-500/20"
               : "bg-card/50 border-border/50 hover:bg-card"
@@ -333,7 +333,7 @@ export function OpsQueueView() {
           {activeQueue === 'action_needed' && (
             <div className="space-y-6">
               {actionItemsCount === 0 ? (
-                <div className="py-16 text-center border border-border/50 rounded-2xl bg-card/40 space-y-3">
+                <div className="py-16 text-center border border-border/50 rounded-xl bg-card/40 space-y-3">
                   <CheckCircle2 className="w-12 h-12 text-teal-400 mx-auto" />
                   <h3 className="text-lg font-bold">All Operational Queues Clear!</h3>
                   <p className="text-xs text-muted-foreground max-w-md mx-auto">
@@ -347,7 +347,7 @@ export function OpsQueueView() {
 
                   {/* Unread Support Tickets Section */}
                   {unreadSupport.length > 0 && (
-                    <div className="bg-card border border-primary/30 rounded-2xl p-5 space-y-4">
+                    <div className="bg-card border border-primary/30 rounded-xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-border/50">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />
@@ -403,7 +403,7 @@ export function OpsQueueView() {
 
                   {/* Reported Markers Section */}
                   {reportedMarkers.length > 0 && (
-                    <div className="bg-card border border-rose-500/30 rounded-2xl p-5 space-y-4">
+                    <div className="bg-card border border-rose-500/30 rounded-xl p-5 space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b border-border/50">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse" />
@@ -615,7 +615,7 @@ export function OpsQueueView() {
       {/* SUPPORT MESSAGE DETAIL MODAL */}
       {selectedMessage && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-card border border-purple-500/40 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-card border border-purple-500/40 rounded-xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-start justify-between">
               <div>
                 <Badge variant="outline" className="text-xs border-primary/30 text-purple-300">

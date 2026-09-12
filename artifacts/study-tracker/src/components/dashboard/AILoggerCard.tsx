@@ -380,7 +380,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
     const scorePct = stagedData.total > 0 ? Math.round((stagedData.score / stagedData.total) * 100) : 0;
 
     return (
-      <div className="bg-card border border-primary/30 shadow-lg rounded-2xl p-6 sm:p-7 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300 relative overflow-hidden">
+      <div className="bg-card border border-primary/30 shadow-lg rounded-xl p-6 sm:p-7 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300 relative overflow-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
           <div>
@@ -399,7 +399,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
           </div>
 
           {/* Interactive Score Stepper Pill */}
-          <div className="flex items-center gap-2 bg-muted/40 border border-border/60 p-2 rounded-2xl shrink-0 self-start sm:self-auto">
+          <div className="flex items-center gap-2 bg-muted/40 border border-border/60 p-2 rounded-xl shrink-0 self-start sm:self-auto">
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -455,9 +455,9 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
             <div className={cn(
               "ml-1 px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold shrink-0 border",
               scorePct >= 70
-                ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30"
+                ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5"
                 : scorePct >= 50
-                ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
+                ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5"
                 : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
             )}>
               {scorePct}%
@@ -598,8 +598,8 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
 
   if (successData) {
     return (
-      <div className="bg-card border border-border/40 rounded-2xl p-8 mb-8 flex flex-col items-center justify-center text-center shadow-sm animate-in fade-in duration-300">
-        <div className="w-16 h-16 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner">
+      <div className="bg-card border border-border/40 rounded-xl p-8 mb-8 flex flex-col items-center justify-center text-center shadow-sm animate-in fade-in duration-300">
+        <div className="w-16 h-16 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-4 border border-white/5">
           <CheckCircle2 className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold tracking-tight mb-1 text-foreground">Study Session Logged</h3>
@@ -612,7 +612,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-foreground">{successData.name}</p>
                 {successData.scoreText && (
-                  <span className="text-xs font-bold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-xs font-bold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 border border-white/5 px-2 py-0.5 rounded-md shrink-0">
                     {successData.scoreText}
                   </span>
                 )}
@@ -637,7 +637,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
   return (
     <div 
       className={cn(
-        "bg-card/50 backdrop-blur-xl border rounded-2xl p-6 sm:p-8 mb-8 transition-all duration-300 relative overflow-hidden",
+        "bg-card/50 backdrop-blur-xl border rounded-xl p-6 sm:p-8 mb-8 transition-all duration-300 relative overflow-hidden",
         isDragging ? "border-primary bg-primary/5 shadow-lg scale-[1.01]" : "border-border/50 shadow-sm hover:shadow-md"
       )}
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -651,7 +651,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       }}
     >
       <div className="flex items-start sm:items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner flex-shrink-0">
+        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 flex-shrink-0">
           <Brain className="w-6 h-6" />
         </div>
         <div>
@@ -668,7 +668,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       />
 
       <div className={cn(
-        "relative mb-6 rounded-xl border-2 border-dashed transition-colors duration-200 overflow-hidden group bg-muted/10",
+        "relative mb-6 rounded-lg border-2 border-dashed transition-colors duration-200 overflow-hidden group bg-muted/10",
         imagePreview ? "border-transparent" : "border-border/60 hover:border-primary/40",
         isDragging && "border-primary/70 bg-primary/5"
       )}>
@@ -741,7 +741,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       </div>
       
       {isDragging && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-2xl pointer-events-none">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl pointer-events-none">
           <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
             <Upload className="w-8 h-8 text-primary animate-bounce" />
           </div>

@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
-          <div className="flex flex-col items-center max-w-md text-center p-6 bg-card rounded-2xl shadow-sm border border-border">
+          <div className="flex flex-col items-center max-w-md text-center p-6 bg-card rounded-xl shadow-sm border border-border">
             <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
               {isChunkError ? <RefreshCcw className="w-6 h-6 animate-spin" /> : <TriangleAlert className="w-6 h-6 text-destructive" />}
             </div>

@@ -115,7 +115,7 @@ export function AmbassadorApplicationsView() {
         </Button>
       </div>
 
-      <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

@@ -143,7 +143,7 @@ export default function ManualAnalytics() {
 
       {/* Actionable Priority Recommendation Banner - Clinical Apex Alert */}
       {studyRecommendation && (
-        <div className={`border rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 transition-colors ${studyRecommendation.isCritical ? 'bg-rose-500/5 border-rose-500/20' : 'bg-primary/5 border-white/5'}`}>
+        <div className={`border rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 transition-colors ${studyRecommendation.isCritical ? 'bg-rose-500/5 border-rose-500/20' : 'bg-primary/5 border-white/5'}`}>
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded border flex items-center gap-1.5 bg-background text-foreground border-border/80 shadow-xs">
@@ -287,7 +287,7 @@ export default function ManualAnalytics() {
           </div>
 
           {systemBreakdownData.length === 0 ? (
-            <div className="h-64 flex flex-col items-center justify-center border border-dashed border-border/60 rounded-2xl p-6 text-center">
+            <div className="h-64 flex flex-col items-center justify-center border border-dashed border-border/60 rounded-xl p-6 text-center">
               <p className="text-xs text-muted-foreground font-medium">No system test data available</p>
             </div>
           ) : (
@@ -317,7 +317,7 @@ export default function ManualAnalytics() {
                   return (
                     <div 
                       key={sys.name} 
-                      className={`group relative rounded-3xl p-4 flex flex-col justify-between transition-all duration-200 hover:scale-[1.02] border border-border/20 ${spanClasses} ${colorClasses}`}
+                      className={`group relative rounded-xl p-4 flex flex-col justify-between transition-all duration-200 hover:scale-[1.02] border border-border/20 ${spanClasses} ${colorClasses}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className={`font-bold ${idx === 0 ? 'text-lg md:text-xl' : 'text-sm'} leading-tight tracking-tight text-foreground/90`}>

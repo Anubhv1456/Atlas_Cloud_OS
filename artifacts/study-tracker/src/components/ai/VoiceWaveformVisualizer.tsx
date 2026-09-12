@@ -119,7 +119,7 @@ export const VoiceWaveformVisualizer: React.FC<VoiceWaveformVisualizerProps> = (
   }, [isListening, isThinking, isSpeakingAI, energyLevel]);
 
   return (
-    <div className={cn("w-full max-w-xs h-10 flex items-center justify-center px-3 py-1 rounded-full bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-border/40 shadow-inner", className)}>
+    <div className={cn("w-full max-w-xs h-10 flex items-center justify-center px-3 py-1 rounded-full bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-border/40", className)}>
       <canvas ref={canvasRef} width={280} height={40} className="w-full h-full" />
     </div>
   );

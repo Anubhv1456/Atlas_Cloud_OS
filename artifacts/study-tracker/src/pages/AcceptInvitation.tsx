@@ -217,7 +217,7 @@ export default function AcceptInvitation() {
 
           {/* Key Value Bullets for Invited Peers */}
           {referralDoc && (
-            <div className="w-full mb-8 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-left space-y-2 text-xs text-zinc-300">
+            <div className="w-full mb-8 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-left space-y-2 text-xs text-zinc-300">
               <div className="flex items-center gap-2">
                 <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
                 <span>15 Days Full Access to SDSR Spaced Recommendations</span>
@@ -236,7 +236,7 @@ export default function AcceptInvitation() {
           <button
             onClick={handleAccept}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-zinc-100 hover:bg-white text-zinc-900 px-4 py-4 rounded-2xl text-[14.5px] font-semibold transition-all shadow-[0_2px_12px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-3 bg-zinc-100 hover:bg-white text-zinc-900 px-4 py-4 rounded-xl text-[14.5px] font-semibold transition-all shadow-[0_2px_12px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden active:scale-[0.98]"
           >
             <div className="absolute inset-0 bg-black/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             {loading ? (

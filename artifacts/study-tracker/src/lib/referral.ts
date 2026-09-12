@@ -11,6 +11,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { firestoreDb } from './firebase';
+import { getCachedDoc } from './firestoreCache';
 import { User } from 'firebase/auth';
 export * from '@/types/growth';
 import type { ReferralCodeEntity } from '@/types/growth';
@@ -68,13 +69,13 @@ export interface UserReferralStatus {
 }
 
 /**
- * Reads global referral policy from Firestore (/config/referral_settings)
+ * Reads global referral policy from Firestore (/config/referral_settings) with Cache-First optimization (P3)
  */
 export async function getReferralConfig(): Promise<ReferralConfig> {
   if (!firestoreDb) return DEFAULT_REFERRAL_CONFIG;
   try {
     const cfgRef = doc(firestoreDb, 'config', 'referral_settings');
-    const snap = await getDoc(cfgRef);
+    const snap = await getCachedDoc(cfgRef);
     if (snap.exists()) {
       return { ...DEFAULT_REFERRAL_CONFIG, ...(snap.data() as ReferralConfig) };
     }

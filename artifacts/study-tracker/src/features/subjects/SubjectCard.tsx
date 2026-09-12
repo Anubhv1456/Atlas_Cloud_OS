@@ -149,7 +149,7 @@ export function SubjectCard({
     <>
       <div
         className={cn(
-          "group relative w-full p-4 rounded-2xl border transition-all duration-300 hover:shadow-sm",
+          "group relative w-full p-4 rounded-xl border transition-all duration-300 hover:shadow-sm",
           isFullyComplete
             ? "bg-primary/5 border-white/5 shadow-[inset_0_0_20px_rgba(var(--primary),0.02)]"
             : "bg-card border-border/40 hover:border-border",
@@ -182,7 +182,7 @@ export function SubjectCard({
                 {safeSystems.length} {safeSystems.length === 1 ? "System" : "Systems"}
               </span>
               {overdueCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 bg-amber-950/20 border border-white/5 px-2 py-0.5 rounded-full">
                   ⚡ {overdueCount} Due
                 </span>
               )}
@@ -199,7 +199,7 @@ export function SubjectCard({
               <Link
                 href={`/mistakes?subjectId=${encodeURIComponent(String(subject.id))}&origin=subject_card`}
                 onClick={(e) => e.stopPropagation()}
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-xl bg-card border border-border/70 hover:border-primary/50 text-muted-foreground hover:text-foreground transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-card border border-border/70 hover:border-primary/50 text-muted-foreground hover:text-foreground transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                 title={`Open ${lexicon.mistakesJournal} for ${subject.name} (${activeMistakesCount} active rules)`}
               >
                 <BookOpen className="w-3 h-3 text-primary" />
@@ -212,13 +212,13 @@ export function SubjectCard({
 
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors focus:outline-none shrink-0 cursor-pointer"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-md flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors focus:outline-none shrink-0 cursor-pointer"
                 aria-label="Subject options"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
               >
                 <MoreVertical className="w-4 h-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-xl">
+              <DropdownMenuContent align="end" className="w-48 rounded-md">
                 <DropdownMenuItem asChild>
                   <Link
                     href={`/mistakes?subjectId=${encodeURIComponent(String(subject.id))}&origin=subject_card_menu`}
@@ -258,7 +258,7 @@ export function SubjectCard({
 
             <div
               {...dragHandleProps}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors cursor-grab active:cursor-grabbing focus:outline-none shrink-0"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-md flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors cursor-grab active:cursor-grabbing focus:outline-none shrink-0"
               aria-label="Drag handle"
             >
               <div className="grid grid-cols-2 gap-0.5">
@@ -282,7 +282,7 @@ export function SubjectCard({
               {progress}%
             </span>
           </div>
-          <div className="h-3 sm:h-4 w-full bg-muted/60 rounded-full overflow-hidden border border-border/20 shadow-inner">
+          <div className="h-1.5 w-full bg-muted/40 dark:bg-white/[0.04] rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${progress}%` }}

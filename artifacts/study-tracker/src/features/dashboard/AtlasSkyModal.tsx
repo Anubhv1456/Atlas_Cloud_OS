@@ -527,7 +527,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.98 }}
                   transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="bg-[#0a0a0a] border border-teal-500/30 rounded-2xl p-4 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.9)] space-y-3 relative overflow-hidden"
+                  className="bg-[#0a0a0a] border border-teal-500/30 rounded-xl p-4 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.9)] space-y-3 relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -602,7 +602,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
             </div>
 
             {/* Medical Phase Filter Strip */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1.5 rounded-xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-md">
               {isMBBSProf && (
                 <button
                   onClick={() => setActiveFilter(activeFilter === 'prof_year' ? 'all' : 'prof_year')}

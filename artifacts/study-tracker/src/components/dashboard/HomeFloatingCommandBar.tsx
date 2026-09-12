@@ -239,7 +239,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                 exit={{ opacity: 0, y: 15, scale: 0.93 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                 className={cn(
-                  "p-4 rounded-3xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl",
+                  "p-4 rounded-xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl",
                   "bg-zinc-950/95 dark:bg-zinc-900/98 text-zinc-100 border-zinc-700/90 shadow-black/70"
                 )}
               >
@@ -296,7 +296,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                 </div>
 
                 {/* Real-Time Ghost-Typing Surface */}
-                <div className="min-h-[44px] max-h-[88px] overflow-y-auto p-2.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs leading-relaxed relative z-10 font-sans">
+                <div className="min-h-[44px] max-h-[88px] overflow-y-auto p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs leading-relaxed relative z-10 font-sans">
                   {finalTranscript ? (
                     <span className="text-zinc-100 font-medium">{finalTranscript}</span>
                   ) : null}
@@ -348,7 +348,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={cn(
-                  "p-4 rounded-3xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl flex items-center justify-between gap-3",
+                  "p-4 rounded-xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl flex items-center justify-between gap-3",
                   "bg-zinc-950/95 dark:bg-zinc-900/98 text-zinc-100 border-zinc-700/90 shadow-black/70"
                 )}
               >
@@ -387,7 +387,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                 }}
                 transition={{ type: 'spring', stiffness: 450, damping: 30 }}
                 className={cn(
-                  "p-4 rounded-3xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl space-y-3 cursor-grab active:cursor-grabbing",
+                  "p-4 rounded-xl backdrop-blur-2xl border select-none relative overflow-hidden shadow-2xl space-y-3 cursor-grab active:cursor-grabbing",
                   "bg-zinc-950/95 dark:bg-zinc-900/98 text-zinc-100 border-zinc-700/90 shadow-black/70"
                 )}
               >
@@ -434,7 +434,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
                     <div className="space-y-2">
                       {/* Action 1: Study Block Capsule */}
                       {compiledDelta.studyDelta && (
-                        <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 text-xs text-zinc-200">
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 text-xs text-zinc-200">
                           <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                             <Check className="w-3.5 h-3.5" />
                           </div>
@@ -453,7 +453,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
 
                       {/* Action 2: 20th Notebook Mistake Capsule */}
                       {compiledDelta.distillations?.[0]?.twentyNotebookRule && (
-                        <div className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-zinc-900/90 border border-amber-500/30 text-xs text-zinc-200">
+                        <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-zinc-900/90 border border-amber-500/30 text-xs text-zinc-200">
                           <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                             <Lightbulb className="w-3.5 h-3.5" />
                           </div>
@@ -470,7 +470,7 @@ export const HomeFloatingCommandBar: React.FC<HomeFloatingCommandBarProps> = ({
 
                       {/* Fallback General Summary Capsule if neither is specifically populated */}
                       {!compiledDelta.studyDelta && !compiledDelta.distillations?.[0]?.twentyNotebookRule && (
-                        <div className="p-2.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-200 leading-relaxed font-medium">
+                        <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-200 leading-relaxed font-medium">
                           {compiledDelta.executiveSummary}
                         </div>
                       )}

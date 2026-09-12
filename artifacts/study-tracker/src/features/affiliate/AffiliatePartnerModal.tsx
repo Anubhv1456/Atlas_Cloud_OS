@@ -92,7 +92,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8 space-y-6 bg-card border-border/50 shadow-2xl text-foreground">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl p-6 sm:p-8 space-y-6 bg-card border-border/50 shadow-2xl text-foreground">
         
         {/* ── Dialog Header ────────────────────────────────────────────── */}
         <DialogHeader className="space-y-2 text-left">
@@ -120,7 +120,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
         {/* ── Metric Highlights Bento Grid ─────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Total Candidates */}
-          <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/50 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50 flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Referrals</span>
               <Users className="w-3.5 h-3.5 text-indigo-400" />
@@ -132,7 +132,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
           </div>
 
           {/* Active Seats */}
-          <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/50 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50 flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Active Seats</span>
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -145,7 +145,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
 
 
           {/* Pending Pipeline */}
-          <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/50 flex flex-col justify-between">
+          <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50 flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted-foreground mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">In Trial</span>
               <Clock className="w-3.5 h-3.5 text-amber-400" />
@@ -158,7 +158,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
         </div>
 
         {/* ── Partner Link & Code Distribution Box ───────────────────────── */}
-        <div className="p-5 rounded-2xl bg-card border border-border/70 space-y-4 shadow-xs">
+        <div className="p-5 rounded-xl bg-card border border-border/70 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Your Dedicated Partner Attribution
@@ -259,7 +259,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
           </div>
 
           {referredCandidates.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-muted/20 border border-dashed border-border text-center space-y-2">
+            <div className="p-8 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-2">
               <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto">
                 <Users className="w-5 h-5" />
               </div>
@@ -269,7 +269,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-border/60 overflow-hidden divide-y divide-border/40 bg-card">
+            <div className="rounded-xl border border-border/60 overflow-hidden divide-y divide-border/40 bg-card">
               {referredCandidates.map((cand) => (
                 <div
                   key={cand.id}
@@ -308,7 +308,7 @@ export function AffiliatePartnerModal({ open, onOpenChange }: AffiliatePartnerMo
         </div>
 
         {/* ── Partner Operational Terms ─────────────────────────── */}
-        <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1.5">
+        <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1.5">
           <div className="flex items-center gap-1.5 font-semibold text-foreground">
             <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span>Operational Guidelines</span>

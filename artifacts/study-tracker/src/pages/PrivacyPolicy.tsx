@@ -192,7 +192,7 @@ export default function PrivacyPolicy() {
               <Shield className="w-3.5 h-3.5" />
               Data Sovereignty & Privacy Protocol
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-400 dark:text-emerald-400 text-xs font-mono font-medium">
+            <span className="px-2.5 py-1 rounded-full bg-emerald-950/20 border border-white/5 text-emerald-400 dark:text-emerald-400 text-xs font-mono font-medium">
               GDPR, CCPA & DPDP Compliant
             </span>
           </div>
@@ -295,7 +295,7 @@ export default function PrivacyPolicy() {
           <main className="flex-1 min-w-0 space-y-10">
             
             {/* Mobile Table of Contents Bar */}
-            <div className="lg:hidden bg-card border border-border/80 rounded-2xl p-4 shadow-xs space-y-3 print:hidden">
+            <div className="lg:hidden bg-card border border-border/80 rounded-xl p-4 shadow-xs space-y-3 print:hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-primary" />
@@ -361,8 +361,8 @@ export default function PrivacyPolicy() {
 
               {/* Summary Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5 border-l-2 border-l-emerald-500/30">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5">
                     <HardDrive className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">1. Local-First & Offline First</h3>
@@ -371,7 +371,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
                   <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-primary flex items-center justify-center border border-white/5">
                     <Lock className="w-5 h-5" />
                   </div>
@@ -381,7 +381,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
                   <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-blue-400 flex items-center justify-center border border-white/5">
                     <Cpu className="w-5 h-5" />
                   </div>
@@ -391,8 +391,8 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5 border-l-2 border-l-amber-500/30">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5">
                     <Key className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">4. 1-Click Data Portability & Purge</h3>
@@ -432,7 +432,7 @@ export default function PrivacyPolicy() {
                 <p>
                   For the purpose of global data protection legislation (including the EU/UK General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA/CPRA), and the Digital Personal Data Protection Act 2023 (DPDP, India)), the Data Controller responsible for processing your personal data is:
                 </p>
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2 text-xs font-mono text-foreground">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2 text-xs font-mono text-foreground">
                   <div><strong>Data Controller:</strong> Atlas OS Operating Team</div>
                   <div><strong>Specialized Domain:</strong> Medical Education & Exam Revision Intelligence</div>
                   <div><strong>Data Protection & Privacy Inquiries:</strong> Submit inquiries directly via our <Link href="/contact" className="text-primary font-semibold underline underline-offset-2">Contact Page</Link>.</div>
@@ -467,7 +467,7 @@ export default function PrivacyPolicy() {
               </p>
 
               <div className="space-y-3 text-xs sm:text-sm">
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-primary" />
                     A. Account & Authentication Credentials
@@ -477,7 +477,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Activity className="w-4 h-4 text-primary" />
                     B. Educational Metrics & Memory Decay Logs
@@ -487,7 +487,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary" />
                     C. Trail Markers & Peer Wisdom Contributions
@@ -497,7 +497,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-primary" />
                     D. Audio Streams & Voice Input Data
@@ -507,7 +507,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Info className="w-4 h-4 text-primary" />
                     E. Technical Diagnostics & Device Information
@@ -546,7 +546,7 @@ export default function PrivacyPolicy() {
                   Under international privacy frameworks (GDPR Art. 6), we process your personal data under the following recognized legal bases:
                 </p>
 
-                <div className="border border-border/60 rounded-2xl overflow-hidden">
+                <div className="border border-border/60 rounded-xl overflow-hidden">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-muted/50 font-bold text-foreground border-b border-border/60">
                       <tr>
@@ -609,7 +609,7 @@ export default function PrivacyPolicy() {
                 </Button>
               </div>
 
-              <div className="bg-primary/5 border border-white/5 rounded-2xl p-5 space-y-3">
+              <div className="bg-primary/5 border border-white/5 rounded-xl p-5 space-y-3">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm">
                   <Sparkles className="w-4 h-4" />
                   Strict Zero-Training Pledge for AI & Voice Streams
@@ -660,7 +660,7 @@ export default function PrivacyPolicy() {
                 To provide high-availability infrastructure and cloud synchronization, Atlas OS utilizes vetted subprocessor services adhering to ISO 27001, SOC 2 Type II, and GDPR standards:
               </p>
 
-              <div className="border border-border/60 rounded-2xl overflow-hidden">
+              <div className="border border-border/60 rounded-xl overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-muted/50 font-bold text-foreground border-b border-border/60">
                     <tr>
@@ -761,7 +761,7 @@ export default function PrivacyPolicy() {
                 </Button>
               </div>
 
-              <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3">
+              <div className="bg-card border border-border/80 rounded-xl p-5 space-y-3">
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   <strong className="text-foreground font-semibold">Absolute Non-Sale Pledge:</strong> We do NOT sell, rent, lease, or monetize your personal information, exam target dates, study habits, confidence scores, or voice input.
                 </p>
@@ -853,7 +853,7 @@ export default function PrivacyPolicy() {
                 </div>
 
                 {/* Tab Contents */}
-                <div className="bg-card border border-border/80 rounded-2xl p-5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                <div className="bg-card border border-border/80 rounded-xl p-5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   {activeRegionTab === 'gdpr' && (
                     <div className="space-y-2">
                       <h4 className="font-bold text-foreground text-sm">EU & UK GDPR Candidate Rights</h4>
@@ -896,7 +896,7 @@ export default function PrivacyPolicy() {
                   {activeRegionTab === 'hipaa' && (
                     <div className="space-y-2">
                       <h4 className="font-bold text-foreground text-sm">HIPAA & Protected Health Information (PHI) Non-Applicability</h4>
-                      <div className="bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 dark:text-amber-400 p-3 rounded-xl">
+                      <div className="bg-amber-950/20 border border-white/5 text-amber-400 dark:text-amber-400 p-3 rounded-xl">
                         <strong>Important Mandate:</strong> Atlas OS is an educational examination preparation application. It is NOT a Covered Entity or Business Associate under the Health Insurance Portability and Accountability Act (HIPAA). Users are strictly forbidden from uploading or including real patient health information (PHI), clinical medical records, or identifiable patient case details anywhere inside Atlas OS notes or Trail Markers.
                       </div>
                     </div>
@@ -931,7 +931,7 @@ export default function PrivacyPolicy() {
                 <p>
                   We retain personal data only as long as necessary to fulfill your active study requirements and maintain cloud synchronization.
                 </p>
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-3">
                   <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
                     <Download className="w-4 h-4 text-primary" />
                     How to Export or Erase Your Data
@@ -968,7 +968,7 @@ export default function PrivacyPolicy() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-1.5">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-1.5">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Lock className="w-4 h-4 text-primary" />
                     Encryption in Transit & At Rest
@@ -978,7 +978,7 @@ export default function PrivacyPolicy() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-4 space-y-1.5">
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-1.5">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Shield className="w-4 h-4 text-primary" />
                     Strict Firebase Access Control
@@ -1076,7 +1076,7 @@ export default function PrivacyPolicy() {
                 </Button>
               </div>
 
-              <div className="bg-card border border-border/80 rounded-2xl p-6 space-y-4">
+              <div className="bg-card border border-border/80 rounded-xl p-6 space-y-4">
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   We may update this Privacy Policy periodically to reflect technological advancements, algorithm optimizations, or statutory legal requirements. Significant modifications will be announced via an in-app system notification or banner.
                 </p>

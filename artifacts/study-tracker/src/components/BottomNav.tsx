@@ -255,6 +255,9 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                       <Link
                         href={href}
                         onClick={(e) => handleTabClick(href, e)}
+                        aria-current={active ? "page" : undefined}
+                        role="tab"
+                        aria-selected={active}
                         className={cn(
                           "relative w-11 h-11 rounded-xl flex items-center justify-center transition-all group cursor-pointer select-none touch-manipulation active:scale-95",
                           active
@@ -288,6 +291,9 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                   key={href}
                   href={href}
                   onClick={(e) => handleTabClick(href, e)}
+                  aria-current={active ? "page" : undefined}
+                  role="tab"
+                  aria-selected={active}
                   className={cn(
                     "relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group cursor-pointer select-none",
                     active
@@ -380,7 +386,7 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                 <span className="truncate max-w-[120px] font-medium text-foreground">{user?.email || 'Medical Scholar'}</span>
               </div>
               {isOnline ? (
-                <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
+                <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5">
                   <ShieldCheck className="w-3 h-3" />
                   <span>Synced</span>
                 </div>
@@ -413,8 +419,11 @@ export function BottomNav({ isAssistantOpen: propIsAssistantOpen }: BottomNavPro
                 key={href}
                 href={href}
                 onClick={(e) => handleTabClick(href, e)}
+                aria-current={active ? "page" : undefined}
+                role="tab"
+                aria-selected={active}
                 className={cn(
-                  "relative flex flex-col items-center justify-center h-full flex-1 group rounded-full py-1 px-1 transition-colors duration-200 cursor-pointer select-none touch-manipulation active:scale-[0.97] overflow-visible",
+                  "relative flex flex-col items-center justify-center h-full min-h-[44px] min-w-[44px] flex-1 group rounded-full py-1 px-1 transition-colors duration-200 cursor-pointer select-none touch-manipulation active:scale-[0.97] overflow-visible",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >

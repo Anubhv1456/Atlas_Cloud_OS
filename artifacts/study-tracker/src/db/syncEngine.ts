@@ -44,7 +44,7 @@ class SyncEngine {
 
       // Query existing snapshots
       const snapshots = await localDb.local_snapshots.toArray();
-      if (snapshots.length < 4) {
+      if (snapshots.length < 5) {
         await localDb.local_snapshots.add({
           timestamp,
           version: 1,
@@ -79,6 +79,10 @@ class SyncEngine {
    * Run background non-blocking check for 6-hourly snapshot
    */
   async checkAndTriggerSnapshot() {
+    // Check if user has explicitly disabled automatic backups on this device
+    const autoBackupsDisabled = typeof window !== 'undefined' && localStorage.getItem('auto_backups_enabled') === 'false';
+    if (autoBackupsDisabled) return;
+
     const meta = await localDb.sync_meta.get('last_snapshot_timestamp');
     const lastTimestamp = meta ? meta.lastSyncTimestamp : 0;
     const now = Date.now();

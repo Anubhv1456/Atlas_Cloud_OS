@@ -1,24 +1,41 @@
 import { firestoreDb, auth } from './firebase';
 import { collection, query, getDocs, limit, doc, updateDoc, orderBy, getDoc, setDoc } from 'firebase/firestore';
+import { getCachedDoc } from './firestoreCache';
 import { Marker, MarkerStatus } from './markers';
 
 /**
  * Executes a privileged mutation through the serverless admin action boundary (/api/admin/*)
  * utilizing the caller's Firebase Auth Bearer token.
  */
-async function callServerlessAdminApi<T = any>(action: string, payload: Record<string, any>): Promise<T> {
+async function callServerlessAdminApi<T = any>(
+  action: string,
+  methodOrPayload: 'GET' | 'POST' | Record<string, any> = 'POST',
+  optionalPayload?: Record<string, any>
+): Promise<T> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) {
     throw new Error('Unauthenticated: An active administrator session is required.');
   }
 
+  let method: 'GET' | 'POST' = 'POST';
+  let payload: Record<string, any> | undefined = undefined;
+
+  if (typeof methodOrPayload === 'string') {
+    method = methodOrPayload;
+    payload = optionalPayload;
+  } else {
+    method = 'POST';
+    payload = methodOrPayload;
+  }
+
+  const isGet = method === 'GET';
   const res = await fetch(`/api/admin/${action}`, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
+    body: isGet ? undefined : JSON.stringify(payload || {}),
   });
 
   const data = await res.json().catch(() => ({}));
@@ -493,7 +510,7 @@ export async function getPaymentConfig(): Promise<PaymentConfig> {
   if (!firestoreDb) return DEFAULT_PAYMENT_CONFIG;
   try {
     const docRef = doc(firestoreDb, 'config', 'payment_settings');
-    const snap = await getDoc(docRef);
+    const snap = await getCachedDoc(docRef);
     if (snap.exists()) {
       return { ...DEFAULT_PAYMENT_CONFIG, ...snap.data() };
     }
@@ -521,7 +538,7 @@ export async function getAffiliateConfig(): Promise<AffiliateConfig> {
   if (!firestoreDb) return DEFAULT_AFFILIATE_CONFIG;
   try {
     const docRef = doc(firestoreDb, 'config', 'affiliate_config');
-    const snap = await getDoc(docRef);
+    const snap = await getCachedDoc(docRef);
     if (snap.exists()) {
       return { ...DEFAULT_AFFILIATE_CONFIG, ...snap.data() };
     }
@@ -706,3 +723,53 @@ export async function rejectAmbassadorApplication(applicationId: string) {
     applicationId,
   });
 }
+
+export type StaffRole = 'superadmin' | 'admin' | 'clinical_lead' | 'moderator' | 'support' | 'student';
+
+export interface StaffUserEntity {
+  uid: string;
+  email: string;
+  name: string;
+  role: StaffRole;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  updatedAt?: string;
+  grantedBy?: string;
+  source?: 'admins_doc' | 'users_doc' | 'claim';
+}
+
+export interface AdminAuditLogEntity {
+  id: string;
+  action: string;
+  performedBy: string;
+  targetUid?: string;
+  timestamp: string;
+  details?: Record<string, any>;
+}
+
+export async function listStaffUsersAdmin(): Promise<StaffUserEntity[]> {
+  const res = await callServerlessAdminApi<{ staff: StaffUserEntity[] }>('list-staff', 'GET');
+  return res?.staff ?? [];
+}
+
+export async function setStaffRoleAdmin(
+  targetUid: string,
+  newRole: StaffRole,
+  targetEmail?: string
+): Promise<{ success: boolean }> {
+  return await callServerlessAdminApi<{ success: boolean }>('set-role', 'POST', {
+    targetUid,
+    newRole,
+    targetEmail,
+  });
+}
+
+export async function reconcileAdminAccessAdmin(): Promise<{ success: boolean; message: string }> {
+  return await callServerlessAdminApi<{ success: boolean; message: string }>('reconcile-admin-access', 'POST');
+}
+
+export async function listAdminAuditLogs(): Promise<AdminAuditLogEntity[]> {
+  const res = await callServerlessAdminApi<{ logs: AdminAuditLogEntity[] }>('list-audit-logs', 'GET');
+  return res?.logs ?? [];
+}
+

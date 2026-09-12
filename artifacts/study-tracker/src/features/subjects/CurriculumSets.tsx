@@ -287,7 +287,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
                             </div>
                             <span className="font-semibold text-sm text-foreground">{rs.name}</span>
                             {(rs.depth === 'rapid' || (rs.customDurationMinutes && rs.customDurationMinutes <= 15)) && (
-                              <span className="text-xs font-semibold font-mono px-1.5 py-0.5 rounded bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+                              <span className="text-xs font-semibold font-mono px-1.5 py-0.5 rounded bg-amber-950/20 text-amber-400 border border-white/5">
                                 ⚡ Rapid Recall
                               </span>
                             )}

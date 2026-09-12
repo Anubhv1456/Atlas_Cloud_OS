@@ -141,7 +141,7 @@ export function OperationalModeSelector({ availableSubjects: propSubjects, class
     <div className={cn("w-full space-y-3", className)}>
       {/* ── Intent Pill Segmented Bar ───────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap min-w-0 max-w-full">
-        <div className="inline-flex items-center p-1 rounded-2xl bg-card/80 border border-border/60 shadow-xs backdrop-blur-md max-w-full overflow-x-auto no-scrollbar scrollbar-none">
+        <div className="inline-flex items-center p-1 rounded-xl bg-card/80 border border-border/60 shadow-xs backdrop-blur-md max-w-full overflow-x-auto no-scrollbar scrollbar-none">
           {/* Standard Mode Pill */}
           <button
             type="button"

@@ -40,11 +40,11 @@ export function GlobalAnnouncements() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`pointer-events-auto max-w-lg w-full p-4 rounded-2xl shadow-lg border backdrop-blur-md flex items-start gap-3 relative ${
+            className={`pointer-events-auto max-w-lg w-full p-4 rounded-xl shadow-lg border backdrop-blur-md flex items-start gap-3 relative ${
               announcement.type === 'info' ? 'bg-zinc-800/40 border-white/5 text-blue-100 dark:text-blue-50' :
-              announcement.type === 'success' ? 'bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-100 dark:text-emerald-50' :
-              announcement.type === 'warning' ? 'bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 text-amber-100 dark:text-amber-50' :
-              'bg-red-950/20 border-white/5 border-l-2 border-l-red-500/30 text-red-100 dark:text-red-50'
+              announcement.type === 'success' ? 'bg-emerald-950/20 border-white/5 text-emerald-100 dark:text-emerald-50' :
+              announcement.type === 'warning' ? 'bg-amber-950/20 border-white/5 text-amber-100 dark:text-amber-50' :
+              'bg-red-950/20 border-white/5 text-red-100 dark:text-red-50'
             }`}
           >
             <div className="shrink-0 mt-0.5">

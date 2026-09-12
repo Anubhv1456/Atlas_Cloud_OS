@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAffiliate } from '@/hooks/useAffiliate';
 import { useAuth } from '@/hooks/useAuth';
 import { firestoreDb } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, limit, serverTimestamp } from 'firebase/firestore';
 import { AffiliatePartnerModal } from '@/features/affiliate/AffiliatePartnerModal';
 import {
   Dialog,
@@ -46,7 +46,11 @@ export function AffiliateSection() {
 
     const checkApp = async () => {
       try {
-        const q = query(collection(firestoreDb, 'ambassador_applications'), where('userId', '==', user.uid));
+        const q = query(
+          collection(firestoreDb, 'ambassador_applications'),
+          where('userId', '==', user.uid),
+          limit(1)
+        );
         const snap = await getDocs(q);
         if (!snap.empty) {
           const doc = snap.docs[0];
@@ -141,7 +145,7 @@ export function AffiliateSection() {
       />
 
       <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
-        <DialogContent className="max-w-md rounded-3xl p-6 space-y-5 bg-card border-border/50 text-foreground shadow-2xl">
+        <DialogContent className="max-w-md rounded-xl p-6 space-y-5 bg-card border-border/50 text-foreground shadow-2xl">
           <DialogHeader className="space-y-2 text-left">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
               <Award className="w-3.5 h-3.5" />
@@ -156,7 +160,7 @@ export function AffiliateSection() {
           </DialogHeader>
 
           <div className="space-y-3 text-xs text-muted-foreground">
-            <div className="p-3.5 rounded-2xl bg-muted/30 border border-border/50 space-y-2">
+            <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50 space-y-2">
               <div className="flex items-center gap-2 text-foreground font-semibold">
                 <Sparkles className="w-4 h-4 text-indigo-400" />
                 <span>Partner Privileges</span>

@@ -33,12 +33,12 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card border border-border/80 p-0 rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card border border-border/80 p-0 rounded-xl shadow-2xl">
         {/* Header */}
         <div className="p-5 border-b border-border/50 bg-muted/20">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                 <Trophy className="w-5 h-5" />
               </div>
               <div>
@@ -162,7 +162,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
               </h4>
               <div className="space-y-1.5">
                 {report.highYieldPearlsToAudit.map((pearl, idx) => (
-                  <div key={idx} className="p-2.5 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
+                  <div key={idx} className="p-2.5 rounded-xl bg-amber-950/20 border border-white/5 text-amber-900 dark:text-amber-200 text-xs">
                     "{pearl}"
                   </div>
                 ))}

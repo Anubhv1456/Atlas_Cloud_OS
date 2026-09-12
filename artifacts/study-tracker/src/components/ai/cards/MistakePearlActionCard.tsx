@@ -50,7 +50,7 @@ export const MistakePearlActionCard: React.FC<MistakePearlActionCardProps> = ({
   };
 
   return (
-    <div className="bg-card/95 backdrop-blur-xl border border-white/5 border-l-2 border-l-amber-500/30 rounded-2xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+    <div className="bg-card/95 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center">

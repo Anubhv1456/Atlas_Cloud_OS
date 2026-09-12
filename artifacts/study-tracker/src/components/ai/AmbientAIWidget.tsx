@@ -214,7 +214,7 @@ export const AmbientAIWidget: React.FC<AmbientAIWidgetProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98 }}
               transition={{ duration: 0.15 }}
-              className="absolute top-14 left-0 right-0 z-50 p-3 rounded-2xl bg-card border border-border/80 shadow-xl backdrop-blur-xl overflow-hidden"
+              className="absolute top-14 left-0 right-0 z-50 p-3 rounded-xl bg-card border border-border/80 shadow-xl backdrop-blur-xl overflow-hidden"
             >
               {/* Search input field */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/40 border border-border/60 mb-2.5">

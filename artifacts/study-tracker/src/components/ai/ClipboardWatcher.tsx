@@ -188,7 +188,7 @@ export const ClipboardWatcher: React.FC = () => {
               if (islandState === 'ready') setIsDrawerOpen(true);
             }}
           >
-            <div className="bg-background/60 dark:bg-zinc-900/50 backdrop-blur-3xl ring-1 ring-black/5 dark:ring-white/10 shadow-2xl rounded-full overflow-hidden shadow-inner px-4 py-2 flex items-center gap-3">
+            <div className="bg-background/60 dark:bg-zinc-900/50 backdrop-blur-3xl ring-1 ring-black/5 dark:ring-white/10 shadow-2xl rounded-full overflow-hidden px-4 py-2 flex items-center gap-3">
               <AnimatePresence mode="popLayout">
                 {islandState === 'ingesting' && (
                   <motion.div

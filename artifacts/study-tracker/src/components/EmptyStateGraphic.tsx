@@ -25,7 +25,7 @@ export function EmptyStateGraphic({
       )}
     >
       <div className="relative mb-5 flex items-center justify-center">
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-muted/50 border border-border/50 flex items-center justify-center text-muted-foreground">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center text-muted-foreground">
           <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
         </div>
       </div>

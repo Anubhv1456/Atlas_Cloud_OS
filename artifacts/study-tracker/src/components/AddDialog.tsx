@@ -34,7 +34,7 @@ export function AddDialog({ open, onOpenChange, title, placeholder, onSave }: Ad
       onOpenChange(isOpen);
       if (!isOpen) setName('');
     }}>
-      <DialogContent className="sm:max-w-[425px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
         </DialogHeader>

@@ -289,7 +289,7 @@ const BaseChart = withTooltip<
           left={tooltipLeft}
           style={{ ...tooltipStyles, transform: 'translate(-50%, -100%)' }}
         >
-          <div className="bg-background/95 backdrop-blur-xl border border-border/60 p-3.5 rounded-2xl shadow-xl text-xs space-y-2 min-w-[200px] max-w-[260px]">
+          <div className="bg-background/95 backdrop-blur-xl border border-border/60 p-3.5 rounded-xl shadow-xl text-xs space-y-2 min-w-[200px] max-w-[260px]">
             <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2">
               <span className="font-bold text-foreground truncate">{tooltipData.title}</span>
               {tooltipData.isProjected ? (

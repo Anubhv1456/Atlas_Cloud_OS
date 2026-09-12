@@ -49,7 +49,7 @@ export function ConfidenceDialog({
 }: ConfidenceDialogProps) {
   return (
     <Dialog open={open} onOpenChange={open => { if (!open && onClose) onClose(); }}>
-      <DialogContent className="sm:max-w-[380px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+      <DialogContent className="sm:max-w-[380px] rounded-xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold leading-snug">{title}</DialogTitle>
           {subtitle && (

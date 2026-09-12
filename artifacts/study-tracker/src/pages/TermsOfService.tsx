@@ -292,7 +292,7 @@ export default function TermsOfService() {
           <main className="flex-1 min-w-0 space-y-10">
             
             {/* Mobile Table of Contents Bar */}
-            <div className="lg:hidden bg-card border border-border/80 rounded-2xl p-4 shadow-xs space-y-3 print:hidden">
+            <div className="lg:hidden bg-card border border-border/80 rounded-xl p-4 shadow-xs space-y-3 print:hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-primary" />
@@ -357,8 +357,8 @@ export default function TermsOfService() {
 
               {/* Summary Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5 border-l-2 border-l-amber-500/30">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-amber-950/20 text-amber-400 dark:text-amber-400 flex items-center justify-center border border-white/5">
                     <Activity className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">1. Strictly Non-Clinical Study Tool</h3>
@@ -367,8 +367,8 @@ export default function TermsOfService() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5 border-l-2 border-l-emerald-500/30">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 flex items-center justify-center border border-white/5">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">2. High-Yield Peer Wisdom Standards</h3>
@@ -377,7 +377,7 @@ export default function TermsOfService() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
                   <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-blue-400 flex items-center justify-center border border-white/5">
                     <Layers className="w-5 h-5" />
                   </div>
@@ -387,7 +387,7 @@ export default function TermsOfService() {
                   </p>
                 </div>
 
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2.5 shadow-xs hover:border-border transition-colors">
                   <div className="w-9 h-9 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-primary flex items-center justify-center border border-white/5">
                     <Building2 className="w-5 h-5" />
                   </div>
@@ -422,7 +422,7 @@ export default function TermsOfService() {
               </div>
 
               {/* CRITICAL WARNING BANNER */}
-              <div className="bg-primary/5 border border-white/5 rounded-2xl p-5 sm:p-6 space-y-3">
+              <div className="bg-primary/5 border border-white/5 rounded-xl p-5 sm:p-6 space-y-3">
                 <div className="flex items-center gap-2 text-primary font-bold text-base">
                   <AlertTriangle className="w-5 h-5 shrink-0" />
                   Mandatory Non-Clinical Medical Disclaimer
@@ -500,7 +500,7 @@ export default function TermsOfService() {
                 Atlas OS includes a collaborative candidate wisdom repository named <strong className="text-foreground font-semibold">Trail Markers</strong> (Clinical Pearls, High-Yield Mnemonics, Exam Pitfalls, and High-Yield Resource notes).
               </p>
 
-              <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 text-xs sm:text-sm">
+              <div className="bg-card border border-border/80 rounded-xl p-5 space-y-3 text-xs sm:text-sm">
                 <div className="font-bold text-foreground flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-400" />
                   Community Content Mandate:
@@ -548,7 +548,7 @@ export default function TermsOfService() {
                 <p>
                   Atlas OS incorporates generative AI capabilities (powered by Google Gemini models) for real-time study query answering, voice command transcription, and concept summarization.
                 </p>
-                <div className="bg-card border border-border/80 rounded-2xl p-4 text-xs sm:text-sm space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 text-xs sm:text-sm space-y-2">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Info className="w-4 h-4 text-primary" />
                     AI Model Response Verification Notice:
@@ -620,7 +620,7 @@ export default function TermsOfService() {
               </p>
 
               {/* Generic Non-Affiliation Box */}
-              <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 text-xs leading-relaxed">
+              <div className="bg-card border border-border/80 rounded-xl p-5 space-y-3 text-xs leading-relaxed">
                 <div className="font-bold text-foreground text-sm flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-primary" />
                   General Non-Affiliation & Trademark Statement
@@ -689,7 +689,7 @@ export default function TermsOfService() {
                 <p>
                   We are fully committed to helping you master your clinical curriculum and excel in your exams. To ensure absolute confidence in your decision, we offer an unconditional, 100% satisfaction guarantee:
                 </p>
-                <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 text-xs sm:text-sm">
+                <div className="bg-card border border-border/80 rounded-xl p-5 space-y-3 text-xs sm:text-sm">
                   <div className="font-bold text-foreground flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary" />
                     Our 7-Day Guarantee Terms:
@@ -734,7 +734,7 @@ export default function TermsOfService() {
                 </Button>
               </div>
 
-              <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-2 text-xs sm:text-sm text-muted-foreground">
+              <div className="bg-card border border-border/80 rounded-xl p-5 space-y-2 text-xs sm:text-sm text-muted-foreground">
                 <p className="font-bold text-foreground">You agree NOT to engage in any of the following prohibited activities:</p>
                 <ul className="list-disc pl-5 space-y-1.5">
                   <li>Automated scraping, bulk data extraction, or bot traffic targeting Atlas OS endpoints.</li>
@@ -800,7 +800,7 @@ export default function TermsOfService() {
                 <p>
                   To the maximum extent permitted by applicable law, Atlas OS, its creators, developers, and maintainers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits, data, or academic opportunities resulting from your use of or inability to use the service.
                 </p>
-                <div className="bg-card border border-border/80 rounded-2xl p-4 text-xs sm:text-sm space-y-2">
+                <div className="bg-card border border-border/80 rounded-xl p-4 text-xs sm:text-sm space-y-2">
                   <div className="font-bold text-foreground">Examination Performance & Rank Disclaimer:</div>
                   <p className="text-muted-foreground leading-relaxed">
                     While Atlas OS recommendation algorithms are mathematically designed to optimize memory retention, final examination performance, ranks, percentiles, and medical licensing outcomes depend entirely on individual student preparation, effort, and exam day execution. Atlas OS makes no warranty or guarantee regarding specific exam pass rates or rank achievements.
@@ -885,7 +885,7 @@ export default function TermsOfService() {
                 </Button>
               </div>
 
-              <div className="bg-card border border-border/80 rounded-2xl p-6 space-y-4">
+              <div className="bg-card border border-border/80 rounded-xl p-6 space-y-4">
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   We reserve the right to modify these Operating Terms at any time. Material updates will be published on this page with a revised "Last Updated" timestamp. Continued use of Atlas OS after any modifications constitutes acceptance of the updated Terms.
                 </p>

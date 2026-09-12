@@ -644,7 +644,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           exit={{ opacity: 0, x: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
           className={cn(
-            "relative w-full sm:w-[420px] h-[100dvh] sm:h-full flex flex-col rounded-none sm:rounded-3xl border-0 sm:border shadow-2xl overflow-hidden pointer-events-auto",
+            "relative w-full sm:w-[420px] h-[100dvh] sm:h-full flex flex-col rounded-none sm:rounded-xl border-0 sm:border shadow-2xl overflow-hidden pointer-events-auto",
             "bg-card/95 dark:bg-zinc-950/95 border-border/80 dark:border-white/10 backdrop-blur-3xl"
           )}
         >
@@ -652,7 +652,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-b border-border/60 dark:border-white/10 bg-muted/40 dark:bg-black/30 backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto justify-between sm:justify-start">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-white/5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary shrink-0 border border-white/5">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -667,7 +667,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
             </div>
 
             {/* Apple-Standard Segmented Control Tab Switcher */}
-            <div className="flex items-center p-1 rounded-xl bg-muted/80 dark:bg-muted/40 border border-border/60 dark:border-border/40 relative shadow-inner">
+            <div className="flex items-center p-1 rounded-xl bg-muted/80 dark:bg-muted/40 border border-border/60 dark:border-border/40 relative">
               <button
                 type="button"
                 onClick={() => setActiveTab('text')}
@@ -919,7 +919,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                     </span>
                   </div>
                   
-                  <div className="text-xs sm:text-sm font-medium text-foreground min-h-[52px] max-h-24 sm:min-h-[72px] sm:max-h-36 overflow-y-auto px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-2xl bg-card/80 dark:bg-card/60 border border-border/60 backdrop-blur-md shadow-xs flex items-center justify-center text-center transition-all leading-relaxed">
+                  <div className="text-xs sm:text-sm font-medium text-foreground min-h-[52px] max-h-24 sm:min-h-[72px] sm:max-h-36 overflow-y-auto px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl bg-card/80 dark:bg-card/60 border border-border/60 backdrop-blur-md shadow-xs flex items-center justify-center text-center transition-all leading-relaxed">
                     {ambientSession.liveTranscript ? (
                       <span className="text-foreground font-semibold italic">
                         "{ambientSession.liveTranscript}"
@@ -964,7 +964,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   onPointerCancel={ambientSession.stopAndSubmitRecording}
                   style={{ touchAction: 'none' }}
                   className={cn(
-                    "w-full h-11 sm:h-13 py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]",
+                    "w-full h-11 sm:h-13 py-2.5 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-xl font-bold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]",
                     ambientSession.isListening
                       ? "bg-emerald-600 text-white shadow-emerald-600/30 ring-4 ring-emerald-500/25 animate-pulse"
                       : ambientSession.isThinking
@@ -1017,7 +1017,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                   <div className="flex flex-col flex-1 min-w-0 space-y-2">
                     {msg.content ? (
                       <div className={cn(
-                        "px-4 py-3 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm",
+                        "px-4 py-3 rounded-xl text-xs sm:text-sm leading-relaxed shadow-sm",
                         isAssistant
                           ? "bg-card border border-border/50 rounded-bl-md text-foreground"
                           : "bg-primary text-primary-foreground rounded-br-md"
@@ -1142,7 +1142,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-2xl bg-card dark:bg-black/50 border border-border/70 dark:border-white/10 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+      <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-xl bg-card dark:bg-black/50 border border-border/70 dark:border-white/10 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
         {/* Camera Upload Button */}
         <button
           type="button"
@@ -1245,7 +1245,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="fixed bottom-4 left-4 right-4 z-[101] flex flex-col gap-2"
               >
-                <div className="flex flex-col bg-card/95 backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl divide-y divide-border/50">
+                <div className="flex flex-col bg-card/95 backdrop-blur-xl rounded-xl overflow-hidden shadow-2xl divide-y divide-border/50">
                   <button
                     type="button"
                     className="p-4 text-center text-primary font-medium hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
@@ -1271,7 +1271,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 </div>
                 <button
                   type="button"
-                  className="p-4 bg-card/95 backdrop-blur-xl rounded-2xl text-center text-foreground font-semibold hover:bg-muted/50 transition-colors shadow-2xl"
+                  className="p-4 bg-card/95 backdrop-blur-xl rounded-xl text-center text-foreground font-semibold hover:bg-muted/50 transition-colors shadow-2xl"
                   onClick={() => setIsActionSheetOpen(false)}
                 >
                   Cancel

@@ -138,7 +138,7 @@ export function UsmleAtlasSkyShareModal({
         hideCloseButton 
         className={cn(
           "max-w-2xl w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6",
-          "bg-[#09090b] text-zinc-100 border border-white/10 rounded-2xl shadow-2xl font-sans"
+          "bg-[#09090b] text-zinc-100 border border-white/10 rounded-xl shadow-2xl font-sans"
         )}
       >
         <DialogTitle className="sr-only">Share Atlas Sky Constellation</DialogTitle>
@@ -173,7 +173,7 @@ export function UsmleAtlasSkyShareModal({
           {/* THE ACTUAL EXPORT CARD ELEMENT TO BE CAPTURED BY HTML-TO-IMAGE */}
           <div 
             ref={exportRef}
-            className="relative w-full max-w-[500px] aspect-square rounded-2xl bg-[#030303] text-zinc-100 p-6 flex flex-col justify-between overflow-hidden border border-white/10 shadow-2xl select-none"
+            className="relative w-full max-w-[500px] aspect-square rounded-xl bg-[#030303] text-zinc-100 p-6 flex flex-col justify-between overflow-hidden border border-white/10 shadow-2xl select-none"
             style={{ backgroundColor: '#030303' }}
           >
             {/* Background Ambient Nebula Glows */}
@@ -199,7 +199,7 @@ export function UsmleAtlasSkyShareModal({
                   {Math.round(globalHealth)}% LUMINOSITY
                 </span>
                 {completedCount > 0 && (
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 text-amber-400">
                     {completedCount}/19 MASTERED
                   </span>
                 )}

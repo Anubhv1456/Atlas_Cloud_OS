@@ -136,8 +136,8 @@ export function ScoreLogModal({
   const percentage = isValidScore ? Math.round((scoreNum / totalNum) * 100 * 100) / 100 : 0;
 
   const getPercentageColor = (pct: number) => {
-    if (pct >= 80) return 'text-emerald-400 bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30';
-    if (pct >= 60) return 'text-amber-400 bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30';
+    if (pct >= 80) return 'text-emerald-400 bg-emerald-950/20 border-white/5';
+    if (pct >= 60) return 'text-amber-400 bg-amber-950/20 border-white/5';
     return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
   };
 
@@ -295,8 +295,8 @@ export function ScoreLogModal({
   if (successData) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-2xl">
-          <div className="w-20 h-20 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner">
+        <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-xl">
+          <div className="w-20 h-20 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 border border-white/5">
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <h3 className="text-2xl font-bold tracking-tight mb-2">Session Recorded</h3>

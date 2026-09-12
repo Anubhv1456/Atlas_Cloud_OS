@@ -133,7 +133,7 @@ export function useHomeLogic() {
       const isDueToday = isRevisionDue(topDecaySystem, curriculumSets, now) && overdue === 0;
 
       let badge = 'REVISION DUE';
-      let badgeClass = 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30';
+      let badgeClass = 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5';
       let statusText = 'due today';
 
       if (overdue > 0) {
@@ -204,7 +204,7 @@ export function useHomeLogic() {
           id: 'coverage-imbalance',
           confidence: 88,
           badge: 'COVERAGE GAP',
-          badgeClass: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30',
+          badgeClass: 'bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5',
           icon: <Activity className="w-4 h-4 text-amber-400 shrink-0" />,
           text: (
             <span>
@@ -257,7 +257,7 @@ export function useHomeLogic() {
             id: `milestone-${sub.id}`,
             confidence: 82,
             badge: 'MASTERY MILESTONE',
-            badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30',
+            badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5',
             icon: <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />,
             text: (
               <span>
@@ -289,7 +289,7 @@ export function useHomeLogic() {
         id: 'triage-mode',
         confidence: 100,
         badge: 'TRIAGE PROTOCOL ACTIVE',
-        badgeClass: 'bg-red-950/20 text-red-400 border-white/5 border-l-2 border-l-red-500/30',
+        badgeClass: 'bg-red-950/20 text-red-400 border-white/5',
         icon: <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />,
         text: (
           <span>
@@ -306,7 +306,7 @@ export function useHomeLogic() {
         id: 'perfect-momentum',
         confidence: 70,
         badge: 'PEAK MOMENTUM',
-        badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30',
+        badgeClass: 'bg-emerald-950/20 text-emerald-400 border-white/5',
         icon: <Flame className="w-4 h-4 text-amber-400 shrink-0" />,
         text: (
           <span>

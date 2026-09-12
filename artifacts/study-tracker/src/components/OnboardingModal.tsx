@@ -286,7 +286,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[540px] rounded-3xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
+      <DialogContent className="sm:max-w-[540px] rounded-xl p-0 gap-0 overflow-hidden border-border/80 shadow-2xl bg-card">
         <div className="p-6 md:p-8 relative overflow-hidden min-h-[480px] flex flex-col justify-between">
           {/* Subtle Ambient Background Glow */}
           <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-zinc-800/40 rounded-full blur-3xl" />
@@ -322,8 +322,8 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col items-center justify-center text-center my-auto space-y-6 z-10 py-4"
             >
               <div className="relative">
-                <div className="w-20 h-20 rounded-3xl bg-zinc-800/40 border border-white/5 flex items-center justify-center shadow-md overflow-hidden">
-                  <img src="/emblem.svg" alt="Atlas Logo" className="w-16 h-16 rounded-2xl object-contain" />
+                <div className="w-20 h-20 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center shadow-md overflow-hidden">
+                  <img src="/emblem.svg" alt="Atlas Logo" className="w-16 h-16 rounded-xl object-contain" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 bg-primary text-primary-foreground rounded-full shadow-sm">
                   <Zap className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 <Button
                   onClick={() => setStep(2)}
                   size="lg"
-                  className="w-full rounded-2xl text-sm font-semibold h-12 shadow-md gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                  className="w-full rounded-xl text-sm font-semibold h-12 shadow-md gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   Begin Calibration
                   <ArrowRight className="w-4 h-4" />
@@ -391,7 +391,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                       type="button"
                       onClick={() => setSelectedGoal(goal.id)}
                       className={cn(
-                        "p-3 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
+                        "p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
                         isSelected
                           ? "bg-zinc-800/40 border-primary shadow-xs"
                           : "bg-background border-border/60 hover:border-border hover:bg-muted/40"
@@ -427,7 +427,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col items-center justify-center space-y-6 z-10 py-6 text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-zinc-800/40 border border-white/5 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
               <div className="space-y-2 max-w-xs">
@@ -581,7 +581,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               </div>
 
               <div className="grid grid-cols-2 gap-2.5 my-2">
-                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500" />
                     Macro Mastery
@@ -590,7 +590,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                     Tracks Subjects & Systems, not micro-facts. Use alongside your favorite Q-Banks.
                   </p>
                 </div>
-                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     Intelligent Direction
@@ -600,7 +600,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   </p>
                 </div>
 
-                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                     Active Recall
@@ -610,7 +610,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   </p>
                 </div>
 
-                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-sky-500" />
                     Spaced Repetition
@@ -620,7 +620,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                   </p>
                 </div>
 
-                <div className="p-3 bg-muted/30 border border-border/60 rounded-2xl space-y-1">
+                <div className="p-3 bg-muted/30 border border-border/60 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                     Continuous Calibration
@@ -643,7 +643,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
 
                 <Button
                   onClick={handleStartComputing}
-                  className="rounded-2xl text-xs font-semibold h-10 px-5 shadow-sm gap-2 cursor-pointer"
+                  className="rounded-xl text-xs font-semibold h-10 px-5 shadow-sm gap-2 cursor-pointer"
                 >
                   Calibrate & Generate
                   <Sparkles className="w-4 h-4 text-amber-400" />
@@ -673,7 +673,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
                 </p>
               </div>
 
-              <div className="w-full max-w-xs space-y-2 text-left bg-muted/40 border border-border/50 rounded-2xl p-4">
+              <div className="w-full max-w-xs space-y-2 text-left bg-muted/40 border border-border/50 rounded-xl p-4">
                 {[
                   'Analyzing curriculum structure...',
                   'Calibrating spaced repetition intervals...',
@@ -709,7 +709,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               className="flex-1 flex flex-col justify-between space-y-4 z-10"
             >
               <div className="text-center space-y-1">
-                <Badge variant="outline" className="bg-emerald-950/20 text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30 text-xs font-bold px-3 py-0.5 rounded-full">
+                <Badge variant="outline" className="bg-emerald-950/20 text-emerald-400 border-white/5 text-xs font-bold px-3 py-0.5 rounded-full">
                   <Sparkles className="w-3 h-3 mr-1 text-emerald-400" />
                   Calibration Complete
                 </Badge>
@@ -719,7 +719,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               </div>
 
               {/* Recommendation Card */}
-              <div className="bg-card border-2 border-primary/40 rounded-3xl p-5 shadow-lg space-y-3.5 relative overflow-hidden">
+              <div className="bg-card border-2 border-primary/40 rounded-xl p-5 shadow-lg space-y-3.5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-3 bg-zinc-800/40 rounded-bl-2xl border-l border-b border-white/5 text-primary">
                   <Flame className="w-5 h-5 text-amber-400" />
                 </div>
@@ -763,7 +763,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
               <Button
                 onClick={handleStartStudying}
                 size="lg"
-                className="w-full rounded-2xl text-sm font-bold h-12 shadow-md gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+                className="w-full rounded-xl text-sm font-bold h-12 shadow-md gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
               >
                 {!hasAccess ? (
                   <>

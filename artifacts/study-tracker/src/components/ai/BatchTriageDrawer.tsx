@@ -25,7 +25,7 @@ export function BatchTriageDrawer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50 rounded-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50 rounded-xl">
         <DialogHeader className="p-4 md:p-6 pb-4 border-b border-border/50 bg-card/30 flex-shrink-0">
           <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <Layers className="w-5 h-5 md:w-6 md:h-6 text-primary" />

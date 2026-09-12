@@ -84,7 +84,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md sm:max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 bg-card border-border/40 shadow-2xl">
+      <DialogContent className="max-w-md sm:max-w-lg rounded-xl p-6 sm:p-8 space-y-6 bg-card border-border/40 shadow-2xl">
         <DialogHeader className="space-y-2 text-left">
           <div className="flex items-center justify-between">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/40 border border-white/5 text-teal-400 text-xs font-semibold">
@@ -105,7 +105,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
         </DialogHeader>
 
         {/* Invite Code & Link Box */}
-        <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-3">
+        <div className="p-4 rounded-xl bg-muted/40 border border-border/60 space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-medium">Your Batchmate Invite Link</span>
             {inviteCode && <span className="font-mono text-teal-400 font-bold">{inviteCode}</span>}
@@ -195,7 +195,7 @@ export function ReferralModal({ open, onOpenChange }: ReferralModalProps) {
                           +14d Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/20 text-amber-400 text-xs font-medium border border-white/5 border-l-2 border-l-amber-500/30">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/20 text-amber-400 text-xs font-medium border border-white/5">
                           <Clock className="w-3 h-3" />
                           First Session Pending
                         </span>

@@ -141,7 +141,7 @@ export function UpgradePaywallModal() {
       setIsOpen(open);
     }}>
       <DialogContent 
-        className="sm:max-w-[500px] border-white/5 border-l-2 border-l-amber-500/30 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden"
+        className="sm:max-w-[500px] border-white/5 shadow-2xl shadow-amber-900/10 p-0 overflow-hidden"
         onInteractOutside={(e) => {
           if (isTrialExpiredTrap) e.preventDefault();
         }}
@@ -151,7 +151,7 @@ export function UpgradePaywallModal() {
         hideCloseButton={isTrialExpiredTrap}
       >
         <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 p-6 border-b border-border/50 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-3 border border-amber-200 dark:border-amber-500/30 shadow-inner">
+          <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-3 border border-amber-200 dark:border-amber-500/30">
             {contextInfo.icon}
           </div>
           <span className="text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">

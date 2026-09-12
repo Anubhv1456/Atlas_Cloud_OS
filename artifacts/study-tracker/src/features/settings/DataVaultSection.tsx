@@ -27,12 +27,14 @@ import { Button } from '@/components/ui/button';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
+import { DeviceBackupsView } from './DeviceBackupsView';
 
 export function DataVaultSection() {
   const { user } = useAuth();
   const { profile } = useExamProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'main' | 'backups'>('main');
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateSubjectGroup[]>([]);
 
@@ -256,9 +258,14 @@ export function DataVaultSection() {
         onClick={() => setModalOpen(true)}
       />
 
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+      <Dialog open={modalOpen} onOpenChange={(open) => {
+        setModalOpen(open);
+        if (!open) setActiveView('main');
+      }}>
+        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-xl p-0 shadow-xl max-h-[85vh] overflow-hidden flex flex-col">
+          {activeView === 'main' ? (
+            <div className="p-6 overflow-y-auto max-h-[85vh] space-y-4">
+              <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <Database className="w-4.5 h-4.5 text-zinc-300" />
               Storage, Backup & Vault Tools
@@ -270,7 +277,7 @@ export function DataVaultSection() {
 
           <div className="space-y-4 pt-1">
             {/* Telemetry Summary */}
-            <div className="p-3.5 bg-muted/20 border border-border/60 rounded-2xl flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-2">
+            <div className="p-3.5 bg-muted/20 border border-border/60 rounded-xl flex items-center justify-between text-xs text-muted-foreground flex-wrap gap-2">
               <span><strong>{subjectCount}</strong> Subjects</span>
               <span>•</span>
               <span><strong>{systemCount}</strong> Systems</span>
@@ -281,7 +288,7 @@ export function DataVaultSection() {
             </div>
 
             {/* Cloud Synchronization Panel */}
-            <div className="p-4 bg-muted/15 border border-border/50 rounded-2xl space-y-3.5">
+            <div className="p-4 bg-muted/15 border border-border/50 rounded-xl space-y-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -329,9 +336,29 @@ export function DataVaultSection() {
               </div>
             </div>
 
+            {/* Automatic Device Backups */}
+            <button 
+              type="button"
+              onClick={() => setActiveView('backups')}
+              className="w-full flex items-center justify-between p-3.5 bg-card border border-border/60 hover:bg-muted/40 transition-colors rounded-xl text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Clock className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">Device Backups</h4>
+                  <p className="text-[10px] text-muted-foreground">{syncMeta.snapshotCount}/5 rolling snapshots saved</p>
+                </div>
+              </div>
+              <div className="text-xs font-medium text-emerald-400 bg-emerald-950/20 px-2 py-1 rounded-md border border-white/5 shrink-0">
+                Manage
+              </div>
+            </button>
+
             {/* Duplicates Advisory */}
             {duplicateGroups.length > 0 && (
-              <div className="p-3.5 rounded-2xl bg-zinc-800/40 border border-white/5 flex items-center justify-between gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-primary">
                   <CopyPlus className="w-4 h-4 shrink-0" />
                   <span>{duplicateGroups.length} duplicate subject group(s) detected</span>
@@ -354,7 +381,7 @@ export function DataVaultSection() {
                 type="button"
                 onClick={handleExportJSON}
                 disabled={loadingAction !== null}
-                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
+                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
                 <Download className="w-4 h-4 text-primary" />
                 <span className="text-xs font-semibold text-foreground">Backup JSON</span>
@@ -365,7 +392,7 @@ export function DataVaultSection() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loadingAction !== null}
-                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
+                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
                 <Upload className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Restore JSON</span>
@@ -376,7 +403,7 @@ export function DataVaultSection() {
                 type="button"
                 onClick={handleRepairSchedules}
                 disabled={loadingAction !== null}
-                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
+                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className="w-4 h-4 text-amber-400" />
                 <span className="text-xs font-semibold text-foreground">Rehydrate Schedules</span>
@@ -387,7 +414,7 @@ export function DataVaultSection() {
                 type="button"
                 onClick={handleExportCSV}
                 disabled={loadingAction !== null}
-                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
+                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
               >
                 <FileSpreadsheet className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Export CSV</span>
@@ -398,7 +425,7 @@ export function DataVaultSection() {
                 type="button"
                 onClick={handleSyncOntology}
                 disabled={loadingAction !== null}
-                className="p-3 rounded-2xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50 col-span-2 sm:col-span-1"
+                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50 col-span-2 sm:col-span-1"
               >
                 <BookOpen className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Sync Blueprint</span>
@@ -406,6 +433,10 @@ export function DataVaultSection() {
               </button>
             </div>
           </div>
+          </div>
+          ) : (
+            <DeviceBackupsView onBack={() => setActiveView('main')} />
+          )}
         </DialogContent>
       </Dialog>
     </>

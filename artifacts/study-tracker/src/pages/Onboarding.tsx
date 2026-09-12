@@ -384,7 +384,7 @@ export default function Onboarding() {
               className="flex-1 flex flex-col items-center justify-center text-center my-auto space-y-6 relative z-10 py-2"
             >
               <div className="relative">
-                <div className="w-20 h-20 rounded-3xl bg-teal-950/30 border border-teal-500/30 flex items-center justify-center shadow-lg">
+                <div className="w-20 h-20 rounded-xl bg-teal-950/30 border border-teal-500/30 flex items-center justify-center shadow-lg">
                   <AtlasEmblem className="w-10 h-10 text-teal-400" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 bg-teal-400 text-black rounded-full shadow-md">
@@ -481,7 +481,7 @@ export default function Onboarding() {
                       type="button"
                       onClick={() => setSelectedGoal(goal.id)}
                       className={cn(
-                        "p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
+                        "p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer relative",
                         isSelected
                           ? "bg-teal-950/30 border-teal-500/60 shadow-[0_0_16px_rgba(20,184,166,0.15)]"
                           : "bg-white/[0.02] border-white/[0.07] hover:border-white/20 hover:bg-white/[0.04]"
@@ -530,7 +530,7 @@ export default function Onboarding() {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col items-center justify-center space-y-6 relative z-10 py-10 text-center"
             >
-              <div className="w-16 h-16 rounded-2xl bg-teal-950/30 border border-teal-500/30 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-xl bg-teal-950/30 border border-teal-500/30 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-teal-400 animate-spin" />
               </div>
               <div className="space-y-2 max-w-xs">
@@ -709,7 +709,7 @@ export default function Onboarding() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 my-1">
-                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-1">
+                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
                     Macro Mastery
@@ -719,7 +719,7 @@ export default function Onboarding() {
                   </p>
                 </div>
 
-                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-1">
+                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     Intelligent Direction
@@ -729,7 +729,7 @@ export default function Onboarding() {
                   </p>
                 </div>
 
-                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-1">
+                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                     Active Recall
@@ -739,7 +739,7 @@ export default function Onboarding() {
                   </p>
                 </div>
 
-                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl space-y-1">
+                <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />
                     Adaptive Spaced Repetition
@@ -792,7 +792,7 @@ export default function Onboarding() {
                 </p>
               </div>
 
-              <div className="w-full max-w-xs space-y-2 text-left bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
+              <div className="w-full max-w-xs space-y-2 text-left bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
                 {[
                   `Analyzing ${selectedGoal} curriculum structure...`,
                   'Calibrating spaced repetition decay constants...',
@@ -842,7 +842,7 @@ export default function Onboarding() {
               </div>
 
               {/* Recommendation Card */}
-              <div className="bg-white/[0.02] border border-teal-500/30 rounded-2xl p-5 shadow-lg space-y-3 relative overflow-hidden">
+              <div className="bg-white/[0.02] border border-teal-500/30 rounded-xl p-5 shadow-lg space-y-3 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-3 bg-teal-950/40 rounded-bl-2xl border-l border-b border-teal-500/20 text-teal-400">
                   <Flame className="w-5 h-5 text-amber-400" />
                 </div>

@@ -100,7 +100,7 @@ export default function Contact() {
     { key: 'github' as const, label: 'GitHub', icon: Github, ...socials.github, color: 'text-slate-300 bg-slate-500/10 border-slate-500/20' },
     { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, ...socials.linkedin, color: 'text-blue-400 bg-zinc-800/40 border-white/5' },
     { key: 'telegram' as const, label: 'Telegram Broadcast', icon: SendIcon, ...socials.telegram, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-    { key: 'youtube' as const, label: 'YouTube', icon: Youtube, ...socials.youtube, color: 'text-red-400 bg-red-950/20 border-white/5 border-l-2 border-l-red-500/30' },
+    { key: 'youtube' as const, label: 'YouTube', icon: Youtube, ...socials.youtube, color: 'text-red-400 bg-red-950/20 border-white/5' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, ...socials.instagram, color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
   ].filter(c => c.enabled && c.url);
 
@@ -189,7 +189,7 @@ export default function Contact() {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-card border border-border/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs hover:border-primary/50 transition-all hover:scale-[1.01] group cursor-pointer"
+                    className="bg-card border border-border/80 rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs hover:border-primary/50 transition-all hover:scale-[1.01] group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${color}`}>
@@ -210,8 +210,8 @@ export default function Contact() {
               </div>
             )}
 
-            <div className="bg-card border border-border/80 rounded-2xl p-4 flex items-center gap-3 shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 flex items-center justify-center shrink-0 border border-white/5 border-l-2 border-l-emerald-500/30">
+            <div className="bg-card border border-border/80 rounded-xl p-4 flex items-center gap-3 shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-emerald-950/20 text-emerald-400 flex items-center justify-center shrink-0 border border-white/5">
                 <Clock className="w-4.5 h-4.5" />
               </div>
               <div>
@@ -221,7 +221,7 @@ export default function Contact() {
             </div>
 
             {/* Quick FAQ Box */}
-            <div className="bg-muted/30 border border-border/60 rounded-2xl p-5 space-y-3">
+            <div className="bg-muted/30 border border-border/60 rounded-xl p-5 space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 <HelpCircle className="w-4 h-4 text-primary" />
                 Frequently Asked Questions
@@ -241,7 +241,7 @@ export default function Contact() {
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-7">
-            <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="bg-card border border-border/80 rounded-xl p-6 sm:p-8 shadow-sm space-y-6">
               <div>
                 <h2 className="font-bold text-xl tracking-tight">Transmit Feedback</h2>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -251,7 +251,7 @@ export default function Contact() {
 
               {submitted ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-950/20 border border-white/5 border-l-2 border-l-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-emerald-950/20 border border-white/5 text-emerald-400 flex items-center justify-center">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
                   <div className="space-y-1">

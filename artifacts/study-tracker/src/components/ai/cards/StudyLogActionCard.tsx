@@ -43,7 +43,7 @@ export const StudyLogActionCard: React.FC<StudyLogActionCardProps> = ({
   const DURATION_PRESETS = [15, 30, 45, 60, 90, 120];
 
   return (
-    <div className="bg-card/95 backdrop-blur-xl border border-white/5 rounded-2xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+    <div className="bg-card/95 backdrop-blur-xl border border-white/5 rounded-xl p-4 shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center">

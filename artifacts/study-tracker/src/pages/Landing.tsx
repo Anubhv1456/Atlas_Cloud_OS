@@ -104,10 +104,10 @@ const HomeDashboardUI = () => (
           <div className="text-xs sm:text-sm font-medium text-white relative z-10">Cardiology</div>
           <div className="text-[7px] sm:text-[9px] text-slate-400 relative z-10">Medicine</div>
         </div>
-        <div className="bg-[#111318] border border-white/5 border-l-2 border-l-amber-500/30 rounded-lg p-1.5 sm:p-2.5 relative overflow-hidden">
+        <div className="bg-[#111318] border border-white/5 rounded-lg p-1.5 sm:p-2.5 relative overflow-hidden">
           <div className="flex items-center justify-between text-[7px] sm:text-[8px] text-slate-400 uppercase mb-0.5">
             <span>SECONDARY FOCUS</span>
-            <span className="bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30 text-[6px] sm:text-[8px] px-1 rounded font-medium">Overdue 2d</span>
+            <span className="bg-amber-950/20 text-amber-400 border border-white/5 text-[6px] sm:text-[8px] px-1 rounded font-medium">Overdue 2d</span>
           </div>
           <div className="text-xs sm:text-sm font-medium text-white">Glaucoma</div>
           <div className="text-[7px] sm:text-[9px] text-slate-400">Ophthalmology</div>
@@ -1934,7 +1934,7 @@ const CommunityMarkersSection = () => {
           
           {/* Section Header */}
           <div className="text-center max-w-4xl mx-auto relative z-10 mb-12">
-             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 text-xs font-mono tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-950/20 border border-white/5 text-amber-400 text-xs font-mono tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                 <Compass className="w-3.5 h-3.5" />
                 <span>CELESTIAL KNOWLEDGE REPOSITORY</span>
                 <span className="w-1 h-1 rounded-full bg-amber-400/50" />
@@ -2119,7 +2119,7 @@ const CommunityMarkersSection = () => {
                    animate={{ opacity: 1, y: 0, scale: 1 }}
                    exit={{ opacity: 0, y: -10, scale: 0.96 }}
                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                   className="absolute bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-30 bg-[#080B10]/95 border border-amber-500/30 backdrop-blur-xl rounded-2xl p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col gap-3"
+                   className="absolute bottom-6 left-6 right-6 md:left-auto md:right-8 md:max-w-md z-30 bg-[#080B10]/95 border border-amber-500/30 backdrop-blur-xl rounded-xl p-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col gap-3"
                 >
                    <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                       <div className="flex items-center gap-2">
@@ -2441,7 +2441,7 @@ export default function Landing() {
         {/* Feature 4 */}
         <div className="flex flex-col lg:flex-row-reverse items-center gap-16 lg:gap-24 relative group">
           <div className="flex-1 lg:pl-12 relative z-10">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-6">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/20 border border-white/5 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-6">
                 <Activity className="w-3 h-3" /> Trajectory
              </div>
              <h3 className="text-4xl lg:text-5xl font-medium tracking-tight mb-6 text-white group-hover:text-amber-400 transition-colors duration-500">Performance Analytics</h3>
@@ -2482,7 +2482,7 @@ export default function Landing() {
                  transition={{ duration: 0.5, delay: i * 0.1 }}
                  className="p-8 rounded-[32px] bg-[#111318]/50 backdrop-blur-sm border border-white/5 hover:bg-[#111318] hover:border-white/10 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group cursor-default"
                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#0a0c10] border border-white/5 flex items-center justify-center mb-6 group-hover:scale-105 group-hover:border-[#20b59b]/20 transition-all duration-300 shadow-inner">
+                  <div className="w-12 h-12 rounded-xl bg-[#0a0c10] border border-white/5 flex items-center justify-center mb-6 group-hover:scale-105 group-hover:border-[#20b59b]/20 transition-all duration-300">
                      <card.icon className="w-5 h-5 text-slate-400 group-hover:text-[#20b59b] transition-colors" />
                   </div>
                   <h3 className="text-lg font-medium text-white mb-2 tracking-tight group-hover:text-[#20b59b] transition-colors">{card.title}</h3>

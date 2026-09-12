@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { firestoreDb } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getCachedDoc } from '@/lib/firestoreCache';
 
 export interface ReferredCandidate {
   id: string;
@@ -64,9 +65,9 @@ export function useAffiliate() {
       return;
     }
 
-    // Subscribe to admin configuration
+    // Subscribe to admin configuration (P3 Cache-First)
     const configRef = doc(firestoreDb, 'config', 'affiliate_config');
-    getDoc(configRef).then((snap) => {
+    getCachedDoc(configRef).then((snap) => {
       if (snap.exists()) {
         const data = snap.data();
         setConfig({ cookieWindowDays: data.cookieWindowDays ?? 60 });

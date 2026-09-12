@@ -223,8 +223,8 @@ If max score is not mentioned, assume total is 40.`;
   if (successData) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-2xl">
-          <div className="w-20 h-20 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner">
+        <DialogContent className="sm:max-w-md bg-background border-border p-8 flex flex-col items-center justify-center text-center shadow-2xl rounded-xl">
+          <div className="w-20 h-20 bg-emerald-950/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 border border-white/5">
             <CheckCircle2 className="w-10 h-10" />
           </div>
           <h3 className="text-2xl font-bold tracking-tight mb-2">Block Parsed & Logged</h3>
@@ -251,7 +251,7 @@ If max score is not mentioned, assume total is 40.`;
     <Dialog open={open} onOpenChange={(val) => { if (!val && loadingPhase < 0) onOpenChange(false); }}>
       <DialogContent 
         className={cn(
-          "sm:max-w-xl bg-background border-border p-0 overflow-hidden shadow-2xl rounded-2xl transition-all duration-300",
+          "sm:max-w-xl bg-background border-border p-0 overflow-hidden shadow-2xl rounded-xl transition-all duration-300",
           isDragging ? "border-primary shadow-lg scale-[1.01]" : ""
         )}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -267,7 +267,7 @@ If max score is not mentioned, assume total is 40.`;
         <div className="p-6 pb-4 bg-muted/30 border-b border-border/40">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30 shadow-inner flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 flex-shrink-0">
                 <Brain className="w-5 h-5" />
               </div>
               Log Study Session
@@ -339,7 +339,7 @@ If max score is not mentioned, assume total is 40.`;
           </div>
           
           {isDragging && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-2xl pointer-events-none border-2 border-primary border-dashed">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl pointer-events-none border-2 border-primary border-dashed">
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
                 <Upload className="w-8 h-8 text-primary animate-bounce" />
               </div>

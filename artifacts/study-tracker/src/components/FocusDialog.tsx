@@ -68,7 +68,7 @@ export function FocusDialog({
         setActiveTab('all');
       }
     }}>
-      <DialogContent className="sm:max-w-[480px] rounded-2xl mx-4 w-[calc(100%-2rem)] max-h-[85vh] flex flex-col p-0 overflow-hidden border border-border shadow-xl">
+      <DialogContent className="sm:max-w-[480px] rounded-xl mx-4 w-[calc(100%-2rem)] max-h-[85vh] flex flex-col p-0 overflow-hidden border border-border shadow-xl">
         <div className="p-5 pb-3 border-b border-border/50 bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">

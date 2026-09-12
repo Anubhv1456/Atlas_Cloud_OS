@@ -217,7 +217,7 @@ export default function Home() {
                 )}
 
                 {streak > 0 && (
-                  <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 shrink-0">
+                  <span className="hidden xs:inline-flex items-center gap-1 text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/20 border border-white/5 text-amber-400 shrink-0">
                     <Flame className="w-3 h-3 fill-amber-500/20" /> {streak}d
                   </span>
                 )}

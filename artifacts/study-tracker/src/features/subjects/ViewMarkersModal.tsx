@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Marker, MarkerType, getMarkersForSystem, getMarkersForTopic, interactWithMarker, deleteMarker, updateOwnMarker } from '@/lib/markers';
 import { Compass, Sparkles, TriangleAlert, Lightbulb, Video, Stethoscope, Bookmark, Check, BookmarkPlus, Flag, ShieldCheck, MoreHorizontal, Trash2, Edit3, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -75,23 +76,64 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
       return;
     }
     try {
-      const updates = await interactWithMarker(markerId, user.uid, action);
-      if (updates) {
-        setMarkers(prev => prev.map(m => {
-          if (m.id === markerId) {
-            return {
-              ...m,
-              ...updates
-            };
+      const currentMarker = markers.find(m => m.id === markerId);
+      const isCurrentlyActive = action === 'helpful' 
+        ? Array.isArray(currentMarker?.helpfulBy) && currentMarker.helpfulBy.includes(user.uid)
+        : action === 'save'
+        ? Array.isArray(currentMarker?.savedBy) && currentMarker.savedBy.includes(user.uid)
+        : false;
+
+      await interactWithMarker(markerId, user.uid, action, { isCurrentlyActive });
+      
+      setMarkers(prev => prev.map(m => {
+        if (m.id === markerId) {
+          const helpfulBy = Array.isArray(m.helpfulBy) ? [...m.helpfulBy] : [];
+          const savedBy = Array.isArray(m.savedBy) ? [...m.savedBy] : [];
+          const reportedBy = Array.isArray(m.reportedBy) ? [...m.reportedBy] : [];
+          let usefulCount = m.usefulCount || 0;
+          let qualityScore = m.qualityScore || 50;
+
+          if (action === 'helpful') {
+            if (isCurrentlyActive) {
+              const idx = helpfulBy.indexOf(user.uid);
+              if (idx > -1) helpfulBy.splice(idx, 1);
+              usefulCount = Math.max(0, usefulCount - 1);
+              qualityScore = Math.max(0, qualityScore - 5);
+            } else {
+              if (!helpfulBy.includes(user.uid)) helpfulBy.push(user.uid);
+              usefulCount += 1;
+              qualityScore = Math.min(100, qualityScore + 5);
+            }
+          } else if (action === 'save') {
+            if (isCurrentlyActive) {
+              const idx = savedBy.indexOf(user.uid);
+              if (idx > -1) savedBy.splice(idx, 1);
+              qualityScore = Math.max(0, qualityScore - 3);
+            } else {
+              if (!savedBy.includes(user.uid)) savedBy.push(user.uid);
+              qualityScore = Math.min(100, qualityScore + 3);
+            }
+          } else if (action === 'report') {
+            if (!reportedBy.includes(user.uid)) reportedBy.push(user.uid);
+            qualityScore = Math.max(0, qualityScore - 10);
           }
-          return m;
-        }).filter(m => m.status !== 'low_quality' && m.status !== 'archived'));
-        
-        if (action === 'report') {
-          toast.success('Marker flagged for review', { description: 'Our medical moderation queue will verify this marker.' });
-        } else if (action === 'helpful') {
-          toast.success('Verified Pearl', { description: 'Your peer verification strengthens this trail for future candidates.' });
+
+          return {
+            ...m,
+            helpfulBy,
+            savedBy,
+            reportedBy,
+            usefulCount,
+            qualityScore,
+          };
         }
+        return m;
+      }).filter(m => m.status !== 'low_quality' && m.status !== 'archived'));
+      
+      if (action === 'report') {
+        toast.success('Marker flagged for review', { description: 'Our medical moderation queue will verify this marker.' });
+      } else if (action === 'helpful') {
+        toast.success('Verified Pearl', { description: 'Your peer verification strengthens this trail for future candidates.' });
       }
     } catch (e) {
       console.error(e);
@@ -182,7 +224,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[580px] rounded-2xl mx-4 w-[calc(100%-2rem)] max-h-[90vh] flex flex-col p-0 overflow-hidden bg-card/95 backdrop-blur-xl border border-border/60 shadow-xl">
+      <DialogContent className="sm:max-w-[580px] rounded-xl mx-4 w-[calc(100%-2rem)] max-h-[90vh] flex flex-col p-0 overflow-hidden bg-card/95 backdrop-blur-xl border border-border/60 shadow-xl">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50 shrink-0">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             <Compass className="w-5 h-5 text-primary shrink-0" />
@@ -209,9 +251,31 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
         >
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-white/5 border-t-primary rounded-full animate-spin" />
-              <p className="text-xs font-medium">Uncovering trail markers...</p>
+            <div className="flex flex-col h-full">
+              {/* Fake Tabs */}
+              <div className="px-6 py-3 border-b border-border/50 overflow-x-auto flex items-center gap-2 no-scrollbar shrink-0">
+                <Skeleton className="h-7 w-20 rounded-full" />
+                <Skeleton className="h-7 w-24 rounded-full" />
+                <Skeleton className="h-7 w-28 rounded-full" />
+              </div>
+              <div className="p-6 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 rounded-xl border border-border/60 bg-card">
+                    <div className="flex justify-between mb-3">
+                      <div className="flex gap-2 items-center">
+                        <Skeleton className="h-5 w-5 rounded-md" />
+                        <Skeleton className="h-4 w-32 rounded-md" />
+                      </div>
+                      <Skeleton className="h-3 w-16 rounded-md" />
+                    </div>
+                    <Skeleton className="h-16 w-full rounded-md mb-4" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-7 w-24 rounded-md" />
+                      <Skeleton className="h-7 w-16 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : markers.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-52 gap-3 text-muted-foreground px-6 text-center">
@@ -351,7 +415,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                                {typeIcons[marker.type] || typeIcons['clinical_pearl']}
                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{typeLabels[marker.type] || 'Clinical Pearl'}</span>
                                {isHighYieldTrail && (
-                                 <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-white/5 border-l-2 border-l-emerald-500/30">
+                                 <span className="ml-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-white/5">
                                    <ShieldCheck className="w-3 h-3" />
                                    High-Yield Trail
                                  </span>
@@ -505,7 +569,7 @@ export function ViewMarkersModal({ isOpen, onClose, systemId, systemName, topicI
                           ) : (
                             <div className="flex items-center gap-2">
                               {helpfulByList.length > 0 && (
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-950/20 text-emerald-400 border border-white/5">
                                   <Check className="w-3.5 h-3.5" />
                                   Verified by {helpfulByList.length} {helpfulByList.length === 1 ? 'candidate' : 'candidates'}
                                 </div>

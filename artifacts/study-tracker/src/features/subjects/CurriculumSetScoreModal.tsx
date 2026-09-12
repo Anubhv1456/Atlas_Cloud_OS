@@ -174,7 +174,7 @@ export function CurriculumSetScoreModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[440px] max-h-[90vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
+      <DialogContent className="sm:max-w-[440px] max-h-[90vh] overflow-hidden flex flex-col rounded-xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader className="pb-2 border-b border-border/50">
           <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
             {step === 1 ? (
@@ -203,7 +203,7 @@ export function CurriculumSetScoreModal({
                     <Calendar className="w-3.5 h-3.5 text-primary" /> Revision Date
                   </Label>
                   {datePreset !== 'today' && (
-                    <span className="text-xs font-semibold text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5 border-l-2 border-l-amber-500/30">
+                    <span className="text-xs font-semibold text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5">
                       Backdated Log
                     </span>
                   )}

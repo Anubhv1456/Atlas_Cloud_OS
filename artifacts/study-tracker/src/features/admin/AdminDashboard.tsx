@@ -11,8 +11,9 @@ import { DirectoryView } from './views/DirectoryView';
 import { SettingsView } from './views/SettingsView';
 import { AmbassadorApplicationsView } from './views/AmbassadorApplicationsView';
 import { AnalyticsView } from './views/AnalyticsView';
+import { AdminsView } from './views/AdminsView';
 
-type ViewType = 'analytics' | 'directory' | 'ops' | 'ambassadors' | 'settings';
+type ViewType = 'analytics' | 'directory' | 'staff' | 'ops' | 'ambassadors' | 'settings';
 
 const navItems = [
   { 
@@ -26,6 +27,12 @@ const navItems = [
     label: 'Directory', 
     subtitle: 'Students & Affiliates', 
     icon: Users 
+  },
+  {
+    id: 'staff' as const,
+    label: 'Staff Directory',
+    subtitle: 'Access & RBAC',
+    icon: ShieldCheck,
   },
   { 
     id: 'ops' as const, 
@@ -57,6 +64,7 @@ export default function AdminDashboard() {
     switch (activeView) {
       case 'analytics': return <AnalyticsView />;
       case 'directory': return <DirectoryView />;
+      case 'staff': return <AdminsView />;
       case 'ops': return <OpsQueueView />;
       case 'ambassadors': return <AmbassadorApplicationsView />;
       case 'settings': return <SettingsView />;
@@ -86,6 +94,9 @@ export default function AdminDashboard() {
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id)}
+                  aria-current={isActive ? "page" : undefined}
+                  role="tab"
+                  aria-selected={isActive}
                   className={cn(
                     "w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative overflow-hidden text-left",
                     isActive 

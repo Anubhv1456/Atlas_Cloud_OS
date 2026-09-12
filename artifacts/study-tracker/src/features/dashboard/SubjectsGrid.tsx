@@ -165,7 +165,7 @@ export function SubjectsGrid({
     <section id="subject-portfolio" className="flex-1">
       {/* ── MBBS Professional Year Focus Banner ────────────────────────────── */}
       {isMBBSProf && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-zinc-800/40 border border-teal-500/25 text-foreground mb-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-zinc-800/40 border border-teal-500/25 text-foreground mb-5 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 rounded-xl bg-zinc-800/50 text-zinc-300 dark:text-teal-400 border border-teal-500/30 shrink-0">
               <GraduationCap className="w-4 h-4" />
@@ -209,7 +209,7 @@ export function SubjectsGrid({
 
       {/* ── Sprint Focus Banner ────────────────────────────────────────────── */}
       {isSprintActive && !isMBBSProf && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-950/20 border border-amber-500/25 text-foreground mb-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/25 text-foreground mb-5 shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
               <Target className="w-4 h-4" />
@@ -301,7 +301,7 @@ export function SubjectsGrid({
           }
         />
       ) : filteredSubjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/60 bg-muted/20">
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border/60 bg-muted/20">
           <p className="text-sm font-medium text-muted-foreground">
             {isSprintActive && !showAllOverride
               ? `No sprint target subjects match '${activeFilter}'.`

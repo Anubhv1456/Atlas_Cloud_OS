@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { requireAuth, setCorsHeaders, parseRequestBody, type VercelRequest, type VercelResponse } from '../_lib/auth.js';
+import { initFirebaseAdmin } from '../_lib/firebaseAdmin.js';
 
 function getAction(req: VercelRequest): string {
   const queryAction = req.query.action;
@@ -132,8 +133,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handleVerifyBackup(req, res);
   }
 
+  if (action === 'purge') {
+    return handlePurgeVault(req, res);
+  }
+
   return res.status(404).json({
     error: 'Not Found',
-    message: `Unknown vault action: '${action}'. Expected 'sign-backup' or 'verify-backup'.`,
+    message: `Unknown vault action: '${action}'. Expected 'sign-backup', 'verify-backup', or 'purge'.`,
   });
+}
+
+async function handlePurgeVault(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const authenticatedUser = await requireAuth(req, res);
+  if (!authenticatedUser) {
+    return; // 401 handled by requireAuth
+  }
+
+  try {
+    const { db } = initFirebaseAdmin();
+    const userId = authenticatedUser.uid;
+
+    const subcollections = [
+      'subjects',
+      'systems',
+      'curriculumSets',
+      'revisionSets',
+      'history',
+      'pyqYears',
+      'scoreLogs',
+      'uiPreferences',
+      'topicProgress',
+      'mistakeLogs',
+      'recommendationSkips',
+      'operationalModes',
+      'customTopics',
+      'telemetry_logs',
+      'backups',
+    ];
+
+    // Concurrently execute recursive deletes on all target user subcollections
+    // preserving the root auth/subscription profile document users/{uid}
+    await Promise.all(
+      subcollections.map(async (subCol) => {
+        try {
+          const colRef = db.collection(`users/${userId}/${subCol}`);
+          await db.recursiveDelete(colRef);
+        } catch (e) {
+          console.warn(`[API vault/purge] Error recursively deleting users/${userId}/${subCol}:`, e);
+        }
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      purgedUserId: userId,
+      purgedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[API vault/purge] Error during server-side purge:', error);
+    return res.status(500).json({ error: error.message || 'Failed to execute server-side vault purge.' });
+  }
 }

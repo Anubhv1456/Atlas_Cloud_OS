@@ -36,7 +36,7 @@ export function MockExamsWidget() {
       {/* Sleek Analytics Card */}
       <div 
         onClick={() => setIsOverlayOpen(true)}
-        className="group relative bg-card border border-border/60 hover:border-primary/50 shadow-sm rounded-3xl p-5 sm:p-6 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between min-h-[140px]"
+        className="group relative bg-card border border-border/60 hover:border-primary/50 shadow-sm rounded-xl p-5 sm:p-6 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between min-h-[140px]"
       >
         <div className="flex items-start justify-between relative z-10 mb-4">
           <div>
@@ -116,7 +116,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Chart Area */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card border border-border/60 rounded-3xl p-5 sm:p-6 shadow-sm">
+            <div className="bg-card border border-border/60 rounded-xl p-5 sm:p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-foreground">Score Trend</h3>
                 <Button onClick={() => setShowAddModal(true)} size="sm" className="gap-1.5 rounded-xl">
@@ -146,7 +146,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-[250px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/20 rounded-2xl border border-dashed border-border/50">
+                <div className="h-[250px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border/50">
                   <BarChart3 className="w-10 h-10 mb-3 opacity-20" />
                   <p className="font-medium text-sm">No mock exams logged yet.</p>
                   <p className="text-xs opacity-70 mt-1">Log your first Grand Test to see your trend line.</p>
@@ -156,7 +156,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
           </div>
 
           {/* History List */}
-          <div className="bg-card border border-border/60 rounded-3xl p-5 shadow-sm flex flex-col max-h-[500px]">
+          <div className="bg-card border border-border/60 rounded-xl p-5 shadow-sm flex flex-col max-h-[500px]">
             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 shrink-0">Exam History</h3>
             
             <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-border/50">
@@ -166,7 +166,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
                 </div>
               ) : (
                 gtScores.map((log) => (
-                  <div key={log.id} className="p-3.5 rounded-2xl bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
+                  <div key={log.id} className="p-3.5 rounded-xl bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-bold text-foreground text-sm truncate pr-2">{log.testName || 'Mock Exam'}</div>
                       <div className={cn(
@@ -242,7 +242,7 @@ function LogExamModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px] rounded-2xl">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <DialogHeader>
           <DialogTitle>Log Mock Exam</DialogTitle>
         </DialogHeader>

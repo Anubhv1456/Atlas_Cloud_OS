@@ -125,11 +125,11 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-[calc(100%-2.5rem)] max-w-xl max-h-[86dvh] p-0 overflow-hidden rounded-3xl bg-card/95 dark:bg-card/95 backdrop-blur-2xl border-border/60 shadow-2xl flex flex-col">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-[calc(100%-2.5rem)] max-w-xl max-h-[86dvh] p-0 overflow-hidden rounded-xl bg-card/95 dark:bg-card/95 backdrop-blur-2xl border-border/60 shadow-2xl flex flex-col">
         {/* ── Fixed Apple-Style Header ────────────────────────────────────────── */}
         <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 border-b border-border/40 shrink-0 text-left">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0">
               <Target className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
@@ -198,7 +198,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
             </div>
 
             {/* Target Date & Daily Target (2-Column Tablet Grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-2xl border border-border/50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-xl border border-border/50">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="examDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
@@ -261,7 +261,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                   <SelectTrigger className="rounded-xl h-10 px-3 text-xs sm:text-sm border-border/60 bg-background/50 focus:ring-primary/20">
                     <SelectValue placeholder="Select academic level" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-border/60 max-h-60">
+                  <SelectContent className="rounded-xl border-border/60 max-h-60">
                     {[
                       { value: '1st Year MBBS', label: '1st Professional (Phase I: Anatomy, Physio, Biochem)' },
                       { value: '2nd Year MBBS', label: '2nd Professional (Phase II: Path, Micro, Pharma)' },
@@ -289,7 +289,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                     <SelectTrigger className="rounded-xl h-10 px-3 text-xs sm:text-sm border-border/60 bg-background/50 focus:ring-primary/20">
                       <SelectValue placeholder="Select curriculum format" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-border/60">
+                    <SelectContent className="rounded-xl border-border/60">
                       {DEFAULT_CURRICULUM_OPTIONS.map((opt) => (
                         <SelectItem key={opt} value={opt} className="rounded-xl text-xs sm:text-sm">
                           {opt}

@@ -68,7 +68,7 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
   const unresolvedMistakes = (mistakes || []).filter(m => !m.resolved);
 
   return (
-    <div className={cn("rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs overflow-hidden shadow-2xs transition-all", className)}>
+    <div className={cn("rounded-xl border border-border/80 bg-card/60 backdrop-blur-xs overflow-hidden shadow-2xs transition-all", className)}>
       {/* Compact Capsule Header */}
       <div 
         onClick={() => setIsExpanded(prev => !prev)}
@@ -80,8 +80,8 @@ export const SubjectFrictionCapsule: React.FC<SubjectFrictionCapsuleProps> = ({
             metric.decayUrgency === 'CRITICAL' 
               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
               : metric.decayUrgency === 'ELEVATED'
-              ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
-              : "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5 border-l-2 border-l-emerald-500/30"
+              ? "bg-amber-950/20 text-amber-400 dark:text-amber-400 border-white/5"
+              : "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5"
           )}>
             {metric.decayUrgency === 'CRITICAL' ? <ShieldAlert className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
           </div>

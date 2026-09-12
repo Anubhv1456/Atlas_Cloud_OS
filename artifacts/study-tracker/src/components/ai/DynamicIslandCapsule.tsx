@@ -177,7 +177,7 @@ export const DynamicIslandCapsule: React.FC = () => {
               }
             }}
             className={cn(
-              "rounded-3xl p-4 sm:p-4.5 max-w-md w-[92vw] sm:w-[420px] shadow-2xl backdrop-blur-2xl border",
+              "rounded-xl p-4 sm:p-4.5 max-w-md w-[92vw] sm:w-[420px] shadow-2xl backdrop-blur-2xl border",
               "bg-zinc-950/95 dark:bg-zinc-900/98 text-zinc-100 border-zinc-700/80 shadow-black/60 relative overflow-hidden"
             )}
           >
@@ -269,7 +269,7 @@ export const DynamicIslandCapsule: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 text-zinc-100 text-xs font-medium leading-relaxed">
+                <div className="p-3 rounded-xl bg-zinc-900/90 border border-emerald-500/30 text-zinc-100 text-xs font-medium leading-relaxed">
                   "{distilledPearl.rule}"
                 </div>
 

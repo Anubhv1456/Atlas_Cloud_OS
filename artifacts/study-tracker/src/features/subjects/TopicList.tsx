@@ -204,7 +204,7 @@ export function TopicList({
   };
 
   return (
-    <div className="flex flex-col bg-card/60 border border-border/50 rounded-2xl overflow-hidden shadow-xs">
+    <div className="flex flex-col bg-card/60 border border-border/50 rounded-xl overflow-hidden shadow-xs">
       {/* Topics Header & Management Bar */}
       <div className="px-3.5 py-2.5 border-b border-border/40 flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export function TopicList({
       {/* Rename Topic Modal */}
       {renameTopicTarget && (
         <Dialog open={!!renameTopicTarget} onOpenChange={(open) => !open && setRenameTopicTarget(null)}>
-          <DialogContent className="sm:max-w-[380px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+          <DialogContent className="sm:max-w-[380px] rounded-xl mx-4 w-[calc(100%-2rem)]">
             <DialogHeader>
               <DialogTitle className="text-base font-bold">Rename Topic</DialogTitle>
             </DialogHeader>
@@ -590,7 +590,7 @@ export function TopicList({
 
       {/* Delete Topic Confirmation Alert */}
       <AlertDialog open={!!topicToDelete} onOpenChange={(open) => !open && setTopicToDelete(null)}>
-        <AlertDialogContent className="rounded-2xl mx-4 max-w-sm">
+        <AlertDialogContent className="rounded-xl mx-4 max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-bold">Delete Topic</AlertDialogTitle>
             <AlertDialogDescription className="text-xs leading-relaxed">
@@ -617,7 +617,7 @@ export function TopicList({
 
       {/* Reset Topics Confirmation Alert */}
       <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
-        <AlertDialogContent className="rounded-2xl mx-4 max-w-sm">
+        <AlertDialogContent className="rounded-xl mx-4 max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-bold">Reset Topics</AlertDialogTitle>
             <AlertDialogDescription className="text-xs leading-relaxed">

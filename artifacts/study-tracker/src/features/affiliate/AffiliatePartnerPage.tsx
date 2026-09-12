@@ -84,7 +84,7 @@ export default function AffiliatePartnerPage() {
   if (!isAffiliate) {
     return (
       <div className="flex-1 min-h-dvh flex flex-col items-center justify-center bg-background px-4 text-center max-w-md mx-auto space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
           <Award className="w-7 h-7" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Partner Status Required</h1>
@@ -140,7 +140,7 @@ export default function AffiliatePartnerPage() {
 
       {/* ── Metric Highlights Bento Grid ─────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-card border border-border flex flex-col justify-between shadow-xs">
+        <div className="p-4 rounded-xl bg-card border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider">Referrals</span>
             <Users className="w-4 h-4 text-indigo-400" />
@@ -149,7 +149,7 @@ export default function AffiliatePartnerPage() {
           <span className="text-xs text-muted-foreground mt-1">Enrolled candidates</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-card border border-border flex flex-col justify-between shadow-xs">
+        <div className="p-4 rounded-xl bg-card border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider">Active Seats</span>
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -158,7 +158,7 @@ export default function AffiliatePartnerPage() {
           <span className="text-xs text-muted-foreground mt-1">Qualified passes</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-card border border-border flex flex-col justify-between shadow-xs">
+        <div className="p-4 rounded-xl bg-card border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider">In Trial</span>
             <Clock className="w-4 h-4 text-amber-400" />
@@ -169,7 +169,7 @@ export default function AffiliatePartnerPage() {
       </div>
 
       {/* ── Partner Link & Code Distribution Box ───────────────────────── */}
-      <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4 shadow-sm">
+      <div className="p-6 rounded-xl bg-card border border-border/80 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Dedicated Referral Link
@@ -258,7 +258,7 @@ export default function AffiliatePartnerPage() {
         </div>
 
         {referredCandidates.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-card border border-dashed border-border text-center space-y-2">
+          <div className="p-8 rounded-xl bg-card border border-dashed border-border text-center space-y-2">
             <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto">
               <Users className="w-5 h-5" />
             </div>
@@ -268,7 +268,7 @@ export default function AffiliatePartnerPage() {
             </p>
           </div>
         ) : (
-          <div className="rounded-3xl border border-border/60 overflow-hidden divide-y divide-border/40 bg-card">
+          <div className="rounded-xl border border-border/60 overflow-hidden divide-y divide-border/40 bg-card">
             {referredCandidates.map((cand) => (
               <div
                 key={cand.id}
@@ -307,7 +307,7 @@ export default function AffiliatePartnerPage() {
       </div>
 
       {/* ── Policy Footer ──────────────────────────────────────────────── */}
-      <div className="p-4 rounded-2xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1">
+      <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground space-y-1">
         <div className="flex items-center gap-1.5 font-semibold text-foreground">
           <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
           <span>Operational Guidelines</span>

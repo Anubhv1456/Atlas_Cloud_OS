@@ -36,7 +36,7 @@ export function FeedbackSection() {
       />
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
+        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-xl p-6 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="w-4.5 h-4.5 text-primary" />

@@ -65,7 +65,7 @@ export default function AuditorAnalytics() {
       {/* Auditor Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Readiness Confidence Widget */}
-        <div className="bg-card border border-white/5 rounded-3xl p-6 shadow-sm">
+        <div className="bg-card border border-white/5 rounded-xl p-6 shadow-sm">
            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-zinc-800/40 flex items-center justify-center text-primary">
                 <Target className="w-5 h-5" />
@@ -83,7 +83,7 @@ export default function AuditorAnalytics() {
         </div>
 
         {/* Forensic Subject Audit */}
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-amber-950/20 flex items-center justify-center text-amber-400">
                 <AlertCircle className="w-5 h-5" />

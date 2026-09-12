@@ -164,7 +164,7 @@ export function AIAssistantSection() {
 
       {/* AI Assistant Configuration Dialog Sheet */}
       <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <Sparkles className="w-4.5 h-4.5 text-zinc-300" />
@@ -177,7 +177,7 @@ export function AIAssistantSection() {
 
           <div className="space-y-4 pt-1">
             {/* Key Field */}
-            <div className="bg-card border border-border/70 rounded-2xl p-3.5 space-y-2.5">
+            <div className="bg-card border border-border/70 rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-muted-foreground" />
@@ -274,7 +274,7 @@ export function AIAssistantSection() {
                       key={m.id}
                       type="button"
                       onClick={() => handleSelectModel(m.id, m.title, m.tag)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         active
                           ? 'border-primary bg-zinc-800/40 text-foreground ring-1 ring-primary/40'
                           : 'border-border/60 bg-card hover:bg-muted/30 text-muted-foreground'
@@ -292,7 +292,7 @@ export function AIAssistantSection() {
             </div>
 
             {/* Mentorship Style & Depth */}
-            <div className="bg-card border border-border/70 rounded-2xl divide-y divide-border/30 overflow-hidden">
+            <div className="bg-card border border-border/70 rounded-xl divide-y divide-border/30 overflow-hidden">
               <div className="flex items-center justify-between p-3.5">
                 <div>
                   <p className="text-[13px] font-medium text-foreground">Mentorship Style</p>

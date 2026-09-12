@@ -33,9 +33,9 @@ export function DangerZoneSection() {
 
       {/* Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={(open) => !isDeleting && setShowDeleteConfirm(open)}>
-        <DialogContent className="sm:max-w-[460px] rounded-2xl mx-4 w-[calc(100%-2rem)] border-destructive/20 bg-background/95 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-[460px] rounded-xl mx-4 w-[calc(100%-2rem)] border-destructive/20 bg-background/95 backdrop-blur-xl">
           <DialogHeader>
-            <div className="mx-auto w-12 h-12 bg-destructive/10 text-destructive border border-destructive/20 rounded-2xl flex items-center justify-center mb-3">
+            <div className="mx-auto w-12 h-12 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl flex items-center justify-center mb-3">
               <ShieldAlert className="w-6 h-6" />
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Permanently Delete All Data?</DialogTitle>
@@ -91,9 +91,9 @@ export function DangerZoneSection() {
 
       {/* Completion Dialog */}
       <Dialog open={showCompletionCard} onOpenChange={setShowCompletionCard}>
-        <DialogContent className="sm:max-w-[460px] rounded-2xl mx-4 w-[calc(100%-2rem)] border-white/5 border-l-2 border-l-emerald-500/30 bg-background/95 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-[460px] rounded-xl mx-4 w-[calc(100%-2rem)] border-white/5 bg-background/95 backdrop-blur-xl">
           <DialogHeader>
-            <div className="mx-auto w-12 h-12 bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30 rounded-2xl flex items-center justify-center mb-3">
+            <div className="mx-auto w-12 h-12 bg-emerald-950/20 text-emerald-400 border border-white/5 rounded-xl flex items-center justify-center mb-3">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Database Reset Complete</DialogTitle>

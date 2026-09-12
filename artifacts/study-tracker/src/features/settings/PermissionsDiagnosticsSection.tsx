@@ -225,7 +225,7 @@ export function PermissionsDiagnosticsSection() {
       />
 
       <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) stopMicTest(); setModalOpen(open); }}>
-        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg bg-card border-border/80 text-foreground rounded-xl p-6 shadow-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
@@ -249,7 +249,7 @@ export function PermissionsDiagnosticsSection() {
 
           <div className="space-y-3 pt-2">
             {/* Status Inset List */}
-            <div className="bg-card border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/30">
+            <div className="bg-card border border-border/70 rounded-xl overflow-hidden divide-y divide-border/30">
               {/* Mic Input */}
               <div className="p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -333,7 +333,7 @@ export function PermissionsDiagnosticsSection() {
             </div>
 
             {/* PWA Guide */}
-            <div className="bg-muted/30 border border-border/60 rounded-2xl p-3.5 space-y-2">
+            <div className="bg-muted/30 border border-border/60 rounded-xl p-3.5 space-y-2">
               <button
                 type="button"
                 onClick={() => setShowPwaGuide(!showPwaGuide)}

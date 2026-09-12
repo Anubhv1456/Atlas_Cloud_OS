@@ -39,7 +39,7 @@ export function NextActionCard() {
 
   if (loading || !result) {
     return (
-      <div className="bg-card border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col items-center justify-center animate-pulse h-64">
+      <div className="bg-card border rounded-xl p-6 sm:p-8 shadow-sm flex flex-col items-center justify-center animate-pulse h-64">
         <div className="w-12 h-12 rounded-full bg-muted mb-4" />
         <div className="h-6 w-1/3 bg-muted rounded mb-2" />
         <div className="h-4 w-1/2 bg-muted rounded" />
@@ -115,12 +115,12 @@ export function NextActionCard() {
               <div 
                  key={pulse.id} 
                  onClick={() => setLocation('/subjects/' + pulse.subjectId)}
-                className="w-[260px] sm:w-[280px] shrink-0 snap-start bg-card border border-border/60 hover:border-primary/30 rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-colors group"
+                className="w-[260px] sm:w-[280px] shrink-0 snap-start bg-card border border-border/60 hover:border-primary/30 rounded-xl p-4 flex flex-col justify-between cursor-pointer transition-colors group"
               >
                 <div>
                    <div className="flex items-start justify-between gap-2 mb-2">
                      <Badge variant="outline" className={cn("text-[9px] uppercase tracking-wider font-bold shrink-0", 
-                         pulse.archetype === 'remediation_clinic' ? 'bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30' : 
+                         pulse.archetype === 'remediation_clinic' ? 'bg-amber-950/20 text-amber-400 border-white/5' : 
                          pulse.archetype === 'zenith' ? 'bg-destructive/10 text-destructive border-destructive/20' :
                         'bg-zinc-800/40 text-primary border-white/5'
                      )}>

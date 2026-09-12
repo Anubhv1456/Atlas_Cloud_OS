@@ -496,7 +496,7 @@
 
   /* Premium interactive card class */
   .premium-card {
-    @apply bg-card border border-border/80 rounded-2xl shadow-xs transition-all duration-300 hover:shadow-sm hover:border-primary/40 hover:-translate-y-0.5;
+    @apply bg-card border border-border/80 rounded-xl shadow-xs transition-all duration-300 hover:shadow-sm hover:border-primary/40 hover:-translate-y-0.5;
   }
 
   /* Obsidian glassmorphism panel */
@@ -506,7 +506,7 @@
   
   /* Specular hairline card */
   .obsidian-card {
-    @apply bg-card border border-border/70 rounded-2xl shadow-xs dark:shadow-sm;
+    @apply bg-card border border-border/70 rounded-xl shadow-xs dark:shadow-sm;
   }
 
   /* Tabular figures for clinical scores, timers, and percentiles */

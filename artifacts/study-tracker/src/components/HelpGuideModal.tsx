@@ -444,7 +444,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] md:h-[80vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50 rounded-2xl">
+      <DialogContent className="max-w-4xl h-[90vh] md:h-[80vh] p-0 overflow-hidden flex flex-col bg-background/95 backdrop-blur-xl border-border/50 rounded-xl">
         <DialogHeader className="p-4 md:p-6 pb-4 border-b border-border/50 bg-card/30 flex-shrink-0">
           <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-primary" />
@@ -524,7 +524,7 @@ export function HelpGuideModal({ open, onOpenChange }: { open: boolean, onOpenCh
                 const isExpanded = expandedMobileId === chapter.id;
                 const Icon = chapter.icon;
                 return (
-                  <div key={chapter.id} className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm transition-all">
+                  <div key={chapter.id} className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm transition-all">
                     <button
                       onClick={() => setExpandedMobileId(isExpanded ? null : chapter.id)}
                       className={cn(

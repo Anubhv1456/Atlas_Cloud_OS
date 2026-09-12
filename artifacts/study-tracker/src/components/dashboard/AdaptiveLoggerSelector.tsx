@@ -167,7 +167,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
             <span>1. Subject / Exam Scope</span>
           </label>
           {isGtMode && (
-            <span className="text-[10px] font-semibold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-2 py-0.5 rounded-full border border-white/5 border-l-2 border-l-emerald-500/30">
+            <span className="text-[10px] font-semibold text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-2 py-0.5 rounded-full border border-white/5">
               Full-Syllabus
             </span>
           )}
@@ -201,7 +201,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
         )}
 
         <Select value={subjectId} onValueChange={handleSelectSubject}>
-          <SelectTrigger className="w-full h-11 bg-background border-border/60 hover:border-border transition-colors rounded-xl shadow-sm">
+          <SelectTrigger className="w-full h-11 bg-background border-border/60 hover:border-border transition-colors rounded-lg">
             <SelectValue placeholder="-- Select Subject or GT / Mock Exam --" />
           </SelectTrigger>
           <SelectContent className="max-h-[320px]">
@@ -237,7 +237,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
       <div className={cn(
         "space-y-1.5 p-3.5 rounded-xl border transition-all duration-200",
         isGtMode 
-          ? "bg-emerald-500/[0.03] border-white/5 border-l-2 border-l-emerald-500/30" 
+          ? "bg-emerald-500/[0.03] border-white/5" 
           : !subjectId 
             ? "bg-muted/10 border-border/40 opacity-70" 
             : "bg-muted/25 border-border/60 shadow-sm"
@@ -260,7 +260,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
         {/* State A: GT Mode - Block selector disabled */}
         {isGtMode ? (
           <div className="space-y-1.5">
-            <div className="w-full h-11 px-3.5 rounded-xl bg-background/50 border border-emerald-500/30 flex items-center justify-between text-sm text-foreground/80 cursor-not-allowed">
+            <div className="w-full h-11 px-3.5 rounded-lg bg-background/50 border border-emerald-500/30 flex items-center justify-between text-sm text-foreground/80 cursor-not-allowed">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="font-medium text-emerald-700 dark:text-emerald-300">Full-Syllabus Mock (All Topics Included)</span>
@@ -275,14 +275,14 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
           </div>
         ) : !subjectId ? (
           /* State B: No Subject picked yet - Block selector disabled/locked */
-          <div className="w-full h-11 px-3.5 rounded-xl bg-background/30 border border-dashed border-border/50 flex items-center gap-2 text-sm text-muted-foreground/60 cursor-not-allowed">
+          <div className="w-full h-11 px-3.5 rounded-lg bg-background/30 border border-dashed border-border/50 flex items-center gap-2 text-sm text-muted-foreground/60 cursor-not-allowed">
             <Lock className="w-3.5 h-3.5 opacity-50 shrink-0" />
             <span>Select a Subject above to unlock study blocks...</span>
           </div>
         ) : (
           /* State C: Subject picked - Block selector unlocked & filtered */
           <Select value={blockId} onValueChange={onBlockChange}>
-            <SelectTrigger className="w-full h-11 bg-background border-border/60 hover:border-border transition-colors rounded-xl shadow-sm">
+            <SelectTrigger className="w-full h-11 bg-background border-border/60 hover:border-border transition-colors rounded-lg">
               <SelectValue placeholder="-- Select Study Block --" />
             </SelectTrigger>
             <SelectContent className="max-h-[300px]">

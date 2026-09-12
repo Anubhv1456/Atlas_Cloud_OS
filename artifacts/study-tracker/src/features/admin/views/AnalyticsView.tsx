@@ -92,7 +92,7 @@ export function AnalyticsView() {
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <Users className="w-4 h-4 text-indigo-400" /> User Behavior
           </h2>
-          <div className="bg-card/40 border border-border/50 rounded-2xl p-5 space-y-5">
+          <div className="bg-card/40 border border-border/50 rounded-xl p-5 space-y-5">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-xs text-muted-foreground font-semibold">Active Seats</div>

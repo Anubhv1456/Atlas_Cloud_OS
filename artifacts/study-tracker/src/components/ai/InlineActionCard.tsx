@@ -114,7 +114,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
       <motion.div 
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mt-3 p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 shadow-sm"
+        className="mt-3 p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 shadow-sm"
       >
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 dark:text-emerald-400">
@@ -158,7 +158,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
     return (
       <div className={cn(
-        "mt-3 p-4 rounded-2xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-amber-500/30 shadow-md",
+        "mt-3 p-4 rounded-xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-amber-500/30 shadow-md",
         className
       )}>
         {/* Header Bar */}
@@ -353,7 +353,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
     return (
       <div className={cn(
-        "mt-3 p-4 rounded-2xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-teal-500/30 shadow-md",
+        "mt-3 p-4 rounded-xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-teal-500/30 shadow-md",
         className
       )}>
         {/* Header Bar */}
@@ -547,7 +547,7 @@ export const InlineActionCard: React.FC<InlineActionCardProps> = ({
 
     return (
       <div className={cn(
-        "mt-3 p-4 rounded-2xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-indigo-500/30 shadow-md",
+        "mt-3 p-4 rounded-xl border transition-all text-xs bg-card/95 dark:bg-card/90 border-indigo-500/30 shadow-md",
         className
       )}>
         {/* Header Bar */}

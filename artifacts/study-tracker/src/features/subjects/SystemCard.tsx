@@ -52,7 +52,7 @@ export function SystemCard(props: SystemCardProps) {
       <div
         ref={cardRef}
         className={cn(
-          "group relative flex flex-col rounded-2xl border transition-all duration-200",
+          "group relative flex flex-col rounded-xl border transition-all duration-200",
           highlighted ? "border-primary/50 shadow-[0_0_20px_rgba(var(--primary),0.1)]" : "border-border/40 hover:border-border/80",
           "bg-card"
         )}
@@ -317,7 +317,7 @@ export function SystemCard(props: SystemCardProps) {
 
       {showRenameDialog && (
         <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
-          <DialogContent className="sm:max-w-[360px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+          <DialogContent className="sm:max-w-[360px] rounded-xl mx-4 w-[calc(100%-2rem)]">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold">Rename System</DialogTitle>
             </DialogHeader>
@@ -343,7 +343,7 @@ export function SystemCard(props: SystemCardProps) {
 
       {showDeleteConfirm && (
         <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <DialogContent className="sm:max-w-[360px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+          <DialogContent className="sm:max-w-[360px] rounded-xl mx-4 w-[calc(100%-2rem)]">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-destructive">Delete System</DialogTitle>
             </DialogHeader>
@@ -362,7 +362,7 @@ export function SystemCard(props: SystemCardProps) {
 
       {showInsightDialog && (
         <Dialog open={showInsightDialog} onOpenChange={setShowInsightDialog}>
-          <DialogContent className="sm:max-w-[440px] rounded-2xl mx-4 w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto border border-border/60">
+          <DialogContent className="sm:max-w-[440px] rounded-xl mx-4 w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto border border-border/60">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold flex items-center gap-2">
                 <Compass className="w-5 h-5 text-primary shrink-0" />

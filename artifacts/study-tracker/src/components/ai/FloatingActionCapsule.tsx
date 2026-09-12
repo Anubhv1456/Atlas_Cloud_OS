@@ -190,7 +190,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: -10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-        className="w-full p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-xl shadow-2xl flex items-center justify-between text-xs text-emerald-300"
+        className="w-full p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-xl shadow-2xl flex items-center justify-between text-xs text-emerald-300"
       >
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-full bg-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0">
@@ -226,7 +226,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
       onMouseEnter={() => setIsPausedCountdown(true)}
       onMouseLeave={() => setIsPausedCountdown(false)}
       className={cn(
-        "relative rounded-2xl border transition-all overflow-hidden touch-pan-y select-none",
+        "relative rounded-xl border transition-all overflow-hidden touch-pan-y select-none",
         "bg-card/90 dark:bg-card/85 text-foreground border-border/70 backdrop-blur-2xl shadow-2xl shadow-black/30",
         className
       )}
@@ -284,7 +284,7 @@ export const FloatingActionCapsule: React.FC<FloatingActionCapsuleProps> = ({
           {/* Header Controls */}
           <div className="flex items-center gap-1 shrink-0">
             {countdown > 0 && !isPausedCountdown && (
-              <span className="text-xs font-mono text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
+              <span className="text-xs font-mono text-emerald-400 dark:text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5">
                 {countdown}s
               </span>
             )}

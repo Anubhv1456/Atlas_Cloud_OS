@@ -129,7 +129,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <ToggleLeft className="w-4 h-4 text-emerald-400" /> Feature Flags
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6">
+        <div className="bg-card border border-border/50 rounded-xl p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/30">
               <div>
@@ -166,7 +166,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <PaymentIcon className="w-4 h-4 text-amber-400" /> Pricing & Cohort Settings
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Plan Title</label>
@@ -299,7 +299,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Share2 className="w-4 h-4 text-indigo-400" /> Affiliate & Partner Program
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-6">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Cookie Attribution Window (Days)</label>
               <Input 
@@ -322,7 +322,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Gift className="w-4 h-4 text-teal-400" /> Batchmate Referral & Study Pass Program
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-border/30">
             <div>
               <div className="font-semibold text-sm text-foreground">Referral Program Active</div>
@@ -405,7 +405,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Megaphone className="w-4 h-4 text-rose-400" /> Announcements
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-6">
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-6">
           <div className="flex gap-4">
             <Input placeholder="Banner Title..." value={newAnnouncement.title} onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})} className="bg-background w-1/3" />
             <Input placeholder="Message content..." value={newAnnouncement.message} onChange={e => setNewAnnouncement({...newAnnouncement, message: e.target.value})} className="bg-background flex-1" />
@@ -430,7 +430,7 @@ export function SettingsView() {
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <Share2 className="w-4 h-4 text-indigo-400" /> Social Links
         </h2>
-        <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-4">
           {['twitter', 'github', 'linkedin', 'instagram', 'youtube'].map(network => (
             <div key={network} className="flex items-center gap-4">
               <label className="w-24 text-xs font-semibold text-muted-foreground capitalize">{network}</label>

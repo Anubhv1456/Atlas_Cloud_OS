@@ -29,6 +29,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const action = getAction(req);
 
+  // Set public edge & browser caching headers for static medical curriculum ontology
+  if (req.method === 'GET') {
+    res.setHeader(
+      'Cache-Control',
+      'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800'
+    );
+  }
+
   // 1. Specific Subject Query: /api/ontology/subject?id=...
   if (action === 'subject') {
     const subjectQuery = (req.query.id as string) || (req.query.name as string) || (req.body && req.body.subjectId);

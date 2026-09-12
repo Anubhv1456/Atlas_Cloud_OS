@@ -1165,66 +1165,44 @@ export async function purgeCompleteDataVault(user: User | null): Promise<PurgeVa
     hlc: generateHLC(),
   });
 
-  // 3. Clear cloud Firestore subcollections if user is logged in
-  if (user && firestoreDb) {
-    const firestoreCollections = [
-      'subjects',
-      'systems',
-      'curriculumSets',
-      'revisionSets',
-      'history',
-      'pyqYears',
-      'scoreLogs',
-      'uiPreferences',
-      'topicProgress',
-      'mistakeLogs',
-      'recommendationSkips',
-      'operationalModes',
-      'customTopics',
-      'telemetry_logs',
-    ];
+  // 3. Clear cloud Firestore subcollections via serverless recursive purge (P0: 0 billable reads)
+  if (user) {
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/vault/purge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    for (const colName of firestoreCollections) {
-      try {
-        const colRef = collection(firestoreDb, `users/${user.uid}/${colName}`);
-        const snap = await getDocs(colRef);
-        if (!snap.empty) {
-          const docs = snap.docs;
-          for (let i = 0; i < docs.length; i += 400) {
-            const batch = writeBatch(firestoreDb);
-            docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          }
-        }
-      } catch (err) {
-        console.warn(`[Purge] Firestore cleanup for ${colName} deferred:`, err);
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn('[Purge] Server-side vault purge non-200 response:', errJson);
       }
+    } catch (err) {
+      console.warn('[Purge] Server-side vault purge network error:', err);
     }
 
     // Set fresh default operational mode in Firestore
-    try {
-      const opDoc = doc(firestoreDb, `users/${user.uid}/operationalModes`, 'current');
-      await setDoc(opDoc, {
-        id: 'current',
-        mode: 'standard',
-        targetSubjectIds: [],
-        targetDate: null,
-        dailyCapacityMinutes: 180,
-        activatedAt: new Date().toISOString(),
-        recalibrationWindowDays: 10,
-        updatedAt: new Date(),
-        hlc: generateHLC(),
-      });
-    } catch (err) {
-      console.warn('[Purge] Resetting opMode doc in Firestore:', err);
-    }
-
-    // Delete remote cloud backup documents from backups collection
-    try {
-      const backupDoc = doc(firestoreDb, `users/${user.uid}/backups`, 'latest');
-      await deleteDoc(backupDoc);
-    } catch (err) {
-      console.warn('[Purge] Resetting remote backup document in Firestore:', err);
+    if (firestoreDb) {
+      try {
+        const opDoc = doc(firestoreDb, `users/${user.uid}/operationalModes`, 'current');
+        await setDoc(opDoc, {
+          id: 'current',
+          mode: 'standard',
+          targetSubjectIds: [],
+          targetDate: null,
+          dailyCapacityMinutes: 180,
+          activatedAt: new Date().toISOString(),
+          recalibrationWindowDays: 10,
+          updatedAt: new Date(),
+          hlc: generateHLC(),
+        });
+      } catch (err) {
+        console.warn('[Purge] Resetting opMode doc in Firestore:', err);
+      }
     }
   }
 

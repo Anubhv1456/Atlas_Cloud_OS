@@ -134,7 +134,7 @@ export default function SubjectRadarPage() {
 
       {/* ── Segmented View Switcher ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center p-1 rounded-2xl bg-muted/40 border border-border/80 w-full sm:w-auto">
+        <div className="flex items-center p-1 rounded-xl bg-muted/40 border border-border/80 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setActiveTab('curriculum')}

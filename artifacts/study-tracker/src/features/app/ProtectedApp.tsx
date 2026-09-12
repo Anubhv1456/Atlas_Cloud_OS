@@ -19,7 +19,6 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
-import { useAdmin } from '@/hooks/useAdmin';
 import { useRole } from '@/hooks/useRole';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
@@ -45,8 +44,7 @@ import { GlobalQuickEntry } from '@/components/ui/GlobalQuickEntry';
 
 export default function ProtectedApp() {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin } = useAdmin();
-  const { isStaff } = useRole();
+  const { isAdmin, isStaff } = useRole();
   const { hasAccess, paymentStatus, isTrialExpired, loading: accessLoading } = useBetaAccess();
   const { hasOnboarded, loading: onboardingLoading } = useOnboardingStatus();
   const { isImpersonating } = useImpersonation();

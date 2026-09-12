@@ -30,14 +30,14 @@ export const AppUpdateCapsule: React.FC = () => {
             }}
             className="w-full max-w-md pointer-events-auto shadow-2xl shadow-primary/10"
           >
-            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-primary/25 bg-background/90 dark:bg-card/90 backdrop-blur-2xl p-3 sm:p-3.5 transition-all">
+            <div className="relative overflow-hidden rounded-xl md:rounded-xl border border-primary/25 bg-background/90 dark:bg-card/90 backdrop-blur-2xl p-3 sm:p-3.5 transition-all">
               {/* Subtle ambient lighting */}
               <div className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 bg-primary/15 rounded-full blur-2xl" />
               <div className="pointer-events-none absolute -bottom-10 -left-10 w-28 h-28 bg-emerald-950/20 rounded-full blur-xl" />
 
               <div className="flex items-center gap-3 relative z-10">
                 {/* Apple-style Icon badge */}
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0 shadow-inner">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
                 </div>
 

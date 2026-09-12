@@ -36,7 +36,7 @@ export function HomeRadarSummaryCard() {
   const completedSystems = rawSystems.filter(s => s.status === 'Strong').length;
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs space-y-4 transition-all hover:border-border">
+    <div className="rounded-xl border border-border/80 bg-card p-5 shadow-xs space-y-4 transition-all hover:border-border">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="p-2 rounded-xl bg-zinc-800/40 text-zinc-300 dark:text-teal-400 border border-white/5">
@@ -98,7 +98,7 @@ export function HomeRadarSummaryCard() {
           </div>
         </div>
 
-        <div className="p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-0.5">
+        <div className="p-3 rounded-xl bg-amber-950/20 border border-white/5 space-y-0.5">
           <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-widest block">
             {lexicon.mistakesJournal}
           </span>

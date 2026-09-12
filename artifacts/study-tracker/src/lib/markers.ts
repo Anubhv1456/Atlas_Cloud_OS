@@ -1,5 +1,5 @@
 import { firestoreDb } from './firebase';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, limit, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 
 export type MarkerType = 'clinical_pearl' | 'mnemonic' | 'pitfall' | 'resource' | 'high_yield' | 'memory_trick';
 export type MarkerStatus = 'pending' | 'published' | 'trusted' | 'featured' | 'low_quality' | 'archived';
@@ -69,94 +69,64 @@ export async function submitMarker(marker: MarkerSubmission) {
 export async function interactWithMarker(
   markerId: string,
   userId: string,
-  action: 'helpful' | 'save' | 'report' | 'read' | 'not_helpful'
+  action: 'helpful' | 'save' | 'report' | 'read' | 'not_helpful',
+  options?: { isCurrentlyActive?: boolean }
 ) {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const markerRef = doc(firestoreDb, 'insights', markerId);
-  const snapshot = await getDoc(markerRef);
-  if (!snapshot.exists()) return null;
-
-  const data = snapshot.data();
-  let updates: any = {};
-  let currentScore = typeof data.qualityScore === 'number' ? data.qualityScore : 50;
+  const updates: Record<string, any> = {};
 
   if (action === 'helpful') {
-    const helpfulBy = Array.isArray(data.helpfulBy) ? data.helpfulBy : [];
-    if (!helpfulBy.includes(userId)) {
-      updates.helpfulBy = arrayUnion(userId);
-      updates.usefulCount = increment(1);
-      currentScore += 5;
-    } else {
+    if (options?.isCurrentlyActive) {
       // Toggle off verification
       updates.helpfulBy = arrayRemove(userId);
       updates.usefulCount = increment(-1);
-      currentScore -= 5;
+      updates.qualityScore = increment(-5);
+    } else {
+      // Add peer verification
+      updates.helpfulBy = arrayUnion(userId);
+      updates.usefulCount = increment(1);
+      updates.qualityScore = increment(5);
     }
   } else if (action === 'save') {
-    const savedBy = Array.isArray(data.savedBy) ? data.savedBy : [];
-    if (!savedBy.includes(userId)) {
-      updates.savedBy = arrayUnion(userId);
-      currentScore += 3;
-    } else {
+    if (options?.isCurrentlyActive) {
+      // Remove from saved list
       updates.savedBy = arrayRemove(userId);
-      currentScore -= 3;
+      updates.qualityScore = increment(-3);
+    } else {
+      // Add to saved list
+      updates.savedBy = arrayUnion(userId);
+      updates.qualityScore = increment(3);
     }
   } else if (action === 'report') {
-    const reportedBy = Array.isArray(data.reportedBy) ? data.reportedBy : [];
-    if (!reportedBy.includes(userId)) {
-      updates.reportedBy = arrayUnion(userId);
-      currentScore -= 10;
-    }
+    updates.reportedBy = arrayUnion(userId);
+    updates.qualityScore = increment(-10);
   } else if (action === 'read') {
     updates.readCount = increment(1);
   }
 
-  if (Object.keys(updates).length > 0 || action === 'read') {
-    updates.qualityScore = Math.max(0, Math.min(100, currentScore));
-    
-    // Auto-promote or auto-flag based on peer verifications
-    if (updates.qualityScore < 30 && data.status === 'published') {
-      updates.status = 'low_quality';
-    } else if (updates.qualityScore >= 70 && data.status === 'published') {
-      updates.status = 'trusted';
-    }
-
+  if (Object.keys(updates).length > 0) {
     await updateDoc(markerRef, updates);
   }
   
   return updates;
 }
 
-export async function deleteMarker(markerId: string, userId: string): Promise<boolean> {
+export async function deleteMarker(markerId: string, _userId?: string): Promise<boolean> {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const markerRef = doc(firestoreDb, 'insights', markerId);
-  const snapshot = await getDoc(markerRef);
-  if (!snapshot.exists()) return false;
-
-  const data = snapshot.data();
-  if (data.userId !== userId) {
-    throw new Error("You can only delete your own trail markers.");
-  }
-
   await deleteDoc(markerRef);
   return true;
 }
 
 export async function updateOwnMarker(
   markerId: string,
-  userId: string,
+  _userId: string,
   content: string,
   source?: string
 ): Promise<boolean> {
   if (!firestoreDb) throw new Error("Firestore is not initialized.");
   const markerRef = doc(firestoreDb, 'insights', markerId);
-  const snapshot = await getDoc(markerRef);
-  if (!snapshot.exists()) return false;
-
-  const data = snapshot.data();
-  if (data.userId !== userId) {
-    throw new Error("You can only edit your own trail markers.");
-  }
 
   const updates: Record<string, any> = {
     content: content.trim(),

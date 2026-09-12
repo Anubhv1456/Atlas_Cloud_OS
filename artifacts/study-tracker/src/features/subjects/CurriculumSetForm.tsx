@@ -99,7 +99,7 @@ export function CurriculumSetForm({ isOpen, onClose, systemId, subjectId, allTop
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[440px] max-h-[85vh] overflow-hidden flex flex-col rounded-2xl mx-4 w-[calc(100%-2rem)]">
+      <DialogContent className="sm:max-w-[440px] max-h-[85vh] overflow-hidden flex flex-col rounded-xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Edit Study Block' : 'Create Study Block'}</DialogTitle>
         </DialogHeader>

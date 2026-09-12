@@ -71,7 +71,7 @@ export function SystemPreferencesCard() {
 
       {/* Cognitive Tint Modal Sheet */}
       <Dialog open={tintModalOpen} onOpenChange={setTintModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-3xl p-6 shadow-xl">
+        <DialogContent className="sm:max-w-md bg-card border-border/80 text-foreground rounded-xl p-6 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-foreground flex items-center gap-2">
               <Palette className="w-4.5 h-4.5 text-zinc-300" />
@@ -82,7 +82,7 @@ export function SystemPreferencesCard() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="bg-card border border-border/70 rounded-2xl overflow-hidden divide-y divide-border/30 my-2">
+          <div className="bg-card border border-border/70 rounded-xl overflow-hidden divide-y divide-border/30 my-2">
             {TINT_THEMES.map((theme) => {
               const isSelected = accent === theme.id;
               return (

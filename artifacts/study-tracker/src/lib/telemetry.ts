@@ -28,7 +28,10 @@ export interface KnowledgeGapItem {
 
 const STORAGE_BUFFER_KEY = 'atlas_telemetry_event_buffer';
 const STORAGE_S10_START = 'atlas_s10_mount_timestamp';
+const STORAGE_LAST_FLUSH_KEY = 'atlas_telemetry_last_flush';
 const MAX_S10_VALID_MS = 120000; // 2 minutes: decisions longer than this indicate background/idle tab
+const FLUSH_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes minimum interval between periodic flushes
+const FLUSH_BUFFER_THRESHOLD = 15; // Flush immediately if buffer reaches 15 events
 
 // In-memory buffer
 let eventBuffer: TelemetryEvent[] = [];
@@ -43,6 +46,17 @@ if (typeof window !== 'undefined') {
   } catch (e) {
     eventBuffer = [];
   }
+
+  // Register browser lifecycle singleton flush listeners (P1 Optimization)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushTelemetryBatch({ force: true }).catch(() => {});
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    flushTelemetryBatch({ force: true }).catch(() => {});
+  });
 }
 
 function persistBuffer() {
@@ -141,9 +155,19 @@ export function recordSessionCompletion(sessionType: string, durationMins: numbe
   // Events remain buffered in localStorage and are flushed during periodic sync or logout
 }
 
-/** Flush buffered events to Firestore telemetry_logs collection (1 write per flush) */
-export async function flushTelemetryBatch(): Promise<boolean> {
+/** Flush buffered events to Firestore telemetry_logs collection (1 write per flush, debounced / throttled) */
+export async function flushTelemetryBatch(options?: { force?: boolean }): Promise<boolean> {
   if (eventBuffer.length === 0) return true;
+
+  // Unless forced (e.g. tab closing / visibility hide) or threshold reached, enforce cooldown
+  if (!options?.force && eventBuffer.length < FLUSH_BUFFER_THRESHOLD) {
+    if (typeof window !== 'undefined') {
+      const lastFlush = localStorage.getItem(STORAGE_LAST_FLUSH_KEY);
+      if (lastFlush && Date.now() - Number(lastFlush) < FLUSH_COOLDOWN_MS) {
+        return true; // Still within cooldown, keep safely buffered in memory & localStorage
+      }
+    }
+  }
 
   const eventsToFlush = [...eventBuffer];
 
@@ -219,10 +243,11 @@ export async function flushTelemetryBatch(): Promise<boolean> {
   try {
     const colRef = collection(firestoreDb, 'telemetry_logs');
     await addDoc(colRef, payload);
-    // Clear buffer on success
+    // Clear buffer on success and update last flush timestamp
     eventBuffer = [];
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_BUFFER_KEY);
+      localStorage.setItem(STORAGE_LAST_FLUSH_KEY, String(Date.now()));
     }
     return true;
   } catch (err) {

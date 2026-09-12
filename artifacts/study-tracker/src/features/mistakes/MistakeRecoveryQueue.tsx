@@ -358,7 +358,7 @@ export default function MistakeRecoveryQueue() {
         <div 
           onClick={() => { setStatusFilter('active'); setSelectedTag('all'); }}
           className={cn(
-            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            "p-3.5 rounded-xl border transition-all cursor-pointer space-y-0.5",
             statusFilter === 'active' && selectedTag === 'all'
               ? "bg-card border-border shadow-xs ring-1 ring-primary/30"
               : "bg-muted/30 border-border/60 hover:bg-muted/50"
@@ -378,10 +378,10 @@ export default function MistakeRecoveryQueue() {
         <div 
           onClick={() => { setSelectedTag('volatile'); setStatusFilter('active'); }}
           className={cn(
-            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            "p-3.5 rounded-xl border transition-all cursor-pointer space-y-0.5",
             selectedTag === 'volatile'
               ? "bg-amber-500/15 border-amber-500/40 shadow-xs ring-1 ring-amber-500/40"
-              : "bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 hover:bg-amber-500/15"
+              : "bg-amber-950/20 border-white/5 hover:bg-amber-500/15"
           )}
         >
           <span className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
@@ -396,7 +396,7 @@ export default function MistakeRecoveryQueue() {
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-zinc-800/40 border border-white/5 space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-zinc-800/40 border border-white/5 space-y-0.5">
           <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1">
             <BookOpen className="w-3 h-3" />
             Subjects
@@ -412,7 +412,7 @@ export default function MistakeRecoveryQueue() {
         <div 
           onClick={() => setStatusFilter(statusFilter === 'archived' ? 'active' : 'archived')}
           className={cn(
-            "p-3.5 rounded-2xl border transition-all cursor-pointer space-y-0.5",
+            "p-3.5 rounded-xl border transition-all cursor-pointer space-y-0.5",
             statusFilter === 'archived'
               ? "bg-emerald-500/15 border-emerald-500/40 shadow-xs ring-1 ring-emerald-500/40"
               : "bg-muted/30 border-border/60 hover:bg-muted/50"
@@ -432,7 +432,7 @@ export default function MistakeRecoveryQueue() {
       </div>
 
       {/* ── Search & Filter Controls ────────────────────────────────────── */}
-      <div className="bg-card border border-border/80 rounded-2xl p-4 shadow-xs space-y-3.5">
+      <div className="bg-card border border-border/80 rounded-xl p-4 shadow-xs space-y-3.5">
         {/* Search Bar & View Toggle */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
@@ -623,8 +623,8 @@ export default function MistakeRecoveryQueue() {
       {/* ── Main Ledger Display ────────────────────────────────────────── */}
       {filteredMistakes.length === 0 ? (
         /* Clean Empty State */
-        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/80 bg-muted/20 space-y-4">
-          <div className="p-3.5 rounded-2xl bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border/80 bg-muted/20 space-y-4">
+          <div className="p-3.5 rounded-xl bg-amber-950/20 text-amber-400 border border-white/5">
             <BookOpen className="w-6 h-6" />
           </div>
           <div className="space-y-1 max-w-sm">
@@ -679,7 +679,7 @@ export default function MistakeRecoveryQueue() {
             return (
               <div 
                 key={group.subjectId}
-                className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs transition-all hover:border-border"
+                className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs transition-all hover:border-border"
               >
                 {/* Group Header */}
                 <div 
@@ -752,7 +752,7 @@ export default function MistakeRecoveryQueue() {
         </div>
       ) : (
         /* ── Continuous Flat Stream Mode ───────────────────────────── */
-        <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs divide-y divide-border/40">
+        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-2xs divide-y divide-border/40">
           {filteredMistakes.map(rule => {
             const subName = subjectMap.get(String(rule.subjectId)) || 'Clinical';
             return (
@@ -902,74 +902,6 @@ function RuleCardRow({
         <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed selection:bg-primary/20">
           {ruleText}
         </p>
-
-        {/* 20th Notebook Heuristic Forge / High-Yield Takeaway */}
-        {rule.heuristicRule && !isEditingRule ? (
-          <div className="mt-2 p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/25 flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2 min-w-0">
-              <span className="text-amber-400 dark:text-amber-400 font-bold text-xs shrink-0 mt-0.5">
-                {isUsmle ? "🎯 Key Takeaway:" : "📝 20th Rule:"}
-              </span>
-              <span className="text-xs sm:text-sm font-semibold text-foreground italic">
-                "{rule.heuristicRule}"
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setCustomRule(rule.heuristicRule || '');
-                setIsEditingRule(true);
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground shrink-0 underline ml-2 cursor-pointer"
-            >
-              Edit
-            </button>
-          </div>
-        ) : (
-          <div className="mt-2.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="relative flex-1">
-              <Input
-                value={customRule}
-                onChange={(e) => setCustomRule(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSaveHeuristic();
-                  }
-                }}
-                placeholder={
-                  isUsmle
-                    ? "My key takeaway: e.g. In acute HF, avoid beta-blockers until euvolemic..."
-                    : "My rule for next time: e.g. Trigeminal neuralgia first line is Carbamazepine..."
-                }
-                className="h-8 text-xs rounded-xl bg-muted/40 border-border/80 focus:bg-background font-medium"
-              />
-            </div>
-            <div className="flex items-center gap-1.5 self-end sm:self-auto">
-              <Button
-                size="sm"
-                type="button"
-                onClick={handleSaveHeuristic}
-                disabled={!customRule.trim()}
-                className="h-8 px-3 text-xs rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-2xs cursor-pointer disabled:opacity-50"
-              >
-                <Sparkles className="w-3 h-3 mr-1" />
-                <span>{isUsmle ? "Save Takeaway" : "Save Rule"}</span>
-              </Button>
-              {isEditingRule && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  onClick={() => setIsEditingRule(false)}
-                  className="h-8 px-2 text-xs rounded-xl text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  Cancel
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Action Toolbar */}

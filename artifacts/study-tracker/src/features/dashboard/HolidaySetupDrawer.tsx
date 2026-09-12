@@ -90,7 +90,7 @@ export function HolidaySetupDrawer({
         <SheetHeader className="text-left pb-4 border-b border-border/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
                 <Palmtree className="w-5 h-5" />
               </div>
               <div>
@@ -142,7 +142,7 @@ export function HolidaySetupDrawer({
           </div>
 
           {/* Guarantees / Peace of Mind */}
-          <div className="p-4 rounded-2xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 space-y-2.5">
+          <div className="p-4 rounded-xl bg-amber-950/20 border border-white/5 space-y-2.5">
             <div className="text-xs font-bold text-amber-400 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" />
               Atlas Holiday Guarantees

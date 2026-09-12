@@ -34,24 +34,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       
       if (currentUser && firestoreDb) {
-        // Retrieve affiliate ID if present
-        const affiliateId = localStorage.getItem('atlas_affiliate_id');
-        const updateData: any = {
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-          lastLoginAt: serverTimestamp(),
-          createdAt: currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime) : serverTimestamp()
-        };
-        
-        if (affiliateId) {
-          updateData.affiliateId = affiliateId;
-          updateData.referredBy = affiliateId;
-        }
+        // P1 Optimization: Session-aware throttling to prevent 60-80% idle writes on token refreshes & tab focus
+        const syncKey = `atlas_auth_synced_${currentUser.uid}`;
+        const lastSync = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(syncKey) : null;
+        const now = Date.now();
+        const FOUR_HOURS = 4 * 60 * 60 * 1000;
 
-        // Non-blocking fire-and-forget background sync for user metadata
-        setDoc(doc(firestoreDb, 'users', currentUser.uid), updateData, { merge: true }).catch((e) => {
-          console.warn("User metadata background sync deferred (offline):", e);
-        });
+        if (!lastSync || now - Number(lastSync) > FOUR_HOURS) {
+          // Retrieve affiliate ID if present
+          const affiliateId = localStorage.getItem('atlas_affiliate_id');
+          const updateData: any = {
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+            lastLoginAt: serverTimestamp(),
+            createdAt: currentUser.metadata.creationTime ? new Date(currentUser.metadata.creationTime) : serverTimestamp()
+          };
+          
+          if (affiliateId) {
+            updateData.affiliateId = affiliateId;
+            updateData.referredBy = affiliateId;
+          }
+
+          // Non-blocking fire-and-forget background sync for user metadata
+          setDoc(doc(firestoreDb, 'users', currentUser.uid), updateData, { merge: true })
+            .then(() => {
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(syncKey, String(now));
+              }
+            })
+            .catch((e) => {
+              console.warn("User metadata background sync deferred (offline):", e);
+            });
+        }
       }
     });
 

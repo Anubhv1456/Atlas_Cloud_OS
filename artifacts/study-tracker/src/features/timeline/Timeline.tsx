@@ -34,10 +34,10 @@ import { useTimelineLogic } from './Timeline.hooks';
 const EVENT_STYLE: Record<TimelineEvent['eventType'], { bg: string; text: string; Icon: typeof BookOpen }> = {
   contentCompleted: { bg: 'bg-zinc-800/40 border-white/5',     text: 'text-zinc-300',         Icon: BookOpen },
   qbankDone:        { bg: 'bg-violet-500/10 border-violet-500/20',   text: 'text-violet-500',       Icon: Layers   },
-  pyqsDone:         { bg: 'bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30',     text: 'text-amber-400',        Icon: BookOpen },
+  pyqsDone:         { bg: 'bg-amber-950/20 border-white/5',     text: 'text-amber-400',        Icon: BookOpen },
   revisionSystem:   { bg: 'bg-zinc-800/40 border-white/5',          text: 'text-primary',          Icon: Clock    },
   revisionSubject:  { bg: 'bg-zinc-800/40 border-white/5',          text: 'text-primary',          Icon: Clock    },
-  topicMastered:    { bg: 'bg-emerald-950/20 border-white/5 border-l-2 border-l-emerald-500/30',  text: 'text-emerald-400',      Icon: CheckCircle2 },
+  topicMastered:    { bg: 'bg-emerald-950/20 border-white/5',  text: 'text-emerald-400',      Icon: CheckCircle2 },
   topicWeak:        { bg: 'bg-rose-500/10 border-rose-500/20',        text: 'text-rose-500',         Icon: TriangleAlert },
 };
 
@@ -58,13 +58,13 @@ function ActionableCard({
 
   return (
     <div className={cn(
-      "group bg-card border rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 shadow-xs",
+      "group bg-card border rounded-xl p-3.5 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 shadow-xs",
       isOverdue ? "border-rose-500/30 hover:border-rose-500/60 bg-rose-500/[0.03]" : "border-amber-500/30 hover:border-amber-500/60 bg-amber-500/[0.03]"
     )}>
       <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
         <div className={cn(
           "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border",
-          isOverdue ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-amber-950/20 border-white/5 border-l-2 border-l-amber-500/30 text-amber-400"
+          isOverdue ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-amber-950/20 border-white/5 text-amber-400"
         )}>
           {isOverdue ? <AlertCircle className="w-4.5 h-4.5" /> : <Clock className="w-4.5 h-4.5" />}
         </div>
@@ -77,7 +77,7 @@ function ActionableCard({
               </span>
             )}
             {isDueToday && (
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5 border-l-2 border-l-amber-500/30 shrink-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded-md border border-white/5 shrink-0">
                 Due Today
               </span>
             )}
@@ -112,7 +112,7 @@ function EventCard({ event, onRollback }: { event: TimelineEvent; onRollback?: (
   const style = EVENT_STYLE[event.eventType];
   const { Icon } = style;
   return (
-    <div className="group bg-card border border-border/70 rounded-2xl p-3 flex items-center gap-3 shadow-xs hover:border-border transition-all duration-200">
+    <div className="group bg-card border border-border/70 rounded-xl p-3 flex items-center gap-3 shadow-xs hover:border-border transition-all duration-200">
       <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border', style.bg)}>
         <Icon className={cn('w-3.5 h-3.5', style.text)} />
       </div>
@@ -205,7 +205,7 @@ export default function Timeline() {
         </header>
 
         {/* ── Integrated Calendar Radar & Filters ────────────────────────────── */}
-        <div className="bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4 w-full">
+        <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 w-full">
           
           {/* Top Bar: Navigation + Category Filter Strip */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border/40">
@@ -372,14 +372,14 @@ export default function Timeline() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+                <div className="p-1 rounded-lg bg-amber-950/20 text-amber-400 border border-white/5">
                   <Zap className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Actionable Revision Queue
                 </h2>
               </div>
-              <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-bold bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+              <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5 font-bold bg-amber-950/20 text-amber-400 border border-white/5">
                 {actionableQueue.length} Due
               </Badge>
             </div>
@@ -422,7 +422,7 @@ export default function Timeline() {
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-emerald-950/20 text-emerald-400 border border-white/5 border-l-2 border-l-emerald-500/30">
+                <div className="p-1 rounded-lg bg-emerald-950/20 text-emerald-400 border border-white/5">
                   <History className="w-3.5 h-3.5" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -448,7 +448,7 @@ export default function Timeline() {
 
       {/* Confirmation Dialog */}
       <AlertDialog open={pendingRollbackId !== null} onOpenChange={(open) => { if (!open) setPendingRollbackId(null); }}>
-        <AlertDialogContent className="rounded-2xl sm:max-w-[400px]">
+        <AlertDialogContent className="rounded-xl sm:max-w-[400px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive text-lg font-bold">
               <RotateCcw className="w-5 h-5" /> Confirm Event Rollback
@@ -491,7 +491,7 @@ function VirtualizedPastActivity({
   return (
     <div
       ref={parentRef}
-      className="max-h-[500px] overflow-y-auto pr-1 rounded-2xl border border-border/40 p-3 bg-card/40 space-y-2"
+      className="max-h-[500px] overflow-y-auto pr-1 rounded-xl border border-border/40 p-3 bg-card/40 space-y-2"
     >
       <div
         style={{

@@ -20,7 +20,7 @@ export function SettingsSection({
           {title}
         </h2>
       )}
-      <div className="bg-card border border-border/40 rounded-2xl overflow-hidden shadow-xs dark:shadow-none backdrop-blur-xs">
+      <div className="bg-card border border-border/40 rounded-xl overflow-hidden shadow-xs dark:shadow-none backdrop-blur-xs">
         {children}
       </div>
       {footer && (

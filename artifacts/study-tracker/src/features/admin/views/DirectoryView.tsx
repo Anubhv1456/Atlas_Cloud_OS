@@ -483,7 +483,7 @@ export function DirectoryView() {
       {/* Custom Trial Duration Modal */}
       {customTrialTarget && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-card border border-border/50 rounded-2xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-card border border-border/50 rounded-xl w-full max-w-md p-6 space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
@@ -535,7 +535,7 @@ export function DirectoryView() {
       {/* Email Batch Modal */}
       {isBatchOpen && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-card border border-border/50 rounded-2xl w-full max-w-lg p-6 space-y-4">
+          <div className="bg-card border border-border/50 rounded-xl w-full max-w-lg p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-lg">Batch Grant Access</h3>
               <button onClick={() => setIsBatchOpen(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5"/></button>

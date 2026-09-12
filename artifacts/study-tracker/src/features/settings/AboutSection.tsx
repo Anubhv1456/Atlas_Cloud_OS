@@ -52,9 +52,9 @@ export function AboutSection() {
       />
 
       <Dialog open={isDisclaimerOpen} onOpenChange={setIsDisclaimerOpen}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-6 bg-card border-border/80 shadow-2xl">
+        <DialogContent className="sm:max-w-lg rounded-xl p-6 bg-card border-border/80 shadow-2xl">
           <DialogHeader className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-amber-950/20 border border-white/5 text-amber-400 flex items-center justify-center">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <DialogTitle className="text-xl font-bold text-foreground">
@@ -66,7 +66,7 @@ export function AboutSection() {
           </DialogHeader>
 
           <div className="space-y-4 text-xs sm:text-sm text-muted-foreground leading-relaxed max-h-[55vh] overflow-y-auto pr-2 my-2 border-y border-border/40 py-3">
-            <div className="p-3 rounded-xl bg-amber-500/5 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-400 dark:text-amber-400 font-medium space-y-1">
+            <div className="p-3 rounded-xl bg-amber-500/5 border border-white/5 text-amber-400 dark:text-amber-400 font-medium space-y-1">
               <p className="font-bold uppercase tracking-wider text-xs">Strictly for Medical Education & Licensing Prep</p>
               <p>Atlas is not a certified medical device and must never be utilized as a substitute for professional clinical judgment, diagnosis, or patient management.</p>
             </div>

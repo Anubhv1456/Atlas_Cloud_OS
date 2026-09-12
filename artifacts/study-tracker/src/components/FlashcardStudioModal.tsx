@@ -200,7 +200,7 @@ return (
                 className="space-y-4"
               >
                 {targetMistakes.length > 7 && (
-                  <div className="bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30 text-amber-700 dark:text-amber-400 p-4 rounded-xl text-sm leading-relaxed mb-2">
+                  <div className="bg-amber-950/20 border border-white/5 text-amber-700 dark:text-amber-400 p-4 rounded-xl text-sm leading-relaxed mb-2">
                     <div className="font-semibold mb-1 flex items-center gap-2">
                       <Sparkles className="w-4 h-4" /> Cognitive Budget Warning
                     </div>
@@ -477,7 +477,7 @@ return (
                     <span>{progress.current} of {progress.total} rules</span>
                     <span>{Math.round((progress.current / Math.max(1, progress.total)) * 100)}%</span>
                   </div>
-                  <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden shadow-inner relative">
+                  <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden relative">
                     <motion.div 
                       className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-primary to-primary/80 rounded-full"
                       initial={{ width: '5%' }}
@@ -526,7 +526,7 @@ return (
                     }
                   }}
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary to-emerald-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary to-emerald-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
                   <div className="relative flex items-center gap-4 bg-card border shadow-xl rounded-xl p-4 transition-transform group-hover:-translate-y-1 group-active:translate-y-0 group-active:shadow-md">
                     <div className="p-3 bg-zinc-800/40 rounded-lg text-primary">
                       <FileBox className="w-6 h-6" />

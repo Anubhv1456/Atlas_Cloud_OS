@@ -80,7 +80,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border/80 shadow-sm overflow-hidden transition-all">
+    <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden transition-all">
       {/* Section Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/40 bg-muted/20">
         <button
@@ -90,7 +90,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
           {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/70 shrink-0 group-hover:text-foreground transition-colors" />
                     : <ChevronRight className="w-4 h-4 text-muted-foreground/70 shrink-0 group-hover:text-foreground transition-colors" />}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30 shrink-0">
+            <div className="p-1.5 rounded-lg bg-amber-950/20 text-amber-400 dark:text-amber-400 border border-white/5 shrink-0">
               <BookOpen className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -220,7 +220,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
                     <div
                       key={year.id}
                       className={cn(
-                        "group relative flex flex-col justify-between p-3.5 rounded-2xl border transition-all duration-200 select-none",
+                        "group relative flex flex-col justify-between p-3.5 rounded-xl border transition-all duration-200 select-none",
                         year.completed
                           ? "bg-emerald-950/20 border-emerald-500/40 dark:bg-emerald-500/15 text-foreground shadow-2xs"
                           : "bg-card border-border/70 hover:border-primary/40 hover:bg-muted/40 shadow-2xs"
@@ -434,7 +434,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
 
       {/* ── Preset Range Generator Dialog ─────────────────────────────────── */}
       <Dialog open={showPresetModal} onOpenChange={setShowPresetModal}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+        <DialogContent className="sm:max-w-[420px] rounded-xl mx-4 w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-400" />
@@ -559,7 +559,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
 
       {/* Edit year dialog */}
       <Dialog open={!!editTarget} onOpenChange={open => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="sm:max-w-[320px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+        <DialogContent className="sm:max-w-[320px] rounded-xl mx-4 w-[calc(100%-2rem)]">
           <DialogHeader><DialogTitle className="text-xl font-semibold">Edit Year Label</DialogTitle></DialogHeader>
           <div className="py-4">
             <Input
@@ -577,7 +577,7 @@ function PYQSection({ subjectId, subjectName, years }: PYQSectionProps) {
 
       {/* PYQ Delete confirmation dialog */}
       <Dialog open={showPYQDeleteConfirm} onOpenChange={setShowPYQDeleteConfirm}>
-        <DialogContent className="sm:max-w-[360px] rounded-2xl mx-4 w-[calc(100%-2rem)]">
+        <DialogContent className="sm:max-w-[360px] rounded-xl mx-4 w-[calc(100%-2rem)]">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-destructive">Delete PYQ Year</DialogTitle>
           </DialogHeader>
@@ -745,7 +745,7 @@ export default function SubjectDetail() {
         </div>
 
         {/* Unified Overall Health Telemetry Card */}
-        <div className="bg-card border border-border/60 shadow-sm p-4 sm:p-5 rounded-2xl space-y-3.5">
+        <div className="bg-card border border-border/60 shadow-sm p-4 sm:p-5 rounded-xl space-y-3.5">
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-sm">
               <span className="font-bold text-foreground">Curriculum Retention & Coverage</span>
@@ -776,7 +776,7 @@ export default function SubjectDetail() {
 
         {/* Recommended Focus Banner or Subject Mastered State */}
         {recommendedFocus ? (
-          <div id="subject-recommended-focus-banner" className="bg-zinc-800/40 border border-primary/25 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
+          <div id="subject-recommended-focus-banner" className="bg-zinc-800/40 border border-primary/25 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-3 min-w-0">
               <div className={cn(
                 "p-2.5 rounded-xl shrink-0 border",
@@ -806,7 +806,7 @@ export default function SubjectDetail() {
                     recommendedFocus.reason === 'overdue_decay'
                       ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                       : recommendedFocus.reason === 'weak_retention'
-                      ? "bg-amber-950/20 text-amber-400 border-white/5 border-l-2 border-l-amber-500/30"
+                      ? "bg-amber-950/20 text-amber-400 border-white/5"
                       : "bg-muted/60 text-muted-foreground border-border/40"
                   )}>
                     {recommendedFocus.reasonLabel}
@@ -842,7 +842,7 @@ export default function SubjectDetail() {
             </Button>
           </div>
         ) : isSubjectMastered ? (
-          <div id="subject-mastered-banner" className="bg-emerald-950/20 border border-emerald-500/25 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+          <div id="subject-mastered-banner" className="bg-emerald-950/20 border border-emerald-500/25 rounded-xl p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                 <CheckCircle2 className="w-4 h-4" />

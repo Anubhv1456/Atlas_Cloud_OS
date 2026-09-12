@@ -172,7 +172,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.97, y: -2 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300"
+        className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300"
       >
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 dark:text-emerald-400 shrink-0">
@@ -206,7 +206,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
       onMouseEnter={() => setIsPausedCountdown(true)}
       onMouseLeave={() => setIsPausedCountdown(false)}
       className={cn(
-        "relative rounded-2xl border transition-all overflow-hidden touch-pan-y select-none",
+        "relative rounded-xl border transition-all overflow-hidden touch-pan-y select-none",
         "bg-zinc-950/95 dark:bg-zinc-900/98 text-zinc-100 border-zinc-800/90 shadow-xl shadow-black/40",
         className
       )}
@@ -255,7 +255,7 @@ export const MorphingActionCard: React.FC<MorphingActionCardProps> = ({
         {/* Action icons & Auto-commit indicator */}
         <div className="flex items-center gap-1.5 shrink-0">
           {countdown > 0 && !isPausedCountdown && (
-            <span className="text-xs font-mono text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5 border-l-2 border-l-emerald-500/30">
+            <span className="text-xs font-mono text-emerald-400 bg-emerald-950/20 px-1.5 py-0.5 rounded border border-white/5">
               {countdown}s
             </span>
           )}

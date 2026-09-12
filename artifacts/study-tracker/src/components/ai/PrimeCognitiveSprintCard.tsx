@@ -33,7 +33,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={cn(
-        "relative rounded-3xl p-5 sm:p-6 overflow-hidden border shadow-lg transition-all",
+        "relative rounded-xl p-5 sm:p-6 overflow-hidden border shadow-lg transition-all",
         "bg-gradient-to-br from-card via-card/95 to-muted/40 border-border/80",
         "hover:shadow-xl hover:border-primary/40",
         className
@@ -90,7 +90,7 @@ export const PrimeCognitiveSprintCard: React.FC<PrimeCognitiveSprintCardProps> =
           <button
             type="button"
             onClick={() => onStartSprint?.(topPulse)}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-md active:scale-98 transition-all cursor-pointer w-full sm:w-auto"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-md active:scale-98 transition-all cursor-pointer w-full sm:w-auto"
           >
             <Sparkles className="w-4 h-4" />
             <span>Engage 15m Sprint</span>

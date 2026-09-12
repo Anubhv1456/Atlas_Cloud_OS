@@ -191,10 +191,10 @@ export function QuickMistakeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-w-[95vw] rounded-2xl p-5 sm:p-6 bg-card border border-border/80 shadow-2xl">
+      <DialogContent className="sm:max-w-xl max-w-[95vw] rounded-xl p-5 sm:p-6 bg-card border border-border/80 shadow-2xl">
         <DialogHeader className="space-y-1 text-left border-b border-border/60 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-amber-950/20 text-amber-400 border border-white/5 border-l-2 border-l-amber-500/30">
+            <span className="p-1.5 rounded-xl bg-amber-950/20 text-amber-400 border border-white/5">
               <BookOpen className="w-4 h-4" />
             </span>
             <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
@@ -300,7 +300,7 @@ export function QuickMistakeModal({
           </div>
 
           {/* Volatile Pin Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-amber-950/20 border border-white/5 border-l-2 border-l-amber-500/30">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-amber-950/20 border border-white/5">
             <div className="flex items-center gap-2.5">
               <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400 dark:text-amber-400">
                 <Zap className="w-4 h-4 fill-amber-500" />
