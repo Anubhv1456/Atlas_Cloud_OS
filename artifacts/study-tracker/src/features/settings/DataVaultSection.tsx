@@ -1,13 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Database, 
+import { Database, RefreshCw, 
   Download, 
   Upload, 
-  FileSpreadsheet, 
-  RefreshCw, 
   CopyPlus, 
-  Merge,
-  BookOpen,
   Cloud,
   Shield,
   Clock,
@@ -20,24 +15,23 @@ import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { exportCompleteVault, restoreCompleteVault, repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
-import { findDuplicateSubjectGroups, mergeAndDeduplicateAllSubjects, DuplicateSubjectGroup } from '@/lib/subjectDeduplication';
 import { SettingsRow } from './SettingsLayout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
 import { DeviceBackupsView } from './DeviceBackupsView';
+import { DiagnosticModal } from './DiagnosticModal';
 
 export function DataVaultSection() {
   const { user } = useAuth();
   const { profile } = useExamProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'main' | 'backups'>('main');
+  const [activeView, setActiveView] = useState<"main" | "backups">("main");
+  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateSubjectGroup[]>([]);
-
+  
   // Live Storage Telemetry
   const subjects = useLiveQuery(() => db.subjects.toArray(), []);
   const systems = useLiveQuery(() => db.systems.toArray(), []);
@@ -102,32 +96,9 @@ export function DataVaultSection() {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    findDuplicateSubjectGroups().then(groups => {
-      if (isMounted) setDuplicateGroups(groups);
-    }).catch(console.error);
-    return () => { isMounted = false; };
-  }, [subjects, systems, curriculumSets, history]);
+  
 
-  const handleMergeAllDuplicates = async () => {
-    try {
-      setLoadingAction('merge-duplicates');
-      const result = await mergeAndDeduplicateAllSubjects();
-      if (result.mergedSubjectsCount > 0) {
-        toast.success(`Merged ${result.mergedSubjectsCount} duplicate subjects safely`);
-        const fresh = await findDuplicateSubjectGroups();
-        setDuplicateGroups(fresh);
-      } else {
-        toast.info('No duplicate subjects found');
-      }
-    } catch {
-      toast.error('Failed to merge duplicate subjects.');
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
+  
   const handleExportJSON = async () => {
     try {
       setLoadingAction('export-json');
@@ -167,18 +138,7 @@ export function DataVaultSection() {
     }
   };
 
-  const handleRepairSchedules = async () => {
-    try {
-      setLoadingAction('repair-schedules');
-      const res = await repairAndRehydrateRevisionDates();
-      toast.success(res.message || 'Schedules synchronized');
-    } catch {
-      toast.error('Failed to rehydrate revision schedules.');
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
+  
   const handleExportCSV = async () => {
     try {
       setLoadingAction('export-csv');
@@ -220,26 +180,10 @@ export function DataVaultSection() {
     }
   };
 
-  const handleSyncOntology = async () => {
-    try {
-      setLoadingAction('sync-ontology');
-      const res = await loadUniversalOntology({
-        targetExam: profile.targetExam || 'USMLE Step 1',
-        force: false,
-        showToast: false
-      });
-      toast.success('Curriculum Blueprint Synchronized', {
-        description: `Successfully reconciled ${res.count} subjects and organ systems.`
-      });
-    } catch (e) {
-      toast.error('Failed to sync ontology: ' + String(e));
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
+  
   return (
     <>
+      <DiagnosticModal open={diagnosticOpen} onOpenChange={setDiagnosticOpen} />
       <input
         type="file"
         accept=".json"
@@ -357,25 +301,26 @@ export function DataVaultSection() {
             </button>
 
             {/* Duplicates Advisory */}
-            {duplicateGroups.length > 0 && (
-              <div className="p-3.5 rounded-xl bg-zinc-800/40 border border-white/5 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-primary">
-                  <CopyPlus className="w-4 h-4 shrink-0" />
-                  <span>{duplicateGroups.length} duplicate subject group(s) detected</span>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleMergeAllDuplicates}
-                  disabled={loadingAction !== null}
-                  className="h-7 text-xs px-2.5 rounded-lg"
-                >
-                  <Merge className="w-3 h-3 mr-1" />
-                  Consolidate
-                </Button>
-              </div>
-            )}
+            
 
             {/* Actions Grid */}
+            <div className="grid grid-cols-1 gap-2.5 mb-2.5">
+              <button
+                type="button"
+                onClick={() => setDiagnosticOpen(true)}
+                disabled={loadingAction !== null}
+                className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10 transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group"
+              >
+                <div className="p-2 rounded-full bg-rose-500/20 text-rose-500 group-hover:scale-110 transition-transform">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-semibold text-rose-600 dark:text-rose-400">System Diagnostics</div>
+                  <div className="text-xs text-rose-600/70 dark:text-rose-400/70">Scan and repair data anomalies</div>
+                </div>
+              </button>
+            </div>
+            
             <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
@@ -397,39 +342,6 @@ export function DataVaultSection() {
                 <Upload className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-semibold text-foreground">Restore JSON</span>
                 <span className="text-xs text-muted-foreground">Import vault backup</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleRepairSchedules}
-                disabled={loadingAction !== null}
-                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-semibold text-foreground">Rehydrate Schedules</span>
-                <span className="text-xs text-muted-foreground">Sync revision dates</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                disabled={loadingAction !== null}
-                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-zinc-300" />
-                <span className="text-xs font-semibold text-foreground">Export CSV</span>
-                <span className="text-xs text-muted-foreground">Spreadsheet table</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSyncOntology}
-                disabled={loadingAction !== null}
-                className="p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/30 transition-all flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer disabled:opacity-50 col-span-2 sm:col-span-1"
-              >
-                <BookOpen className="w-4 h-4 text-zinc-300" />
-                <span className="text-xs font-semibold text-foreground">Sync Blueprint</span>
-                <span className="text-xs text-muted-foreground">Update medical ontology</span>
               </button>
             </div>
           </div>

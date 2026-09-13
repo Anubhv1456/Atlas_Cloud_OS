@@ -461,7 +461,7 @@ export async function submitPaymentProof(data: {
   return docRef.id;
 }
 
-export interface PaymentConfig {
+export interface PaymentConfig { strikePriceCents?: number; priceCents?: number;
   planTitle: string;
   price: number;
   usdPrice?: number;

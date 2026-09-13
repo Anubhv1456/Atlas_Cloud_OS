@@ -11,9 +11,7 @@ import { syncEngine } from '@/db/syncEngine';
 import { GlobalAnnouncements } from '@/components/GlobalAnnouncements';
 import { OfflineLeaseBanner } from '@/components/OfflineLeaseBanner';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
-import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { runFSRSMigration } from '@/lib/fsrs-engine';
-import { mergeAndDeduplicateAllSubjects, findDuplicateSubjectGroups } from '@/lib/subjectDeduplication';
 import { db, dbEvents } from '@/db';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -68,29 +66,11 @@ export default function ProtectedApp() {
 
   useEffect(() => {
     let hasRun = false;
-    const checkOntologyAndRehydrate = async () => {
-      try {
-        await db.subjects.ready;
-        const count = await db.subjects.count();
-        if (count > 0) {
-          const dups = await findDuplicateSubjectGroups();
-          if (dups.length > 0) {
-            await mergeAndDeduplicateAllSubjects();
-          }
-          if (!hasRun) {
-            hasRun = true;
-            await repairAndRehydrateRevisionDates();
-            await runFSRSMigration();
-          }
-        }
-      } catch (err) {
-        console.warn('Initial ontology verification or schedule rehydration deferred:', err);
-      }
-    };
-    checkOntologyAndRehydrate();
+
     const handleInitialSync = (table?: string) => {
       if (!hasRun && (table === 'subjects' || table === 'curriculumSets')) {
-        checkOntologyAndRehydrate();
+        hasRun = true;
+        runFSRSMigration().catch(err => console.warn('Initial FSRS migration deferred:', err));
       }
     };
     dbEvents.on('change', handleInitialSync);

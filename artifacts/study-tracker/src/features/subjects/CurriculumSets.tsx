@@ -16,7 +16,6 @@ import { CurriculumSetScoreModal } from './CurriculumSetScoreModal';
 import { CurriculumSetForm } from './CurriculumSetForm';
 import { AILoggerModal } from '@/components/AILoggerModal';
 import { deleteCurriculumSet } from '@/db/mutations';
-import { repairAndRehydrateRevisionDates } from '@/lib/vaultSync';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -45,8 +44,7 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
   const [editSet, setEditSet] = useState<CurriculumSet | undefined>();
   const [scoreModalOpen, setScoreModalOpen] = useState(false);
   const [scoreModalSet, setScoreModalSet] = useState<CurriculumSet | undefined>();
-  const [isRehydrating, setIsRehydrating] = useState(false);
-
+  
   const handleNudgeRevision = async (setId: string, currentRevisionDate?: Date | string | null, daysDelta: number = 3) => {
     const baseDate = currentRevisionDate ? new Date(currentRevisionDate) : new Date();
     const newDate = new Date(baseDate.getTime() + daysDelta * 24 * 60 * 60 * 1000);
@@ -78,23 +76,6 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
     }
   };
 
-  const handleRehydrateDates = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsRehydrating(true);
-    try {
-      const res = await repairAndRehydrateRevisionDates();
-      toast.success('SDSR Schedules Rehydrated', {
-        description: res.message,
-      });
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to rehydrate SDSR dates');
-    } finally {
-      setIsRehydrating(false);
-    }
-  };
-  
   const curriculumSets = useLiveQuery(
     () => {
       if (!subjectId && !systemId) return [];
@@ -217,9 +198,6 @@ export function CurriculumSets({ systemId, subjectId, topics, onLogScore }: Curr
               <MoreVertical className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleRehydrateDates} disabled={isRehydrating}>
-                <RefreshCw className={cn("w-4 h-4 mr-2", isRehydrating && "animate-spin")} /> Rehydrate Dates
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); e.preventDefault(); setAiLoggerOpen(true); }}>
                 <Sparkles className="w-4 h-4 mr-2 text-amber-400" /> Log AI Block
               </DropdownMenuItem>

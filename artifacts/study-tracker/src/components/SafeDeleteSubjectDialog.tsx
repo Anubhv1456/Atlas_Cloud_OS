@@ -113,17 +113,7 @@ export function SafeDeleteSubjectDialog({
             Cancel
           </Button>
 
-          {siblingDuplicate && onMergeWithDuplicate && (
-            <Button
-              variant="default"
-              className="flex-1 rounded-xl font-semibold text-xs bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 shadow-sm"
-              disabled={isDeleting}
-              onClick={onMergeWithDuplicate}
-            >
-              <Merge className="w-3.5 h-3.5" />
-              <span>Merge Progress</span>
-            </Button>
-          )}
+          
 
           <Button
             variant="destructive"

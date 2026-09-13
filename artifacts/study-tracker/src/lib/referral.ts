@@ -1,3 +1,4 @@
+export interface GrowthSourceParam { source: string; campaign?: string; }
 import { 
   doc, 
   getDoc, 

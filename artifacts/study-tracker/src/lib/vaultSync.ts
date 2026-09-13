@@ -781,7 +781,7 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
       }
 
       // Match by exact curriculumSetId
-      if (h.curriculumSetId && h.curriculumSetId === set.id) return true;
+      if ((h as any).curriculumSetId && (h as any).curriculumSetId === set.id) return true;
 
       // Match by systemId within same subject
       if (h.systemId && set.systemId && Number(h.systemId) === Number(set.systemId)) {
@@ -885,7 +885,7 @@ export async function repairAndRehydrateRevisionDates(): Promise<{
         if (h.deletedAt) return false;
         if (h.subjectId && set.subjectId && String(h.subjectId) !== String(set.subjectId)) return false;
         if (h.subjectName && subjectName && h.subjectName.toLowerCase() !== subjectName.toLowerCase()) return false;
-        if (h.curriculumSetId && h.curriculumSetId === set.id) return true;
+        if ((h as any).curriculumSetId && (h as any).curriculumSetId === set.id) return true;
         if (h.systemId && set.systemId && Number(h.systemId) === Number(set.systemId)) return true;
         const nameMatches = (h.systemName && h.systemName.toLowerCase() === ((set.name || '').toLowerCase())) ||
                             (h.taskLabel && h.taskLabel.toLowerCase().includes(((set.name || '').toLowerCase())));

@@ -1147,7 +1147,7 @@ export async function getNextActionRecommendation(
       depth: 'standard',
       estimatedMinutes: starter.estimatedHours * 60,
       whyBreakdown: {
-        decayImpact: 0,
+        // decayImpact: 0,
         memoryDecayPercent: 0,
         upcomingExamProximity: 0,
         clinicalUtilityScore: 0,

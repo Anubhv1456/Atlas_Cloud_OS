@@ -444,16 +444,6 @@ export function TopicList({
 
                 {/* Right Actions Cluster */}
                 <div className="flex items-center gap-1 shrink-0">
-                  {/* Trail Markers Action */}
-                  <button 
-                    type="button"
-                    onClick={() => onViewMarkers?.(topic.id, topic.name)}
-                    className="p-1.5 text-muted-foreground/60 hover:text-primary transition-colors rounded-lg hover:bg-zinc-800/40 cursor-pointer"
-                    title={`Trail Markers for ${topic.name}`}
-                  >
-                    <Compass className="w-3.5 h-3.5" />
-                  </button>
-
                   {/* Weak Concept Toggle */}
                   <button 
                     type="button"
@@ -487,33 +477,6 @@ export function TopicList({
                       >
                         <Edit2 className="w-3.5 h-3.5 mr-2 text-foreground" /> 
                         <span>Rename Topic</span>
-                      </DropdownMenuItem>
-
-                      {revisionSets.length > 0 && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Add to Study Block
-                          </DropdownMenuLabel>
-                          {revisionSets.map(rs => (
-                            <DropdownMenuItem 
-                              key={rs.id} 
-                              onClick={() => handleAddToSet(rs.id!, topic.id)}
-                              className="text-xs cursor-pointer"
-                            >
-                              <FolderPlus className="w-3.5 h-3.5 mr-2 text-primary" /> 
-                              <span className="truncate">{rs.name}</span>
-                            </DropdownMenuItem>
-                          ))}
-                        </>
-                      )}
-                      
-                      <DropdownMenuItem 
-                        onClick={() => { setAddTopicToSet(topic); setFormOpen(true); }}
-                        className="text-xs cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5 mr-2 text-primary" /> 
-                        <span>New Study Block...</span>
                       </DropdownMenuItem>
                       
                       <DropdownMenuSeparator />

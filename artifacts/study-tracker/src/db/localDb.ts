@@ -79,6 +79,31 @@ export class AtlasLocalDB extends Dexie {
       mutation_queue: '++id, collectionName, bucketMonth, timestamp',
       local_snapshots: '++id, timestamp, version'
     });
+
+    this.setupHooks();
+  }
+
+  private setupHooks() {
+    this.history.hook('reading', (obj) => {
+      if (obj && typeof obj.completedAt === 'string') {
+        obj.completedAt = new Date(obj.completedAt);
+      }
+      return obj;
+    });
+
+    this.scoreLogs.hook('reading', (obj) => {
+      if (obj && typeof obj.timestamp === 'string') {
+        obj.timestamp = new Date(obj.timestamp);
+      }
+      return obj;
+    });
+
+    this.topicProgress.hook('reading', (obj) => {
+      if (obj && typeof obj.lastStudiedAt === 'string') {
+        obj.lastStudiedAt = new Date(obj.lastStudiedAt);
+      }
+      return obj;
+    });
   }
 }
 

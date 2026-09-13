@@ -17,7 +17,7 @@ import { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 
 import { calculateSubjectProgress } from "@/lib/progress";
 import { SafeDeleteSubjectDialog } from "@/components/SafeDeleteSubjectDialog";
-import { evaluateSubjectProgress, SubjectProgressScore, mergeAndDeduplicateAllSubjects } from "@/lib/subjectDeduplication";
+import { evaluateSubjectProgress, SubjectProgressScore } from "@/lib/subjectDeduplication";
 
 interface SubjectCardProps {
   subject: Subject;
@@ -129,22 +129,6 @@ export function SubjectCard({
     }
   };
 
-  const handleMergeDuplicates = async () => {
-    try {
-      setIsDeleting(true);
-      const res = await mergeAndDeduplicateAllSubjects();
-      setShowSafeDelete(false);
-      toast.success('Subjects Merged Successfully', {
-        description: `Consolidated duplicate subjects and preserved all study progress.`
-      });
-    } catch (e) {
-      console.error(e);
-      toast.error('Failed to merge duplicate subjects');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   return (
     <>
       <div
@@ -233,17 +217,7 @@ export function SubjectCard({
                     )}
                   </Link>
                 </DropdownMenuItem>
-                {siblingDuplicateSubject && (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMergeDuplicates();
-                    }}
-                    className="text-primary focus:text-primary gap-2 py-2 cursor-pointer text-xs font-semibold"
-                  >
-                    <Merge className="w-3.5 h-3.5" /> Merge Duplicates
-                  </DropdownMenuItem>
-                )}
+                
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();

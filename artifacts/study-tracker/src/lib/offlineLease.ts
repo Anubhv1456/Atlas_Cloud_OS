@@ -47,44 +47,56 @@ export async function requestServerOfflineLease(user: User | null): Promise<Offl
   }
 
   try {
-    const idToken = await user.getIdToken();
-    const response = await fetch('/api/auth/issue-lease', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
-    });
+    if (!firestoreDb) return null;
+    const userRef = doc(firestoreDb, 'users', user.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return null;
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      console.warn('[Atlas Offline Lease] Server rejected lease request:', errData.message || response.statusText);
+    const userData = snap.data();
+    const now = Date.now();
+    const isPaid = userData.hasPaidAccess === true || userData.paymentStatus === 'succeeded';
+
+    let betaExpiry: number | null = null;
+    if (userData.betaAccessExpiresAt) {
+      betaExpiry = typeof userData.betaAccessExpiresAt === 'string' ? new Date(userData.betaAccessExpiresAt).getTime() : userData.betaAccessExpiresAt;
+    }
+
+    let trialExpiry: number | null = null;
+    if (userData.trialExpiresAt) {
+      trialExpiry = typeof userData.trialExpiresAt === 'string' ? new Date(userData.trialExpiresAt).getTime() : userData.trialExpiresAt;
+    }
+
+    const isBetaActive = userData.betaAccess === true && (!betaExpiry || betaExpiry > now);
+    const isTrialActive = Boolean(trialExpiry && trialExpiry > now);
+    const isEntitled = isPaid || isBetaActive || isTrialActive;
+
+    if (!isEntitled) {
       return null;
     }
 
-    const data = await response.json();
-    if (!data.success || !data.lease) {
-      return null;
+    let expiresAt = now + OFFLINE_LEASE_DURATION_MS;
+    const caps = [betaExpiry, trialExpiry].filter((exp): exp is number => typeof exp === 'number' && exp > now);
+    if (!isPaid && caps.length > 0) {
+      expiresAt = Math.min(expiresAt, ...caps);
     }
 
     const monotonic = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
-    const now = Date.now();
 
     const signedLease: OfflineLease = {
-      uid: data.lease.uid,
-      grantedAt: data.lease.grantedAt,
-      expiresAt: data.lease.expiresAt,
+      uid: user.uid,
+      grantedAt: now,
+      expiresAt: expiresAt,
       lastOnlineSync: now,
       initialMonotonic: monotonic,
       initialTimestamp: now,
-      signature: data.signature,
-      serverSigned: true,
+      signature: 'hmac_local_optimistic_fallback',
+      serverSigned: false,
     };
 
     localStorage.setItem(`${LEASE_KEY_PREFIX}${user.uid}`, JSON.stringify(signedLease));
     return signedLease;
   } catch (error) {
-    console.warn('[Atlas Offline Lease] Network error requesting server lease:', error);
+    console.warn('[Atlas Offline Lease] Error requesting local fallback lease:', error);
     return getStoredOfflineLease(user.uid);
   }
 }
@@ -108,6 +120,7 @@ export function issueOfflineLease(uid: string, maxExpiry?: number | null): Offli
     lastOnlineSync: now,
     initialMonotonic: monotonic,
     initialTimestamp: now,
+    signature: 'hmac_local_optimistic_fallback',
     serverSigned: false,
   };
 
