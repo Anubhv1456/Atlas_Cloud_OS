@@ -8,6 +8,8 @@
  */
 
 import type { User } from 'firebase/auth';
+import { firestoreDb } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const OFFLINE_LEASE_DURATION_MS = 72 * 60 * 60 * 1000; // 72 Hours
 

@@ -48,16 +48,8 @@
       "destination": "https://atlas-cloud-6f1c6.firebaseapp.com/__/auth/:path*"
     },
     {
-      "source": "/api/admin",
-      "destination": "/api/admin/action"
-    },
-    {
       "source": "/api/referral",
       "destination": "/api/referral/action"
-    },
-    {
-      "source": "/api/auth",
-      "destination": "/api/auth/action"
     },
     {
       "source": "/((?!api/|.*\\.[^/]+$).*)",

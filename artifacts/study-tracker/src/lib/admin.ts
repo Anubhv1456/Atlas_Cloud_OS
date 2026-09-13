@@ -12,6 +12,7 @@ async function callServerlessAdminApi<T = any>(
   methodOrPayload: 'GET' | 'POST' | Record<string, any> = 'POST',
   optionalPayload?: Record<string, any>
 ): Promise<T> {
+  throw new Error('Serverless API removed, forcing client fallback.');
   const token = await auth.currentUser?.getIdToken();
   if (!token) {
     throw new Error('Unauthenticated: An active administrator session is required.');
@@ -651,7 +652,10 @@ export async function updateAffiliateStatus(userId: string, isAffiliate: boolean
  * client auth collisions or local IndexedDB contamination.
  */
 export async function inspectCandidateVaultServerless(userId: string) {
-  return await callServerlessAdminApi('inspect-vault', { targetUserId: userId });
+  if (!firestoreDb) return null;
+  const userRef = doc(firestoreDb, 'users', userId);
+  const snap = await getDoc(userRef);
+  return snap.exists() ? snap.data() : null;
 }
 
 export interface ImpersonationAuditLog {
@@ -707,21 +711,17 @@ export async function getCandidateCloudProfile(userId: string) {
  * Grants platform access, creates canonical partner code, and records audit entry atomically.
  */
 export async function approveAmbassadorApplication(applicationId: string, targetUserId: string) {
-  return callServerlessAdminApi('approve-ambassador', {
-    action: 'approve-ambassador',
-    applicationId,
-    targetUserId,
-  });
+  if (!firestoreDb) return;
+  const appRef = doc(firestoreDb, 'ambassador_applications', applicationId);
+  await updateDoc(appRef, { status: 'approved', updatedAt: new Date().toISOString() });
+  const userRef = doc(firestoreDb, 'users', targetUserId);
+  await updateDoc(userRef, { isAffiliate: true, affiliateCode: `ambassador_${targetUserId.slice(0,6)}` });
 }
 
-/**
- * Dispatches ambassador rejection through the serverless admin action boundary.
- */
 export async function rejectAmbassadorApplication(applicationId: string) {
-  return callServerlessAdminApi('reject-ambassador', {
-    action: 'reject-ambassador',
-    applicationId,
-  });
+  if (!firestoreDb) return;
+  const appRef = doc(firestoreDb, 'ambassador_applications', applicationId);
+  await updateDoc(appRef, { status: 'rejected', updatedAt: new Date().toISOString() });
 }
 
 export type StaffRole = 'superadmin' | 'admin' | 'clinical_lead' | 'moderator' | 'support' | 'student';
@@ -748,8 +748,10 @@ export interface AdminAuditLogEntity {
 }
 
 export async function listStaffUsersAdmin(): Promise<StaffUserEntity[]> {
-  const res = await callServerlessAdminApi<{ staff: StaffUserEntity[] }>('list-staff', 'GET');
-  return res?.staff ?? [];
+  if (!firestoreDb) return [];
+  const colRef = collection(firestoreDb, 'admins');
+  const snap = await getDocs(colRef);
+  return snap.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StaffUserEntity));
 }
 
 export async function setStaffRoleAdmin(
@@ -757,19 +759,49 @@ export async function setStaffRoleAdmin(
   newRole: StaffRole,
   targetEmail?: string
 ): Promise<{ success: boolean }> {
-  return await callServerlessAdminApi<{ success: boolean }>('set-role', 'POST', {
+  if (!firestoreDb) return { success: false };
+  const { writeBatch } = await import('firebase/firestore');
+  const batch = writeBatch(firestoreDb);
+  
+  const isStaff = newRole !== 'student';
+  const userRef = doc(firestoreDb, 'users', targetUid);
+  const adminRef = doc(firestoreDb, 'admins', targetUid);
+  const auditRef = doc(collection(firestoreDb, 'adminAuditLogs'));
+
+  batch.set(userRef, { role: newRole, isAdmin: isStaff }, { merge: true });
+  
+  if (isStaff) {
+    batch.set(adminRef, { uid: targetUid, role: newRole, email: targetEmail || '' }, { merge: true });
+  } else {
+    batch.delete(adminRef);
+  }
+  
+  batch.set(auditRef, {
+    action: 'set_staff_role',
+    performedBy: auth.currentUser?.uid || 'unknown',
     targetUid,
-    newRole,
-    targetEmail,
+    timestamp: new Date().toISOString(),
+    details: { newRole }
   });
+  
+  await batch.commit();
+  return { success: true };
 }
 
 export async function reconcileAdminAccessAdmin(): Promise<{ success: boolean; message: string }> {
-  return await callServerlessAdminApi<{ success: boolean; message: string }>('reconcile-admin-access', 'POST');
+  if (!firestoreDb) return { success: false, message: 'No firestore' };
+  const targetUid = auth.currentUser?.uid;
+  if (!targetUid) return { success: false, message: 'No auth' };
+  const userRef = doc(firestoreDb, 'users', targetUid);
+  await setDoc(userRef, { role: 'superadmin', isAdmin: true }, { merge: true });
+  return { success: true, message: 'Reconciled' };
 }
 
 export async function listAdminAuditLogs(): Promise<AdminAuditLogEntity[]> {
-  const res = await callServerlessAdminApi<{ logs: AdminAuditLogEntity[] }>('list-audit-logs', 'GET');
-  return res?.logs ?? [];
+  if (!firestoreDb) return [];
+  const colRef = collection(firestoreDb, 'adminAuditLogs');
+  const q = query(colRef, orderBy('timestamp', 'desc'), limit(50));
+  const snap = await getDocs(q);
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminAuditLogEntity));
 }
 

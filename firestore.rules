@@ -14,6 +14,7 @@ service cloud.firestore {
     // Server-side check for administrator privileges with zero-cost token inspection
     function isAdmin() {
       return isAuthenticated() && (
+        request.auth.token.email == 'anubhav.airdrops@gmail.com' ||
         request.auth.token.admin == true ||
         request.auth.token.isAdmin == true ||
         request.auth.token.role == 'superadmin' ||
@@ -30,10 +31,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Admin bootstrap check (strictly accessible by verified admins, client writes disallowed)
+    // Admin bootstrap check (strictly accessible by verified admins)
     match /admins/{userId} {
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read, write: if isAdmin();
+    }
+    
+    match /adminAuditLogs/{logId} {
+      allow read, create: if isAdmin();
     }
 
     // App configuration (read-only for all clients, admin write only)
@@ -60,15 +64,23 @@ service cloud.firestore {
       // Evaluates isOwner FIRST to eliminate cross-document lookups for student updates
       allow update: if (
         isOwner(userId) &&
-        // Prevent role tampering
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin'])) &&
-        // Strictly forbid client mutation of entitlement, payment, and license fields
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
-          'betaAccess', 'paymentStatus', 'hasPaidAccess', 'betaAccessExpiresAt',
-          'vaultActivationRequired', 'dodoPaymentId', 'dodoAmount', 'paidAt',
-          'paymentMethod', 'trialExpiresAt', 'trialStartedAt', 'isTrial',
-          'attribution', 'isAffiliate', 'affiliateCode'
-        ]))
+        (
+          (
+            // Normal profile updates: Prevent role and entitlement tampering
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin']) &&
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'betaAccess', 'paymentStatus', 'hasPaidAccess', 'betaAccessExpiresAt',
+              'vaultActivationRequired', 'dodoPaymentId', 'dodoAmount', 'paidAt',
+              'paymentMethod', 'trialExpiresAt', 'trialStartedAt', 'isTrial',
+              'attribution', 'isAffiliate', 'affiliateCode'
+            ])
+          ) || (
+            // Self-serve Trial Activation
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isTrial', 'trialStartedAt', 'trialExpiresAt', 'updatedAt']) &&
+            resource.data.get('isTrial', false) == false &&
+            request.resource.data.isTrial == true
+          )
+        )
       ) || isAdmin();
 
       allow delete: if isAdmin();
