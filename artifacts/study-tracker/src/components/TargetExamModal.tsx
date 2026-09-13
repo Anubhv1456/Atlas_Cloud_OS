@@ -60,7 +60,6 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       if (diffDays > 0) {
         // Assume ~4000 QBank average for standard medical exams
         const defaultDaily = Math.max(10, Math.ceil(4000 / diffDays));
-        setDailyQuestionGoal(defaultDaily > 300 ? 300 : defaultDaily);
       }
     }
   }, [targetExamDate, targetExam]);
