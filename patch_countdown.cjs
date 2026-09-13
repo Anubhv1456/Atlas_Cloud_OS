@@ -1,4 +1,7 @@
-import React, { useMemo } from 'react';
+const fs = require('fs');
+let code = fs.readFileSync('artifacts/study-tracker/src/components/dashboard/ExamCountdownWidget.tsx', 'utf8');
+
+const newCode = `import React, { useMemo } from 'react';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { Calendar } from 'lucide-react';
 import { differenceInDays, parseISO, isValid } from 'date-fns';
@@ -38,3 +41,6 @@ export function ExamCountdownWidget() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('artifacts/study-tracker/src/components/dashboard/ExamCountdownWidget.tsx', newCode);

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+const code = `import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { 
-  Sparkles, Brain, Check, Zap, Target, BookOpen, ArrowRight
+  Sparkles, Brain, Check, Zap, Target, BookOpen
 } from 'lucide-react';
 import { useExamProfile } from '@/hooks/useExamProfile';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
@@ -78,7 +80,7 @@ export default function Onboarding() {
     setSubjects(subs);
     
     const initialStatus: Record<string, 'untouched' | 'familiar' | 'weak'> = {};
-    subs.forEach(s => { if (s.id) initialStatus[s.id as string] = 'untouched'; });
+    subs.forEach(s => initialStatus[s.id] = 'untouched');
     setSyllabusStatus(initialStatus);
     
     setStep('baseline');
@@ -91,11 +93,11 @@ export default function Onboarding() {
     const lastReviewTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     
     for (const sub of subjects) {
-      const status = sub.id ? syllabusStatus[sub.id as string] : undefined;
+      const status = syllabusStatus[sub.id];
       if (status === 'untouched') continue;
       
       const systems = await db.systems.where('subjectId').equals(sub.id).toArray();
-      const updates: any[] = [];
+      const updates = [];
       
       for (const sys of systems) {
         if (status === 'familiar') {
@@ -149,7 +151,7 @@ export default function Onboarding() {
       <div className="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-12 flex flex-col relative z-10">
         
         <div className="mb-12 flex justify-center">
-          <AtlasEmblem  className="animate-fade-in" />
+          <AtlasEmblem size="lg" className="animate-fade-in" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -432,3 +434,7 @@ export default function Onboarding() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('artifacts/study-tracker/src/pages/Onboarding.tsx', code);
+console.log("Onboarding.tsx generated");

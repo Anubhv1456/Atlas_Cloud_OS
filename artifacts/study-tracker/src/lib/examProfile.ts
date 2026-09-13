@@ -8,7 +8,6 @@ export interface ExamProfile {
   hasCompletedTriage?: boolean;
   curriculum: string;
   targetScore: string;
-  dailyQuestionGoal: number;
   currentYear?: string;
   startedStudying?: 'yes' | 'fresh';
 }
@@ -33,7 +32,6 @@ export const DEFAULT_EXAM_PROFILE: ExamProfile = {
   targetExamDate: '',
   curriculum: 'Subject-Based (Anatomy, Pharmacology, Pathology, etc.)',
   targetScore: '',
-  dailyQuestionGoal: 40,
   currentYear: 'Final MBBS',
 };
 
@@ -112,7 +110,6 @@ export async function fetchExamProfile(userId?: string): Promise<ExamProfile> {
               hasCompletedTriage: data.hasCompletedTriage ?? local.hasCompletedTriage,
               curriculum: data.curriculum ?? local.curriculum ?? DEFAULT_EXAM_PROFILE.curriculum,
               targetScore: data.targetScore ?? local.targetScore ?? '',
-              dailyQuestionGoal: data.dailyQuestionGoal ?? local.dailyQuestionGoal ?? 40,
               currentYear: data.currentYear ?? local.currentYear ?? DEFAULT_EXAM_PROFILE.currentYear,
               startedStudying: data.startedStudying ?? local.startedStudying ?? 'yes',
             };
@@ -168,7 +165,6 @@ export async function saveExamProfile(profile: ExamProfile, userId?: string): Pr
       hasCompletedTriage: profile.hasCompletedTriage ?? false,
       curriculum: profile.curriculum,
       targetScore: profile.targetScore,
-      dailyQuestionGoal: profile.dailyQuestionGoal,
       currentYear: profile.currentYear || 'Final MBBS',
       startedStudying: profile.startedStudying || 'yes',
       updatedAt: new Date().toISOString()

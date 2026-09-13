@@ -33,7 +33,6 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
   const [customExam, setCustomExam] = useState('');
   const [targetExamDate, setTargetExamDate] = useState(profile.targetExamDate || '');
   const [curriculum, setCurriculum] = useState(profile.curriculum || DEFAULT_CURRICULUM_OPTIONS[0]);
-  const [dailyQuestionGoal, setDailyQuestionGoal] = useState<number>(profile.dailyQuestionGoal || 40);
   const [currentYear, setCurrentYear] = useState<string>(profile.currentYear || 'Final MBBS');
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
       }
       setTargetExamDate(profile.targetExamDate || '');
       setCurriculum(profile.curriculum || DEFAULT_CURRICULUM_OPTIONS[0]);
-      setDailyQuestionGoal(profile.dailyQuestionGoal || 40);
       setCurrentYear(profile.currentYear || 'Final MBBS');
     }
   }, [open, profile]);
@@ -105,7 +103,6 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
         targetExamDate,
         curriculum,
         targetScore: profile.targetScore || '',
-        dailyQuestionGoal: Number(dailyQuestionGoal) || 40,
         currentYear,
       });
 
@@ -137,7 +134,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                 Exam Profile
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Calibrate your clinical curriculum, timeline, and daily question targets
+                Calibrate your clinical curriculum and timeline
               </DialogDescription>
             </div>
           </div>
@@ -198,7 +195,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
             </div>
 
             {/* Target Date & Daily Target (2-Column Tablet Grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-xl border border-border/50">
+            <div className="grid grid-cols-1 gap-3 bg-muted/25 dark:bg-muted/15 p-3.5 rounded-xl border border-border/50">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="examDate" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
@@ -221,25 +218,7 @@ export function TargetExamModal({ open, onOpenChange }: TargetExamModalProps) {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="dailyGoal" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-primary" />
-                    Daily QBank Target
-                  </Label>
-                  <span className="text-xs text-muted-foreground font-medium">MCQs/day</span>
-                </div>
-                <Input
-                  id="dailyGoal"
-                  type="number"
-                  min={5}
-                  max={300}
-                  value={dailyQuestionGoal}
-                  onChange={(e) => setDailyQuestionGoal(Number(e.target.value))}
-                  className="rounded-xl h-10 px-3 text-xs sm:text-sm bg-background border-border/60 focus-visible:ring-primary/20 font-medium"
-                  required
-                />
-              </div>
+
             </div>
 
             {/* Academic Level & Curriculum */}

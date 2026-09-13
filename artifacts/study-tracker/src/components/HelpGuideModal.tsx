@@ -310,7 +310,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Exam Profile & Horizon Countdown</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Set your target exam (NEET PG, INI-CET, FMGE, USMLE Step 1/2, or MBBS Proff) and exam date in <strong>Settings ➔ Target Exam & Horizon</strong>. The dashboard automatically calculates your daily question pace and revision velocity.
+            Set your target exam (NEET PG, INI-CET, FMGE, USMLE Step 1/2, or MBBS Proff) and exam date in <strong>Settings ➔ Target Exam & Horizon</strong>. The dashboard automatically calculates your required study velocity.
           </p>
         </section>
         <section className="space-y-2">

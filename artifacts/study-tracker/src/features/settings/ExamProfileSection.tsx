@@ -24,7 +24,7 @@ export function ExamProfileSection() {
         icon={Target}
         iconBg="bg-teal-600 dark:bg-teal-500"
         label="Target Exam & Horizon"
-        sublabel={`${profile.currentYear || 'Medical Degree'} • ${profile.dailyQuestionGoal || 40} Qs/day`}
+        sublabel={profile.currentYear || 'Medical Degree'}
         value={isConfigured ? profile.targetExam : 'Configure'}
         chevron
         onClick={() => setModalOpen(true)}
