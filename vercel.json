@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build --workspace=artifacts/study-tracker",
   "outputDirectory": "artifacts/study-tracker/dist",
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "bun install",
   "framework": null,
   "headers": [
     {

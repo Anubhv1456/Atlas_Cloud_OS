@@ -21,7 +21,7 @@
   },
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",
@@ -54,7 +54,7 @@
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "firebase": "^12.17.0",
-    "firebase-admin": "^14.3.0",
+    "firebase-admin": "^14.4.0",
     "html-to-image": "^1.11.13",
     "katex": "^0.18.5",
     "pino": "^10.3.1",
@@ -148,5 +148,11 @@
         ]
       ]
     }
+  },
+  "overrides": {
+    "jose": "4.15.5"
+  },
+  "resolutions": {
+    "jose": "4.15.5"
   }
 }
