@@ -33,6 +33,13 @@ export function BaselineTriageModal({ open, onOpenChange }: BaselineTriageModalP
       const topSystems = allSystems.slice(0, 15);
       setSystems(topSystems);
       
+      // Auto-bypass if no systems exist in the db yet
+      if (topSystems.length === 0) {
+        await updateProfile({ hasCompletedTriage: true });
+        onOpenChange(false);
+        return;
+      }
+      
       const initialConfidences: Record<string, 'untouched' | 'weak' | 'average' | 'strong'> = {};
       topSystems.forEach(s => {
         initialConfidences[String(s.id)] = 'untouched';
@@ -51,6 +58,12 @@ export function BaselineTriageModal({ open, onOpenChange }: BaselineTriageModalP
 
   const handleComplete = async () => {
     setSaving(true);
+    // Fallback if triggered on empty
+    if (systems.length === 0) {
+      await updateProfile({ hasCompletedTriage: true });
+      onOpenChange(false);
+      return;
+    }
     try {
       const now = Date.now();
       const logs = [];

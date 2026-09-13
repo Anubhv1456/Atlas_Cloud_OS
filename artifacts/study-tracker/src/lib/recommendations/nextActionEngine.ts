@@ -1,3 +1,15 @@
+/**
+ * Copyright (c) 2026 Atlas OS. All rights reserved.
+ * 
+ * PROPRIETARY AND CONFIDENTIAL.
+ * This source code, algorithm architecture, and mathematical heuristic
+ * (including the Continuous Linear Glide-Path and Cognitive Recovery Engine)
+ * are the sole intellectual property of Atlas OS.
+ * 
+ * Unauthorized copying, reverse-engineering, decompilation, or distribution
+ * of this file via any medium is strictly prohibited.
+ */
+
 
 import { db } from '@/db';
 import { calculateBlockMemoryLoss, getTopicMemoryLoss, getInitialInterval, isSoftRecalibrating, calculateKnapsackPriority } from '@/db';
@@ -190,6 +202,33 @@ export function getCircadianContext(now: Date = new Date()): {
   } else {
     return { period: 'evening', label: 'Evening Volatiles • High-Speed Refresh' };
   }
+}
+
+
+function applyConfidenceInterleaving(items: NextActionRecommendation[]): NextActionRecommendation[] {
+  if (!items || items.length === 0) return [];
+
+  const anchors = items.filter(i => (i.whyBreakdown?.retrievabilityPercent ?? 0) > 85);
+  const others = items.filter(i => (i.whyBreakdown?.retrievabilityPercent ?? 0) <= 85);
+
+  const result: NextActionRecommendation[] = [];
+  let aIdx = 0;
+  let oIdx = 0;
+
+  // Interleave until both candidate pools are completely drained
+  while (aIdx < anchors.length || oIdx < others.length) {
+    const shouldPickAnchor = result.length % 3 === 2;
+
+    if (shouldPickAnchor && aIdx < anchors.length) {
+      result.push(anchors[aIdx++]);
+    } else if (oIdx < others.length) {
+      result.push(others[oIdx++]);
+    } else if (aIdx < anchors.length) {
+      result.push(anchors[aIdx++]);
+    }
+  }
+
+  return result;
 }
 
 export async function getNextActionRecommendation(
@@ -439,6 +478,9 @@ export async function getNextActionRecommendation(
     
     // Only use true revision date for recency calculation (never set.updatedAt, which changes on edits)
     const hasStudiedBefore = Boolean(set.lastRevisionDate);
+    if (recalibrationStatus.active && !hasStudiedBefore) {
+      continue;
+    }
     const lastDate = set.lastRevisionDate ? new Date(set.lastRevisionDate) : null;
     const stability = set.currentRevisionInterval && set.currentRevisionInterval > 0 
       ? set.currentRevisionInterval 
@@ -510,14 +552,27 @@ export async function getNextActionRecommendation(
 
     // ── Soft Recalibration Knapsack Scoring ─────────────────────────────────
     if (recalibrationStatus.active) {
-      const knapsackScore = calculateKnapsackPriority({
+      const knapsackScoreRaw = calculateKnapsackPriority({
         subjectWeight: 100,
         yieldWeight,
         memoryLoss: Math.max(baseMemoryLoss, !hasStudiedBefore ? 60 : 0),
         estimatedMinutes: setDepth === 'rapid' ? 15 : setDepth === 'deep' ? 45 : 30,
         mistakeBonus: activeMistakesInSet * 8
       });
-      actionIndex = Math.min(100, Math.round(knapsackScore * 2.5));
+      const knapsackScore = Math.min(100, Math.round(knapsackScoreRaw * 2.5));
+      const standardSrsScore = actionIndex; // Base actionIndex before this point
+      
+      const pRatio = recalibrationStatus.progressRatio;
+      let finalScore = ((1 - pRatio) * knapsackScore) + (pRatio * standardSrsScore);
+
+      // Volatility Multiplier
+      const subjectN = (subjectName || '').toLowerCase();
+      const isHighVolatility = subjectN.includes('pharma') || subjectN.includes('micro') || subjectN.includes('psm') || subjectN.includes('preventive');
+      if (pRatio <= 0.5 && isHighVolatility) {
+        finalScore *= 1.25;
+      }
+      
+      actionIndex = finalScore;
     } else {
       if (activeMistakesInSet > 0) {
         actionIndex += Math.min(25, activeMistakesInSet * 5);
@@ -928,6 +983,9 @@ export async function getNextActionRecommendation(
   if (isClinicalDuty) {
     filteredCandidates = filteredCandidates.slice(0, 3);
   }
+
+  // Apply Confidence Interleaving (Soft Recalibration Guard)
+  filteredCandidates = applyConfidenceInterleaving(filteredCandidates);
 
   const quickEligibleCount = rawCandidates.filter(c => c.depth === 'rapid' || c.isQuickEligible).length;
   

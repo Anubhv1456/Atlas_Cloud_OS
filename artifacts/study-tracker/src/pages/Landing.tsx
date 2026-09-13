@@ -2543,7 +2543,7 @@ export default function Landing() {
                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
                   <Compass className="w-4 h-4 text-slate-400" />
                </div>
-               <span className="font-medium tracking-tight text-slate-300">Atlas OS</span>
+               <span className="font-medium tracking-tight text-slate-300">© 2026 Atlas OS. All rights reserved.</span>
             </div>
             
             <div className="flex items-center gap-6 text-sm font-medium text-slate-500">

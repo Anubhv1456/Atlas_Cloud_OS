@@ -49,6 +49,9 @@ export function ActiveRevisions({
   customSecondarySubject,
   customSecondarySystem
 }: ActiveRevisionsProps) {
+  const opMode = useOperationalMode();
+  const recalStatus = opMode ? isSoftRecalibrating(opMode, new Date()) : { active: false };
+
   return (
     <>
       {/* ── Focus for Today ───────────────────────── */}

@@ -43,7 +43,7 @@ export function ExamProfileSection() {
       <div className="p-3.5 bg-card space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
           <span className="text-[13px] font-medium text-foreground">
-            Operational Mode & Pacing
+            Operational Mode™ & Pacing
           </span>
           <span className="text-xs text-muted-foreground">
             Dynamic Regimen

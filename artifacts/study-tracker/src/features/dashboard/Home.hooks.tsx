@@ -6,6 +6,8 @@ import { db } from '@/db';
 import { BookOpen, AlertCircle, Target, Activity, Sparkles, Flame } from 'lucide-react';
 import { useState, ReactNode, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { triggerDormancyRecalibration } from '@/db/mutations';
+import { isSoftRecalibrating } from '@/db/revisionEngine';
 import { 
   useSubjects, useAllSystems, addSubject, updateSubject, deleteSubject, 
   useCurrentStreak, setFocus, setSubjectFocus, updateSubjectsOrder, useAllPYQs, Subject, StudySystem,
@@ -44,6 +46,26 @@ export function useHomeLogic() {
   const [focusDialogType, setFocusDialogType] = useState<'primary' | 'secondary' | null>(null);
 
   const opMode = useOperationalMode();
+
+  // Dormancy Detection & Dynamic Windowing Auto-Trigger
+  useEffect(() => {
+    async function checkDormancy() {
+      if (!opMode) return;
+      const history = await db.history.orderBy('completedAt').reverse().toArray();
+      const validHistory = history.filter(h => !h.deletedAt);
+      if (validHistory.length > 0) {
+        const lastActive = new Date(validHistory[0].completedAt).getTime();
+        const daysSinceLastActive = (Date.now() - lastActive) / (1000 * 60 * 60 * 24);
+        
+        const recalStatus = isSoftRecalibrating(opMode, new Date());
+        
+        if (daysSinceLastActive >= 5 && !recalStatus.active && opMode.mode === 'standard') {
+          await triggerDormancyRecalibration(daysSinceLastActive);
+        }
+      }
+    }
+    checkDormancy();
+  }, [opMode]);
 
   const {
     customPrimarySubject,

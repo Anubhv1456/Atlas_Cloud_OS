@@ -30,7 +30,7 @@ export function AboutSection() {
       <SettingsRow
         icon={AlertTriangle}
         iconBg="bg-amber-500"
-        label="Medical & Educational Disclaimer"
+        label="Medical Disclaimer & Licensing Terms"
         value="View Terms"
         chevron
         onClick={() => setIsDisclaimerOpen(true)}

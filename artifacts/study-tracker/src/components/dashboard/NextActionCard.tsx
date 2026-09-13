@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useNextActionEngine } from '@/hooks/useNextActionEngine';
+import { useOperationalMode } from '@/db';
+import { isSoftRecalibrating } from '@/db/revisionEngine';
 import { 
   Sparkles, Play, Clock, ArrowRight, AlertTriangle, CheckCircle2, ShieldAlert, Zap, Target, Book, Crosshair
 } from 'lucide-react';
@@ -12,6 +14,8 @@ import { toast } from 'sonner';
 export function NextActionCard() {
   const [, setLocation] = useLocation();
   const { result, loading } = useNextActionEngine();
+  const opMode = useOperationalMode();
+  const recalStatus = opMode ? isSoftRecalibrating(opMode, new Date()) : { active: false, progressRatio: 0, daysRemaining: 0 };
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStartSession = () => {
@@ -36,6 +40,59 @@ export function NextActionCard() {
     if (rec.isFreshState) return <Sparkles className="w-4 h-4 text-emerald-400" />;
     return <Book className="w-4 h-4 text-zinc-300" />;
   };
+
+  if (recalStatus.active && result?.primary) {
+    const totalCount = (result.upcomingQueue?.length || 0) + 1;
+    const completed = 15 - Math.min(15, totalCount); // Mocking bounded queue
+    return (
+      <div className="bg-background/95 border border-white/[0.06] rounded-xl p-6 sm:p-8 shadow-md relative overflow-hidden flex flex-col items-center text-center">
+        
+        {/* Soft Recalibration Halo / Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="z-10 w-full max-w-lg flex flex-col items-center">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider mb-4 border border-primary/20">
+            <Zap className="w-3 h-3" /> Soft Recalibration™ Active
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
+            Recovery Session
+          </h2>
+          
+          <div className="flex items-center justify-between w-full mb-2 mt-4 px-2">
+            <span className="text-xs text-muted-foreground font-medium">Recovery Batch</span>
+            <span className="text-xs text-foreground font-bold">{completed} / 15 completed</span>
+          </div>
+          <div className="w-full bg-muted/40 rounded-lg h-2 mb-8 overflow-hidden border border-white/[0.02]">
+            <div className="bg-primary h-full rounded-lg transition-all duration-1000 ease-out" style={{ width: `${(completed / 15) * 100}%` }} />
+          </div>
+
+          <Button 
+            size="lg" 
+            className="w-full rounded-xl h-14 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 font-bold tracking-wide transition-all group"
+            onClick={handleStartSession}
+            disabled={isStarting}
+          >
+            {isStarting ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                Initializing...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Play className="w-5 h-5 fill-current" />
+                Resume Recovery: 15 High-Yield Cards (12 min)
+              </span>
+            )}
+          </Button>
+
+          <p className="mt-6 text-[11px] text-muted-foreground/70 font-medium tracking-wide">
+            320 low-yield reviews safely parked in Deep Storage™.<br className="hidden sm:block"/> Focus on today's high-yield targets.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !result) {
     return (

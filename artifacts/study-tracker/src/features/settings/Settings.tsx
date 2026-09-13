@@ -87,7 +87,7 @@ export default function Settings() {
 
       {/* ── Footer Attribution ────────────────────────────────────────────── */}
       <footer className="text-center text-xs text-muted-foreground/60 py-4 select-none">
-        Atlas Medical Operating System • Version {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"}
+        © 2026 Atlas Medical Operating System. Proprietary & Confidential. • Version {typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"}
       </footer>
     </div>
   );

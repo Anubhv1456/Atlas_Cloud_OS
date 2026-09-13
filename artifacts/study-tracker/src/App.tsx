@@ -1,6 +1,7 @@
 import { useEffect, Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UpgradePaywallModal } from "@/components/UpgradePaywallModal";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { ensurePersistentStorage } from '@/db/localDb';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster, toast } from 'sonner';
@@ -179,6 +180,7 @@ function App() {
             <GlobalQuickEntry />
             <AppUpdateCapsule />
             <Toaster />
+            <PWAInstallPrompt />
             <UpgradePaywallModal />
             <SonnerToaster position="top-center" richColors />
           </TooltipProvider>

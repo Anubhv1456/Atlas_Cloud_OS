@@ -366,9 +366,10 @@ export function AdminsView() {
           </div>
 
           {/* Directory Table */}
-          <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden backdrop-blur-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+          <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden backdrop-blur-sm relative">
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" />
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <table className="w-full text-left text-xs min-w-[700px] whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border/40 bg-muted/20 text-muted-foreground font-mono uppercase tracking-wider">
                     <th className="py-3 px-4">Staff Member</th>

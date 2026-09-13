@@ -116,7 +116,7 @@ export function UpgradePaywallModal() {
       case 'recalibration_relief_cap':
         return {
           icon: <RotateCcw className="w-8 h-8 text-amber-400" />,
-          badge: "Soft Recalibration Protection",
+          badge: "Soft Recalibration™ Protection",
           title: "Protect Against Rotation Backlogs",
           description: "You've experienced zero-debt schedule smoothing. Unlock continuous Soft Recalibrations to protect your schedule after every clinical duty shift, hospital call, or rest break.",
         };

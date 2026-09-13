@@ -248,6 +248,9 @@ export interface OperationalModeRecord {
   previousMode?: OperationalModeType;
   lastRecalibratedAt?: string;
   recalibrationCount?: number; // Total consumed recalibration resets
+  recalibrationStartedAt?: string;
+  isAutoTriggered?: boolean;
+  dormancyDaysDetected?: number;
   notes?: string;
   examProfile?: string;
   updatedAt: Date;

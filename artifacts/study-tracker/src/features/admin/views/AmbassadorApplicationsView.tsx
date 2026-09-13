@@ -115,9 +115,10 @@ export function AmbassadorApplicationsView() {
         </Button>
       </div>
 
-      <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm relative">
+        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" />
+        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <table className="w-full text-left border-collapse min-w-[700px] whitespace-nowrap">
             <thead>
               <tr className="border-b border-border/50 bg-muted/10">
                 <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Candidate</th>

@@ -1030,6 +1030,36 @@ export async function resetOperationalMode(recalibrationDays: number = 10): Prom
 }
 
 
+
+export async function triggerDormancyRecalibration(daysSinceLastActive: number): Promise<OperationalModeRecord | null> {
+  enforceReadOnlySandbox();
+  if (daysSinceLastActive <= 4 || daysSinceLastActive == null || isNaN(daysSinceLastActive)) {
+    return null;
+  }
+  const existing = (await db.operationalModes.get('current')) || DEFAULT_OPERATIONAL_MODE;
+  const currentRecalibrations = existing.recalibrationCount ?? 0;
+  
+  const windowDays = Math.max(5, Math.min(21, Math.round(daysSinceLastActive / 2)));
+  const nowStr = new Date().toISOString();
+
+  const recalibrationRecord: OperationalModeRecord = {
+    ...existing,
+    id: 'current',
+    mode: 'standard', // Ensure standard mode is active
+    recalibrationWindowDays: windowDays,
+    lastRecalibratedAt: nowStr,
+    recalibrationStartedAt: nowStr,
+    recalibrationCount: currentRecalibrations + 1,
+    isAutoTriggered: true,
+    dormancyDaysDetected: daysSinceLastActive,
+    updatedAt: new Date(),
+    hlc: generateHLC(),
+  };
+
+  await db.operationalModes.put(recalibrationRecord);
+  return recalibrationRecord;
+}
+
 export async function markMistakesAsAnkiExported(ids: (string | number)[]) {
   enforceReadOnlySandbox();
   if (!db.mistakeLogs || ids.length === 0) return;

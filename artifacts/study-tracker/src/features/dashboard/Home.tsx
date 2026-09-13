@@ -95,10 +95,21 @@ export default function Home() {
   useEffect(() => {
     // Pillar 4: Onboarding is strictly governed by App.tsx at the route level (/onboarding).
     // Home dashboard only triggers the initial triage once the user is confirmed onboarded.
-    if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
-      setTriageOpen(true);
+    // If user already has historical pyqs or blocks, auto-bypass triage
+    const hasHistoricalData = pyqs.length > 0 || Object.keys(streak).length > 0;
+    
+    if (hasHistoricalData && !profile.hasCompletedTriage) {
+      updateProfile({ hasCompletedTriage: true });
+      return;
     }
-  }, [hasOnboarded, onboardingLoading, isConfigured, profile.hasCompletedTriage]);
+
+    if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
+      // Only show calibration if they have active access or trial
+      if (hasAccess || isTrialActive) {
+        setTriageOpen(true);
+      }
+    }
+  }, [hasOnboarded, onboardingLoading, isConfigured, profile.hasCompletedTriage, hasAccess, isTrialActive]);
 
   useEffect(() => {
     const handleOpenOnboarding = () => setOnboardingOpen(true);

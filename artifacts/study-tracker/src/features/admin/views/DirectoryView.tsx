@@ -257,11 +257,13 @@ export function DirectoryView() {
             </select>
           </div>
 
-          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+          <div className="bg-card border border-border/50 rounded-xl overflow-hidden w-full relative">
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" />
             {loading ? (
                <div className="p-8 text-center text-muted-foreground animate-pulse">Loading directory...</div>
             ) : (
-              <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <table className="w-full text-left border-collapse min-w-[700px] whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border/50 bg-muted/20">
                     <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Candidate</th>
@@ -404,6 +406,7 @@ export function DirectoryView() {
                   )}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>
@@ -411,8 +414,10 @@ export function DirectoryView() {
 
       {activeTab === 'affiliates' && (
         <div className="space-y-4">
-          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="bg-card border border-border/50 rounded-xl overflow-hidden w-full relative">
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 sm:hidden" />
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <table className="w-full text-left border-collapse min-w-[800px] whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
                   <th className="py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">Affiliate Partner</th>
@@ -476,6 +481,7 @@ export function DirectoryView() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}

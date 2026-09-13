@@ -1,3 +1,15 @@
+/**
+ * Copyright (c) 2026 Atlas OS. All rights reserved.
+ * 
+ * PROPRIETARY AND CONFIDENTIAL.
+ * This source code, algorithm architecture, and mathematical heuristic
+ * (including the Continuous Linear Glide-Path and Cognitive Recovery Engine)
+ * are the sole intellectual property of Atlas OS.
+ * 
+ * Unauthorized copying, reverse-engineering, decompilation, or distribution
+ * of this file via any medium is strictly prohibited.
+ */
+
 import { StudySystem, SystemStatus, RevisionLog, CurriculumSet, OperationalModeRecord, HistoryEntry, ScoreLog, MistakeLog } from './types';
 import { db } from './schema';
 import { generateHLC } from '@/lib/hlc';
@@ -494,18 +506,34 @@ export function isSoftRecalibrating(opMode?: OperationalModeRecord | null, now: 
   daysRemaining: number;
   progressRatio: number;
 } {
-  if (!opMode || opMode.mode !== 'standard' || !opMode.lastRecalibratedAt) {
+  if (!opMode || opMode.mode !== 'standard' || !opMode.recalibrationStartedAt) {
+    if (!opMode || opMode.mode !== 'standard' || !opMode.lastRecalibratedAt) {
+      return { active: false, daysRemaining: 0, progressRatio: 1 };
+    }
+  }
+
+  const startedTime = new Date(opMode.recalibrationStartedAt || opMode.lastRecalibratedAt!).getTime();
+  const nowMs = now.getTime();
+  
+  if (nowMs < startedTime) {
+    // Clock inversion guard
+    return { active: true, daysRemaining: opMode.recalibrationWindowDays || 10, progressRatio: 0.0 };
+  }
+
+  const windowDays = opMode.recalibrationWindowDays || 10;
+  const windowMs = windowDays * 24 * 60 * 60 * 1000;
+  
+  if (windowMs <= 0) {
     return { active: false, daysRemaining: 0, progressRatio: 1 };
   }
 
-  const recalibratedTime = new Date(opMode.lastRecalibratedAt).getTime();
-  const windowDays = opMode.recalibrationWindowDays || 10;
-  const windowMs = windowDays * 24 * 60 * 60 * 1000;
-  const elapsedMs = Math.max(0, now.getTime() - recalibratedTime);
+  const elapsedMs = nowMs - startedTime;
 
   if (elapsedMs < windowMs) {
     const daysRemaining = Math.max(1, Math.ceil((windowMs - elapsedMs) / (24 * 60 * 60 * 1000)));
-    const progressRatio = Math.min(1, elapsedMs / windowMs);
+    let progressRatio = elapsedMs / windowMs;
+    if (isNaN(progressRatio) || !isFinite(progressRatio)) progressRatio = 0.0;
+    progressRatio = Math.max(0.0, Math.min(1.0, progressRatio));
     return { active: true, daysRemaining, progressRatio };
   }
 

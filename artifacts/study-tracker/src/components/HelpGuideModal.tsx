@@ -198,7 +198,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Module Study Depth (Rapid / Standard / Deep)</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Curriculum sets can be configured with distinct study depths: <strong>Rapid Drill (~15m)</strong>, <strong>Standard (~30m)</strong>, or <strong>Deep Block (~60m)</strong>. The Knapsack recommendation engine automatically factors depth into your daily schedule.
+            Curriculum sets can be configured with distinct study depths: <strong>Rapid Drill (~15m)</strong>, <strong>Standard (~30m)</strong>, or <strong>Deep Block (~60m)</strong>. The Knapsack™ Adaptive Engine automatically factors depth into your daily schedule.
           </p>
         </section>
       </div>

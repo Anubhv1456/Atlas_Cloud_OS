@@ -1,5 +1,16 @@
+/**
+ * Copyright (c) 2026 Atlas OS. All rights reserved.
+ * 
+ * Modifications, dampening heuristics, and recovery stability scalers
+ * are proprietary intellectual property of Atlas OS.
+ * 
+ * Derived in part from the open-source Free Spaced Repetition Scheduler (FSRS)
+ * algorithm under standard open-source licensing terms.
+ */
+
 import { fsrs, Card, Rating, State, FSRS, createEmptyCard } from 'ts-fsrs';
 import { db, StudySystem } from '@/db';
+import { isSoftRecalibrating } from '@/db/revisionEngine';
 
 const f = fsrs({});
 
@@ -29,6 +40,16 @@ export async function processFSRS(systemId: number | string, rating: Rating, log
 
   const schedulingCards = f.repeat(card, logDate);
   const nextCard = schedulingCards[rating].card;
+
+  const opMode = await db.operationalModes.get('current');
+  const recalibration = isSoftRecalibrating(opMode, logDate);
+
+  if (recalibration.active && (rating === Rating.Good || rating === Rating.Easy)) {
+    const elapsedSinceDue = card.due ? (logDate.getTime() - card.due.getTime()) / (1000 * 60 * 60 * 24) : 0;
+    if (elapsedSinceDue > 7) {
+      nextCard.stability = nextCard.stability * 0.75;
+    }
+  }
 
   await db.systems.update(systemId, {
     fsrsDue: nextCard.due,

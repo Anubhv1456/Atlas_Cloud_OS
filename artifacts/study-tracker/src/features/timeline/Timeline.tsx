@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/alert-dialog';
 
 import { useTimelineLogic } from './Timeline.hooks';
+import { useOperationalMode } from '@/db';
+import { isSoftRecalibrating } from '@/db/revisionEngine';
 
 // ── Visual config ─────────────────────────────────────────────────────────────
 const EVENT_STYLE: Record<TimelineEvent['eventType'], { bg: string; text: string; Icon: typeof BookOpen }> = {
@@ -176,6 +178,9 @@ function PastDayGroup({ date, events, onRollback }: { date: Date; events: Timeli
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function Timeline() {
+  const opMode = useOperationalMode();
+  const recalStatus = opMode ? isSoftRecalibrating(opMode, new Date()) : { active: false };
+
   const {
     calDate, setCalDate,
     selectedDate, setSelectedDate,
@@ -393,7 +398,7 @@ export default function Timeline() {
         )}
 
         {/* ── Upcoming Revisions Horizon ────────────────────────────────────── */}
-        {filteredUpcoming.length > 0 && (
+        {!recalStatus.active && filteredUpcoming.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
