@@ -355,11 +355,16 @@ export async function getLiveAtlasContext(): Promise<LiveAtlasContext> {
   };
 }
 
+export enum ContextTier {
+  ROUTINE = 'ROUTINE',
+  CLINICAL_DEEP_DIVE = 'CLINICAL_DEEP_DIVE'
+}
+
 /**
  * Minifies the LiveAtlasContext into a high-density, token-efficient system instruction block.
  */
-export function formatContextForSystemPrompt(ctx: LiveAtlasContext, isRoutine = false): string {
-  if (isRoutine) {
+export function formatContextForSystemPrompt(ctx: LiveAtlasContext, tier: ContextTier = ContextTier.CLINICAL_DEEP_DIVE): string {
+  if (tier === ContextTier.ROUTINE) {
     return `[ATLAS CONTEXT] Exam: ${ctx.exam.targetExam} (${ctx.exam.daysRemaining !== null ? ctx.exam.daysRemaining + 'd' : 'Unset'}) | Streak: ${ctx.exam.currentStreakDays}d | Today: ${ctx.exam.todayLoggedMinutes}m`;
   }
 
@@ -418,15 +423,15 @@ export function formatContextForSystemPrompt(ctx: LiveAtlasContext, isRoutine = 
 /**
  * Convenience helper to get the fully serialized system prompt context string directly.
  */
-export async function getSerializedSystemPromptContext(isRoutine = false): Promise<string> {
+export async function getSerializedSystemPromptContext(tier: ContextTier = ContextTier.CLINICAL_DEEP_DIVE): Promise<string> {
   try {
     const settings = getAISettings();
     const ctx = await getLiveAtlasContext();
-    const formatted = formatContextForSystemPrompt(ctx, isRoutine);
-    return buildAtlasMentorSystemPrompt(formatted, isRoutine, settings.mentorshipStyle, settings.clinicalDepth);
+    const formatted = formatContextForSystemPrompt(ctx, tier);
+    return buildAtlasMentorSystemPrompt(formatted, tier, settings.mentorshipStyle, settings.clinicalDepth);
   } catch (err) {
     console.error('[ContextPackager] Error packaging context:', err);
-    return buildAtlasMentorSystemPrompt('ATLAS STATE: Default Offline Mode', isRoutine);
+    return buildAtlasMentorSystemPrompt('ATLAS STATE: Default Offline Mode', tier);
   }
 }
 

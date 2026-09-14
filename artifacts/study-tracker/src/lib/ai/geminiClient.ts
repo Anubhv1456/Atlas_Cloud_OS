@@ -1,5 +1,5 @@
 import { getAISettings, saveAISettings, SupportedGeminiModel } from './aiSettingsStorage';
-import { getSerializedSystemPromptContext } from './contextPackager';
+import { getSerializedSystemPromptContext, ContextTier } from './contextPackager';
 import {
   CognitiveDelta,
   CognitiveDeltaSchema,
@@ -283,7 +283,8 @@ export async function executeCognitiveCompiler(
   }
 
   // Dynamic context packager: generates ultra-compact system instructions for routine load
-  const systemInstruction = await getSerializedSystemPromptContext(isRoutine);
+  const tier = isRoutine ? ContextTier.ROUTINE : ContextTier.CLINICAL_DEEP_DIVE;
+  const systemInstruction = await getSerializedSystemPromptContext(tier);
 
   // Response schema & output token limits tailored to workload
   const responseSchema = isRoutine

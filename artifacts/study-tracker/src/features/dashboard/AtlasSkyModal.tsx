@@ -473,7 +473,7 @@ export function AtlasSkyModal({ open, onOpenChange, subjects, systems, curriculu
                     key={star.name}
                     style={{ left: `${star.x}%`, top: `${star.y}%`, opacity: matchesFilter ? decayOpacity : 0.05 }}
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 cursor-pointer group p-2",
+                      "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 cursor-pointer group w-11 h-11 flex items-center justify-center touch-manipulation",
                       matchesFilter ? "z-30" : "z-10 hover:opacity-80"
                     )}
                     onClick={() => setSelectedStarName(isSelected ? null : star.name)}

@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon, Plus, Minus, Trash2, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import { db } from '@/db';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
+import { getSerializedSystemPromptContext, ContextTier } from '@/lib/ai/contextPackager';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
 import { cn } from '@/lib/utils';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
@@ -221,12 +222,15 @@ If max score is not mentioned, assume total is ${defaultTotal}. Keep concepts co
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 25000);
 
+      const systemPrompt = await getSerializedSystemPromptContext(ContextTier.ROUTINE);
+
       let res;
       try {
         res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: 'user', parts }],
             generationConfig: { responseMimeType: 'application/json' }
           }),

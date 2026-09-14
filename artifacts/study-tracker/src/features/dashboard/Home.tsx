@@ -42,6 +42,7 @@ import { HomeFloatingCommandBar } from '@/components/dashboard/HomeFloatingComma
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { useAuth } from '@/hooks/useAuth';
+import { setOperationalMode } from '@/db/mutations';
 
 // ── Inline result sub-components ──────────────────────────────────────────────
 
@@ -55,6 +56,109 @@ function StatusBadge({ sys }: { sys: StudySystem }) {
     <span className={cn('text-xs uppercase tracking-wider px-2 py-0.5 rounded-full font-medium border shrink-0', colors[sys.status])}>
       {sys.status}
     </span>
+  );
+}
+
+function MasteryDashboard() {
+  const [activeTab, setActiveTab] = useState<'radar' | 'sky'>('radar');
+  
+  return (
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Mastery & Analytics</h2>
+        <div className="flex items-center bg-muted/40 p-1 rounded-xl border border-border/80 self-start sm:self-auto">
+          <button 
+            type="button"
+            onClick={() => setActiveTab('radar')}
+            className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer", activeTab === 'radar' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
+          >
+            🕸️ Radar View
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab('sky')}
+            className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer", activeTab === 'sky' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
+          >
+            ✨ Atlas Sky
+          </button>
+        </div>
+      </div>
+      
+      {activeTab === 'radar' && <HomeRadarSummaryCard />}
+      {activeTab === 'sky' && (
+         <div className="bg-card border border-border/60 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[300px] gap-5 shadow-xs relative overflow-hidden">
+             <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-500/20 via-background to-background"></div>
+             <div className="p-4 bg-zinc-800/40 rounded-full border border-white/5 relative z-10">
+                <Sparkles className="w-8 h-8 text-amber-400" />
+             </div>
+             <div className="text-center relative z-10">
+                 <h3 className="text-lg font-bold text-foreground">Atlas Sky Constellation</h3>
+                 <p className="text-sm text-muted-foreground max-w-sm mt-1.5 mb-4 mx-auto leading-relaxed">
+                   Explore your medical mastery in an ambient, interactive spatial map. As you solidify concepts, constellations connect.
+                 </p>
+                 <div className="flex justify-center mt-2">
+                    <AtlasSkyPreview />
+                 </div>
+             </div>
+         </div>
+      )}
+    </div>
+  );
+}
+
+function ProactiveModeBanner() {
+  const history = useLiveQuery(() => db.studyHistory.toArray(), []) || [];
+  const opMode = useLiveQuery(() => db.operationalModes.get('current'), []);
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed || !opMode || opMode.mode !== 'standard') return null;
+
+  const fortyEightHoursAgo = Date.now() - 48 * 60 * 60 * 1000;
+  const recentLogs = history.filter(h => new Date(h.completedAt).getTime() > fortyEightHoursAgo);
+  const recentMinutes = recentLogs.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+
+  if (recentMinutes > 0) return null;
+
+  const handleSetMode = async (mode: 'clinical_duty' | 'holiday') => {
+    try {
+      await setOperationalMode({
+        mode,
+        activatedAt: new Date().toISOString(),
+        targetSubjectIds: [],
+        dailyCapacityMinutes: mode === 'clinical_duty' ? 30 : 0
+      });
+      toast.success(`${mode === 'clinical_duty' ? 'Clinical Duty' : 'Holiday'} mode activated. Schedule protected.`);
+      setDismissed(true);
+    } catch (e) {
+      toast.error('Failed to change mode');
+    }
+  };
+
+  return (
+    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+      <div className="flex items-start sm:items-center gap-3">
+        <div className="p-2 bg-indigo-500/20 rounded-lg shrink-0 mt-1 sm:mt-0">
+          <Brain className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-300">Take a breath.</h3>
+          <p className="text-xs text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
+            We noticed you haven't logged study time in 2 days. Want to protect your spaced-repetition schedule from snowballing?
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <Button onClick={() => handleSetMode('clinical_duty')} variant="outline" size="sm" className="flex-1 sm:flex-auto text-xs h-8 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 cursor-pointer">
+          Clinical Duty
+        </Button>
+        <Button onClick={() => handleSetMode('holiday')} variant="outline" size="sm" className="flex-1 sm:flex-auto text-xs h-8 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 cursor-pointer">
+          Holiday Mode
+        </Button>
+        <Button onClick={() => setDismissed(true)} variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 dark:text-indigo-500 hover:bg-indigo-500/20 shrink-0 cursor-pointer">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -218,7 +322,7 @@ export default function Home() {
             
             {/* Action controls - Top Right Corner */}
             <div className="flex items-center justify-end gap-1.5 shrink-0">
-              <AtlasSkyPreview />
+              {/* Removed AtlasSkyPreview from header */}
             </div>
           </div>
         </header>
@@ -228,19 +332,24 @@ export default function Home() {
           
           <ExamCountdownWidget />
           
-          {/* ── Single Unified Focal Directive Hero ─────────────────────────────── */}
-        <div className="mb-8">
-          <NextActionCard />
-        </div>
-        
-        {/* ── AI Logger (Phase 2) ─────────────────────────────── */}
-        <AILoggerCard />
+          {/* ── Single Unified Focal Directive Hero (Execution Zone) ───────────── */}
+          <ProactiveModeBanner />
+          
+          <div className="mb-4">
+            <NextActionCard />
+          </div>
+          
+          {/* ── AI Logger (Execution Zone) ─────────────────────────────────────── */}
+          <div className="mb-8">
+            <AILoggerCard />
+          </div>
 
-        {/* ── Dedicated Subject Radar Entry Card ──────────────────────────────── */}
-        <div className="mb-6">
-          <HomeRadarSummaryCard />
+          <div className="my-6 border-t border-border/40"></div>
+
+          {/* ── Mastery & Analytics Zone (Reflection Zone) ────────────────────── */}
+          <MasteryDashboard />
+
         </div>
-      </div>
       </div>
 
       

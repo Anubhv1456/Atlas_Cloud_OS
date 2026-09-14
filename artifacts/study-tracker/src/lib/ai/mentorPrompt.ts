@@ -1,4 +1,4 @@
-import { LiveAtlasContext } from './contextPackager';
+import { LiveAtlasContext, ContextTier } from './contextPackager';
 
 /**
  * Builds the authoritative system prompt for Atlas Clinical AI, establishing the
@@ -12,7 +12,7 @@ import { LiveAtlasContext } from './contextPackager';
  */
 export function buildAtlasMentorSystemPrompt(
   contextPrompt: string, 
-  isRoutine = false, 
+  tier: ContextTier = ContextTier.CLINICAL_DEEP_DIVE, 
   mentorshipStyle: 'socratic' | 'direct' = 'socratic',
   clinicalDepth: 'high-yield' | 'comprehensive' = 'high-yield'
 ): string {
@@ -24,7 +24,7 @@ export function buildAtlasMentorSystemPrompt(
 
 
 
-  if (isRoutine) {
+  if (tier === ContextTier.ROUTINE) {
     const toneInstruction = mentorshipStyle === 'socratic'
     ? 'Direct, collegial, academically rigorous, Socratic. Challenge the user with sharp recall questions.'
     : 'Direct, clear, authoritative instruction. Provide the answers immediately without Socratic questioning.';
