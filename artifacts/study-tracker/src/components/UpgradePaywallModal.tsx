@@ -196,7 +196,7 @@ export function UpgradePaywallModal() {
               <div>
                 <h4 className="font-semibold text-xs text-foreground">100% Local-First & Private</h4>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                  Your notes, test autopsies, and memory decay states remain securely encrypted in your browser's IndexedDB.
+                  Your notes, test error logs, and memory decay states remain stored locally on your device in your browser's private local database.
                 </p>
               </div>
             </div>
@@ -231,7 +231,10 @@ export function UpgradePaywallModal() {
               Instant activation via Dodo Payments • Merchant of Record
             </p>
             <p className="text-[9px] text-center text-zinc-500 mt-1 leading-relaxed">
-              Backed by our 7-day refund guarantee. Contact us anytime for support.
+              Backed by our 7-day satisfaction refund guarantee under our{' '}
+              <a href="/terms#refund-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-400">
+                Terms of Service
+              </a>.
             </p>
           </div>
           

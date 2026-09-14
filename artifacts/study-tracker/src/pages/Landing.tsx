@@ -2471,7 +2471,7 @@ export default function Landing() {
             {[
                { title: "Stop managing spreadsheets.", desc: "Your curriculum is too complex for static rows and columns. Atlas brings it to life.", icon: Activity },
                { title: "Stop guessing what deserves attention.", desc: "Our engine analyzes your history to surface the exact topics you need to review today.", icon: Brain },
-               { title: "Stop forgetting completed topics.", desc: "With automated spaced repetition schedules, knowledge retention becomes a mathematical certainty.", icon: Clock },
+               { title: "Stop forgetting completed topics.", desc: "With automated spaced repetition schedules, memory decay is scientifically minimized through structured active recall intervals.", icon: Clock },
                { title: "Replace scattered tools.", desc: "One intelligent operating system for everything: planning, execution, and review.", icon: Compass }
             ].map((card, i) => (
                  <motion.div 
@@ -2538,27 +2538,37 @@ export default function Landing() {
 
       {/* --- FOOTER --- */}
       <footer className="border-t border-white/5 bg-[#06080A] py-12 px-6 relative overflow-hidden z-10">
-         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="flex items-center gap-2">
-               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                  <Compass className="w-4 h-4 text-slate-400" />
+         <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+            {/* Non-Clinical Educational Disclaimer */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-[11px] text-slate-400 leading-relaxed">
+               <p className="font-semibold text-slate-300 uppercase tracking-wider mb-1 text-[10px]">Educational Disclaimer & Non-Clinical Practice Boundary</p>
+               <p>
+                  Atlas OS is strictly an educational curriculum revision, study progress tracking, and cognitive spaced-repetition software designed solely for medical licensing examination preparation (including USMLE, NEET PG, INI-CET, FMGE). Atlas OS does not provide medical, clinical, diagnostic, therapeutic, surgical, pharmacology prescription, or patient management advice. It does not establish a doctor-patient relationship and is not certified as a clinical decision support system under applicable medical device regulations. Medical candidates and healthcare professionals must always rely on their own independent clinical judgment and validated medical resources.
+               </p>
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+               <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+                     <Compass className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <span className="font-medium tracking-tight text-slate-300">© 2026 Atlas OS. All rights reserved.</span>
                </div>
-               <span className="font-medium tracking-tight text-slate-300">© 2026 Atlas OS. All rights reserved.</span>
-            </div>
-            
-            <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
-               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-               <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-            </div>
-            
-            <div className="flex items-center gap-4 text-slate-500">
-               <a href="#" className="hover:text-white transition-colors">
-                 <Twitter className="w-4 h-4" />
-               </a>
-               <a href="#" className="hover:text-white transition-colors">
-                 <Github className="w-4 h-4" />
-               </a>
+               
+               <div className="flex items-center gap-6 text-sm font-medium text-slate-500">
+                  <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+                  <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+                  <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+               </div>
+               
+               <div className="flex items-center gap-4 text-slate-500">
+                  <a href="#" className="hover:text-white transition-colors">
+                    <Twitter className="w-4 h-4" />
+                  </a>
+                  <a href="#" className="hover:text-white transition-colors">
+                    <Github className="w-4 h-4" />
+                  </a>
+               </div>
             </div>
          </div>
       </footer>

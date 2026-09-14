@@ -1,6 +1,6 @@
 import { useLexicon } from '@/lib/lexicon';
 import React, { useState, lazy, Suspense } from 'react';
-import { useSubjects, useAllSystems, updateSubjectsOrder, db } from '@/db';
+import { useSubjects, useAllSystems, updateSubjectsOrder, addSubject, db } from '@/db';
 import { SubjectsGrid } from '@/features/dashboard/SubjectsGrid';
 import { DropResult } from '@hello-pangea/dnd';
 import { 
@@ -193,7 +193,21 @@ export default function SubjectRadarPage() {
 
       {/* Target Exam and Add Subject Modals */}
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
-      <AddDialog open={addSubjectOpen} onOpenChange={setAddSubjectOpen} type="subject" />
+      <AddDialog 
+        open={addSubjectOpen} 
+        onOpenChange={setAddSubjectOpen} 
+        title="New Subject"
+        placeholder="e.g. Pharmacology"
+        type="subject"
+        onSave={async (name) => {
+          try {
+            await addSubject(name);
+            toast.success(`Subject "${name}" added`);
+          } catch (err) {
+            toast.error('Failed to add subject: ' + String(err));
+          }
+        }}
+      />
     </div>
   );
 }

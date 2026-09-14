@@ -744,9 +744,15 @@ export default function Onboarding() {
         </div>
 
         {/* Bottom Micro-Affordance */}
-        <div className="text-center pt-6 shrink-0">
+        <div className="text-center pt-6 shrink-0 space-y-1">
           <p className="text-[11px] text-zinc-400 font-medium">
-            Protected by offline-first local encryption. No data leaves your device.
+            Offline-first local data architecture with private client-side storage.
+          </p>
+          <p className="text-[10px] text-zinc-500">
+            For medical examination preparation. By continuing, you agree to our{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">Terms of Service</a>
+            {' '}and{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-300">Privacy Policy</a>.
           </p>
         </div>
 

@@ -97,6 +97,7 @@ export function QuickMistakeModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isVolatile, setIsVolatile] = useState(false);
   const [source, setSource] = useState<'GT' | 'QBank' | 'Custom'>('GT');
+  const [sourceReference, setSourceReference] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Re-hydrate form when opening or editing
@@ -108,6 +109,7 @@ export function QuickMistakeModal({
         setSelectedTags(editingMistake.tags || (editingMistake as any).coreLenses || []);
         setIsVolatile(Boolean(editingMistake.isVolatile));
         setSource(editingMistake.source || 'GT');
+        setSourceReference(editingMistake.sourceReference || '');
       } else {
         if (defaultSubjectId !== undefined && defaultSubjectId !== null) {
           const match = subjectOptions.find(
@@ -122,6 +124,7 @@ export function QuickMistakeModal({
         setSelectedTags(defaultTags || []);
         setIsVolatile(false);
         setSource('GT');
+        setSourceReference('');
       }
       setTimeout(() => {
         textareaRef.current?.focus();
@@ -155,6 +158,7 @@ export function QuickMistakeModal({
           tags: selectedTags,
           isVolatile,
           source,
+          sourceReference: sourceReference.trim(),
           updatedAt: new Date()
         });
         toast.success(`${lexicon?.mistakesJournal || 'Mistakes Journal'} rule updated`);
@@ -168,7 +172,8 @@ export function QuickMistakeModal({
           keyTakeaway: keyTakeaway.trim(),
           tags: selectedTags,
           isVolatile,
-          source
+          source,
+          sourceReference: sourceReference.trim()
         });
       }
 
@@ -299,33 +304,55 @@ export function QuickMistakeModal({
             </div>
           </div>
 
-          {/* Volatile Pin Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-amber-950/20 border border-white/5">
-            <div className="flex items-center gap-2.5">
-              <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400 dark:text-amber-400">
-                <Zap className="w-4 h-4 fill-amber-500" />
-              </span>
-              <div>
-                <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block">
-                  Mark as Volatile Trap ⚡
+          {/* Volatile Pin Toggle & Source Reference */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex items-center justify-between p-3 flex-1 rounded-xl bg-amber-950/20 border border-white/5">
+              <div className="flex items-center gap-2.5">
+                <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400 dark:text-amber-400">
+                  <Zap className="w-4 h-4 fill-amber-500" />
                 </span>
-                <span className="text-xs text-amber-400/80 dark:text-amber-400/80">
-                  Highlight this rule in the {(lexicon?.preExamSpotlight || 'High-Yield Spotlight').toLowerCase()}.
+                <div>
+                  <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block">
+                    Mark as Volatile Trap ⚡
+                  </span>
+                  <span className="text-xs text-amber-400/80 dark:text-amber-400/80">
+                    Highlight this rule in the {(lexicon?.preExamSpotlight || 'High-Yield Spotlight').toLowerCase()}.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsVolatile(!isVolatile)}
+                className={cn(
+                  "w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shrink-0",
+                  isVolatile 
+                    ? "bg-amber-500 border-amber-500 text-white shadow-xs" 
+                    : "border-border/80 bg-card hover:border-amber-400"
+                )}
+              >
+                {isVolatile && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              </button>
+            </div>
+
+            <div className="flex items-center p-3 flex-1 rounded-xl bg-muted/20 border border-border/40 focus-within:border-primary/50 transition-colors">
+              <div className="flex items-center gap-2.5 w-full">
+                <span className="p-1 rounded-lg text-muted-foreground">
+                  <BookOpen className="w-4 h-4" />
                 </span>
+                <div className="w-full">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-0.5">
+                    Citation / Source Tag (Optional)
+                  </span>
+                  <input
+                    type="text"
+                    value={sourceReference}
+                    onChange={(e) => setSourceReference(e.target.value)}
+                    placeholder="e.g. UW QID 12345"
+                    className="w-full bg-transparent text-xs font-medium text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:ring-0 p-0"
+                  />
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsVolatile(!isVolatile)}
-              className={cn(
-                "w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer",
-                isVolatile 
-                  ? "bg-amber-500 border-amber-500 text-white shadow-xs" 
-                  : "border-border/80 bg-card hover:border-amber-400"
-              )}
-            >
-              {isVolatile && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-            </button>
           </div>
 
           {/* Footer Actions */}

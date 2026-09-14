@@ -33,7 +33,12 @@ export const ClipboardWatcher: React.FC = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const inspectClipboard = useCallback(async () => {
-    if (!settings.isAiEnabled || typeof navigator === 'undefined' || !navigator.clipboard) {
+    // Privacy safeguard (GDPR Art. 6 / DPDP § 6): Only inspect clipboard if AI is enabled AND user has explicitly opted in
+    const isClipboardWatcherExplicitlyEnabled = 
+      typeof window !== 'undefined' && 
+      localStorage.getItem('atlas_clipboard_watcher_enabled') === 'true';
+
+    if (!settings.isAiEnabled || !isClipboardWatcherExplicitlyEnabled || typeof navigator === 'undefined' || !navigator.clipboard) {
       return;
     }
     try {

@@ -1,3 +1,18 @@
+/**
+ * Atlas Medical Education Knowledge Ontology: USMLE Step 1 / Step 2 CK
+ * 
+ * STATUTORY IP & ATTRIBUTION SAFE HARBOR NOTICE:
+ * This organ-system taxonomy, discipline classification, and high-yield concept index
+ * are synthesized for non-commercial educational instruction and revision tracking.
+ * Organ system categories and discipline distributions reflect publicly published USMLE®
+ * Content Outlines maintained by the Federation of State Medical Boards (FSMB) and the
+ * National Board of Medical Examiners (NBME).
+ * 
+ * USMLE® is a joint program of the Federation of State Medical Boards (FSMB) and National
+ * Board of Medical Examiners (NBME). Neither FSMB nor NBME sponsors, endorses, or is affiliated
+ * with Atlas OS. Formulated under US Copyright Fair Use Doctrine (17 U.S.C. § 107) for educational instruction.
+ */
+
 import { OntologySubject } from './types.js';
 
 /**

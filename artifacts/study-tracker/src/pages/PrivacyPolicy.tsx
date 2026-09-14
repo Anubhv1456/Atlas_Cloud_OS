@@ -433,9 +433,10 @@ export default function PrivacyPolicy() {
                   For the purpose of global data protection legislation (including the EU/UK General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA/CPRA), and the Digital Personal Data Protection Act 2023 (DPDP, India)), the Data Controller responsible for processing your personal data is:
                 </p>
                 <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2 text-xs font-mono text-foreground">
-                  <div><strong>Data Controller:</strong> Atlas OS Operating Team</div>
+                  <div><strong>Data Controller:</strong> Atlas OS Technologies, Medical EdTech Division</div>
                   <div><strong>Specialized Domain:</strong> Medical Education & Exam Revision Intelligence</div>
-                  <div><strong>Data Protection & Privacy Inquiries:</strong> Submit inquiries directly via our <Link href="/contact" className="text-primary font-semibold underline underline-offset-2">Contact Page</Link>.</div>
+                  <div><strong>Resident Grievance & Privacy Officer:</strong> Compliance Legal Officer (<a href="mailto:grievance@atlas-med.com" className="text-primary underline">grievance@atlas-med.com</a>)</div>
+                  <div><strong>Statutory Inquiries:</strong> Submit inquiries directly via our <Link href="/contact" className="text-primary font-semibold underline underline-offset-2">Contact Page</Link> with 48-hour acknowledgment.</div>
                 </div>
               </div>
             </section>
@@ -514,6 +515,16 @@ export default function PrivacyPolicy() {
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
                     Browser type, operating system version, screen resolution, local storage health status, network connection type (offline/online state), and error logs necessary for system stability debugging.
+                  </p>
+                </div>
+
+                <div className="bg-card border border-border/80 rounded-xl p-4 space-y-2">
+                  <div className="font-bold text-foreground flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-emerald-400" />
+                    F. Optional Clipboard Question-Stem Capture (Opt-In Only)
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Atlas OS includes an optional study convenience feature ("Clipboard Distiller") that is disabled by default. When explicitly enabled by you in settings, the application checks your clipboard locally upon window focus for standard clinical question-bank keywords. This parsing occurs strictly inside your browser through local regular expressions; no text is transmitted or saved unless you explicitly review the clip and click "Distill Pearls" to log it into your Mistakes Journal.
                   </p>
                 </div>
               </div>
@@ -1012,9 +1023,14 @@ export default function PrivacyPolicy() {
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Atlas OS is designed exclusively for medical students, healthcare professionals, and adult candidates (18 years or older). We do not knowingly collect or solicit personal data from children under 16 years of age (COPPA compliance). If we learn that personal information from a minor has been collected without parental verification, we will promptly delete that data.
-              </p>
+              <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                <p>
+                  Atlas OS is designed exclusively for medical students, healthcare professionals, and adult candidates (18 years of age or older). In compliance with India's <strong>Digital Personal Data Protection Act, 2023 (DPDP Act § 9)</strong>, the US Children's Online Privacy Protection Act (COPPA), and EU GDPR Article 8, we do not knowingly process personal data or conduct behavioural tracking of individuals under 18 years of age without verifiable parental or legal guardian consent.
+                </p>
+                <p>
+                  If a parent, guardian, or educational sponsor discovers that a minor student has registered without appropriate consent, you may contact our Grievance Officer at <a href="mailto:grievance@atlas-med.com" className="text-primary underline">grievance@atlas-med.com</a> to request immediate account deletion and complete erasure of all local and cloud-associated study records.
+                </p>
+              </div>
             </section>
 
             {/* SECTION 12.0: COOKIES & BROWSER STORAGE */}

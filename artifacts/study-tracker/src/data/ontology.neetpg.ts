@@ -1,3 +1,17 @@
+/**
+ * Atlas Medical Education Knowledge Ontology: NEET PG / INI-CET
+ * 
+ * STATUTORY IP & ATTRIBUTION SAFE HARBOR NOTICE:
+ * This medical curriculum taxonomy, competency mapping, and high-yield topic index
+ * are synthesized for non-commercial educational instruction and revision tracking.
+ * Subject divisions and competency codes reflect publicly published educational guidelines
+ * established by the National Medical Commission (NMC) Competency Based Medical Education (CBME)
+ * curriculum and National Board of Examinations in Medical Sciences (NBEMS) syllabi.
+ * 
+ * Formulated under Fair Dealing doctrine (Section 52(1)(a) & (i) of the Indian Copyright Act, 1957)
+ * for private study, research, and examination preparation assistance.
+ */
+
 export interface OntologyTopic {
   id: string;
   subjectId: string;

@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { BookOpen, Filter, Target, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Subject, StudySystem, useOperationalMode } from '@/db';
+import { Subject, StudySystem, useOperationalMode, addSubject } from '@/db';
 import { EmptyStateGraphic } from '@/components/EmptyStateGraphic';
 import { Button } from '@/components/ui/button';
 import { SubjectCard } from '@/features/subjects/SubjectCard';
+import { AddDialog } from '@/components/AddDialog';
+import { toast } from 'sonner';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { ALL_SUBJECTS, USMLE_ONTOLOGY, GENERAL_ONTOLOGY, NEETPG_ONTOLOGY, getOntologyForExam } from '@/data/ontology';
 import { useExamProfile } from '@/hooks/useExamProfile';
@@ -30,6 +32,7 @@ export function SubjectsGrid({
 }: SubjectsGridProps) {
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
   const [showAllOverride, setShowAllOverride] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const opMode = useOperationalMode();
   const { profile } = useExamProfile();
 
@@ -362,6 +365,22 @@ export function SubjectsGrid({
           </Droppable>
         </DragDropContext>
       )}
+
+      <AddDialog
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        title="New Subject"
+        placeholder="e.g. Pharmacology"
+        type="subject"
+        onSave={async (name) => {
+          try {
+            await addSubject(name);
+            toast.success(`Subject "${name}" created`);
+          } catch (err) {
+            toast.error('Failed to create subject: ' + String(err));
+          }
+        }}
+      />
     </section>
   );
 }

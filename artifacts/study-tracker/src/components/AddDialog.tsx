@@ -6,17 +6,35 @@ import { Input } from '@/components/ui/input';
 interface AddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
-  placeholder: string;
-  onSave: (name: string) => void;
+  title?: string;
+  placeholder?: string;
+  onSave?: (name: string) => void | Promise<void>;
+  type?: string;
 }
 
-export function AddDialog({ open, onOpenChange, title, placeholder, onSave }: AddDialogProps) {
+export function AddDialog({ 
+  open, 
+  onOpenChange, 
+  title, 
+  placeholder, 
+  onSave,
+  type 
+}: AddDialogProps) {
   const [name, setName] = useState('');
 
+  const displayTitle = title || (type === 'subject' ? 'New Subject' : type === 'system' ? 'New System' : 'Add Item');
+  const displayPlaceholder = placeholder || (type === 'subject' ? 'e.g. Pharmacology' : type === 'system' ? 'e.g. Cardiology' : 'Enter name...');
+
   const handleSave = () => {
-    if (name.trim()) {
-      onSave(name.trim());
+    const trimmed = name.trim();
+    if (trimmed) {
+      if (typeof onSave === 'function') {
+        try {
+          onSave(trimmed);
+        } catch (err) {
+          console.error('[AddDialog] Error in onSave callback:', err);
+        }
+      }
       setName('');
       onOpenChange(false);
     }
@@ -36,12 +54,12 @@ export function AddDialog({ open, onOpenChange, title, placeholder, onSave }: Ad
     }}>
       <DialogContent className="sm:max-w-[425px] rounded-xl mx-4 w-[calc(100%-2rem)]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{displayTitle}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <Input
             autoFocus
-            placeholder={placeholder}
+            placeholder={displayPlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}

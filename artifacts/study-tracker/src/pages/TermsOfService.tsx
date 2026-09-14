@@ -858,9 +858,14 @@ export default function TermsOfService() {
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                These Terms shall be governed by and construed in accordance with the laws of the applicable operating jurisdiction, without regard to its conflict of law principles. Any dispute or claim arising out of or in connection with these Terms shall be resolved through binding confidential arbitration or competent local courts.
-              </p>
+              <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                <p>
+                  These Terms of Service and any non-contractual obligations arising out of or in connection with them shall be governed by and construed in accordance with the substantive laws of India, without reference to conflict of laws principles. For international consumers utilizing cross-border merchant-of-record facilities (e.g., Dodo Payments), non-waivable statutory consumer protections of the subscriber's primary country of domicile remain unaffected.
+                </p>
+                <p>
+                  Subject to mandatory local consumer protection statutes, any dispute, controversy, claim, or breach arising out of or relating to these Terms or the breach, termination, or invalidity thereof shall be subject to the exclusive jurisdiction of the competent courts situated in New Delhi, India. The parties may mutually elect to resolve disputes through expedited arbitration conducted under the Arbitration and Conciliation Act, 1996, before a sole arbitrator in New Delhi, in the English language.
+                </p>
+              </div>
             </section>
 
             {/* SECTION 13.0: MODIFICATIONS & CONTACT */}
@@ -872,7 +877,7 @@ export default function TermsOfService() {
                   </div>
                   <div>
                     <span className="text-xs font-mono font-semibold text-primary">13.0</span>
-                    <h2 className="text-xl font-bold text-foreground">Term Modifications & Legal Notice Channel</h2>
+                    <h2 className="text-xl font-bold text-foreground">Term Modifications & Statutory Grievance Redressal</h2>
                   </div>
                 </div>
                 <Button
@@ -889,6 +894,20 @@ export default function TermsOfService() {
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   We reserve the right to modify these Operating Terms at any time. Material updates will be published on this page with a revised "Last Updated" timestamp. Continued use of Atlas OS after any modifications constitutes acceptance of the updated Terms.
                 </p>
+
+                {/* Statutory Grievance Redressal Table (Rule 3(2) IT Rules 2021 & DPDP Act 2023) */}
+                <div className="p-4 rounded-xl bg-muted/40 border border-border/80 space-y-2">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Statutory Grievance Redressal Mechanism</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    In compliance with the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, and Section 13 of the Digital Personal Data Protection Act, 2023, you may address grievances, data erasure requests, or copyright takedown notices to our designated Resident Grievance Officer:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground pt-1">
+                    <div><strong className="text-foreground">Designated Officer:</strong> Resident Grievance & Compliance Officer</div>
+                    <div><strong className="text-foreground">Corporate Division:</strong> Atlas OS Technologies, Medical EdTech</div>
+                    <div><strong className="text-foreground">Email:</strong> <a href="mailto:grievance@atlas-med.com" className="text-primary underline font-mono">grievance@atlas-med.com</a></div>
+                    <div><strong className="text-foreground">Statutory SLA:</strong> Acknowledged within 48 hours; resolved within 15 days</div>
+                  </div>
+                </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border/60">
                   <div className="space-y-1 text-xs">

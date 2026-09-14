@@ -128,6 +128,7 @@ export interface MistakeLog {
   heuristicRule?: string;
   source: 'GT' | 'QBank' | 'Custom';
   sourceExam?: string;
+  sourceReference?: string;
 
   resolved: boolean;
   createdAt: Date;

@@ -33,7 +33,8 @@ import {
   Sparkles,
   SlidersHorizontal,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -880,6 +881,21 @@ function RuleCardRow({
             <span className="text-xs font-mono px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/40">
               {rule.source}
             </span>
+          )}
+
+          {rule.sourceReference && (
+            <a 
+              href={rule.sourceReference.startsWith('http') ? rule.sourceReference : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted/30 text-muted-foreground border border-border/60 transition-colors",
+                rule.sourceReference.startsWith('http') && "hover:bg-muted/60 hover:text-foreground cursor-pointer underline-offset-2 hover:underline"
+              )}
+            >
+              {rule.sourceReference.startsWith('http') ? <Globe className="w-2.5 h-2.5" /> : <BookOpen className="w-2.5 h-2.5" />}
+              <span>{rule.sourceReference.startsWith('http') ? new URL(rule.sourceReference).hostname : rule.sourceReference}</span>
+            </a>
           )}
 
           {tags.map((t: string) => {

@@ -8,7 +8,7 @@ import {
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { useAuth } from '@/hooks/useAuth';
 import { useExamProfile } from '@/hooks/useExamProfile';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { AtlasEmblem } from '@/components/AtlasEmblem';
 import { AtlasLoadingScreen } from '@/components/AtlasLoadingScreen';
 import { getPaymentConfig, PaymentConfig, DEFAULT_PAYMENT_CONFIG } from '@/lib/admin';
@@ -29,6 +29,7 @@ export default function BetaAccess() {
   const [payConfig, setPayConfig] = useState<PaymentConfig>(DEFAULT_PAYMENT_CONFIG);
   const [configLoading, setConfigLoading] = useState(true);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Load live Payment Config from Firestore
   useEffect(() => {
@@ -47,6 +48,11 @@ export default function BetaAccess() {
   const handleCheckout = async () => {
     if (!user) {
       toast.error('Sign-in required to continue to checkout.');
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast.error('Please accept the Terms of Service and Privacy Policy to proceed.');
       return;
     }
 
@@ -199,28 +205,49 @@ export default function BetaAccess() {
                 <span className="text-[10px] text-amber-400/70 text-center">Your bank is processing the transaction. Refresh if you have completed payment.</span>
               </div>
             ) : (
-              <button 
-                onClick={handleCheckout}
-                disabled={loadingCheckout}
-                className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 disabled:opacity-50 text-black font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer group"
-              >
-                {loadingCheckout ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Preparing Secure Checkout...</span>
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4" />
-                    <span>Purchase Lifetime Access</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
+              <div className="space-y-3">
+                {/* Click-Wrap Enforceable Consent */}
+                <label className="flex items-start gap-2.5 px-2 py-1 text-left cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 rounded border-zinc-700 bg-zinc-900 text-teal-500 focus:ring-teal-500/20 w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-[11px] text-zinc-400 leading-relaxed">
+                    I agree to the{' '}
+                    <Link href="/terms" target="_blank" className="text-zinc-200 underline hover:text-white">Terms of Service</Link>
+                    {' '}(including the{' '}
+                    <Link href="/terms#refund-policy" target="_blank" className="text-zinc-200 underline hover:text-white">7-Day Refund Policy</Link>
+                    ) and{' '}
+                    <Link href="/privacy" target="_blank" className="text-zinc-200 underline hover:text-white">Privacy Policy</Link>
+                    , and acknowledge that Atlas OS is an educational preparation tool and does not provide clinical or medical advice.
+                  </span>
+                </label>
+
+                <button 
+                  onClick={handleCheckout}
+                  disabled={loadingCheckout || !termsAccepted}
+                  className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed text-black font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer group"
+                >
+                  {loadingCheckout ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Preparing Secure Checkout...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Purchase Lifetime Access</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </div>
             )}
             
             <p className="text-[10px] text-zinc-500 px-4 leading-relaxed">
-              By proceeding, you agree to our Terms of Service. Secure payments processed via Dodo Payments. Your seat is fully protected under our 7-day refund guarantee; contact us anytime for assistance.
+              Secure payments processed via Dodo Payments (Merchant of Record). Your seat is fully protected under our 7-day refund guarantee.
             </p>
           </div>
         </div>

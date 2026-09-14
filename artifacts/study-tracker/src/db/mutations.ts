@@ -75,8 +75,8 @@ export async function addSubject(name: string) {
   });
 }
 
-export async function updateSubjectsOrder(updates: {
-  enforceReadOnlySandbox(); id: number; order: number }[]) {
+export async function updateSubjectsOrder(updates: { id: number; order: number }[]) {
+  enforceReadOnlySandbox();
   return await db.transaction('rw', db.uiPreferences, async () => {
     for (const update of updates) {
       await updateUIPref('subject', update.id, { order: update.order });
@@ -144,8 +144,8 @@ export async function updateSystem(id: number, changes: Partial<StudySystem>) {
   return await db.systems.update(id, { ...changes, updatedAt: new Date(), hlc: generateHLC() });
 }
 
-export async function updateSystemsOrder(updates: {
-  enforceReadOnlySandbox(); id: number; order: number }[]) {
+export async function updateSystemsOrder(updates: { id: number; order: number }[]) {
+  enforceReadOnlySandbox();
   return await db.transaction('rw', db.uiPreferences, async () => {
     for (const update of updates) {
       await updateUIPref('system', update.id, { order: update.order });

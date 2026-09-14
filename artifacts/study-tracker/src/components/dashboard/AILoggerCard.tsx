@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon, Plus, Minus, Trash2, Calendar, ArrowRight } from 'lucide-react';
+import { Sparkles, Brain, CheckCircle2, FileText, Check, Upload, X, Image as ImageIcon, Plus, Minus, Trash2, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import { db } from '@/db';
 import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { calibrateSystemSDSR } from '@/lib/sdsr-engine';
@@ -14,6 +14,7 @@ interface StagedMistake {
   id: string;
   concept: string;
   errorTag: string;
+  sourceReference?: string;
 }
 
 interface StagedData {
@@ -35,8 +36,8 @@ export function AILoggerCard() {
   const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
 
   const [text, setText] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   
   // Subject-first state hierarchy
@@ -77,32 +78,82 @@ export function AILoggerCard() {
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve((e.target?.result as string).split(',')[1]);
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.onerror = () => reject(new Error("Failed to process image"));
+        img.src = e.target?.result as string;
+      };
       reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
     });
   };
 
-  const handleFile = (file: File) => {
-    if (file.type.startsWith('image/')) {
-      setImageFile(file);
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
+  const handleFiles = (files: FileList | File[]) => {
+    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    
+    if (validFiles.length > 0) {
+      setImageFiles(prev => {
+        const newTotal = prev.length + validFiles.length;
+        if (newTotal > 10) {
+          alert('Maximum 10 images allowed per batch to ensure accurate processing.');
+        }
+        return [...prev, ...validFiles].slice(0, 10);
+      });
+      
+      setImagePreviews(prev => {
+        const urls = validFiles.map(f => URL.createObjectURL(f));
+        const combined = [...prev, ...urls];
+        // Cleanup URLs that got sliced off
+        if (combined.length > 10) {
+          const removed = combined.slice(10);
+          removed.forEach(url => URL.revokeObjectURL(url));
+        }
+        return combined.slice(0, 10);
+      });
     }
   };
 
-  const removeImage = () => {
-    setImageFile(null);
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
-    setImagePreview(null);
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleProcess = async () => {
-    if (!selectedSubjectId) {
-      alert("Please select a subject or Full-Syllabus Mock first.");
-      return;
-    }
-    if (!text.trim() && !imageFile) return;
+    if (!text.trim() && imageFiles.length === 0) return;
 
     setLoadingPhase(0);
 
@@ -113,7 +164,7 @@ export function AILoggerCard() {
       }
 
       const isGt = selectedSubjectId === 'gt-full';
-      const targetSubject = !isGt ? activeSubjects.find(s => String(s.id) === selectedSubjectId) : null;
+      const targetSubject = !isGt && selectedSubjectId ? activeSubjects.find(s => String(s.id) === selectedSubjectId) : null;
       const targetSystem = (!isGt && selectedBlockId && selectedBlockId !== 'ad-hoc' && selectedBlockId !== 'full-syllabus') 
         ? activeSystems.find(s => String(s.id) === selectedBlockId) 
         : null;
@@ -130,7 +181,8 @@ export function AILoggerCard() {
         contextDescription = `${targetSubject.name} General Practice`;
         defaultTotal = 50;
       } else {
-        contextDescription = 'Study Practice Session';
+        contextDescription = 'Uncategorized Practice Session. Auto-detect the most likely medical subject based on the content (e.g. "Cardiology", "Neurology"). If there are multiple disparate subjects, classify as "Grand Test".';
+        defaultTotal = 40;
       }
 
       const prompt = `You are a precision medical extractor. Analyze this text or screenshot of a test result/score report for ${contextDescription}.
@@ -140,34 +192,54 @@ Format your output STRICTLY as a JSON object matching this schema exactly:
 {
   "score": 28,
   "total": ${defaultTotal},
+  "detectedSubject": "String. If a specific subject or context isn't explicitly provided, infer the medical subject (e.g. 'Cardiology', 'Neurology', 'Pathology'). Use 'Grand Test' if it mixes many subjects.",
   "mistakes": [
-    "Detailed description of specific medical concept they got incorrect (e.g. 'Atrial Fibrillation anticoagulation guidelines')"
+    {
+      "concept": "Detailed description of specific medical concept they got incorrect (e.g. 'Atrial Fibrillation anticoagulation guidelines')",
+      "sourceReference": "If a Question ID or specific source reference is visible (e.g. 'UWorld QID 12345', 'NBME 29', 'Amboss Q45'), extract it here. Otherwise, null."
+    }
   ]
 }
-If max score is not mentioned, assume total is ${defaultTotal}.`;
+If max score is not mentioned, assume total is ${defaultTotal}. Keep concepts concise to avoid truncation.`;
 
       const parts: any[] = [{ text: prompt }];
       if (text.trim()) {
         parts.push({ text: `Input Data:\n${text}` });
       }
-      if (imageFile) {
-        const base64 = await fileToBase64(imageFile);
-        parts.push({
-          inlineData: {
-            data: base64,
-            mimeType: imageFile.type
-          }
-        });
+      if (imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          const base64 = await fileToBase64(file);
+          parts.push({
+            inlineData: {
+              data: base64,
+              mimeType: file.type
+            }
+          });
+        }
       }
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts }],
-          generationConfig: { responseMimeType: 'application/json' }
-        })
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      let res;
+      try {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: { responseMimeType: 'application/json' }
+          }),
+          signal: controller.signal
+        });
+      } catch (e: any) {
+        if (e.name === 'AbortError') {
+          throw new Error("Atlas is taking too long to analyze this batch. Try uploading fewer images.");
+        }
+        throw e;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!res.ok) throw new Error("Failed to reach Gemini API");
 
@@ -200,11 +272,16 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
 
       const defaultTag = isUsmle ? 'mechanism' : 'silly';
       const stagedMistakes: StagedMistake[] = (result.mistakes && Array.isArray(result.mistakes))
-        ? result.mistakes.map((m: any, idx: number) => ({
-            id: `mistake-${Date.now()}-${idx}`,
-            concept: String(m).substring(0, 200),
-            errorTag: defaultTag
-          }))
+        ? result.mistakes.map((m: any, idx: number) => {
+            const conceptText = typeof m === 'string' ? m : (m.concept || '');
+            const sourceRef = typeof m === 'object' && m.sourceReference ? m.sourceReference : undefined;
+            return {
+              id: `mistake-${Date.now()}-${idx}`,
+              concept: String(conceptText).substring(0, 200),
+              errorTag: defaultTag,
+              sourceReference: sourceRef
+            };
+          })
         : [];
 
       setStagedData({
@@ -217,7 +294,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         defaultTotal,
         calculatedOptimalDays,
         intervalChoice: 'optimal',
-        subjectName: targetSubject?.name || (isGt ? (isUsmle ? 'Full Mock Assessment' : 'Full Grand Test') : 'Curriculum')
+        subjectName: targetSubject?.name || (isGt ? (isUsmle ? 'Full Mock Assessment' : 'Full Grand Test') : (result.detectedSubject || 'Curriculum'))
       });
 
     } catch (e) {
@@ -254,19 +331,21 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         createdAt: now
       } as any);
 
-      for (const m of mistakes) {
-        await db.mistakeLogs.add({
+      if (mistakes.length > 0) {
+        const mistakeEntries = mistakes.map(m => ({
           topic: m.concept,
           keyTakeaway: m.concept,
           tags: [m.errorTag],
           subjectId: 'general',
           systemId: 'gt',
           source: 'GT',
+          sourceReference: m.sourceReference,
           errorType: 'concept',
           resolved: false,
           createdAt: now,
           updatedAt: now
-        } as any);
+        } as any));
+        await db.mistakeLogs.bulkAdd(mistakeEntries);
       }
 
       setSuccessData({
@@ -291,19 +370,21 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         createdAt: now
       } as any);
 
-      for (const m of mistakes) {
-        await db.mistakeLogs.add({
+      if (mistakes.length > 0) {
+        const mistakeEntries = mistakes.map(m => ({
           topic: m.concept,
           keyTakeaway: m.concept,
           tags: [m.errorTag],
           subjectId: targetSubject?.id || targetSystem.subjectId || 'general',
           systemId: targetSystem.id!,
           source: 'QBank',
+          sourceReference: m.sourceReference,
           errorType: 'concept',
           resolved: false,
           createdAt: now,
           updatedAt: now
-        } as any);
+        } as any));
+        await db.mistakeLogs.bulkAdd(mistakeEntries);
       }
 
       const oldDate = targetSystem.nextRevisionDate 
@@ -330,18 +411,20 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         createdAt: now
       } as any);
 
-      for (const m of mistakes) {
-        await db.mistakeLogs.add({
+      if (mistakes.length > 0) {
+        const mistakeEntries = mistakes.map(m => ({
           topic: m.concept,
           keyTakeaway: m.concept,
           tags: [m.errorTag],
           subjectId: targetSubject?.id || 'general',
           source: 'QBank',
+          sourceReference: m.sourceReference,
           errorType: 'concept',
           resolved: false,
           createdAt: now,
           updatedAt: now
-        } as any);
+        } as any));
+        await db.mistakeLogs.bulkAdd(mistakeEntries);
       }
 
       setSuccessData({
@@ -353,7 +436,9 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
 
     setStagedData(null);
     setText('');
-    removeImage();
+    setImageFiles([]);
+    imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    setImagePreviews([]);
     setSelectedSubjectId('');
     setSelectedBlockId('ad-hoc');
 
@@ -398,62 +483,32 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
             </p>
           </div>
 
-          {/* Interactive Score Stepper Pill */}
-          <div className="flex items-center gap-2 bg-muted/40 border border-border/60 p-2 rounded-xl shrink-0 self-start sm:self-auto">
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setStagedData(prev => prev ? { ...prev, score: Math.max(0, prev.score - 1) } : null)}
-                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
-                title="Decrease score"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <div className="px-2.5 py-0.5 text-center min-w-[54px]">
-                <div className="text-base font-bold font-mono text-foreground leading-tight">
-                  {stagedData.score}
-                </div>
-                <div className="text-[10px] text-muted-foreground font-mono">Score</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStagedData(prev => prev ? { ...prev, score: Math.min(prev.total, prev.score + 1) } : null)}
-                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
-                title="Increase score"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+          {/* Interactive Score Input Pill */}
+          <div className="flex items-center gap-1.5 bg-muted/40 border border-border/60 p-1.5 rounded-xl shrink-0 self-start sm:self-auto">
+            <div className="flex items-center text-center">
+              <input
+                type="number"
+                value={stagedData.score}
+                onChange={(e) => setStagedData(prev => prev ? { ...prev, score: Math.max(0, parseInt(e.target.value) || 0) } : null)}
+                className="w-12 h-9 text-center bg-background border border-border/70 rounded-lg text-base font-bold font-mono text-foreground focus:ring-2 focus:ring-primary/50 outline-none"
+                title="Score"
+              />
             </div>
 
-            <div className="text-muted-foreground/50 text-sm font-light">/</div>
+            <div className="text-muted-foreground/50 text-xl font-light">/</div>
 
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setStagedData(prev => prev ? { ...prev, total: Math.max(1, prev.total - 1) } : null)}
-                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
-                title="Decrease total questions"
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </button>
-              <div className="px-2 py-0.5 text-center min-w-[44px]">
-                <div className="text-base font-bold font-mono text-foreground leading-tight">
-                  {stagedData.total}
-                </div>
-                <div className="text-[10px] text-muted-foreground font-mono">Total</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStagedData(prev => prev ? { ...prev, total: prev.total + 1 } : null)}
-                className="w-7 h-7 rounded-lg bg-background border border-border/70 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95 transition-all cursor-pointer"
-                title="Increase total questions"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+            <div className="flex items-center text-center">
+              <input
+                type="number"
+                value={stagedData.total}
+                onChange={(e) => setStagedData(prev => prev ? { ...prev, total: Math.max(1, parseInt(e.target.value) || 1) } : null)}
+                className="w-12 h-9 text-center bg-background border border-border/70 rounded-lg text-base font-bold font-mono text-foreground focus:ring-2 focus:ring-primary/50 outline-none"
+                title="Total"
+              />
             </div>
 
             <div className={cn(
-              "ml-1 px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold shrink-0 border",
+              "ml-2 px-2.5 py-1 rounded-lg font-mono text-xs font-bold shrink-0 border",
               scorePct >= 70
                 ? "bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-white/5"
                 : scorePct >= 50
@@ -465,74 +520,100 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
           </div>
         </div>
 
-        {/* Mistakes Section */}
-        <div className="py-4 space-y-2.5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-semibold uppercase tracking-wider text-foreground">
-              {isUsmle ? "Extracted Missed Questions" : "Extracted Mistakes"} ({stagedData.mistakes.length})
-            </span>
-            <span>Tap tag to classify error</span>
-          </div>
-
-          {stagedData.mistakes.length === 0 ? (
-            <div className="p-4 rounded-xl bg-muted/20 border border-border/40 text-center text-xs text-muted-foreground">
-              No specific mistakes detected in this report. Your overall score and mastery will be logged.
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-              {stagedData.mistakes.map((mistake) => (
-                <div
-                  key={mistake.id}
-                  className="p-3 rounded-xl bg-muted/20 border border-border/60 hover:border-border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
-                >
-                  <div className="flex items-start gap-2 min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStagedData(prev => prev ? {
-                          ...prev,
-                          mistakes: prev.mistakes.filter(m => m.id !== mistake.id)
-                        } : null);
-                      }}
-                      className="p-1 rounded-md text-muted-foreground/70 hover:text-rose-500 hover:bg-rose-500/10 transition-colors mt-0.5 cursor-pointer"
-                      title="Remove this mistake"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="text-xs sm:text-sm font-medium text-foreground leading-snug">
-                      {mistake.concept}
-                    </span>
+        {/* Unified Main Content Area */}
+        <div className="py-4 grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6 items-start">
+          
+          {/* Left Column: Image Thumbnails */}
+          {imagePreviews.length > 0 && (
+            <div className="space-y-3 shrink-0">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Source Material</h4>
+              <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+                {imagePreviews.map((url, idx) => (
+                  <div key={idx} className="relative w-24 h-24 lg:w-full lg:h-auto border border-border/40 rounded-xl overflow-hidden bg-black/5 shadow-sm shrink-0">
+                    <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover lg:object-contain mix-blend-luminosity opacity-90 transition-opacity hover:opacity-100" />
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  <div className="flex items-center gap-1.5 flex-wrap shrink-0 pl-6 sm:pl-0">
-                    {errorTags.map((tag) => {
-                      const isSelected = mistake.errorTag === tag.id;
-                      return (
-                        <button
-                          key={tag.id}
-                          type="button"
-                          onClick={() => {
+          {/* Right Column: Mistakes Section */}
+          <div className="min-w-0 flex-1 space-y-2.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-semibold uppercase tracking-wider text-foreground">
+                {isUsmle ? "Extracted Missed Questions" : "Extracted Mistakes"} ({stagedData.mistakes.length})
+              </span>
+            </div>
+
+            {stagedData.mistakes.length === 0 ? (
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/40 text-center text-xs text-muted-foreground">
+                No specific mistakes detected in this report. Your overall score and mastery will be logged.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+                {stagedData.mistakes.map((mistake) => (
+                  <div
+                    key={mistake.id}
+                    className="p-3 rounded-xl bg-muted/20 border border-border/60 hover:border-border transition-all flex flex-col gap-3"
+                  >
+                    <div className="flex items-start gap-2 min-w-0 w-full">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStagedData(prev => prev ? {
+                            ...prev,
+                            mistakes: prev.mistakes.filter(m => m.id !== mistake.id)
+                          } : null);
+                        }}
+                        className="p-1 rounded-md text-muted-foreground/70 hover:text-rose-500 hover:bg-rose-500/10 transition-colors mt-0.5 cursor-pointer shrink-0"
+                        title="Remove this mistake"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm font-medium text-foreground leading-snug">
+                          {mistake.concept}
+                        </span>
+                        {mistake.sourceReference && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground border border-border/40 bg-background/50 px-1.5 py-0.5 rounded w-fit mt-1">
+                            <BookOpen className="w-2.5 h-2.5" />
+                            {mistake.sourceReference}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center pl-7">
+                      <div className="relative">
+                        <select
+                          value={mistake.errorTag}
+                          onChange={(e) => {
                             setStagedData(prev => prev ? {
                               ...prev,
-                              mistakes: prev.mistakes.map(m => m.id === mistake.id ? { ...m, errorTag: tag.id } : m)
+                              mistakes: prev.mistakes.map(m => m.id === mistake.id ? { ...m, errorTag: e.target.value } : m)
                             } : null);
                           }}
                           className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer select-none active:scale-95",
-                            isSelected
-                              ? cn(tag.color, "ring-2 ring-primary/20 shadow-xs font-bold")
-                              : "bg-background/60 hover:bg-background text-muted-foreground border-border/50"
+                            "appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer outline-none",
+                            errorTags.find(t => t.id === mistake.errorTag)?.color || "bg-muted text-foreground border-border/50"
                           )}
                         >
-                          {tag.label}
-                        </button>
-                      );
-                    })}
+                          {errorTags.map(tag => (
+                            <option key={tag.id} value={tag.id} className="bg-background text-foreground font-medium">
+                              {tag.label}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-70">
+                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* SDSR Spacing Choice */}
@@ -576,9 +657,11 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
             type="button"
             variant="ghost"
             onClick={() => {
-              setStagedData(null);
+              if (window.confirm("Are you sure you want to discard these extracted mistakes? This cannot be undone.")) {
+                setStagedData(null);
+              }
             }}
-            className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground rounded-xl cursor-pointer"
+            className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground hover:bg-rose-500/10 hover:text-rose-500 rounded-xl cursor-pointer transition-colors"
           >
             Discard & Re-upload
           </Button>
@@ -637,8 +720,8 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
   return (
     <div 
       className={cn(
-        "bg-card/50 backdrop-blur-xl border rounded-xl p-6 sm:p-8 mb-8 transition-all duration-300 relative overflow-hidden",
-        isDragging ? "border-primary bg-primary/5 shadow-lg scale-[1.01]" : "border-border/50 shadow-sm hover:shadow-md"
+        "bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-2 mb-8 transition-all duration-300 relative overflow-hidden shadow-sm hover:shadow-md focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10",
+        isDragging && "border-primary ring-4 ring-primary/20 bg-primary/5 shadow-lg scale-[1.01]"
       )}
       onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
       onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
@@ -646,107 +729,106 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-          handleFile(e.dataTransfer.files[0]);
+          handleFiles(e.dataTransfer.files);
         }
       }}
     >
-      <div className="flex items-start sm:items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 border border-white/5 flex-shrink-0">
-          <Brain className="w-6 h-6" />
+      <div className="flex items-center gap-3 w-full pl-3 pr-2 py-1">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+          <Brain className="w-4 h-4" />
         </div>
-        <div>
-          <h3 className="text-xl font-bold tracking-tight text-foreground">Log Study Session</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">Select a subject, choose a study block, then paste text or drop a screenshot of your score report.</p>
+        
+        <div className="flex-1 min-w-0 flex items-center">
+          <input
+            value={text} 
+            onChange={e => setText(e.target.value)}
+            onPaste={(e) => {
+              if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+                handleFiles(e.clipboardData.files);
+              }
+            }}
+            placeholder="Log a session, GT score, or drop screenshots here..."
+            className="w-full bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground/60 border-none outline-none focus:ring-0 px-2"
+          />
         </div>
-      </div>
 
-      <AdaptiveLoggerSelector 
-        subjectId={selectedSubjectId} 
-        onSubjectChange={setSelectedSubjectId}
-        blockId={selectedBlockId} 
-        onBlockChange={setSelectedBlockId}
-      />
-
-      <div className={cn(
-        "relative mb-6 rounded-lg border-2 border-dashed transition-colors duration-200 overflow-hidden group bg-muted/10",
-        imagePreview ? "border-transparent" : "border-border/60 hover:border-primary/40",
-        isDragging && "border-primary/70 bg-primary/5"
-      )}>
-        {imagePreview ? (
-          <div className="relative w-full h-48 bg-black/5 flex items-center justify-center">
-            <img src={imagePreview} alt="Screenshot preview" className="h-full object-contain mix-blend-luminosity opacity-90 transition-opacity hover:opacity-100" />
-            <button 
-              onClick={removeImage}
-              className="absolute top-3 right-3 p-2 bg-background/90 backdrop-blur-md rounded-full text-muted-foreground hover:text-foreground border border-border/50 shadow-sm hover:scale-105 transition-transform"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="absolute top-4 left-4 text-muted-foreground/40 group-focus-within:text-primary/50 transition-colors">
-              <FileText className="w-5 h-5" />
-            </div>
-            <Textarea 
-              value={text} 
-              onChange={e => setText(e.target.value)}
-              onPaste={(e) => {
-                if (e.clipboardData.files && e.clipboardData.files.length > 0) {
-                  handleFile(e.clipboardData.files[0]);
-                }
-              }}
-              placeholder="Paste text or `Ctrl+V` a screenshot... (e.g. Cardiology: 28/40)"
-              className="min-h-[140px] font-mono text-sm pl-12 pt-4 pb-4 pr-4 border-0 bg-transparent resize-none focus-visible:ring-0 placeholder:text-muted-foreground/50 shadow-none"
-            />
-          </>
-        )}
-      </div>
-      
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="w-full sm:w-auto">
+        <div className="flex items-center gap-1 shrink-0">
           <input 
             type="file" 
             accept="image/*" 
+            multiple
             className="hidden" 
             ref={fileInputRef} 
-            onChange={(e) => e.target.files && handleFile(e.target.files[0])}
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
           />
-          {!imagePreview && (
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto text-muted-foreground hover:text-foreground border-border/60 rounded-xl h-10 px-4 bg-background/50"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Upload Image
-            </Button>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
-          {loadingPhase >= 0 && (
-            <span className="text-xs text-primary/80 animate-pulse font-medium whitespace-nowrap">
-              {loadingMessages[Math.min(loadingPhase, loadingMessages.length - 1)]}
-            </span>
-          )}
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors cursor-pointer"
+            title="Attach Screenshot"
+          >
+            <ImageIcon className="w-4 h-4" />
+          </button>
+          
           <Button 
             onClick={handleProcess} 
-            disabled={loadingPhase >= 0 || !selectedSubjectId || (!text.trim() && !imageFile)} 
-            className="w-full sm:w-auto gap-2 rounded-xl shadow-md h-10 px-6 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 disabled:bg-emerald-600"
+            disabled={loadingPhase >= 0 || (!text.trim() && imageFiles.length === 0)} 
+            className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 transition-colors disabled:opacity-50 disabled:bg-emerald-600 cursor-pointer ml-1 shadow-sm"
           >
             {loadingPhase >= 0 ? <Brain className="w-4 h-4 animate-pulse" /> : <Sparkles className="w-4 h-4" />}
-            Parse & Log
+            <span className="hidden sm:inline">{loadingPhase >= 0 ? 'Analyzing...' : 'Analyze'}</span>
           </Button>
+        </div>
+      </div>
+
+      {/* Expanded Area for Selection & Preview */}
+      <div className={cn(
+        "grid transition-all duration-300 ease-in-out",
+        (text.trim() || imageFiles.length > 0 || isDragging) ? "grid-rows-[1fr] mt-3 pt-3 border-t border-border/40" : "grid-rows-[0fr]"
+      )}>
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3 space-y-4">
+            
+            <div className="p-3 bg-muted/20 border border-border/40 rounded-xl space-y-2">
+              <div className="flex items-center justify-between pl-1">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Context Routing (Optional)
+                </label>
+                <span className="text-[10px] text-muted-foreground/60 italic">Leave empty to auto-detect</span>
+              </div>
+              <AdaptiveLoggerSelector 
+                subjectId={selectedSubjectId} 
+                onSubjectChange={setSelectedSubjectId}
+                blockId={selectedBlockId} 
+                onBlockChange={setSelectedBlockId}
+              />
+            </div>
+
+            {imagePreviews.length > 0 && (
+              <div className="flex flex-wrap gap-3">
+                {imagePreviews.map((url, idx) => (
+                  <div key={idx} className="relative inline-block border border-border/40 rounded-xl overflow-hidden bg-black/5 shadow-sm">
+                    <img src={url} alt={`Screenshot preview ${idx}`} className="h-32 object-contain mix-blend-luminosity opacity-90 transition-opacity hover:opacity-100" />
+                    <button 
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-2 right-2 p-1.5 bg-background/90 backdrop-blur-md rounded-full text-muted-foreground hover:text-foreground border border-border/50 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
       {isDragging && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-xl pointer-events-none">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center z-50 rounded-2xl pointer-events-none border-2 border-dashed border-primary">
           <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
             <Upload className="w-8 h-8 text-primary animate-bounce" />
           </div>
-          <p className="text-lg font-semibold text-foreground">Drop screenshot to parse</p>
-          <p className="text-sm text-muted-foreground">Release to upload the image instantly</p>
+          <p className="text-lg font-bold text-foreground tracking-tight">Drop screenshot to parse</p>
+          <p className="text-sm text-muted-foreground font-medium">Atlas will analyze metrics and mistakes instantly</p>
         </div>
       )}
     </div>
