@@ -945,7 +945,7 @@ export default function SubjectDetail() {
             <EmptyStateGraphic
               icon={LayoutList}
               title="Start Structuring Your Subject"
-              description={`Break down ${subject.name} into specific modules or systems. This enables precise task tracking and unlocks spaced repetition tracking.`}
+              description={`Break down ${subject.name} into specific modules or systems. This enables precise syllabus tracking and unlocks FSRS spaced retention tracking.`}
               action={
                 <Button onClick={() => setShowAddSystem(true)} size="sm" className="gap-1.5 rounded-xl shadow-xs cursor-pointer">
                   <Plus className="w-4 h-4" /> Add First System

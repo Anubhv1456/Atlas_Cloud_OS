@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useNextActionEngine } from '@/hooks/useNextActionEngine';
 import { useOperationalMode } from '@/db';
 import { isSoftRecalibrating } from '@/db/revisionEngine';
+import { useLexicon } from '@/lib/lexicon';
 import { 
   Sparkles, Play, Clock, ArrowRight, AlertTriangle, CheckCircle2, ShieldAlert, Zap, Target, Book, Crosshair
 } from 'lucide-react';
@@ -13,6 +14,7 @@ import { toast } from 'sonner';
 
 export function NextActionCard() {
   const [, setLocation] = useLocation();
+  const lexicon = useLexicon();
   const { result, loading } = useNextActionEngine();
   const opMode = useOperationalMode();
   const recalStatus = opMode ? isSoftRecalibrating(opMode, new Date()) : { active: false, progressRatio: 0, daysRemaining: 0 };
@@ -27,7 +29,7 @@ export function NextActionCard() {
       if (result?.primary) {
         setLocation('/subjects/' + result.primary.subjectId);
       } else { 
-        toast.info("No tasks pending. Enjoy your rest.");
+        toast.info("No syllabus sets pending. Enjoy your rest.");
       }
       setIsStarting(false);
     }, 800);
@@ -42,8 +44,12 @@ export function NextActionCard() {
   };
 
   if (recalStatus.active && result?.primary) {
-    const totalCount = (result.upcomingQueue?.length || 0) + 1;
-    const completed = 15 - Math.min(15, totalCount); // Mocking bounded queue
+    const totalBatchCount = (result.upcomingQueue?.length || 0) + 1;
+    const targetSet = result.primary;
+    const targetSetName = targetSet.systemName || targetSet.subjectName;
+    const estimatedMin = targetSet.estimatedMinutes || 30;
+    const passNum = targetSet.whyBreakdown?.revisionPass || 1;
+
     return (
       <div className="bg-background/95 border border-white/[0.06] rounded-xl p-6 sm:p-8 shadow-md relative overflow-hidden flex flex-col items-center text-center">
         
@@ -55,16 +61,19 @@ export function NextActionCard() {
             <Zap className="w-3 h-3" /> Soft Recalibration™ Active
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">
             Recovery Session
           </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Day {10 - Math.max(0, recalStatus.daysRemaining)} of 10 • Knapsack schedule smoothing active
+          </p>
           
-          <div className="flex items-center justify-between w-full mb-2 mt-4 px-2">
-            <span className="text-xs text-muted-foreground font-medium">Recovery Batch</span>
-            <span className="text-xs text-foreground font-bold">{completed} / 15 completed</span>
+          <div className="flex items-center justify-between w-full mb-2 px-2">
+            <span className="text-xs text-muted-foreground font-medium">Scheduled Today</span>
+            <span className="text-xs text-foreground font-bold font-mono">1 of {totalBatchCount} Sets Active</span>
           </div>
-          <div className="w-full bg-muted/40 rounded-lg h-2 mb-8 overflow-hidden border border-white/[0.02]">
-            <div className="bg-primary h-full rounded-lg transition-all duration-1000 ease-out" style={{ width: `${(completed / 15) * 100}%` }} />
+          <div className="w-full bg-muted/40 rounded-lg h-2 mb-6 overflow-hidden border border-white/[0.02]">
+            <div className="bg-primary h-full rounded-lg transition-all duration-1000 ease-out" style={{ width: `${Math.round((1 / Math.max(1, totalBatchCount)) * 100)}%` }} />
           </div>
 
           <Button 
@@ -81,13 +90,13 @@ export function NextActionCard() {
             ) : (
               <span className="flex items-center gap-2">
                 <Play className="w-5 h-5 fill-current" />
-                Resume Recovery: 15 High-Yield Cards (12 min)
+                Resume Recovery: {targetSetName} • Pass #{passNum} ({estimatedMin}m)
               </span>
             )}
           </Button>
 
-          <p className="mt-6 text-[11px] text-muted-foreground/70 font-medium tracking-wide">
-            320 low-yield reviews safely parked in Deep Storage™.<br className="hidden sm:block"/> Focus on today's high-yield targets.
+          <p className="mt-5 text-[11px] text-muted-foreground/70 font-medium tracking-wide">
+            Overdue syllabus sets smoothly redistributed across your 10-day recovery window with zero backlog debt.
           </p>
         </div>
       </div>
@@ -154,7 +163,7 @@ export function NextActionCard() {
           )}
         </Button>
         <p className="mt-6 text-xs text-muted-foreground/80 font-medium">
-          Note: Keep using Anki for daily micro-flashcards. Use Study Tracker to macro-schedule your QBank blocks and modules.
+          Atlas macro-schedules your curriculum syllabus, question bank revision passes, and mock examinations.
         </p>
       </div>
 

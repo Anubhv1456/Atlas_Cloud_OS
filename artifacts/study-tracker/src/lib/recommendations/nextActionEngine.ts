@@ -973,7 +973,7 @@ export async function getNextActionRecommendation(
         ...c,
         whyBreakdown: {
           ...c.whyBreakdown,
-          budgetInfluence: 'Standard review queue prioritized by Ebbinghaus memory decay and NEET exam yield.'
+          budgetInfluence: 'Standard review queue prioritized by FSRS memory decay and examination blueprint yield.'
         }
       }));
     }
@@ -1173,7 +1173,7 @@ export async function getNextActionRecommendation(
     } else if (isFinalLap) {
       message = `Critical ${targetExam} Integration: You historically drop points in ${rec.subjectName}. Review these high-yield concepts before your mock exam.`;
     } else if (rec.archetype === 'remediation_clinic') {
-      message = `Your memory retention for ${rec.subjectName} has decayed by ${rec.whyBreakdown.memoryDecayPercent}%. Let's do a quick ${rec.estimatedMinutes || 30}-minute block to plug this leak.`;
+      message = `Your retention for ${rec.subjectName} has decayed by ${rec.whyBreakdown.memoryDecayPercent}%. Prioritize ${rec.systemName || rec.subjectName} (Pass #${rec.whyBreakdown.revisionPass}) to reinforce this high-yield system.`;
     } else {
       message = `Optimizing spaced repetition. Focusing on ${rec.systemName || rec.subjectName} for ${rec.whyBreakdown.depthLabel} retention.`;
     }

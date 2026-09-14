@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // Regex patterns to identify medical Q-Bank explanation stems
-const MEDICAL_KEYWORDS_REGEX = /\b(explanation|correct option|incorrect option|most likely diagnosis|drug of choice|investigation of choice|classic triad|diagnostic criteria|management protocol|differential diagnosis|q-bank|marrow|uworld|pre-pg|first aid|pathognomonic|histopathology|gold standard|patient presents with|biopsy shows|treatment of choice)\b/i;
+const MEDICAL_KEYWORDS_REGEX = /\b(explanation|correct option|incorrect option|most likely diagnosis|drug of choice|investigation of choice|classic triad|diagnostic criteria|management protocol|differential diagnosis|q-bank|qbank|question bank|pathognomonic|histopathology|gold standard|patient presents with|biopsy shows|treatment of choice)\b/i;
 
 export const DynamicIslandCapsule: React.FC = () => {
   const { settings } = useAISettings();

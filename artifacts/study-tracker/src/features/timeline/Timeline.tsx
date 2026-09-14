@@ -164,7 +164,7 @@ function PastDayGroup({ date, events, onRollback }: { date: Date; events: Timeli
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-foreground">{format(date, 'EEEE, MMMM d')}</span>
           <Badge variant="secondary" className="text-[9px] font-mono font-bold px-1.5 py-0 bg-muted text-muted-foreground">
-            {events.length} task{events.length !== 1 ? 's' : ''}
+            {events.length} session{events.length !== 1 ? 's' : ''}
           </Badge>
         </div>
       </div>
@@ -342,7 +342,7 @@ export default function Timeline() {
                       'aspect-square min-h-[42px] sm:min-h-[48px] w-full flex flex-col items-center justify-center rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                       bgClass
                     )}
-                    title={`${format(day, 'MMM d, yyyy')}: ${count} completed task${count !== 1 ? 's' : ''}${hasUpcoming ? ' • Revision Scheduled' : ''}`}
+                    title={`${format(day, 'MMM d, yyyy')}: ${count} completed study session${count !== 1 ? 's' : ''}${hasUpcoming ? ' • Revision Scheduled' : ''}`}
                   >
                     <span>{day.getDate()}</span>
                     {hasUpcoming && (
@@ -446,7 +446,7 @@ export default function Timeline() {
             title="No Activity Logged"
             description={filter !== 'all'
                 ? `No ${TIMELINE_FILTERS.find(f => f.key === filter)!.label} events recorded in ${format(calDate, 'MMMM yyyy')}.`
-                : `Start logging your study tasks, completing revisions, or solving PYQs to populate your activity radar for ${format(calDate, 'MMMM yyyy')}.`}
+                : `Start completing syllabus sets, revision modules, or solving previous exam questions to populate your activity radar for ${format(calDate, 'MMMM yyyy')}.`}
           />
         )}
       </div>

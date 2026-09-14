@@ -12,8 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useLexicon } from '@/lib/lexicon';
 
 export function MockExamsWidget() {
+  const lexicon = useLexicon();
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
   const gtScores = useLiveQuery(async () => {
@@ -44,7 +46,7 @@ export function MockExamsWidget() {
               <div className="p-1.5 rounded-lg bg-zinc-800/40 text-primary">
                 <Target className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Mock Exams (GT/NBME)</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Mock Exams (Full Tests)</h3>
             </div>
             {latestScore ? (
               <div className="flex items-baseline gap-2">
@@ -93,6 +95,7 @@ export function MockExamsWidget() {
 }
 
 function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: boolean, onClose: () => void, gtScores: ScoreLog[], chartData: any[] }) {
+  const lexicon = useLexicon();
   const [showAddModal, setShowAddModal] = useState(false);
 
   return (
@@ -149,7 +152,7 @@ function MockExamsOverlay({ isOpen, onClose, gtScores, chartData }: { isOpen: bo
                 <div className="h-[250px] flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border/50">
                   <BarChart3 className="w-10 h-10 mb-3 opacity-20" />
                   <p className="font-medium text-sm">No mock exams logged yet.</p>
-                  <p className="text-xs opacity-70 mt-1">Log your first Grand Test to see your trend line.</p>
+                  <p className="text-xs opacity-70 mt-1">Log your first {lexicon.mockExamLabel} to see your trend line.</p>
                 </div>
               )}
             </div>
@@ -250,7 +253,7 @@ function LogExamModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
           <div className="space-y-2">
             <Label>Exam Name</Label>
             <Input 
-              placeholder="e.g., NBME 25, Grand Test 4" 
+              placeholder="e.g., Full Mock Exam 1, Grand Test 4" 
               value={testName}
               onChange={(e) => setTestName(e.target.value)}
               required

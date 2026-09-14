@@ -29,6 +29,7 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const lexicon = useLexicon();
   if (!report) return null;
 
   return (
@@ -43,9 +44,9 @@ export const GtAutopsyModal: React.FC<GtAutopsyModalProps> = ({
               </div>
               <div>
                 <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                  <span>Grand Test Psychometric Performance Review</span>
+                  <span>{lexicon.mockExamLabel} Performance Autopsy</span>
                   <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-xs font-mono font-bold">
-                    GT-DELTA
+                    {lexicon.mockExamAbbreviation}-DELTA
                   </span>
                 </h3>
                 <p className="text-xs text-muted-foreground">

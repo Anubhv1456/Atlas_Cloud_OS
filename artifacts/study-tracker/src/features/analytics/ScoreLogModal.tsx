@@ -174,9 +174,9 @@ export function ScoreLogModal({
         } else if (type === 'pyq') {
           logTitle = selectedPyq ? `${selectedSub?.name} ${selectedPyq.year} PYQ` : `${selectedSub?.name} PYQ`;
         } else if (type === 'qbank') {
-          logTitle = 'QBank Block';
+          logTitle = lexicon.revisionModuleUnit;
         } else {
-          logTitle = 'Grand Test';
+          logTitle = lexicon.mockExamLabel;
         }
       }
 
@@ -374,7 +374,7 @@ export function ScoreLogModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              QBank Block
+              {lexicon.revisionModuleUnit}
             </button>
             <button
               type="button"

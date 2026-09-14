@@ -94,7 +94,7 @@ export function MistakesNotebookCard() {
               </h2>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              High-yield clinical rules, drug choices, classic triads, and volatile distinctions curated across 19 subjects.
+              High-yield clinical rules, drug choices, classic triads, and volatile distinctions curated across your curriculum.
             </p>
           </div>
 
@@ -217,7 +217,7 @@ export function MistakesNotebookCard() {
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold flex items-center gap-1.5 text-foreground">
                 <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-500" />
-                <span>Pre-GT Volatile Spotlight</span>
+                <span>{lexicon.preExamSpotlight}</span>
               </span>
               <span className="text-xs text-muted-foreground">High-yield revision</span>
             </div>

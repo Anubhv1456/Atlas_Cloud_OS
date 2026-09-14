@@ -31,7 +31,6 @@ import { useExamProfile } from '@/hooks/useExamProfile';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { TargetExamModal } from '@/components/TargetExamModal';
 import { OnboardingModal } from '@/components/OnboardingModal';
-import { BaselineTriageModal } from '@/components/BaselineTriageModal';
 import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { loadUniversalOntology } from '@/lib/exam-presets';
 import { toast } from 'sonner';
@@ -77,7 +76,6 @@ export default function Home() {
   const { settings } = useAISettings();
   const [examModalOpen, setExamModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
-  const [triageOpen, setTriageOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [chatDrawerMode, setChatDrawerMode] = useState<'text' | 'voice'>('text');
@@ -92,24 +90,6 @@ export default function Home() {
     sessionStorage.getItem('atlas_pending_ref_code')
   );
 
-  useEffect(() => {
-    // Pillar 4: Onboarding is strictly governed by App.tsx at the route level (/onboarding).
-    // Home dashboard only triggers the initial triage once the user is confirmed onboarded.
-    // If user already has historical pyqs or blocks, auto-bypass triage
-    const hasHistoricalData = pyqs.length > 0 || Object.keys(streak).length > 0;
-    
-    if (hasHistoricalData && !profile.hasCompletedTriage) {
-      updateProfile({ hasCompletedTriage: true });
-      return;
-    }
-
-    if (!onboardingLoading && hasOnboarded && isConfigured && !profile.hasCompletedTriage) {
-      // Only show calibration if they have active access or trial
-      if (hasAccess || isTrialActive) {
-        setTriageOpen(true);
-      }
-    }
-  }, [hasOnboarded, onboardingLoading, isConfigured, profile.hasCompletedTriage, hasAccess, isTrialActive]);
 
   useEffect(() => {
     const handleOpenOnboarding = () => setOnboardingOpen(true);
@@ -285,7 +265,6 @@ export default function Home() {
 
       <TargetExamModal open={examModalOpen} onOpenChange={setExamModalOpen} />
       <OnboardingModal open={onboardingOpen} onOpenChange={setOnboardingOpen} />
-      <BaselineTriageModal open={triageOpen} onOpenChange={setTriageOpen} />
       <HelpGuideModal open={helpOpen} onOpenChange={setHelpOpen} />
       {settings.isAiEnabled && (
         <>

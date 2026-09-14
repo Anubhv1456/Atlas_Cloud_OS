@@ -11,6 +11,7 @@ import { Settings2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { useLexicon } from '@/lib/lexicon';
 
 interface FlashcardStudioModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const USMLE_PRESETS = [
 
 export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMistakes, selectedMistakes = [], onMarkExported }: FlashcardStudioModalProps) {
   const { profile } = useExamProfile();
+  const lexicon = useLexicon();
   const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
   const presets = isUsmle ? USMLE_PRESETS : NEET_PRESETS;
 
@@ -181,10 +183,10 @@ return (
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <Sparkles className="w-5 h-5 text-primary" />
-            Atlas Flashcard Studio
+            Atlas Active Recall Studio
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Transform your logged mistakes into highly optimized active-recall flashcards using AI.
+            Transform your logged clinical mistakes into highly optimized active-recall cards for offline spaced review.
           </p>
         </DialogHeader>
 
@@ -503,7 +505,7 @@ return (
                 <div className="text-center space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/20 border border-amber-500/25 text-amber-400 dark:text-amber-400 text-xs font-semibold mb-1">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isUsmle ? "Curated by you for USMLE · High-Yield Vignette Deck" : "Curated by you for NEET PG · 20th Notebook Deck"}</span>
+                    <span>Curated for {profile.targetExam || 'Medical Exam'} · {lexicon.mistakesJournalTitle}</span>
                   </div>
                   <h3 className="text-xl font-bold">Your Curated Deck is Ready</h3>
                   <p className="text-sm text-muted-foreground">
@@ -540,7 +542,7 @@ return (
                 </div>
 
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest pt-2">
-                  {targetDeck.trim() ? "Import into any flashcard app. Map Field 3 to Tags and Field 4 to Deck." : "Double-click the downloaded file to instantly open in your flashcard app"}
+                  {targetDeck.trim() ? "Import into spaced repetition software. Map Field 3 to Tags and Field 4 to Deck." : "Standard TSV format ready for offline active recall spaced-repetition."}
                 </p>
 
                 <div className="absolute top-4 right-4">

@@ -15,8 +15,8 @@ import {
 import { GENERAL_ONTOLOGY } from './ontology.general.js';
 
 // Helper function to dynamically load ontology based on exam string
-export function getOntologyForExam(targetExam: string): OntologySubject[] {
-  const examLower = targetExam.toLowerCase();
+export function getOntologyForExam(targetExam?: string): OntologySubject[] {
+  const examLower = (targetExam || '').toLowerCase();
   if (examLower.includes('step 2')) {
     return USMLE_STEP2_ONTOLOGY;
   }

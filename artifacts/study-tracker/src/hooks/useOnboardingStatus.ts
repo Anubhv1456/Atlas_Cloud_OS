@@ -88,7 +88,7 @@ export function useOnboardingStatus() {
       if (rawExamProfile) {
         try {
           const parsed = JSON.parse(rawExamProfile);
-          if (parsed && (parsed.targetExamDate || parsed.hasCompletedTriage || (parsed.targetExam && parsed.targetExam !== 'NEET PG / INI-CET'))) {
+          if (parsed && (parsed.targetExamDate || (parsed.targetExam && parsed.targetExam !== 'NEET PG / INI-CET'))) {
             return true;
           }
         } catch {

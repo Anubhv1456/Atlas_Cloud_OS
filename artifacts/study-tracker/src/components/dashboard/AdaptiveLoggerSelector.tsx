@@ -16,7 +16,7 @@ interface Props {
 
 export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, onBlockChange }: Props) {
   const { profile } = useExamProfile();
-  const isUSMLE = profile?.targetExam?.toLowerCase().includes('usmle');
+  const isUSMLE = Boolean((profile?.targetExam || '').toLowerCase().includes('usmle'));
   
   const activeSubjects = useLiveQuery(() => db.subjects.filter(s => !s.deletedAt).toArray(), []) || [];
   const activeSystems = useLiveQuery(() => db.systems.filter(s => !s.deletedAt).toArray(), []) || [];
@@ -37,7 +37,8 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
 
     for (const log of scoreLogs) {
       // If user took a GT
-      if (log.type === 'gt' || log.title?.toLowerCase().includes('mock') || log.title?.toLowerCase().includes('gt')) {
+      const logTitle = (log.title || '').toLowerCase();
+      if (log.type === 'gt' || logTitle.includes('mock') || logTitle.includes('gt')) {
         if (!seen.has('gt-full')) {
           recents.push({ id: 'gt-full', name: '🏆 Full Mock / GT' });
           seen.add('gt-full');
@@ -210,7 +211,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
               value="gt-full" 
               className="font-semibold text-emerald-400 dark:text-emerald-400 cursor-pointer border-b border-border/70 mb-1 pb-2 focus:bg-emerald-950/20"
             >
-              🏆 Full-Syllabus Mock (GT / NBME Comprehensive)
+              🏆 Full-Syllabus Mock (GT / Comprehensive Exam)
             </SelectItem>
 
             {/* Categorized Syllabus Subjects */}
@@ -270,7 +271,7 @@ export function AdaptiveLoggerSelector({ subjectId, onSubjectChange, blockId, on
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground ml-1">
-              Grand Tests & NBME Mocks evaluate full curriculum retention; individual block selection is disabled.
+              Grand Tests & Comprehensive Mocks evaluate full curriculum retention; individual block selection is disabled.
             </p>
           </div>
         ) : !subjectId ? (

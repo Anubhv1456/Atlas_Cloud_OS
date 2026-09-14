@@ -61,7 +61,7 @@ export class USMLEStrategy implements ExamStrategy {
   }
 
   getRationaleVocabulary(isHighYield: boolean, urgencyScore: number): string {
-    if (urgencyScore > 85) return "Critical for UWorld Block & NBME Performance";
+    if (urgencyScore > 85) return "Critical for QBank & Practice Exam Performance";
     if (urgencyScore > 70) return "High-Yield Organ System Integration";
     if (isHighYield) return "Essential Step 1 Core Mastery";
     return "Balanced System Review";
@@ -76,7 +76,7 @@ export class USMLEStrategy implements ExamStrategy {
 
   getUrgencyCurve(daysRemaining: number | null) {
     if (daysRemaining === null || daysRemaining > 180) return { acquisitionWeight: 0.6, consolidationWeight: 0.4 };
-    if (daysRemaining < 45) return { acquisitionWeight: 0.05, consolidationWeight: 0.95 }; // Dedicated Period (UWorld + NBME)
+    if (daysRemaining < 45) return { acquisitionWeight: 0.05, consolidationWeight: 0.95 }; // Dedicated Period (QBank + Mock Exams)
     return { acquisitionWeight: 0.3, consolidationWeight: 0.7 };
   }
 }

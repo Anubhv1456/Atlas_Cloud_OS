@@ -121,7 +121,7 @@ export function AILoggerCard() {
       let contextDescription = '';
       let defaultTotal = 40;
       if (isGt) {
-        contextDescription = 'Grand Test / Full-Syllabus Mock Exam (GT/NBME Comprehensive)';
+        contextDescription = 'Grand Test / Full-Syllabus Mock Exam (Comprehensive Assessment)';
         defaultTotal = 200;
       } else if (targetSystem) {
         contextDescription = `${targetSubject ? `${targetSubject.name} - ` : ''}${targetSystem.name} Study Block`;
@@ -217,7 +217,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
         defaultTotal,
         calculatedOptimalDays,
         intervalChoice: 'optimal',
-        subjectName: targetSubject?.name || (isGt ? (isUsmle ? 'Full NBME Mock' : 'Full Grand Test') : 'Curriculum')
+        subjectName: targetSubject?.name || (isGt ? (isUsmle ? 'Full Mock Assessment' : 'Full Grand Test') : 'Curriculum')
       });
 
     } catch (e) {
@@ -245,7 +245,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
 
     if (isGt) {
       await db.scoreLogs.add({
-        title: isUsmle ? `Mock Exam: Full NBME Comprehensive` : `Grand Test: Full-Syllabus Mock (GT)`,
+        title: isUsmle ? `Mock Exam: Full Comprehensive Assessment` : `Grand Test: Full-Syllabus Mock (GT)`,
         score,
         total,
         percentage: scorePercent * 100,
@@ -270,7 +270,7 @@ If max score is not mentioned, assume total is ${defaultTotal}.`;
       }
 
       setSuccessData({
-        name: isUsmle ? 'Full NBME Comprehensive' : 'Full Grand Test (GT)',
+        name: isUsmle ? 'Full Comprehensive Assessment' : 'Full Grand Test (GT)',
         scoreText: `${score}/${total} (${Math.round(scorePercent * 100)}%)`,
         detailText: `${mistakes.length} mistakes saved to your error notebook.`
       });

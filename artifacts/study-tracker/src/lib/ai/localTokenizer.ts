@@ -245,7 +245,7 @@ export function tokenizeMedicalInput(rawInput: string): TokenizerMatchResult {
   // -------------------------------------------------------------
   // PATTERN 2: Grand Test / Mock Score Record (e.g. "GT 4 score 142/200", "mock 135 65 correct")
   // -------------------------------------------------------------
-  const scoreRegex = /(?:gt|mock|test|exam|swt|nbme|uwsa|uworld|cms form|block)\s*(?:#|no\.?)?\s*(\d+)?\s*(?:score|marks|scored|got)?\s*:?\s*(\d+)(?:\s*\/\s*(\d+))?/i;
+  const scoreRegex = /(?:gt|mock|test|exam|assessment|cbt|qbank|block)\s*(?:#|no\.?)?\s*(\d+)?\s*(?:score|marks|scored|got)?\s*:?\s*(\d+)(?:\s*\/\s*(\d+))?/i;
   const scoreMatch = input.match(scoreRegex);
 
   if (scoreMatch && (scoreMatch[1] || scoreMatch[2])) {

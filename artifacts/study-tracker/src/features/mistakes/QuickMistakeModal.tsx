@@ -86,11 +86,11 @@ export function QuickMistakeModal({
   
   // Normalized 19 Subjects List
   const subjectOptions = useMemo(() => {
-    if (dbSubjects.length > 0) {
-      return dbSubjects.map(s => ({ id: s.id, name: s.name }));
+    if (dbSubjects && dbSubjects.length > 0) {
+      return dbSubjects.filter(Boolean).map(s => ({ id: s.id, name: s.name || 'Subject' }));
     }
-    return getOntologyForExam(profile.targetExam || 'NEET PG').map(s => ({ id: s.id, name: s.name }));
-  }, [dbSubjects, profile.targetExam]);
+    return getOntologyForExam(profile?.targetExam || 'NEET PG').map(s => ({ id: s.id, name: s.name || 'Subject' }));
+  }, [dbSubjects, profile?.targetExam]);
 
   const [subjectId, setSubjectId] = useState<number | string>(subjectOptions[0]?.id || 1);
   const [keyTakeaway, setKeyTakeaway] = useState('');
@@ -109,10 +109,10 @@ export function QuickMistakeModal({
         setIsVolatile(Boolean(editingMistake.isVolatile));
         setSource(editingMistake.source || 'GT');
       } else {
-        if (defaultSubjectId) {
+        if (defaultSubjectId !== undefined && defaultSubjectId !== null) {
           const match = subjectOptions.find(
-            s => String(s.id).toLowerCase() === String(defaultSubjectId).toLowerCase() ||
-                 ((s.name || '').toLowerCase()) === String(defaultSubjectId).toLowerCase()
+            s => String(s?.id ?? '').toLowerCase() === String(defaultSubjectId).toLowerCase() ||
+                 String(s?.name ?? '').toLowerCase() === String(defaultSubjectId).toLowerCase()
           );
           setSubjectId(match ? match.id : (defaultSubjectId || subjectOptions[0]?.id || 1));
         } else {
@@ -157,7 +157,7 @@ export function QuickMistakeModal({
           source,
           updatedAt: new Date()
         });
-        toast.success(`${lexicon.mistakesJournal} rule updated`);
+        toast.success(`${lexicon?.mistakesJournal || 'Mistakes Journal'} rule updated`);
       } else {
         await logMistake({
           subjectId,
@@ -175,7 +175,7 @@ export function QuickMistakeModal({
       onOpenChange(false);
       if (onSaved) onSaved();
     } catch (err) {
-      console.error(`Failed to save ${lexicon.mistakesJournal} rule:`, err);
+      console.error(`Failed to save ${lexicon?.mistakesJournal || 'mistake'} rule:`, err);
       toast.error('Could not save rule. Please try again.');
     } finally {
       setSaving(false);
@@ -198,11 +198,11 @@ export function QuickMistakeModal({
               <BookOpen className="w-4 h-4" />
             </span>
             <DialogTitle className="text-lg font-extrabold tracking-tight text-foreground">
-              {editingMistake ? `Edit ${lexicon.mistakesJournal} Rule` : `Add to ${lexicon.mistakesJournal}`}
+              {editingMistake ? `Edit ${lexicon?.mistakesJournal || 'Mistakes Journal'} Rule` : `Add to ${lexicon?.mistakesJournal || 'Mistakes Journal'}`}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Curate an atomic clinical rule, drug choice, or volatile distinction for rapid pre-GT reading.
+            Curate an atomic clinical rule, drug choice, or volatile distinction for rapid {(lexicon?.preExamSpotlight || 'High-Yield Spotlight').toLowerCase()} review.
           </DialogDescription>
         </DialogHeader>
 
@@ -243,7 +243,7 @@ export function QuickMistakeModal({
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {src === 'GT' ? 'Grand Test' : src === 'QBank' ? 'Q-Bank' : 'Custom'}
+                    {src === 'GT' ? (lexicon?.mockExamAbbreviation || 'Mock') : src === 'QBank' ? 'Question Bank' : 'Custom'}
                   </button>
                 ))}
               </div>
@@ -310,7 +310,7 @@ export function QuickMistakeModal({
                   Mark as Volatile Trap ⚡
                 </span>
                 <span className="text-xs text-amber-400/80 dark:text-amber-400/80">
-                  Highlight this rule in the pre-GT urgent revision spotlight.
+                  Highlight this rule in the {(lexicon?.preExamSpotlight || 'High-Yield Spotlight').toLowerCase()}.
                 </span>
               </div>
             </div>

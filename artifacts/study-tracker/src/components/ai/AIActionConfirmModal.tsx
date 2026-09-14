@@ -469,7 +469,7 @@ export const AIActionConfirmModal: React.FC<AIActionConfirmModalProps> = ({
           <Label className="text-xs font-medium text-foreground">Grand Test / Mock Exam Name</Label>
           <Input
             value={scoreRec.testName}
-            placeholder="e.g. Marrow GT 12, Prepladder CBT 3, INI-CET Mock 4"
+            placeholder="e.g. Full Grand Test 12, Practice CBT 3, Comprehensive Mock 4"
             className="h-9 text-sm"
             onChange={(e) => setDraftAction({ ...scoreRec, testName: e.target.value })}
           />

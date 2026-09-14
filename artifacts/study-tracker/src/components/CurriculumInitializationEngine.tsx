@@ -8,7 +8,7 @@ export const ATLAS_CURRICULUM_VERSION = 'v2026.09.usmle_blueprint_v10_organ_syst
 
 export function CurriculumInitializationEngine({ children }: { children: React.ReactNode }) {
   const { profile, loading: profileLoading } = useExamProfile();
-  const targetExam = profile.targetExam || 'NEET PG';
+  const targetExam = profile?.targetExam || 'NEET PG';
   const isCustom = targetExam.toLowerCase().includes('custom') || targetExam.toLowerCase().includes('other');
   
   // Track DB count for current workspace. This automatically re-evaluates when workspace suffix changes.

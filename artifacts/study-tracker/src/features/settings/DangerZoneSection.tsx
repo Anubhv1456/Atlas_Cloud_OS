@@ -40,7 +40,7 @@ export function DangerZoneSection() {
             </div>
             <DialogTitle className="text-center text-xl font-bold tracking-tight">Permanently Delete All Data?</DialogTitle>
             <DialogDescription className="text-center text-xs sm:text-sm text-muted-foreground pt-1.5 leading-relaxed">
-              This action cannot be undone. This will permanently delete all 19 subjects, curriculum units, study blocks, score logs, revision schedules, and {lexicon.mistakesJournal} rules.
+              This action cannot be undone. This will permanently delete your curriculum subjects, syllabus sets, study blocks, score logs, revision schedules, and {lexicon.mistakesJournal} rules.
             </DialogDescription>
           </DialogHeader>
 
@@ -50,7 +50,7 @@ export function DangerZoneSection() {
               <span>What will be purged:</span>
             </div>
             <ul className="list-disc list-inside space-y-0.5 text-muted-foreground pl-1">
-              <li>All 19 NEET PG subjects & curriculum units</li>
+              <li>All curriculum subjects & syllabus sets</li>
               <li>Revision schedules, decay intervals & history</li>
               <li>Clinical score logs & diagnostic metrics</li>
               <li>{lexicon.mistakesJournal} high-yield pearls</li>

@@ -554,7 +554,7 @@ export default function TermsOfService() {
                     AI Model Response Verification Notice:
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
-                    While generative AI models are continuously optimized for medical accuracy, artificial intelligence can occasionally produce incorrect facts, outdated clinical references, or plausible hallucinations. <strong className="text-foreground">Candidates must always verify high-stakes medical concepts against standard primary medical textbooks</strong> (e.g., Harrison's Principles of Internal Medicine, Robbins Pathology, Bailey & Love's Surgery, First Aid) or official examination syllabi.
+                    While generative AI models are continuously optimized for medical accuracy, artificial intelligence can occasionally produce incorrect facts, outdated clinical references, or plausible hallucinations. <strong className="text-foreground">Candidates must always verify high-stakes medical concepts against standard primary medical textbooks</strong> (e.g., standard clinical medicine reference texts, pathology treatises, surgical manuals) or official examination syllabi.
                   </p>
                 </div>
               </div>

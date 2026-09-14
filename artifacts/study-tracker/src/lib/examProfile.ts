@@ -5,7 +5,6 @@ export interface ExamProfile {
   targetExam: string;
   targetExamDate: string;
   targetQBankSize?: number;
-  hasCompletedTriage?: boolean;
   curriculum: string;
   targetScore: string;
   currentYear?: string;
@@ -107,7 +106,6 @@ export async function fetchExamProfile(userId?: string): Promise<ExamProfile> {
               targetExam: data.targetExam ?? local.targetExam ?? '',
               targetExamDate: data.targetExamDate ?? local.targetExamDate ?? '',
               targetQBankSize: data.targetQBankSize ?? local.targetQBankSize,
-              hasCompletedTriage: data.hasCompletedTriage ?? local.hasCompletedTriage,
               curriculum: data.curriculum ?? local.curriculum ?? DEFAULT_EXAM_PROFILE.curriculum,
               targetScore: data.targetScore ?? local.targetScore ?? '',
               currentYear: data.currentYear ?? local.currentYear ?? DEFAULT_EXAM_PROFILE.currentYear,
@@ -162,7 +160,6 @@ export async function saveExamProfile(profile: ExamProfile, userId?: string): Pr
       targetExam: profile.targetExam,
       targetExamDate: profile.targetExamDate,
       targetQBankSize: profile.targetQBankSize ?? 3000,
-      hasCompletedTriage: profile.hasCompletedTriage ?? false,
       curriculum: profile.curriculum,
       targetScore: profile.targetScore,
       currentYear: profile.currentYear || 'Final MBBS',

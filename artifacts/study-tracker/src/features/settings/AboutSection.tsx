@@ -81,7 +81,7 @@ export function AboutSection() {
             <section className="space-y-1.5">
               <h4 className="font-bold text-foreground">2. No Doctor-Patient Relationship</h4>
               <p>
-                Use of this application, including its clinical quizzing algorithms, high-yield mistake ledgers, drug guidelines, and conversational AI assistant, does not establish a doctor-patient relationship or constitute clinical advice.
+                Use of this application, including its spaced repetition algorithms, active recall ledgers, high-yield mistake journals, drug guidelines, and conversational AI assistant, does not establish a doctor-patient relationship or constitute clinical advice.
               </p>
             </section>
 

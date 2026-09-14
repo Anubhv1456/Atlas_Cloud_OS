@@ -51,6 +51,7 @@ import { ParsedAtlasAction } from '@/lib/ai/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useExamProfile } from '@/hooks/useExamProfile';
+import { useLexicon } from '@/lib/lexicon';
 import { db } from '@/db';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 
@@ -66,6 +67,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
   initialMode = 'text'
 }) => {
   const { profile } = useExamProfile();
+  const lexicon = useLexicon();
   const isUsmle = Boolean(profile.targetExam && (profile.targetExam.includes('USMLE') || profile.targetExam.includes('Step')));
 
   const { settings } = useAISettings();
@@ -75,9 +77,7 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
       {
         id: 'msg-init',
         role: 'assistant',
-        content: isUsmle
-          ? "👋 Hello Doctor! I'm your **Atlas USMLE Co-Pilot**. Dictate or type your UWorld/NBME blocks, high-yield takeaways, or ask diagnostic drill questions based on your organ systems curriculum."
-          : "👋 Hello Doctor! I'm your **Atlas NEET PG Co-Pilot**. Dictate or type your study sessions, 20th notebook pearls, GT mock scores, or ask high-yield recall drills based on your 19-subject curriculum.",
+        content: lexicon.aiAssistantGreeting,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -168,12 +168,12 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
         { label: "💡 Log Key Takeaway", text: "Add takeaway: In acute HF exacerbation, avoid initiating beta-blockers until euvolemic." },
         { label: "🧬 2-Step Mechanism Drill", text: "Give me a two-step USMLE diagnostic vignette testing cardiovascular pathophysiology." },
         { label: "🫀 Explain Beta-blocker contraindications", text: "Explain absolute and relative contraindications of Beta-blockers in high-yield detail." },
-        { label: "📊 Record UWorld Block", text: "Recorded UWorld 40Q block: 75% correct in Renal and Pharmacology." }
+        { label: "📊 Record QBank Block", text: "Recorded 40Q QBank block: 75% correct in Renal and Pharmacology." }
       );
     } else {
       pills.push(
         { label: "💡 Log 20th Notebook Pearl", text: "Add 20th notebook pearl: DOC for acute manic episode with psychosis is Atypical Antipsychotic + Lithium." },
-        { label: "🧠 Quiz me on Cranial Nerves", text: "Quiz me on cranial nerve nuclei, exit foramina, and high-yield clinical lesions." },
+        { label: "🧠 Drill Cranial Nerves", text: "Rapid-fire active recall on cranial nerve nuclei, exit foramina, and high-yield clinical lesions." },
         { label: "🫀 Explain Beta-blocker contraindications", text: "Explain absolute and relative contraindications of Beta-blockers in high-yield detail." },
         { label: "📊 Record GT Score", text: "Recorded Mock GT score 144/200, weak in Microbiology and Pathology." }
       );
@@ -930,7 +930,9 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-xs sm:text-sm font-normal">
-                        "Log a 20th notebook pearl, record a GT score, or quiz high-yield concepts."
+                        {isUsmle 
+                          ? `"Log a high-yield takeaway rule, record a ${lexicon.mockExamAbbreviation} score, or review core objectives."`
+                          : `"Log a 20th notebook pearl, record a ${lexicon.mockExamAbbreviation} score, or review high-yield concepts."`}
                       </span>
                     )}
                   </div>
@@ -939,9 +941,20 @@ export const ChatAssistantDrawer: React.FC<ChatAssistantDrawerProps> = ({
                 {/* Quick Voice Suggestion Pills - Horizontal Scrollable Row */}
                 <div className="w-full flex flex-nowrap items-center justify-start sm:justify-center gap-1.5 overflow-x-auto scrollbar-none px-1 py-1 shrink-0">
                   {[ 
-                    { label: "📝 Add 20th Notebook Rule", query: "Add 20th notebook pearl: Drug of choice for Trigeminal Neuralgia is Carbamazepine" },
-                    { label: "🧠 Quiz me on Cranial Nerves", query: "Quiz me on Cranial Nerves clinical high-yields" },
-                    { label: "🎯 Log GT 4 Score (142/200)", query: "Log Grand Test 4 score 142 out of 200" },
+                    { 
+                      label: isUsmle ? "📝 Add Takeaway Rule" : "📝 Add 20th Notebook Rule", 
+                      query: isUsmle 
+                        ? "Add high-yield clinical rule: Drug of choice for Trigeminal Neuralgia is Carbamazepine" 
+                        : "Add 20th notebook pearl: Drug of choice for Trigeminal Neuralgia is Carbamazepine" 
+                    },
+                    { 
+                      label: "🧠 Drill Cranial Nerves", 
+                      query: "Review Cranial Nerves high-yield clinical pearls and exam objectives" 
+                    },
+                    { 
+                      label: `🎯 Log ${lexicon.mockExamAbbreviation} 4 Score (142/200)`, 
+                      query: `Log ${lexicon.mockExamLabel} 4 score 142 out of 200` 
+                    },
                   ].map((chip, idx) => ( 
                     <button
                       key={idx}

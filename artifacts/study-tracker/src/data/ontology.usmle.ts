@@ -2,7 +2,7 @@ import { OntologySubject } from './types.js';
 
 /**
  * Backward-Compatible Legacy Identifier Mapping Dictionary
- * Maps legacy IDs (USMLE_1 through USMLE_14) to canonical First Aid semantic identifiers.
+ * Maps legacy IDs (USMLE_1 through USMLE_14) to canonical USMLE Step 1 semantic identifiers.
  */
 export const USMLE_LEGACY_ID_MAP: Record<string, string> = {
   // 10 Organ Systems
@@ -171,7 +171,7 @@ export function isSubjectIdMatch(idA: string | number | undefined | null, idB: s
 }
 
 /**
- * Canonical 16-Subject First Aid Taxonomy for USMLE Step 1:
+ * Canonical 16-Subject Core Curriculum Taxonomy for USMLE Step 1:
  * - 10 Organ Systems
  * - 6 Foundational Disciplines
  */

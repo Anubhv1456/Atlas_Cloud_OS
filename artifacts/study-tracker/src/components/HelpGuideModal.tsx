@@ -21,7 +21,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">The SDSR Engine</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Our <strong>Spaced Decay Study Routine</strong> mathematically models the Ebbinghaus forgetting curve. You learn on your primary clinical platforms (Marrow, Pre-PG, DAMS, Bhatia, First Aid, Q-banks, or video lectures), and Atlas schedules the exact day and depth to revise.
+            Our <strong>Spaced Decay Study Routine</strong> mathematically models the Ebbinghaus forgetting curve. You learn on your primary clinical resources (question banks, core review notes, syllabus modules, or video lectures), and Atlas schedules the exact day and depth to revise.
           </p>
         </section>
         <section className="space-y-2">
@@ -111,7 +111,7 @@ const CHAPTERS = [
             </div>
             <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
               <strong className="text-primary font-semibold block">Phase III: Revision Orbit</strong>
-              <p className="text-muted-foreground">Maintaining retention stability across all 19 subjects simultaneously.</p>
+              <p className="text-muted-foreground">Maintaining retention stability across all curriculum subjects simultaneously.</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border/70 text-xs space-y-1">
               <strong className="text-primary font-semibold block">Phase IV: Polaris Peak</strong>
@@ -132,21 +132,21 @@ const CHAPTERS = [
     id: 'curriculum',
     title: 'Curriculum & Radar',
     icon: BookOpen,
-    searchTerms: 'hierarchy subject system topic high-yield star study blocks radar 19 subjects modules',
+    searchTerms: 'hierarchy subject system topic high-yield star study blocks radar subjects modules',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Hierarchy: Subject ➔ System ➔ Topic</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Atlas organizes the medical curriculum into <strong>19 Subjects</strong>, broken down into organ systems and high-yield topics.
+            Atlas organizes the medical curriculum into core subjects, broken down into organ systems and high-yield topics.
           </p>
         </section>
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            The 19-Subject Medical Radar
+            The Medical Subject Radar
           </h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Tap the <strong>Curriculum</strong> tab in the navigation bar to open the full macro-level <strong>Subject Radar</strong>. It displays completion rings, revision health, and systems needing attention across all 19 subjects simultaneously.
+            Tap the <strong>Curriculum</strong> tab in the navigation bar to open the full macro-level <strong>Subject Radar</strong>. It displays completion rings, revision health, and systems needing attention across your entire curriculum simultaneously.
           </p>
         </section>
         <section className="space-y-2">
@@ -206,15 +206,15 @@ const CHAPTERS = [
   },
   {
     id: 'notebook',
-    title: 'The 20th Notebook & Error Traps',
+    title: 'Mistakes Journal & Error Traps',
     icon: Award,
-    searchTerms: '20th notebook mistake recovery queue clinical lenses DOC IOC triad criteria imaging histopath contraindicated twin distinction anki export',
+    searchTerms: 'mistakes journal 20th notebook mistake recovery queue clinical lenses DOC IOC triad criteria imaging histopath contraindicated twin distinction active recall export flashcards',
     content: (
       <div className="space-y-8">
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">The 20th Notebook Philosophy</h4>
+          <h4 className="text-base font-bold text-foreground">The Mistakes Journal Philosophy</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            In Indian medical PG preparation, the legendary "20th Notebook" is where you distill high-yield volatile facts, repetitive traps, and clinical pearls across all 19 subjects. Atlas digitizes this into an actionable, searchable ledger.
+            In competitive medical board preparation (including Indian PG and USMLE Step exams), high-scoring candidates distill volatile facts, repetitive traps, and clinical pearls. Atlas digitizes this into an actionable, searchable ledger with active recall export capability.
           </p>
         </section>
         <section className="space-y-2">
@@ -258,9 +258,9 @@ const CHAPTERS = [
           </div>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">AI Flashcard Deck Synthesis (.tsv format)</h4>
+          <h4 className="text-base font-bold text-foreground">Active Recall Deck Synthesis (.tsv format)</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Turn your mistake logs into high-yield active-recall cards in one tap. Atlas uses clinical AI to synthesize raw question explanations and 20th Notebook pearls into crisp prompt-and-answer flashcard decks, complete with clinical lens tags, ready for export into any external spaced-repetition app.
+            Turn your mistake logs into high-yield active-recall cards in one tap. Atlas uses clinical AI to synthesize raw question explanations and error journal pearls into crisp prompt-and-answer flashcard decks, complete with clinical lens tags, ready for export into any external spaced-repetition app.
           </p>
         </section>
       </div>
@@ -282,7 +282,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">1-Tap Clinical Stem / Q-Bank Parser</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Tap the <strong>Clipboard</strong> icon inside the AI drawer to paste complex question stems or explanations from your Q-bank. The AI automatically isolates the core diagnostic trap and generates a 1-tap card to log straight into your 20th Notebook.
+            Tap the <strong>Clipboard</strong> icon inside the AI drawer to paste complex question stems or explanations from your Q-bank. The AI automatically isolates the core diagnostic trap and generates a 1-tap card to log straight into your mistakes journal.
           </p>
         </section>
         <section className="space-y-2">
@@ -344,7 +344,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">Does Atlas provide question banks or video lectures?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            No. Atlas is strictly a <strong>Curriculum Tracking & Spaced Revision OS</strong>. You use your preferred primary content sources (Marrow, Pre-PG, DAMS, Bhatia, First Aid, UWorld, Pathoma), and Atlas schedules your revision timings and mistake ledgers.
+            No. Atlas is strictly a <strong>Curriculum Tracking & Spaced Revision OS</strong>. You use your preferred primary learning sources (question banks, textbooks, review notes, and clinical lecture courses), and Atlas schedules your revision timings and mistake ledgers.
           </p>
         </section>
         <section className="space-y-2">
@@ -360,15 +360,15 @@ const CHAPTERS = [
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">What is the "20th Notebook"?</h4>
+          <h4 className="text-base font-bold text-foreground">What is the "Mistakes Journal"?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            It is your unified mistake repository and high-yield pearl ledger across all 19 subjects, categorized with 8 clinical lenses (DOC, IOC, Triads, Diagnostic Criteria, Imaging, Histopath, Contraindications, and Twin Distinctions).
+            It is your unified mistake repository and high-yield pearl ledger across your curriculum, categorized with 8 clinical lenses (DOC, IOC, Triads, Diagnostic Criteria, Imaging, Histopath, Contraindications, and Twin Distinctions).
           </p>
         </section>
         <section className="space-y-2">
-          <h4 className="text-base font-bold text-foreground">Can I export my mistakes as flashcards using AI?</h4>
+          <h4 className="text-base font-bold text-foreground">Can I export my mistakes as active recall cards?</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Yes. In the 20th Notebook, use <strong>AI Flashcard Synthesis</strong> to automatically distill your logged errors and clinical pearls into structured, tag-preserved flashcard decks ready for download and offline spaced-repetition practice.
+            Yes. In the Mistakes Journal, use <strong>Active Recall Deck Synthesis</strong> to automatically distill your logged errors and clinical pearls into structured, tag-preserved decks ready for download and offline spaced-repetition practice.
           </p>
         </section>
         <section className="space-y-2">
@@ -399,7 +399,7 @@ const CHAPTERS = [
         <section className="space-y-2">
           <h4 className="text-base font-bold text-foreground">1. Academic Context Only</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            All algorithms, memory decay models, high-yield mistake ledgers, drug of choice heuristics, and clinical quiz interactions are curated solely to assist medical students in passing licensing and competitive entrance exams.
+            All algorithms, memory decay models, high-yield mistake ledgers, drug of choice heuristics, and clinical recall interactions are curated solely to assist medical students in passing licensing and competitive entrance exams.
           </p>
         </section>
 

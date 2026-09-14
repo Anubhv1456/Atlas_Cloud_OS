@@ -200,10 +200,10 @@ export function useHomeLogic() {
         icon: <Target className="w-4 h-4 text-primary shrink-0" />,
         text: (
           <span>
-            Primary Focus <strong className="text-foreground">{primaryFocus.name}</strong> ({sub?.name}) is 1 task away from mastery ({missingTask} pending).
+            Primary Focus <strong className="text-foreground">{primaryFocus.name}</strong> ({sub?.name}) is 1 module away from completion ({missingTask} pending).
           </span>
         ),
-        actionLabel: 'Complete Task',
+        actionLabel: 'Complete Module',
         onAction: () => setLocation(`/subjects/${primaryFocus!.subjectId}?highlight=${primaryFocus.id}`),
       });
     }

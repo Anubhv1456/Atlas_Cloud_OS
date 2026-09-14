@@ -45,10 +45,8 @@ import { useAISettings } from '@/lib/ai/aiSettingsStorage';
 import { AIVoiceCaptureModal } from '@/components/ai/AIVoiceCaptureModal';
 import { FlashcardStudioModal } from '@/components/FlashcardStudioModal';
 
-export function getTagMeta(tag: string) {
-  const lexicon = useLexicon();
-
-  const norm = tag.toLowerCase();
+export function getTagMeta(tag?: string) {
+  const norm = (tag || '').toLowerCase();
   if (norm === 'doc' || norm.includes('pharma') || norm.includes('drug')) {
     return { icon: '💊', color: 'bg-emerald-950/20 text-emerald-400 dark:text-emerald-400 border-emerald-500/25' };
   }
@@ -185,7 +183,7 @@ export default function MistakeRecoveryQueue() {
       // Subject filter
       if (selectedSubjectId !== 'all') {
         const subMatch = String(m.subjectId) === selectedSubjectId;
-        const subNameMatch = subjectMap.get(String(m.subjectId))?.toLowerCase() === selectedSubjectId.toLowerCase();
+        const subNameMatch = (subjectMap.get(String(m.subjectId)) || '').toLowerCase() === String(selectedSubjectId).toLowerCase();
         if (!subMatch && !subNameMatch) return false;
       }
 
@@ -194,7 +192,7 @@ export default function MistakeRecoveryQueue() {
         if (!m.isVolatile) return false;
       } else if (selectedTag !== 'all') {
         const tags = m.tags || (m as any).coreLenses || [];
-        const hasTag = tags.some((t: string) => t.toLowerCase() === selectedTag.toLowerCase());
+        const hasTag = tags.some((t: string) => String(t || '').toLowerCase() === String(selectedTag).toLowerCase());
         if (!hasTag) return false;
       }
 
@@ -252,7 +250,7 @@ export default function MistakeRecoveryQueue() {
       return;
     }
 
-    let markdown = `# ${lexicon.mistakesJournal} — Rapid Pre-GT Revision Sheet\n`;
+    let markdown = `# ${lexicon.mistakesJournalTitle} — Pre-Exam Revision Sheet\n`;
     markdown += `Generated on ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}\n\n`;
 
     groupedMistakes.forEach(group => {
@@ -332,10 +330,10 @@ export default function MistakeRecoveryQueue() {
             variant="outline"
             onClick={() => setFlashcardModalOpen(true)}
             className="rounded-xl font-bold text-xs h-9 px-3 gap-1.5 cursor-pointer border-primary/30 text-zinc-300 dark:text-primary hover:bg-purple-50 dark:hover:bg-zinc-800/40 shadow-2xs"
-            title="Export Flashcards"
+            title="Export Active Recall Cards"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Flashcard Studio</span>
+            <span className="hidden sm:inline">Active Recall Studio</span>
             <span className="sm:hidden">Cards</span>
           </Button>
 
