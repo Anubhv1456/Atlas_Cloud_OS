@@ -88,6 +88,7 @@ export interface NextActionRecommendation {
   statusText: string;
   isMicroSliced?: boolean;
   priorityOverrideNotice?: string;
+  tags?: string[];
 }
 
 export interface SubjectInitiationOption {
@@ -249,6 +250,9 @@ export async function getNextActionRecommendation(
   const isClinicalDuty = mode === 'clinical_duty';
   let isFinalLap = mode === 'final_lap';
   const isHoliday = mode === 'holiday';
+
+  const onboardingPref = await db.uiPreferences.get('onboarding_status');
+  const onboardingIntentsResolved = onboardingPref?.onboardingCompleted === true;
 
   // 2. Fetch history for today to detect momentum & daily volume
   const todayStart = new Date(now);
@@ -765,7 +769,8 @@ export async function getNextActionRecommendation(
       revisionCount,
       statusText,
       isAgingPin,
-      wasPinned
+      wasPinned,
+      tags: set.tags
     });
   }
 
@@ -1129,13 +1134,11 @@ export async function getNextActionRecommendation(
   }
 
   // Detect fresh user / no progress state (e.g. fresh onboarding or cleared progress)
-  const isFreshState = historyEntries.length === 0 && 
-    !systems.some(s => s.contentCompleted || (s.revisionCount && s.revisionCount > 0)) &&
-    !curriculumSets.some(c => Boolean(c.lastRevisionDate) || (c.revisionCount && c.revisionCount > 0));
+  const isFreshState = !onboardingIntentsResolved && curriculumSets.length === 0;
 
-  // Inject synthetic primary for fresh users
+  // Inject synthetic primary for fresh users or true cold starts
   let finalPrimary = primary;
-  if (isFreshState && !finalPrimary && suggestedStarterSubjects.length > 0) {
+  if ((isFreshState || curriculumSets.length === 0) && !finalPrimary && suggestedStarterSubjects.length > 0) {
     const starter = suggestedStarterSubjects[0];
     finalPrimary = {
       id: -1,
@@ -1168,8 +1171,14 @@ export async function getNextActionRecommendation(
     if (!rec) return null;
     let message = '';
     
-    if (isFreshState) {
-      message = "Let's establish your baseline. We're starting with a highly-tested core subject to calibrate your personalized algorithm.";
+    if (rec.isFreshState || (!rec.tags?.includes('onboarding') && isFreshState)) {
+      message = `Let's establish your baseline. We're starting with ${rec.subjectName}, a highly-tested core subject.`;
+    } else if (rec.tags?.includes('onboarding')) {
+      if (rec.tags.includes('Targeted Review')) {
+        message = `Based on your setup, prioritizing ${rec.subjectName} to strengthen your weak areas.`;
+      } else {
+        message = `You've got a strong baseline here. Let's do a quick review of ${rec.subjectName} to confirm your mastery.`;
+      }
     } else if (isFinalLap) {
       message = `Critical ${targetExam} Integration: You historically drop points in ${rec.subjectName}. Review these high-yield concepts before your mock exam.`;
     } else if (rec.archetype === 'remediation_clinic') {

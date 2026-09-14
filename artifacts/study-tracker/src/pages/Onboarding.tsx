@@ -228,9 +228,30 @@ export default function Onboarding() {
       }
       
       if (updates.length > 0) {
-        await db.transaction('rw', db.systems, async () => {
+        await db.transaction('rw', db.systems, db.curriculumSets, async () => {
           for (const u of updates) {
             await db.systems.put(u);
+            
+            // Also generate an active curriculum set to instantly enter the Next Action engine
+            const setId = `cs_${sub.id}_${u.id}_${Date.now()}`;
+            const rationale = status === 'weak' ? 'Targeted Review' : 'Baseline Confirmation';
+            
+            await db.curriculumSets.put({
+              id: setId,
+              subjectId: sub.id,
+              systemId: u.id,
+              name: `${sub.name || 'System'} • ${u.name || 'Core'}`,
+              depth: 'standard',
+              tags: ['onboarding', rationale],
+              fsrsStability: u.fsrsStability,
+              fsrsDifficulty: u.fsrsDifficulty,
+              fsrsState: u.fsrsState,
+              fsrsReps: u.fsrsReps,
+              fsrsLastReview: u.fsrsLastReview,
+              fsrsDue: u.fsrsDue,
+              createdAt: now,
+              updatedAt: now
+            } as any);
           }
         });
       }

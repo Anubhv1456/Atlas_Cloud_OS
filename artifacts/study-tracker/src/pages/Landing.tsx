@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from 'framer-motion';
 import { ChevronRight, Play, Compass, ArrowRight, Cloud, Smartphone, Sparkles, Map, BookOpen, Brain, Shield, Activity, Clock, Users, ArrowUpRight, Github, Twitter, Mail, Network, Target } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { getMedicalGreeting } from '@/lib/greeting';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,7 +39,9 @@ function PhoneMockup({ children, className }: { children?: React.ReactNode, clas
 }
 
 // --- Illustration UIs ---
-const HomeDashboardUI = () => (
+const HomeDashboardUI = () => {
+  const greeting = useMemo(() => getMedicalGreeting(), []);
+  return (
   <div className="flex flex-col w-full h-full p-2.5 sm:p-4 bg-[#0a0c10] text-white text-left font-sans select-none overflow-hidden justify-between">
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-2">
@@ -47,7 +50,7 @@ const HomeDashboardUI = () => (
         </div>
         <div>
           <div className="text-[7px] sm:text-[9px] font-semibold text-[#20b59b] tracking-wider uppercase leading-none">MEDICAL STUDY TRACKER</div>
-          <div className="text-xs sm:text-base font-medium text-white tracking-tight leading-tight">Good Morning</div>
+          <div className="text-xs sm:text-base font-medium text-white tracking-tight leading-tight">{greeting}</div>
         </div>
       </div>
       <div className="hidden sm:flex items-center gap-1.5 bg-[#12141a] border border-white/10 rounded-full px-2.5 py-1 text-[9px] text-slate-400">
@@ -116,8 +119,11 @@ const HomeDashboardUI = () => (
     </div>
   </div>
 );
+};
 
-const MobileHomeUI = () => (
+const MobileHomeUI = () => {
+  const greeting = useMemo(() => getMedicalGreeting(), []);
+  return (
   <div className="flex flex-col w-full h-full p-2.5 bg-[#0a0c10] text-white text-left font-sans select-none overflow-hidden justify-between">
     <div className="flex items-center justify-between mb-1.5">
       <div className="flex items-center gap-1.5">
@@ -126,7 +132,7 @@ const MobileHomeUI = () => (
         </div>
         <div>
           <div className="text-[6px] font-semibold text-[#20b59b] tracking-wider uppercase leading-none">MEDICAL STUDY TRACKER</div>
-          <div className="text-xs font-medium text-white leading-tight">Good Morning</div>
+          <div className="text-xs font-medium text-white leading-tight">{greeting}</div>
         </div>
       </div>
     </div>
@@ -156,6 +162,7 @@ const MobileHomeUI = () => (
     </div>
   </div>
 );
+};
 
 const CurriculumVisualization = () => {
   return (

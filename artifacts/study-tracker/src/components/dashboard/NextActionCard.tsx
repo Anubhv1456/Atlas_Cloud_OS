@@ -186,11 +186,12 @@ export function NextActionCard() {
                 <div>
                    <div className="flex items-start justify-between gap-2 mb-2">
                      <Badge variant="outline" className={cn("text-[9px] uppercase tracking-wider font-bold shrink-0", 
+                         pulse.tags?.includes('onboarding') ? 'bg-primary/20 text-primary border-primary/30' :
                          pulse.archetype === 'remediation_clinic' ? 'bg-amber-950/20 text-amber-400 border-white/5' : 
                          pulse.archetype === 'zenith' ? 'bg-destructive/10 text-destructive border-destructive/20' :
                         'bg-zinc-800/40 text-primary border-white/5'
                      )}>
-                        {pulse.archetype.replace('_', ' ')}
+                        {pulse.tags?.includes('onboarding') ? 'Targeted Priority' : pulse.archetype.replace('_', ' ')}
                      </Badge>
                      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
                         {getOntologyIcon(pulse)}

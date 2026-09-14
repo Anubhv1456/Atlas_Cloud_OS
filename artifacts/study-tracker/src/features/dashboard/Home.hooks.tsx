@@ -1,4 +1,5 @@
 import { useLexicon } from '@/lib/lexicon';
+import { getMedicalGreeting } from '@/lib/greeting';
 import { isSystemComplete } from '@/lib/progress';
 import { useLiveQuery } from '@/hooks/useLiveQuery';
 import { useExamProfile } from '@/hooks/useExamProfile';
@@ -87,10 +88,7 @@ export function useHomeLogic() {
   } = determineFocusSystems(subjects, systems, curriculumSets, today(), opMode);
 
   const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    return getMedicalGreeting();
   }, []);
 
   const aiInsight = null;
