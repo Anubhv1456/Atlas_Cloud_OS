@@ -6,6 +6,7 @@ import { db } from '@/db/schema';
 import { localDb } from '@/db/localDb';
 import { cleanupBetaAccessSubscription } from '@/hooks/useBetaAccess';
 import { flushTelemetryBatch } from '@/lib/telemetry';
+import { claimReferralCode } from '@/lib/referral';
 
 interface AuthContextType {
   user: User | null;
@@ -74,7 +75,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const currentUser = result.user;
+      
+      if (currentUser) {
+        // Automatically claim any pending referral or affiliate code upon authentication
+        const pendingRef = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('atlas_pending_ref_code') : null;
+        const affiliateId = typeof localStorage !== 'undefined' ? localStorage.getItem('atlas_affiliate_id') : null;
+        const codeToClaim = pendingRef || affiliateId;
+        
+        if (codeToClaim) {
+          const source = affiliateId ? 'affiliate' : 'ref';
+          // Non-blocking fire-and-forget: hits /api/referral/claim to establish ledger entry
+          claimReferralCode(codeToClaim, currentUser, source as any).catch(err => {
+            console.warn('[useAuth] Background referral claim deferred:', err);
+          });
+        }
+      }
     } catch (error) {
       console.error('Error signing in with Google', error);
       throw error;
