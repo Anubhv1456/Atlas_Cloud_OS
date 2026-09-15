@@ -80,7 +80,31 @@ export class AtlasLocalDB extends Dexie {
       local_snapshots: '++id, timestamp, version'
     });
 
+    this.setupLifecycleHandlers();
     this.setupHooks();
+  }
+
+  private setupLifecycleHandlers() {
+    this.on('versionchange', () => {
+      // Gracefully yield connection when another tab or service worker triggers a schema migration
+      console.warn('[IndexedDB] Schema version upgrade detected from another tab or service worker. Closing connection...');
+      this.close();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('atlas-system-alert', {
+          detail: {
+            type: 'SCHEMA_UPGRADE_RELOAD',
+            message: 'A new version of Atlas OS is available. Reloading to apply updates...'
+          }
+        }));
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    });
+
+    this.on('blocked', () => {
+      console.warn('[IndexedDB] Database upgrade is blocked by an active database connection.');
+    });
   }
 
   private setupHooks() {

@@ -329,6 +329,32 @@ export function useBetaAccess() {
     } else {
       isTrialExpired = true;
     }
+  } else {
+    // Guest or unauthenticated local-first user trial tracking
+    try {
+      const GUEST_TRIAL_KEY = 'atlas_guest_trial_start';
+      let guestStart = typeof window !== 'undefined' ? localStorage.getItem(GUEST_TRIAL_KEY) : null;
+      if (!guestStart && typeof window !== 'undefined') {
+        guestStart = new Date().toISOString();
+        localStorage.setItem(GUEST_TRIAL_KEY, guestStart);
+      }
+      if (guestStart) {
+        const createdAt = new Date(guestStart);
+        const now = Date.now();
+        const diffMs = now - createdAt.getTime();
+        const diffDays = diffMs < 0 ? 999 : Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays <= 14) {
+          isTrialActive = true;
+          trialDaysRemaining = 14 - diffDays;
+        } else {
+          isTrialExpired = true;
+        }
+      }
+    } catch {
+      // Storage access fallback
+      isTrialActive = true;
+      trialDaysRemaining = 14;
+    }
   }
 
   // Override trial status if user has paid/been granted access

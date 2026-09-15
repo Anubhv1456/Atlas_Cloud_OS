@@ -168,7 +168,8 @@ export default function ProtectedApp() {
           return;
         }
 
-        if (!isStaffOrAdmin && !isAdminRoute && !accessLoading && !hasAccess && isTrialExpired) {
+        const isExemptRoute = location === '/settings' || location.startsWith('/settings');
+        if (!isStaffOrAdmin && !isAdminRoute && !isExemptRoute && !accessLoading && !hasAccess && isTrialExpired) {
           window.dispatchEvent(new CustomEvent('open-paywall-modal', {
             detail: { trigger: 'trial_expired' }
           }));

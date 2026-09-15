@@ -22,6 +22,8 @@ type OnboardingStep =
   | 'computing'
   | 'start_trial';
 
+const DRAFT_KEY = 'atlas_onboarding_draft';
+
 export default function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>('welcome_exam');
   const [, setLocation] = useLocation();
@@ -36,6 +38,51 @@ export default function Onboarding() {
   
   const [subjects, setSubjects] = useState<any[]>([]);
   const [computingStep, setComputingStep] = useState(0);
+
+  // Hydrate draft state if available
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.selectedExam) setSelectedExam(data.selectedExam);
+        if (data.selectedYear) setSelectedYear(data.selectedYear);
+        if (typeof data.baselineScore === 'number') setBaselineScore(data.baselineScore);
+        if (data.syllabusStatus) setSyllabusStatus(data.syllabusStatus);
+        if (data.step && data.step !== 'computing') {
+          setStep(data.step);
+          if (data.step === 'syllabus' || data.step === 'baseline') {
+            const exam = data.selectedExam || 'NEET PG';
+            const activeOntology = getOntologyForExam(exam);
+            setSubjects(activeOntology.map(s => ({
+              id: s.id as any,
+              name: s.name,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to hydrate onboarding draft', e);
+    }
+  }, []);
+
+  // Persist draft updates
+  useEffect(() => {
+    if (step === 'computing') return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        step,
+        selectedExam,
+        selectedYear,
+        baselineScore,
+        syllabusStatus
+      }));
+    } catch {
+      // ignore storage quota issues
+    }
+  }, [step, selectedExam, selectedYear, baselineScore, syllabusStatus]);
 
   const EXAMS = [
     { 
@@ -167,6 +214,11 @@ export default function Onboarding() {
   };
 
   const handleJumpRightIn = async () => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
     await markOnboarded();
     setLocation('/');
   };
@@ -193,69 +245,86 @@ export default function Onboarding() {
 
   const handleBuildRoadmap = async () => {
     setStep('computing');
+    // Yield to let the computing animation mount smoothly
+    await new Promise(r => setTimeout(r, 60));
     
     const now = new Date();
     const lastReviewTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     
-    for (const sub of subjects) {
-      const status = sub.id ? syllabusStatus[sub.id as string] : undefined;
-      if (status === 'untouched') continue;
+    try {
+      const activeSubIds = subjects.map(s => s.id).filter(Boolean);
+      const allSystems = await db.systems.where('subjectId').anyOf(activeSubIds).toArray();
+      const systemUpdates: any[] = [];
+      const curriculumSetInserts: any[] = [];
       
-      const systems = await db.systems.where('subjectId').equals(sub.id).toArray();
-      const updates: any[] = [];
-      
-      for (const sys of systems) {
-        if (status === 'familiar') {
-          updates.push({
-            ...sys,
-            fsrsStability: 40,
-            fsrsDifficulty: 5,
-            fsrsState: 2, 
-            fsrsReps: 5,
-            fsrsLastReview: lastReviewTime,
-            fsrsDue: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
-          });
-        } else if (status === 'weak') {
-          updates.push({
-            ...sys,
-            fsrsStability: 2,
-            fsrsDifficulty: 9,
-            fsrsState: 2,
-            fsrsReps: 2,
-            fsrsLastReview: lastReviewTime,
-            fsrsDue: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      for (const sub of subjects) {
+        const status = sub.id ? syllabusStatus[sub.id as string] : undefined;
+        if (status === 'untouched' || !status) continue;
+        
+        const subSystems = allSystems.filter(sys => sys.subjectId === sub.id);
+        for (const sys of subSystems) {
+          let updatedSys = { ...sys };
+          if (status === 'familiar') {
+            updatedSys = {
+              ...updatedSys,
+              fsrsStability: 40,
+              fsrsDifficulty: 5,
+              fsrsState: 2, 
+              fsrsReps: 5,
+              fsrsLastReview: lastReviewTime,
+              fsrsDue: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            };
+          } else if (status === 'weak') {
+            updatedSys = {
+              ...updatedSys,
+              fsrsStability: 2,
+              fsrsDifficulty: 9,
+              fsrsState: 2,
+              fsrsReps: 2,
+              fsrsLastReview: lastReviewTime,
+              fsrsDue: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
+            };
+          }
+          systemUpdates.push(updatedSys);
+          
+          const setId = `cs_${sub.id}_${sys.id}_${Date.now()}`;
+          const rationale = status === 'weak' ? 'Targeted Review' : 'Baseline Confirmation';
+          curriculumSetInserts.push({
+            id: setId,
+            subjectId: sub.id,
+            systemId: sys.id,
+            name: `${sub.name || 'System'} • ${sys.name || 'Core'}`,
+            depth: 'standard',
+            tags: ['onboarding', rationale],
+            fsrsStability: updatedSys.fsrsStability,
+            fsrsDifficulty: updatedSys.fsrsDifficulty,
+            fsrsState: updatedSys.fsrsState,
+            fsrsReps: updatedSys.fsrsReps,
+            fsrsLastReview: updatedSys.fsrsLastReview,
+            fsrsDue: updatedSys.fsrsDue,
+            createdAt: now,
+            updatedAt: now
           });
         }
       }
       
-      if (updates.length > 0) {
-        await db.transaction('rw', db.systems, db.curriculumSets, async () => {
-          for (const u of updates) {
-            await db.systems.put(u);
-            
-            // Also generate an active curriculum set to instantly enter the Next Action engine
-            const setId = `cs_${sub.id}_${u.id}_${Date.now()}`;
-            const rationale = status === 'weak' ? 'Targeted Review' : 'Baseline Confirmation';
-            
-            await db.curriculumSets.put({
-              id: setId,
-              subjectId: sub.id,
-              systemId: u.id,
-              name: `${sub.name || 'System'} • ${u.name || 'Core'}`,
-              depth: 'standard',
-              tags: ['onboarding', rationale],
-              fsrsStability: u.fsrsStability,
-              fsrsDifficulty: u.fsrsDifficulty,
-              fsrsState: u.fsrsState,
-              fsrsReps: u.fsrsReps,
-              fsrsLastReview: u.fsrsLastReview,
-              fsrsDue: u.fsrsDue,
-              createdAt: now,
-              updatedAt: now
-            } as any);
-          }
-        });
+      // Write in micro-batches across animation frames to guarantee 60fps on radar graphic
+      if (systemUpdates.length > 0) {
+        const batchSize = 30;
+        for (let i = 0; i < systemUpdates.length; i += batchSize) {
+          await db.systems.bulkPut(systemUpdates.slice(i, i + batchSize));
+          await new Promise(r => requestAnimationFrame(r));
+        }
       }
+      if (curriculumSetInserts.length > 0) {
+        const batchSize = 30;
+        for (let i = 0; i < curriculumSetInserts.length; i += batchSize) {
+          await db.curriculumSets.bulkPut(curriculumSetInserts.slice(i, i + batchSize) as any);
+          await new Promise(r => requestAnimationFrame(r));
+        }
+      }
+    } catch (e) {
+      console.warn('Roadmap generation warning:', e);
     }
     
     setTimeout(() => setComputingStep(1), 800);
@@ -801,6 +870,11 @@ export default function Onboarding() {
 
                   <button
                     onClick={async () => {
+                      try {
+                        localStorage.removeItem(DRAFT_KEY);
+                      } catch {
+                        // ignore
+                      }
                       await markOnboarded();
                       setLocation('/');
                     }}

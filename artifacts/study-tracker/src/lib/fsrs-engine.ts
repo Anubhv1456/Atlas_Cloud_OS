@@ -21,6 +21,15 @@ export async function processFSRS(systemId: number | string, rating: Rating, log
   const system = await db.systems.get(systemId);
   if (!system) return;
 
+  // Micro-review spam defense: reject duplicate ratings within 2500ms on the same entity
+  if (system.fsrsLastReview) {
+    const lastRevTime = new Date(system.fsrsLastReview).getTime();
+    if (logDate.getTime() - lastRevTime < 2500 && logDate.getTime() >= lastRevTime) {
+      console.warn(`[FSRS Guard] Duplicate rating for system ${systemId} suppressed (<2500ms delta).`);
+      return;
+    }
+  }
+
   // Build FSRS Card from system fields or create new
   let card: Card = {
     due: system.fsrsDue ? new Date(system.fsrsDue) : new Date(),
@@ -44,7 +53,9 @@ export async function processFSRS(systemId: number | string, rating: Rating, log
   const opMode = await db.operationalModes.get('current');
   const recalibration = isSoftRecalibrating(opMode, logDate);
 
-  if (recalibration.active && (rating === Rating.Good || rating === Rating.Easy)) {
+  // Protect synthetic baseline cards: Only apply soft recalibration dampener if card has at least 1 true review
+  const isSynthetic = (card.reps === 0 || (system as any).isSyntheticBaseline === true);
+  if (!isSynthetic && recalibration.active && (rating === Rating.Good || rating === Rating.Easy)) {
     const elapsedSinceDue = card.due ? (logDate.getTime() - card.due.getTime()) / (1000 * 60 * 60 * 24) : 0;
     if (elapsedSinceDue > 7) {
       nextCard.stability = nextCard.stability * 0.75;

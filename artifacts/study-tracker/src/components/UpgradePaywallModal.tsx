@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Lock, Key, CreditCard, Sparkles, Zap, ShieldCheck, Brain, Layers, RotateCcw, Loader2 } from 'lucide-react';
+import { Lock, Key, CreditCard, Sparkles, Zap, ShieldCheck, Brain, Layers, RotateCcw, Loader2, Download, WifiOff } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
+import { exportCompleteVault } from '@/lib/vaultSync';
 import { toast } from 'sonner';
 
 export interface PaywallTriggerDetail {
@@ -14,11 +15,24 @@ export interface PaywallTriggerDetail {
 export function UpgradePaywallModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [exportingVault, setExportingVault] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [payload, setPayload] = useState<PaywallTriggerDetail>({ trigger: 'default' });
   const [, setLocation] = useLocation();
   const [affiliateId, setAffiliateId] = useState<string>('');
   const { user, signInWithGoogle } = useAuth();
   const { hasAccess } = useBetaAccess();
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Automatically dismiss paywall trap whenever paid access is confirmed
   useEffect(() => {
@@ -134,6 +148,26 @@ export function UpgradePaywallModal() {
 
   const isTrialExpiredTrap = payload.trigger === 'trial_expired' && !hasAccess;
 
+  const handleEmergencyExport = async () => {
+    setExportingVault(true);
+    try {
+      const { blob, filename } = await exportCompleteVault(user);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Your complete study vault was safely exported.');
+    } catch (err: any) {
+      toast.error('Failed to export vault: ' + (err.message || 'Unknown error'));
+    } finally {
+      setExportingVault(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       // Prevent closing if it's a trial expiration trap
@@ -210,15 +244,26 @@ export function UpgradePaywallModal() {
               </div>
               <span className="text-[10px] font-semibold text-muted-foreground">Calculated at Checkout</span>
             </div>
+            {!isOnline && (
+              <div className="mb-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2 text-xs text-amber-400">
+                <WifiOff className="w-4 h-4 shrink-0" />
+                <span>You are currently offline. Connect to internet to proceed to checkout.</span>
+              </div>
+            )}
             <Button 
-              disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs py-2 shadow-md cursor-pointer transition-all"
+              disabled={loading || !isOnline}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs py-2 shadow-md cursor-pointer transition-all disabled:opacity-50"
               onClick={handleCheckout}
             >
               {loading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                   Connecting to Secure Checkout...
+                </>
+              ) : !isOnline ? (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 mr-1.5" />
+                  Offline — Reconnect to Subscribe
                 </>
               ) : (
                 <>
@@ -238,16 +283,26 @@ export function UpgradePaywallModal() {
             </p>
           </div>
           
-          <div className="text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
             <Button 
               variant="link" 
-              className="text-xs text-muted-foreground hover:text-primary"
+              className="text-xs text-muted-foreground hover:text-primary cursor-pointer h-auto p-1"
               onClick={() => {
                 setIsOpen(false);
                 setLocation('/settings');
               }}
             >
               I already have a License / Enter API Key
+            </Button>
+            <span className="hidden sm:inline text-xs text-muted-foreground/60">•</span>
+            <Button 
+              variant="link" 
+              disabled={exportingVault}
+              className="text-xs text-muted-foreground hover:text-primary cursor-pointer h-auto p-1 flex items-center gap-1.5"
+              onClick={handleEmergencyExport}
+            >
+              {exportingVault ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+              <span>{exportingVault ? 'Exporting Vault...' : 'Export My Study Vault (Backup)'}</span>
             </Button>
           </div>
         </div>

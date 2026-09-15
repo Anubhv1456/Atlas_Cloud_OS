@@ -3,13 +3,14 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, firestoreDb } from '@/lib/firebase';
 import { flushTelemetryBatch } from '@/lib/telemetry';
 import { localDb } from './localDb';
-import { db } from './schema';
+import { db, dbEvents } from './schema';
 
 class SyncEngine {
   public isSyncing = false;
   public isColdBootComplete = false;
   private resolveColdBoot!: () => void;
   public coldBootPromise: Promise<void>;
+  private syncTimer: any = null;
 
   constructor() {
     this.coldBootPromise = new Promise<void>((resolve) => {
@@ -18,6 +19,80 @@ class SyncEngine {
         resolve();
       };
     });
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        console.log('[SyncEngine] Network connection restored. Processing queued mutations...');
+        this.drainMutationQueue();
+      });
+
+      // Listen for mutation events emitted by database writes to schedule debounced cloud backup
+      dbEvents.on('mutation', () => {
+        this.scheduleBackgroundSync();
+      });
+    }
+  }
+
+  /**
+   * Debounced background sync trigger
+   */
+  scheduleBackgroundSync(delayMs = 6000) {
+    if (typeof window === 'undefined') return;
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer);
+    }
+    this.syncTimer = setTimeout(async () => {
+      this.syncTimer = null;
+      await this.drainMutationQueue();
+    }, delayMs);
+  }
+
+  /**
+   * Flushes local database to Firestore and cleans processed mutations from the queue
+   */
+  async drainMutationQueue() {
+    if (this.isSyncing) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      console.log('[SyncEngine] Device offline; mutation queue preserved.');
+      return;
+    }
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    try {
+      const queueCount = await localDb.mutation_queue.count();
+      if (queueCount === 0) return;
+
+      const syncTimestamp = Date.now();
+      
+      // Multi-device conflict safeguard: Check if cloud vault has newer remote changes from another device
+      try {
+        const docRef = doc(firestoreDb, `users/${uid}/vaultBackup`, 'latest');
+        const cloudSnap = await getDoc(docRef);
+        if (cloudSnap.exists()) {
+          const cloudData = cloudSnap.data();
+          const localMeta = await localDb.sync_meta.get('last_cloud_sync_timestamp');
+          const lastLocalSync = localMeta ? localMeta.lastSyncTimestamp : 0;
+          const cloudUpdatedAt = cloudData?.updatedAt?.toMillis ? cloudData.updatedAt.toMillis() : 0;
+
+          // If cloud backup is newer than our last known sync, pull and merge remote changes first
+          if (cloudUpdatedAt > 0 && lastLocalSync > 0 && cloudUpdatedAt > lastLocalSync + 5000) {
+            console.log('[SyncEngine] Detected concurrent cloud changes from another device. Pulling remote baseline before push...');
+            await this.pullRemoteBackupFromFirestore(uid);
+          }
+        }
+      } catch (checkErr) {
+        console.warn('[SyncEngine] Cloud timestamp pre-check skipped:', checkErr);
+      }
+
+      await this.pushLocalBackupToFirestore(uid);
+
+      // Clean up drained mutations that occurred up to syncTimestamp
+      await localDb.mutation_queue.where('timestamp').belowOrEqual(syncTimestamp).delete();
+      console.log(`[SyncEngine] Successfully synced and cleared ${queueCount} mutations from queue.`);
+    } catch (err) {
+      console.warn('[SyncEngine] Mutation queue sync attempt deferred:', err);
+    }
   }
 
   /**
@@ -127,16 +202,47 @@ class SyncEngine {
       }
       const base64Data = btoa(binaryString);
 
-      // Write entire backup to a single document location in Firestore
+      const CHUNK_SIZE = 700 * 1024; // 700 KB safe slice limit per doc (Firestore ceiling is 1,048,576 bytes)
       const docRef = doc(firestoreDb, `users/${uid}/vaultBackup`, 'latest');
-      await setDoc(docRef, {
-        version: 2,
-        compressed: true,
-        encoding: 'base64',
-        data: base64Data,
-        updatedAt: serverTimestamp(),
-        itemCount: totalRecords
-      });
+
+      if (base64Data.length <= CHUNK_SIZE) {
+        // Write entire backup to a single document
+        await setDoc(docRef, {
+          version: 2,
+          compressed: true,
+          encoding: 'base64',
+          isChunked: false,
+          data: base64Data,
+          updatedAt: serverTimestamp(),
+          itemCount: totalRecords
+        });
+      } else {
+        // Partition into chunks to avoid Firestore 1 MiB document size crash
+        const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
+        const chunkPromises: Promise<any>[] = [];
+
+        for (let c = 0; c < totalChunks; c++) {
+          const chunkData = base64Data.substring(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
+          const chunkDocRef = doc(firestoreDb, `users/${uid}/vaultBackup`, `chunk_${c}`);
+          chunkPromises.push(setDoc(chunkDocRef, {
+            chunkIndex: c,
+            data: chunkData,
+            updatedAt: serverTimestamp()
+          }));
+        }
+
+        await Promise.all(chunkPromises);
+
+        await setDoc(docRef, {
+          version: 2,
+          compressed: true,
+          encoding: 'base64',
+          isChunked: true,
+          chunkCount: totalChunks,
+          updatedAt: serverTimestamp(),
+          itemCount: totalRecords
+        });
+      }
 
       const now = Date.now();
       await localDb.sync_meta.put({
@@ -154,6 +260,9 @@ class SyncEngine {
 
       // Bundle flush of any pending telemetry events during cloud sync
       await flushTelemetryBatch().catch(() => {});
+
+      // Clear mutation queue up to this backup timestamp
+      await localDb.mutation_queue.where('timestamp').belowOrEqual(now).delete().catch(() => {});
 
       console.log(`Successfully backed up ${totalRecords} items in a single-blob.`);
     } catch (err) {
@@ -174,10 +283,23 @@ class SyncEngine {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const docData = docSnap.data();
-        if (docData && docData.data) {
+        let fullBase64Data = docData?.data || '';
+
+        if (docData?.isChunked && docData?.chunkCount) {
+          // Reassemble segmented chunk documents
+          const chunkFetches: Promise<any>[] = [];
+          for (let c = 0; c < docData.chunkCount; c++) {
+            const chunkDocRef = doc(firestoreDb, `users/${uid}/vaultBackup`, `chunk_${c}`);
+            chunkFetches.push(getDoc(chunkDocRef));
+          }
+          const chunkSnaps = await Promise.all(chunkFetches);
+          fullBase64Data = chunkSnaps.map(snap => snap.data()?.data || '').join('');
+        }
+
+        if (fullBase64Data) {
           let parsed;
           if (docData.compressed && docData.encoding === 'base64') {
-            const binaryString = atob(docData.data);
+            const binaryString = atob(fullBase64Data);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               bytes[i] = binaryString.charCodeAt(i);
@@ -186,7 +308,7 @@ class SyncEngine {
             const jsonStr = strFromU8(decompressedUint8);
             parsed = JSON.parse(jsonStr);
           } else {
-            parsed = JSON.parse(docData.data);
+            parsed = JSON.parse(fullBase64Data);
           }
           
           // Fast bulkPut inside IndexedDB

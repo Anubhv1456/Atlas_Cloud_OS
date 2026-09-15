@@ -1,3 +1,4 @@
+import React, { useState, useRef } from 'react';
 import { SystemStatus } from '@/db';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,20 @@ export function ConfidenceDialog({
   onSelect,
   onClose,
 }: ConfidenceDialogProps) {
+  const isSubmittingRef = useRef(false);
+
+  const handleSelect = (confidence: SystemStatus) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    try {
+      onSelect(confidence);
+    } finally {
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+      }, 400);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={open => { if (!open && onClose) onClose(); }}>
       <DialogContent className="sm:max-w-[380px] rounded-xl mx-4 w-[calc(100%-2rem)]">
@@ -60,7 +75,7 @@ export function ConfidenceDialog({
           {OPTIONS.map(opt => (
             <button
               key={opt.value}
-              onClick={() => onSelect(opt.value)}
+              onClick={() => handleSelect(opt.value)}
               className={cn(
                 'w-full flex items-center justify-between px-5 py-3.5 rounded-xl border-2 transition-all duration-150 text-left',
                 'bg-card active:scale-[0.98]',

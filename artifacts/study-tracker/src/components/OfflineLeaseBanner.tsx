@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, Database, RefreshCw, AlertCircle } from 'lucide-react';
+import { WifiOff, Database, RefreshCw, AlertCircle, BookmarkPlus } from 'lucide-react';
 import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export function OfflineLeaseBanner() {
   );
   const { offlineLeaseValid, offlineHoursRemaining, isSoftLocked } = useBetaAccess();
   const [isChecking, setIsChecking] = useState(false);
+  const [showIosStorageTip, setShowIosStorageTip] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -17,6 +18,16 @@ export function OfflineLeaseBanner() {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Check if iOS Safari standard tab (not installed as Home Screen PWA)
+    if (typeof window !== 'undefined') {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      const isStandalone = (window.navigator as any).standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      const hasDismissedTip = localStorage.getItem('atlas_ios_storage_tip_dismissed') === 'true';
+      if (isIOS && !isStandalone && !hasDismissedTip) {
+        setShowIosStorageTip(true);
+      }
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -37,9 +48,28 @@ export function OfflineLeaseBanner() {
     }
   };
 
-  // If online and not soft locked, no banner needed — zero visual noise
+  // If online and not soft locked, check if we need to show iOS storage tip
   if (isOnline && !isSoftLocked) {
-    return null;
+    if (!showIosStorageTip) return null;
+    return (
+      <div className="w-full relative z-40 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs flex items-center justify-between gap-3 text-amber-200">
+        <div className="flex items-center gap-2 min-w-0">
+          <BookmarkPlus className="w-4 h-4 text-amber-400 shrink-0" />
+          <span className="truncate">
+            <strong>iOS Tip:</strong> Add to Home Screen (<span className="text-white font-medium">Share → Add to Home Screen</span>) to protect your study database from Safari's 7-day storage cleanup.
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            localStorage.setItem('atlas_ios_storage_tip_dismissed', 'true');
+            setShowIosStorageTip(false);
+          }}
+          className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 shrink-0 cursor-pointer font-medium"
+        >
+          Got it
+        </button>
+      </div>
+    );
   }
 
   const isLeaseCritical = !offlineLeaseValid || offlineHoursRemaining <= 6;

@@ -186,6 +186,20 @@ class FirestoreTable<T extends Record<string, any>> {
     if (localTable) {
       await localTable.put(cleanPayload);
     }
+    try {
+      const timestamp = Date.now();
+      await localDb.mutation_queue.add({
+        collectionName: this.name,
+        docId: String(id),
+        action: 'PUT',
+        payload: cleanPayload,
+        timestamp,
+        bucketMonth: new Date(timestamp).toISOString().slice(0, 7)
+      });
+      dbEvents.emit('mutation', this.name);
+    } catch (err) {
+      console.warn(`[FirestoreTable:${this.name}] Mutation queue warning:`, err);
+    }
     tabSyncChannel.postMessage('invalidate_cache');
     return id;
   }
@@ -218,6 +232,21 @@ class FirestoreTable<T extends Record<string, any>> {
     const localTable = (localDb as any)[this.name];
     if (localTable) {
       await localTable.bulkPut(resolvedItems);
+    }
+    try {
+      const timestamp = Date.now();
+      const bucketMonth = new Date(timestamp).toISOString().slice(0, 7);
+      await localDb.mutation_queue.bulkAdd(resolvedItems.map(item => ({
+        collectionName: this.name,
+        docId: String((item as any).id),
+        action: 'PUT' as const,
+        payload: item,
+        timestamp,
+        bucketMonth
+      })));
+      dbEvents.emit('mutation', this.name);
+    } catch (err) {
+      console.warn(`[FirestoreTable:${this.name}] Bulk mutation queue warning:`, err);
     }
     tabSyncChannel.postMessage('invalidate_cache');
   }
@@ -253,6 +282,20 @@ class FirestoreTable<T extends Record<string, any>> {
     if (localTable && resolved) {
       await localTable.put(resolved);
     }
+    try {
+      const timestamp = Date.now();
+      await localDb.mutation_queue.add({
+        collectionName: this.name,
+        docId: String(id),
+        action: 'PUT',
+        payload: resolved,
+        timestamp,
+        bucketMonth: new Date(timestamp).toISOString().slice(0, 7)
+      });
+      dbEvents.emit('mutation', this.name);
+    } catch (err) {
+      console.warn(`[FirestoreTable:${this.name}] Update mutation queue warning:`, err);
+    }
     tabSyncChannel.postMessage('invalidate_cache');
     return 1;
   }
@@ -264,6 +307,20 @@ class FirestoreTable<T extends Record<string, any>> {
     const localTable = (localDb as any)[this.name];
     if (localTable) {
       await localTable.delete(id);
+    }
+    try {
+      const timestamp = Date.now();
+      await localDb.mutation_queue.add({
+        collectionName: this.name,
+        docId: String(id),
+        action: 'DELETE',
+        payload: null,
+        timestamp,
+        bucketMonth: new Date(timestamp).toISOString().slice(0, 7)
+      });
+      dbEvents.emit('mutation', this.name);
+    } catch (err) {
+      console.warn(`[FirestoreTable:${this.name}] Delete mutation queue warning:`, err);
     }
     tabSyncChannel.postMessage('invalidate_cache');
   }

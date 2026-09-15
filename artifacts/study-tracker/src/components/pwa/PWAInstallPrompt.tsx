@@ -17,11 +17,28 @@ export function PWAInstallPrompt() {
     if (typeof window === 'undefined') return;
     const handleShow = () => setIsVisible(true);
     window.addEventListener('show-pwa-install-modal', handleShow);
+
+    // Auto-surface if user is trapped inside an in-app WebView
+    try {
+      if (isWebView && sessionStorage.getItem('webview_escape_dismissed') !== 'true') {
+        setIsVisible(true);
+      }
+    } catch {
+      // ignore storage access issues
+    }
+
     return () => window.removeEventListener('show-pwa-install-modal', handleShow);
-  }, []);
+  }, [isWebView]);
 
   const handleClose = () => {
     setIsVisible(false);
+    if (isWebView) {
+      try {
+        sessionStorage.setItem('webview_escape_dismissed', 'true');
+      } catch {
+        // ignore
+      }
+    }
     dismissPrompt();
   };
 
@@ -56,16 +73,35 @@ export function PWAInstallPrompt() {
               <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mb-4">
                 <ExternalLink className="w-6 h-6 text-amber-500" />
               </div>
-              <h3 className="text-xl font-semibold text-zinc-100">Open in System Browser</h3>
+              <h3 className="text-xl font-semibold text-zinc-100">Open in Safari / Chrome</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                You're viewing Atlas inside an in-app browser. Tap the menu icon (•••) and select <strong>'Open in Safari'</strong> or <strong>'Open in Chrome'</strong> to install Atlas offline.
+                You're viewing Atlas inside an in-app browser (Instagram/TikTok/YouTube). In-app browsers delete your local study notes when closed.
               </p>
-              <button 
-                onClick={handleClose}
-                className="w-full mt-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors"
-              >
-                Got it
-              </button>
+              <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs text-zinc-300 space-y-1.5">
+                <div className="font-semibold text-amber-400 flex items-center gap-1.5">
+                  <span>1.</span> Tap the menu icon (••• or ↗) in the top/bottom corner
+                </div>
+                <div className="font-semibold text-zinc-200 flex items-center gap-1.5">
+                  <span>2.</span> Tap <strong>'Open in Safari'</strong> or <strong>'Open in System Browser'</strong>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard?.writeText(window.location.href);
+                    alert('Link copied to clipboard! Paste it directly into Safari or Chrome.');
+                  }}
+                  className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Copy Link for Safari
+                </button>
+                <button 
+                  onClick={handleClose}
+                  className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
             </div>
           ) : (platform === 'ios' || platform === 'ipados') ? (
             <div className="space-y-5">

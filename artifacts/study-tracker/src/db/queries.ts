@@ -181,10 +181,15 @@ export function useCurrentStreak(): number {
     }));
 
     // Check if there is an entry for reference date. If not, check the day before.
+    // Use a 30-hour timezone travel window to protect streaks during international flights across date lines
     let timeToCheck = currentDate.getTime();
     if (!dates.has(timeToCheck)) {
+      // Check if last activity occurred within 36 hours of current date midnight
+      const latestEntryTime = Math.max(...Array.from(dates));
+      const hoursSinceLastActive = (currentDate.getTime() - latestEntryTime) / (1000 * 60 * 60);
+      
       timeToCheck -= 86400000;
-      if (!dates.has(timeToCheck)) {
+      if (!dates.has(timeToCheck) && hoursSinceLastActive > 30) {
         return 0; // Missed prior days
       }
     }

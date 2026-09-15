@@ -84,9 +84,23 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
     }
   }, [exportSubjectId, subjects, hasManuallyEditedDeck]);
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
+  const activeAbortControllerRef = React.useRef<AbortController | null>(null);
+
+  const handleCancelOperation = () => {
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+      activeAbortControllerRef.current = null;
+    }
+    toast.info('Generation stopped.');
+    setStep('select');
+  };
 
   useEffect(() => {
     if (isOpen) {
+      if (activeAbortControllerRef.current) {
+        activeAbortControllerRef.current.abort();
+        activeAbortControllerRef.current = null;
+      }
       setStep('select');
       setPrompt("");
       setFormatType("custom");
@@ -101,6 +115,9 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
 
   useEffect(() => {
     return () => {
+      if (activeAbortControllerRef.current) {
+        activeAbortControllerRef.current.abort();
+      }
       if (deckUrl) URL.revokeObjectURL(deckUrl);
     };
   }, [deckUrl]);
@@ -113,9 +130,15 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
 
   const generatePreview = async (currentPrompt: string, currentFormatType: string) => {
     if (targetMistakes.length === 0) return;
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     setStep('preview_loading');
     try {
-      const card = await generateFlashcardPreview(targetMistakes[0], currentPrompt, currentFormatType);
+      const card = await generateFlashcardPreview(targetMistakes[0], currentPrompt, currentFormatType, controller.signal);
       if (card) {
         setPreviewCard(card);
         setStep('preview_ready');
@@ -124,19 +147,36 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
         setStep('select');
       }
     } catch (e: any) {
+      if (controller.signal.aborted) return;
       toast.error(e.message || 'Failed to generate preview.');
       setStep('select');
+    } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
     }
   };
 
   const handleStartGeneration = async () => {
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     setStep('generating');
     setProgress({ current: 0, total: targetMistakes.length });
     
     try {
-      const result = await generateFlashcardDeck(targetMistakes, prompt, formatType, (current, total) => {
-        setProgress({ current, total });
-      });
+      const result = await generateFlashcardDeck(
+        targetMistakes, 
+        prompt, 
+        formatType, 
+        (current, total) => {
+          setProgress({ current, total });
+        },
+        controller.signal
+      );
       
       setGeneratedCards(result.cards);
       setFailedCount(result.failed);
@@ -158,11 +198,20 @@ export function FlashcardStudioModal({ isOpen, onClose, allMistakes, visibleMist
         setDeckUrl(URL.createObjectURL(blob));
       }
       
-      
       setStep('complete');
     } catch (e: any) {
-      toast.error(e.message || 'Generation failed.');
+      if (controller.signal.aborted) return;
+      const isQuota = e?.message?.includes('429') || e?.message?.includes('RESOURCE_EXHAUSTED');
+      if (isQuota) {
+        toast.error('Gemini API quota exceeded (429). Please wait a minute or use manual card entry.');
+      } else {
+        toast.error(e.message || 'Generation failed.');
+      }
       setStep('select');
+    } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
     }
   };
 
@@ -382,9 +431,17 @@ return (
                 
                 <div className="relative min-h-[150px] w-full rounded-xl border bg-muted/30 p-5 flex flex-col items-center justify-center">
                   {step === 'preview_loading' ? (
-                     <div className="flex flex-col items-center gap-3 text-primary">
+                     <div className="flex flex-col items-center gap-3 text-primary py-4">
                        <RefreshCcw className="w-6 h-6 animate-spin" />
                        <span className="text-xs font-medium">Generating preview from your topmost rule...</span>
+                       <Button 
+                         variant="outline" 
+                         size="sm" 
+                         onClick={handleCancelOperation}
+                         className="mt-2 text-xs cursor-pointer border-border/80"
+                       >
+                         Cancel
+                       </Button>
                      </div>
                   ) : previewCard ? (
                     <div className="w-full space-y-4">
@@ -488,6 +545,15 @@ return (
                     />
                   </div>
                 </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelOperation}
+                  className="mt-6 text-xs cursor-pointer border-border/80"
+                >
+                  Cancel Generation
+                </Button>
               </motion.div>
             )}
 
