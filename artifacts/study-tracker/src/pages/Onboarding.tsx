@@ -19,7 +19,8 @@ type OnboardingStep =
   | 'fork'
   | 'baseline'
   | 'syllabus'
-  | 'computing';
+  | 'computing'
+  | 'start_trial';
 
 export default function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>('welcome_exam');
@@ -259,9 +260,8 @@ export default function Onboarding() {
     
     setTimeout(() => setComputingStep(1), 800);
     setTimeout(() => setComputingStep(2), 1600);
-    setTimeout(async () => {
-      await markOnboarded();
-      setLocation('/');
+    setTimeout(() => {
+      setStep('start_trial');
     }, 2500);
   };
 
@@ -758,6 +758,57 @@ export default function Onboarding() {
                       <span>{msg}</span>
                     </div>
                   ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 7: START TRIAL */}
+            {step === 'start_trial' && (
+              <motion.div
+                key="start_trial"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="py-12 flex flex-col items-center justify-center text-center"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-6">
+                  <Zap className="w-8 h-8 text-teal-400" />
+                </div>
+                
+                <h2 className="text-2xl font-bold tracking-tight text-zinc-100 mb-3">
+                  Your Personalized Roadmap is Ready
+                </h2>
+                
+                <p className="text-zinc-400 mb-8 max-w-sm">
+                  We've built your baseline matrix. Start your 14-day free trial to unlock the complete spaced-repetition engine and predictive analytics.
+                </p>
+
+                <div className="space-y-4 w-full max-w-sm">
+                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 text-left space-y-3 mb-8">
+                    <div className="flex items-center gap-3 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Smart scheduling powered by FSRS-4.5</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Targeted review for your weak subjects</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span>Predictive exam readiness scoring</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      await markOnboarded();
+                      setLocation('/');
+                    }}
+                    className="w-full h-12 rounded-xl bg-teal-400 hover:bg-teal-300 text-zinc-950 font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_24px_rgba(45,212,191,0.3)] cursor-pointer active:scale-[0.98]"
+                  >
+                    <span>Start My 14-Day Free Trial</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
               </motion.div>
             )}
