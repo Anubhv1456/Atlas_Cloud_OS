@@ -88,7 +88,8 @@ export function useOnboardingStatus() {
       if (rawExamProfile) {
         try {
           const parsed = JSON.parse(rawExamProfile);
-          if (parsed && (parsed.targetExamDate || (parsed.targetExam && parsed.targetExam !== 'NEET PG / INI-CET'))) {
+          // Removed targetExam from heuristic to prevent premature ejection during onboarding
+          if (parsed && (parsed.targetExamDate)) {
             return true;
           }
         } catch {
@@ -174,7 +175,8 @@ export function useOnboardingStatus() {
           const snap = await getDoc(userRef);
           if (snap.exists()) {
             const data = snap.data();
-            if (data.onboardingCompleted || data.betaAccess || data.targetExam || data.trialDaysAwarded) {
+            // Removed data.targetExam from heuristic to prevent premature ejection
+            if (data.onboardingCompleted || data.betaAccess || data.trialDaysAwarded) {
               if (isMounted) {
                 setHasOnboarded(true);
                 setLoading(false);
